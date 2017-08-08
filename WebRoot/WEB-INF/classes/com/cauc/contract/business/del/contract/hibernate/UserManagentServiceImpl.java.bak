@@ -1,0 +1,68 @@
+package com.cauc.training.business.contract.hibernate;
+
+import java.util.List;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.hibernate.HibernateException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.business.contract.IUserManagentService;
+import com.cauc.training.business.dao.GenericHibernateDAO;
+import com.cauc.training.pojos.TContractUser;
+
+/**
+ * 用户管理的Service
+ * 
+ * @author litie
+ */
+@Service
+public class UserManagentServiceImpl extends GenericHibernateDAO implements IUserManagentService {
+
+	private static Log log = LogFactory.getLog(UserManagentServiceImpl.class);
+
+	@Override
+	public List<TContractUser> readAllUser() {
+		String hql = "from " + TContractUser.class.getSimpleName() + " t where t.VDelFlg = ? ";
+		List<TContractUser> list = find(hql, "0");
+		return list;
+	}
+
+	@Override
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void saveUser(TContractUser user) throws FinanceServiceException {
+		try {
+			if (StringUtils.isBlank(user.getVId())) {
+				// 新增
+				// 计算用户编号
+				String hql = "select max(t.VNo) from " + TContractUser.class.getSimpleName() + " t ";
+				List<Object> list = find(hql);
+				String newVNo = null;
+				if (!list.isEmpty() && list.get(0) != null) {
+					int newVNoInt = Integer.parseInt((String) list.get(0)) + 1;
+					newVNo = StringUtils.leftPad(String.valueOf(newVNoInt), 3, "0");
+				} else {
+					newVNo = "001";
+				}
+				user.setVNo(newVNo);
+				user.setVDelFlg("0");
+				// 插入数据
+				save(user);
+			} else {
+				// 更新
+				TContractUser currentUser = get(TContractUser.class, user.getVId());
+				currentUser.setVName(user.getVName());
+				currentUser.setVRole(user.getVRole());
+				update(currentUser);
+			}
+		} catch (HibernateException e) {
+			log.error("保持用户信息时失败", e);
+			throw new FinanceServiceException("保持用户信息时失败。", e);
+		}
+	}
+
+}

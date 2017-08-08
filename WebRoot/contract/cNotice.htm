@@ -1,0 +1,84 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>通知</title>
+    <link href="themes/cupertino/jquery.ui.all.css" rel="stylesheet" type="text/css" />
+    <link href="themes/cupertino/selfStyle.css" rel="stylesheet" type="text/css" />
+    <script src="scripts/jquery.min.js"></script>
+    <script src="scripts/jquery-ui.min.js"></script>
+    <script src="scripts/ui/jquery.ui.position.min.js"></script>
+    <script src="scripts/ui/jquery.ui.core.min.js"></script>
+    <script src="scripts/ui/jquery.ui.widget.min.js"></script>
+    <script src="scripts/ui/jquery.ui.button.min.js"></script>
+    <script src="scripts/ui/jquery.ui.tabs.min.js"></script>
+    <script src="scripts/ui/jquery.ui.dialog.min.js"></script>
+    <script src="scripts/ui/jquery.ui.menu.min.js"></script>
+    <script src="scripts/function.min.js"></script>
+    <!-- 此js务必放在所有页面自带的js后面加载 -->
+    <script src="scripts/base.min.js"></script>
+</head>
+<body>
+<div id="indexHead">
+  <div class="headercontent">
+      <img src="themes/cupertino/images/logo.png" />
+      <span class="sysNameC">中国民航大学飞行培训合同管理系统</span>
+      <div class="sysNameE">Civil aviation university of china Contract management system </div>
+      <div class="logout">
+          <span class="today">2016-6-6</span>
+          <span class="wel">欢迎</span>
+          <a href="">张雪</a>
+          <span class="sep"></span>
+          <a href="">退出</a>
+      </div>
+  </div>
+</div>
+<div id="leftPartA">
+    <ul class="itemList">
+	    <li class="active"><a style="display:block;" href="cMain.htm" title="主页">主页</a></li>
+	    <li><a href="cContractList.htm" title="合同管理">合同管理</a></li>
+	    <li><a href="cStudentList.htm" title="学生管理">学生管理</a></li>
+	    <li><a href="cPaylist.htm" title="付款管理">付款管理</a></li>
+	    <li><a href="cClearingList.htm" title="结算管理">结算管理</a></li>
+    </ul>
+    <ul class="foldList">
+	    <li title="统计">统计</li>
+	    <ul class="itemList">
+	        <li><a href="cPayStatistics.htm">付款统计</a></li>
+	        <li><a href="cCollectStatistics.htm">汇总统计</a></li>
+	        <li><a href="cAverageStatistics.htm">平均统计</a></li>
+	    </ul>
+	</ul>
+	<ul class="foldList">
+        <li title="用户管理">用户管理</li>
+        <ul class="itemList">
+	        <li><a href="cUserList.htm">用户列表</a></li>
+	        <li><a href="cRoleList.htm">角色列表</a></li>
+	    </ul>
+    </ul>
+	<ul class="itemList">
+	    <li><a href="cDataDictionary.htm" title="数据字典">数据字典</a></li>
+	</ul>
+</div>
+<div id="rightPartA" style="overflow-x:hidden;">
+    <div>
+    <div class="Panel">
+        <div class="panelHead">
+            <span>根据付款通知格式设置输入项</span>
+        </div>
+        <div class="panelContent" style="min-height:300px;">
+            <input id="Button1" type="button" class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-icon-primary mt10 ml10" value="生成付款通知单" />
+            <input id="Button2" type="button" class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-icon-primary mt10 ml10" value="保存" />
+        </div>
+    </div>
+    </div>
+</div>
+<script>
+    $(function() {
+        $('#Button2').click(function() {
+        window.location.href = 'cPaylist.htm';
+        });
+    });
+</script>
+</body>
+</html>

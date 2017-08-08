@@ -1,0 +1,289 @@
+/*
+ * @(#)ExamRoomAllocationDataBean.java
+ */
+package com.cauc.training.util.del;
+
+/**
+ * 
+ * 考场分配情况
+ * 
+ * @author fuchaohui
+ *
+ */
+public class ExamRoomAllocationDataBean implements java.io.Serializable{
+
+	private static final long serialVersionUID = 531353494713264792L;
+	
+	private Integer effectiveTotalNum=0;//所有合格的报名登记表数量
+	
+	private Integer assignedTotalNum=0;//所有已分配报名登记表数量
+	
+	private Integer glyjsTotalNum=0;//管理类研究生报名表数量
+	
+	private Integer glfyjsTotalNum=0;//管理类非研究生报名表数量
+	
+	private Integer yxyjsTotalNum=0;//医学类研究生报名表数量
+	
+	private Integer yxfyjsTotalNum=0;//医学类非研究生报名表数量	
+	
+	private Integer zyyjsTotalNum=0;//专业类研究生报名表数量
+
+	private Integer zyfyjsTotalNum=0;//专业类非研究生报名表数量
+	
+	//--------------------------------------------------------//
+	
+	private Integer assignedGlyjsNum=0;//已分配管理类研究生报名表数量
+	
+	private Integer assignedGlfyjsNum=0;//已分配管理类非研究生报名表数量
+	
+	private Integer assignedYxyjsNum=0;//已分配医学类研究生报名表数量
+	
+	private Integer assignedYxfyjsNum=0;//已分配医学类非研究生报名表数量	
+	
+	private Integer assignedZyyjsNum=0;//已分配专业类研究生报名表数量
+	
+	private Integer assignedZyfyjsNum=0;//已分配专业类非研究生报名表数量	
+
+	/**
+	 * 获取已分配管理类非研究生报名表数量
+	 * 
+	 * @return assignedGlfyjsNum
+	 */
+	public Integer getAssignedGlfyjsNum() {
+		return assignedGlfyjsNum;
+	}
+
+	/**
+	 * 设置已分配管理类非研究生报名表数量
+	 * @param assignedGlfyjsNum 要设置的 assignedGlfyjsNum
+	 */
+	public void setAssignedGlfyjsNum(Integer assignedGlfyjsNum) {
+		this.assignedGlfyjsNum = assignedGlfyjsNum;
+	}
+
+	/**
+	 * 获取已分配管理类研究生报名表数量
+	 * @return assignedGlyjsNum
+	 */
+	public Integer getAssignedGlyjsNum() {
+		return assignedGlyjsNum;
+	}
+
+	/**
+	 * 设置已分配管理类研究生报名表数量
+	 * @param assignedGlyjsNum 要设置的 assignedGlyjsNum
+	 */
+	public void setAssignedGlyjsNum(Integer assignedGlyjsNum) {
+		this.assignedGlyjsNum = assignedGlyjsNum;
+	}
+
+	/**
+	 * 
+	 * 获取已分配医学类非研究生报名表数量
+	 * @return assignedYxfyjsNum
+	 */
+	public Integer getAssignedYxfyjsNum() {
+		return assignedYxfyjsNum;
+	}
+
+	/**
+	 * 设置已分配医学类非研究生报名表数量
+	 * 
+	 * @param assignedYxfyjsNum 要设置的 assignedYxfyjsNum
+	 */
+	public void setAssignedYxfyjsNum(Integer assignedYxfyjsNum) {
+		this.assignedYxfyjsNum = assignedYxfyjsNum;
+	}
+
+	/**
+	 * 获取已分配医学类研究生报名表数量
+	 * 
+	 * @return assignedYxyjsNum
+	 */
+	public Integer getAssignedYxyjsNum() {
+		return assignedYxyjsNum;
+	}
+
+	/**
+	 *  设置已分配医学类非研究生报名表数量
+	 *  
+	 * @param assignedYxyjsNum 要设置的 assignedYxyjsNum
+	 */
+	public void setAssignedYxyjsNum(Integer assignedYxyjsNum) {
+		this.assignedYxyjsNum = assignedYxyjsNum;
+	}
+
+	/**
+	 * 获取已分配专业类非研究生报名表数量
+	 * 
+	 * @return assignedZyfyjsNum
+	 */
+	public Integer getAssignedZyfyjsNum() {
+		return assignedZyfyjsNum;
+	}
+
+	/**
+	 * 设置已分配专业类非研究生报名表数量
+	 * 
+	 * @param assignedZyfyjsNum 要设置的 assignedZyfyjsNum
+	 */
+	public void setAssignedZyfyjsNum(Integer assignedZyfyjsNum) {
+		this.assignedZyfyjsNum = assignedZyfyjsNum;
+	}
+
+	/**
+	 * 获取已分配专业类研究生报名表数量
+	 * 
+	 * @return assignedZyyjsNum
+	 */
+	public Integer getAssignedZyyjsNum() {
+		return assignedZyyjsNum;
+	}
+
+	/**
+	 * 设置已分配专业类研究生报名表数量
+	 * @param assignedZyyjsNum 要设置的 assignedZyyjsNum
+	 */
+	public void setAssignedZyyjsNum(Integer assignedZyyjsNum) {
+		this.assignedZyyjsNum = assignedZyyjsNum;
+	}
+
+	/**
+	 * 获取所有有效的报名数量
+	 * 
+	 * @return effectiveTotalNum
+	 */
+	public Integer getEffectiveTotalNum() {
+		return effectiveTotalNum;
+	}
+
+	/**
+	 * 设置所有有效的报名数量
+	 * @param effectiveTotalNum 要设置的 effectiveTotalNum
+	 */
+	public void setEffectiveTotalNum(Integer effectiveTotalNum) {
+		this.effectiveTotalNum = effectiveTotalNum;
+	}
+
+	/**
+	 * 获取管理类非研究生报名表数量
+	 * 
+	 * @return glfyjsTotalNum
+	 */
+	public Integer getGlfyjsTotalNum() {
+		return glfyjsTotalNum;
+	}
+
+	/**
+	 * 设置管理类非研究生报名表数量
+	 * @param glfyjsTotalNum 要设置的 glfyjsTotalNum
+	 */
+	public void setGlfyjsTotalNum(Integer glfyjsTotalNum) {
+		this.glfyjsTotalNum = glfyjsTotalNum;
+	}
+
+	/**
+	 * 获取管理类研究生报名表数量
+	 * @return glyjsTotalNum
+	 */
+	public Integer getGlyjsTotalNum() {
+		return glyjsTotalNum;
+	}
+
+	/**
+	 * 设置管理类研究生报名表数量
+	 * @param glyjsTotalNum 要设置的 glyjsTotalNum
+	 */
+	public void setGlyjsTotalNum(Integer glyjsTotalNum) {
+		this.glyjsTotalNum = glyjsTotalNum;
+	}
+
+	/**
+	 * 获取医学类非研究生报名表数量
+	 * 
+	 * @return yxfyjsTotalNum
+	 */
+	public Integer getYxfyjsTotalNum() {
+		return yxfyjsTotalNum;
+	}
+
+	/**
+	 * 设置医学类非研究生报名表数量
+	 * 
+	 * @param yxfyjsTotalNum 要设置的 yxfyjsTotalNum
+	 */
+	public void setYxfyjsTotalNum(Integer yxfyjsTotalNum) {
+		this.yxfyjsTotalNum = yxfyjsTotalNum;
+	}
+
+	/**
+	 * 获取医学类研究生报名表数量
+	 * @return yxyjsTotalNum
+	 */
+	public Integer getYxyjsTotalNum() {
+		return yxyjsTotalNum;
+	}
+
+	/**
+	 * 设置医学类研究生报名表数量
+	 * @param yxyjsTotalNum 要设置的 yxyjsTotalNum
+	 */
+	public void setYxyjsTotalNum(Integer yxyjsTotalNum) {
+		this.yxyjsTotalNum = yxyjsTotalNum;
+	}
+
+	/**
+	 * 获取专业类非研究生报名表数量
+	 * @return zyfyjsTotalNum
+	 */
+	public Integer getZyfyjsTotalNum() {
+		return zyfyjsTotalNum;
+	}
+
+	/**
+	 * 设置专业类非研究生报名表数量
+	 * @param zyfyjsTotalNum 要设置的 zyfyjsTotalNum
+	 */
+	public void setZyfyjsTotalNum(Integer zyfyjsTotalNum) {
+		this.zyfyjsTotalNum = zyfyjsTotalNum;
+	}
+
+	/**
+	 * 获取专业类研究生报名表数量
+	 * @return zyyjsTotalNum
+	 */
+	public Integer getZyyjsTotalNum() {
+		return zyyjsTotalNum;
+	}
+
+	/**
+	 * 设置专业类研究生报名表数量
+	 * @param zyyjsTotalNum 要设置的 zyyjsTotalNum
+	 */
+	public void setZyyjsTotalNum(Integer zyyjsTotalNum) {
+		this.zyyjsTotalNum = zyyjsTotalNum;
+	}
+
+	/**
+	 * 获取所有已分配的考生数量
+	 * 
+	 * @return assignedTotalNum
+	 */
+	public Integer getAssignedTotalNum() {
+		this.assignedTotalNum=assignedGlyjsNum;
+		this.assignedTotalNum+=assignedGlfyjsNum;
+		this.assignedTotalNum+=assignedYxyjsNum;
+		this.assignedTotalNum+=assignedYxfyjsNum;
+		this.assignedTotalNum+=assignedZyyjsNum;
+		this.assignedTotalNum+=assignedZyfyjsNum;
+		return assignedTotalNum;
+	}
+
+	/**
+	 * @param assignedTotalNum 要设置的 assignedTotalNum
+	 */
+	public void setAssignedTotalNum(Integer assignedTotalNum) {
+		this.assignedTotalNum = assignedTotalNum;
+	}
+
+}

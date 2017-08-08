@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>飞行训练管理</title>
+
+<link rel="stylesheet" href="themes/cupertino/jquery.ui.all.css">
+<script src="scripts/jquery.min.js"></script>
+<script src="scripts/jquery-ui.min.js"></script>
+<script src="scripts/ui/jquery.ui.position.min.js"></script>
+<script src="scripts/ui/jquery.ui.core.min.js"></script>
+<script src="scripts/ui/jquery.ui.widget.min.js"></script>
+<script src="scripts/ui/jquery.ui.button.min.js"></script>
+<script src="scripts/ui/jquery.ui.tabs.min.js"></script>
+<script src="scripts/ui/jquery.ui.dialog.min.js"></script>
+<script src="scripts/ui/jquery.ui.menu.min.js"></script>
+<script src="scripts/function.min.js"></script>
+
+<style>
+#setupMenu #setupSubMenu1 { width: 120px; }
+#infoBox { height: 110px; border: solid 1px #EEEEEE; background-color: #FAFAFA; margin-top: 15px; }
+</style>
+<script>
+A_WIDTH=200; //注意，不要写成var A_WIDTH，这个值已经在function.js中定义好了，只需要重新赋值
+C_WIDTH=160; //注意，不要写成var C_WIDTH，这个值已经在function.js中定义好了，只需要重新赋值
+
+//可以隐藏部分表格行的全选代码：
+var $checkUserBoxes,$checkAllUsersBox;
+function reFilterCheckUserBoxes()
+{
+	$checkUserBoxes=$("input[name='users']").filter(function(index) {
+		return !$(this).closest("tr").hasClass("hide"); //.is(":visible"); //这个不可用
+	});
+	checkCheckAll();
+}
+
+function checkCheckAll(){
+	if($checkUserBoxes.size()==$checkUserBoxes.filter(":checked").size() && $checkUserBoxes.size()!=0) $checkAllUsersBox[0].checked=true;
+	else $checkAllUsersBox[0].checked=false;
+	$checkAllUsersBox.trigger("change");
+}
+
+$(function() {
+	$checkUserBoxes=$("input[name='users']");	
+	$checkAllUsersBox=$("#checkAllUsersBox");
+	$checkUserBoxes.click(function(){
+		checkCheckAll();
+	});
+	reFilterCheckUserBoxes();
+	$checkAllUsersBox.click(function(){
+		$checkUserBoxes.each(function(){
+			this.checked = $checkAllUsersBox[0].checked;
+			$(this).trigger("change");
+		});
+	});
+	
+	$("#searchUser").on("keyup blur",function(){
+		var _this=this;
+		$checkAllUsersBox[0].checked=false;
+		$checkAllUsersBox.change();
+		$("#usersTable tbody > tr").addClass("hide");
+		$("input[name='users']").each(function(){this.checked=false; $(this).change();}); //hide的同时，还应该取消勾选
+		$("td.searchRange").each(function(){
+			var tr=$(this).closest("tr");
+			var title=$(this).attr("title");
+			var value=$.trim(_this.value);
+			if(title.indexOf(value)>-1) tr.removeClass("hide");
+			$(this).html(title.replace(value,"<span style='color: #cc0000; font-weight: bold;'>"+value+"</span>"));
+		});
+		reFilterCheckUserBoxes();
+	});
+});
+
+$(function() {
+	//3个下拉选框的处理代码：
+	$("div.dropDownList").find("button").css("width","100px").end().each(function(i){ //如果是前3个元素，单独处理
+		if(i==0){var d=new $.dropDownList(i,false,100); d.button.css("width", "90px");}
+		else if(i==1){var d=new $.dropDownList(i,false,120); d.button.css("width", "90px");}
+		else if(i==2){var d=new $.dropDownList(i,false,120); d.button.css("width", "65px");}
+		else{new $.dropDownList(i,true,100);}
+	});
+});
+
+//一个技巧：
+//$(function() {} ); 在每一个单独的语句块中定义的变量都是局部变量，和其它语句块中的变量重名也不会产生冲突。如果需要从这些功能里拷贝多份代码使用，又怕产生冲突，则可以利用这个原理
+//为了避免冲突，需要新起一个函数：
+$(function() {
+	//全选框代码：
+	var checkAllButton1 = new $.checkAllButton(0,"operate");
+	checkAllButton1.setMenuWidth(80);
+	checkAllButton1.setMenu(function(i){
+		switch(i)
+		{
+			case 0:
+				$(this).click(function(){
+					checkAllButton1.checkAllbox[0].checked=false;
+					checkAllButton1.checkAllbox.click();
+				});
+				break;
+			case 1:
+				$(this).click(function(){
+					checkAllButton1.checkAllbox[0].checked=true;
+					checkAllButton1.checkAllbox.click();
+				});
+				break;
+			case 2:
+				$(this).click(function(){
+					checkAllButton1.checkAllbox[0].checked=true;
+					checkAllButton1.checkAllbox.click();
+					checkAllButton1.check(".unread", true);
+				});
+				break;
+			case 3:
+				$(this).click(function(){
+					checkAllButton1.checkAllbox[0].checked=true;
+					checkAllButton1.checkAllbox.click();
+					checkAllButton1.check(":not(.unread)", true);
+				});
+				break;
+		}
+	});
+});
+
+$(function() {
+	//显隐菜单代码：
+	var $setupMenu = $("#setupMenu"), $setupSubMenu1=$("#setupSubMenu1");
+	$("#setupButton").click(function(e){
+		e.stopPropagation(); //阻止事件冒泡到BODY、HTML级别
+		$(".ui-menu:not([id='setupMenu'])").fadeOut(150);
+		$setupMenu.fadeToggle(150);
+	});
+	
+	$setupMenu.menu({ position: { my: "right top", at: "left-2 top+2" } });
+	$(".menuButtonSpan").buttonset().find("input[type='checkbox']").change(function(){
+		$(this).siblings("label").children().html(this.checked?"已开启":"已关闭");
+	});
+
+	$setupSubMenu1.delegate( "a", "click", function() {
+		$(this).find("span.ui-icon-bullet").remove().end().parent().siblings().find("span.ui-icon-bullet").remove();
+		$(this).prepend($("<span class='ui-icon ui-icon-bullet'></span>"));
+		$setupMenu.fadeToggle(150);
+	});
+});
+</script>
+<!-- 此js务必放在所有页面自带的js后面加载 -->
+<script src="scripts/base.min.js"></script>
+</head>
+<body class="hide">
+<div id="leftPartA"><div>
+
+<ul class="itemList">
+	<li><a class="navLink" href="main1.html" id="navLink0" title="我的首页">我的首页</a><!-- (10) --></li>
+	<li><a class="navLink" href="peopleManage.html" id="navLink1" title="人员管理">人员管理</a></li>
+	<li class="active"><a class="navLink" href="trainingManage.html" id="navLink2" title="飞行训练管理">飞行训练管理</a></li>
+	<li><a class="navLink" href="aircraftManage.html" id="navLink3" title="航空器管理">航空器管理</a></li>
+	<li><a class="navLink" href="summaryManage.html" id="navLink4" title="飞行训练大纲管理">飞行训练大纲管理</a></li>
+	<li><a class="navLink" href="systemManage.html" id="navLink5" title="系统管理">系统管理</a></li>
+	<li><a class="navLink" href="marksManage.html" id="navLink6" title="成绩管理">成绩管理</a>
+</ul>
+<span class="panelLine"></span>
+<ul class="itemList">
+	<li><a class="navLink" href="Func1.html" id="navLink101" title="功能展示1">功能展示1</a></li>
+	<li><a class="navLink" href="Func2.html" id="navLink102" title="功能展示2">功能展示2</a></li>
+	<li><a class="navLink" href="Func3.html" id="navLink103" title="功能展示3">功能展示3</a></li>
+	<li><a class="navLink" href="Func4.html" id="navLink104" title="功能展示4">功能展示4</a></li>
+	<li><a class="navLink" href="Func5.html" id="navLink105" title="功能展示5">功能展示5</a></li>
+	<li><a class="navLink" href="Func6.html" id="navLink106" title="功能展示6">功能展示6</a></li>
+	<li><a class="navLink" href="Func7.html" id="navLink107" title="功能展示7">功能展示7</a></li>
+	<li><a class="navLink" href="Func8.html" id="navLink108" title="功能展示8">功能展示8</a></li>
+	<li><a class="navLink" href="Func9.html" id="navLink109" title="功能展示9">功能展示9</a></li>
+	<li><a class="navLink" href="Func10.html" id="navLink110" title="功能展示10">功能展示10</a></li>
+</ul>
+<ul class="foldList">
+	<li><span class="ui-icon ui-icon-carat-1-e"></span>功能展示11</li>
+	<ul class="itemList hide">
+		<li><a class="navLink" href="Func11.html" id="navLink111" title="功能展示11" tabTitle="功能展示11[HTML]">HTML版本</a></li>
+		<li><a class="navLink" href="Func11_1.html" id="navLink11101" title="功能展示11" tabTitle="功能展示11[JS]">JS版本</a></li>
+	</ul>
+</ul>
+<ul class="itemList">
+	<li><a class="navLink" href="Func12.html" id="navLink112" title="功能展示12">功能展示12</a></li>
+	<li><a class="navLink" href="Func13.html" id="navLink113" title="功能展示13">功能展示13</a></li>
+	<li><a class="navLink" href="Func14.html" id="navLink114" title="功能展示14">功能展示14</a></li>
+</ul>
+
+</div></div>
+
+
+<div id="leftPartC"><div>
+
+	<ul class="foldList">
+		<li><span class="ui-icon ui-icon-carat-1-s"></span>未分类(2)</li>
+		<ul class="itemList">
+			<li><a href="#N" title="">12345@163.com</a></li>
+			<li><a href="#N" title="">12345@163.com</a></li>
+			<li><a href="#N" title="">12345@163.com</a></li>
+		</ul>
+	</ul>
+	<span class="panelLine"></span>
+	<ul class="foldList">
+		<li><span class="ui-icon ui-icon-carat-1-s"></span>所有(3)</li>
+		<ul class="itemList">
+			<li><a href="#N" title="">12345@163.com</a></li>
+			<li><a href="#N" title="">12345@163.com</a></li>
+			<li><a href="#N" title="">12345@163.com</a></li>
+			<li><a href="#N" title="">12345@163.com</a></li>
+		</ul>
+	</ul>
+	<span class="panelLine"></span>
+	<ul class="foldList">
+		<li><span class="ui-icon ui-icon-carat-1-s"></span>朋友(3)</li>
+		<ul class="itemList">
+			<li><a href="#N" title="">12345@163.com</a></li>
+			<li><a href="#N" title="">12345@163.com</a></li>
+			<li><a href="#N" title="">12345@163.com</a></li>
+			<li><a href="#N" title="">12345@163.com</a></li>
+			<li><a href="#N" title="">12345@163.com</a></li>
+		</ul>
+	</ul>
+
+
+</div></div>
+
+
+<div id="rightPartC"><div>
+<div class="panelBox buttonBox">
+<!-- panelBox计划用于布局横向的简单一行 -->
+<button id="button1" class="green" primary="ui-icon-button-addperson">新建联系人</button>
+
+<button class="normal barLeft">写信</button>
+
+<div class="dropDownList barMiddle">
+	<button>复制到组</button><span class="bar"></span><!-- 这个span单独设置了样式，如果去掉，则360浏览器显示不正常 -->
+	<ul>
+		<li><a href="#N" val="1"><span class="ui-icon ui-icon-bullet"></span>已读</a></li>
+		<li><a href="#N" val="2">未读</a></li>
+	</ul>
+	<input type="hidden" name="oper_01" value="1" />
+</div>
+
+<div class="dropDownList barMiddle">
+	<button>移动到组</button><span class="bar"></span><!-- 这个span单独设置了样式，如果去掉，则360浏览器显示不正常 -->
+	<ul>
+		<li><a href="#N" val="1"><span class="ui-icon ui-icon-bullet"></span>垃圾邮件夹</a></li>
+		<li><a href="#N" val="2">已删除</a></li>
+	</ul>
+	<input type="hidden" name="oper_02" value="1" />
+</div>
+
+<button class="normal barMiddle">删除</button>
+
+<div class="dropDownList barRight">
+	<button>更多</button><span class="bar"></span><!-- 这个span单独设置了样式，如果去掉，则360浏览器显示不正常 -->
+	<ul>
+		<li><a href="#N" val="1"><span class="ui-icon ui-icon-bullet"></span>垃圾邮件夹</a></li>
+		<li><a href="#N" val="2">已删除</a></li>
+	</ul>
+	<input type="hidden" name="oper_02" value="1" />
+</div>
+
+<div class="iconInput relative left" iconSize="16" width="180" height="28">
+	<input title="搜索所有联系人" id="searchUser" name="searchUser" type="text" maxlength="50" value="搜索所有联系人" />
+	<b class="ui-icon ui-icon-search nextIcon"></b>
+</div>
+
+
+
+	<div class="right">
+		<span class="text"><span class="ui-icon ui-icon-copy"></span><a href="#N" class="blue">同步至手机</a> | <a href="#N" class="blue">导入导出<span class="ui-icon ui-icon-carat-1-s"></span></a></span>
+		<button id="setupButton" class="icon" icon="ui-icon-gear"></button>
+		<ul id="setupMenu">
+			<li><a href="#N">正文工具栏</a><span class="menuButtonSpan">
+				<input type="checkbox" id="toolBoxCheck1" name="toolBoxCheck" checked="checked" /><label for="toolBoxCheck1">已开启</label>
+			</span></li>
+			<li class="ui-menu-divider"></li>
+			<li><a href="#N">读信窗口</a><span class="menuButtonSpan">
+				<!-- 注意，这些按钮一定要紧挨着摆放，不要换行，否则会出现空格 -->
+				<input type="radio" id="readWinRadio1" name="readWinRadio" /><label for="readWinRadio1">关闭</label><input type="radio" id="readWinRadio2" name="readWinRadio" /><label for="readWinRadio2">底部</label><input type="radio" id="readWinRadio3" name="readWinRadio" checked="checked" /><label for="readWinRadio3">右侧</label>
+			</span></li>
+			<li class="ui-menu-divider"></li>
+			<li><a href="#N">发/收件人姓名显示</a><span class="menuButtonSpan">
+				<input type="radio" id="nameDispRadio1" name="nameDispRadio" /><label for="nameDispRadio1">发件人姓名</label><input type="radio" id="nameDispRadio2" name="nameDispRadio" checked="checked" /><label for="nameDispRadio2">通讯录昵称</label>
+			</span></li>
+			<li class="ui-menu-divider"></li>
+			<li><a href="#N">附件上传方式</a>
+				<ul id="setupSubMenu1">
+					<li><a href="#N"><span class="ui-icon ui-icon-bullet"></span>直接上传</a></li>
+					<li class="ui-menu-divider"></li>
+					<li><a href="#N">上传到百度网盘</a></li>
+				</ul>
+			</li>
+			<li class="ui-menu-divider"></li>
+			<li><a href="#N">回复时添加签名</a><span class="menuButtonSpan">
+				<input type="checkbox" id="reSignCheck1" name="reSignCheck" checked="checked" /><label for="reSignCheck1">已开启</label>
+			</span></li>
+			<li class="ui-menu-divider"></li>
+			<li><a href="#N">转发时添加签名</a><span class="menuButtonSpan">
+				<input type="checkbox" id="fwSignCheck1" name="fwSignCheck" /><label for="fwSignCheck1">已关闭</label>
+			</span></li>
+			<li class="ui-menu-divider"></li>
+			<li><a href="#N">回复转发时签名位置</a><span class="menuButtonSpan">
+				<input type="radio" id="signPosRadio1" name="signPosRadio" checked="checked" /><label for="signPosRadio1">原文上方</label><input type="radio" id="signPosRadio2" name="signPosRadio" /><label for="signPosRadio2">原文下方</label>
+			</span></li>
+			<li class="ui-menu-divider"></li>
+			<li><a href="#N">签名设置</a></li>
+		</ul>
+	</div>
+
+
+
+
+</div>
+
+
+<div class="Panel ui-corner-all-0" id="Panel2">
+
+	<!--<div class="panelHead"><span>不需要显示就直接删掉即可</span></div> -->
+  
+	<div class="panelContent">
+
+		<table class="panelTable" id="usersTable" border="0" cellspacing="0" cellpadding="3">
+			<thead>
+			  <tr class="trSpliter">
+				<th width="79"></th>
+				<th></th>
+				<th width="166"></th>
+				<th width="168"></th>
+				<th width="104"></th>
+				<th width="160"></th>
+			  </tr>
+			  <tr>
+				<th class="thSortableGray" style="padding-left: 6px;"><input type="checkbox" value="" id="checkAllUsersBox"><b></b></th>
+				<th class="thSortable">姓名<span class="ui-icon ui-icon-arrow-1-s" role="presentation">↓</span></th>
+				<th class="thSortable">邮件地址<span class="ui-icon ui-icon-arrow-1-n" role="presentation">↑</span></th>
+				<th class="thSortableGray">手机号码</th>
+				<th class="thSortableGray">所在分组</th>
+				<th class="thSortableGray">&nbsp;</th>
+			  </tr>
+			</thead>
+			<tbody>
+			  <tr>
+				<td><input name="users" type="checkbox" value=""><b></b></td>
+				<td class="searchRange" title="张惠妹">张惠妹</td>
+				<td class="searchRange" title="liulaogen@163.com">liulaogen@163.com</td>
+				<td class="searchRange" title="13112121212">13112121212</td>
+				<td><a href="#N" class="blue">朋友</a></td>
+				<td><span class="hide"><button class="icon" icon="ui-icon-mail-closed"></button><button class="icon" icon="ui-icon-pencil"></button><button class="icon" icon="ui-icon-trash"></button></span></td>
+			  </tr>
+			  <tr>
+				<td><input name="users" type="checkbox" value=""><b></b></td>
+				<td class="searchRange" title="王菲">王菲</td>
+				<td class="searchRange" title="madashuai@sohu.com">madashuai@sohu.com</td>
+				<td class="searchRange" title="13012121212">13012121212</td>
+				<td><a href="#N" class="blue">老师</a></td>
+				<td><span class="hide"><button class="icon" icon="ui-icon-mail-closed"></button><button class="icon" icon="ui-icon-pencil"></button><button class="icon" icon="ui-icon-trash"></button></span></td>
+			  </tr>
+			  <tr>
+				<td><input name="users" type="checkbox" value=""><b></b></td>
+				<td class="searchRange" title="梁咏琪">梁咏琪</td>
+				<td class="searchRange" title="xiangcun@sina.com">xiangcun@sina.com</td>
+				<td class="searchRange" title="13912121212">13912121212</td>
+				<td><a href="#N" class="blue">同学</a></td>
+				<td><span class="hide"><button class="icon" icon="ui-icon-mail-closed"></button><button class="icon" icon="ui-icon-pencil"></button><button class="icon" icon="ui-icon-trash"></button></span></td>
+			  </tr>
+			  <tr>
+				<td><input name="users" type="checkbox" value=""><b></b></td>
+				<td class="searchRange" title="周杰伦">周杰伦</td>
+				<td class="searchRange" title="aiqing@163.com">aiqing@163.com</td>
+				<td class="searchRange" title="13912121212">13912121212</td>
+				<td><a href="#N" class="blue">家人</a></td>
+				<td><span class="hide"><button class="icon" icon="ui-icon-mail-closed"></button><button class="icon" icon="ui-icon-pencil"></button><button class="icon" icon="ui-icon-trash"></button></span></td>
+			  </tr>
+			  <tr>
+				<td><input name="users" type="checkbox" value=""><b></b></td>
+				<td class="searchRange" title="周润发">周润发</td>
+				<td class="searchRange" title="yaoxiazi@sohu.com">yaoxiazi@sohu.com</td>
+				<td class="searchRange" title="13012121212">13012121212</td>
+				<td><a href="#N" class="blue">家人</a></td>
+				<td><span class="hide"><button class="icon" icon="ui-icon-mail-closed"></button><button class="icon" icon="ui-icon-pencil"></button><button class="icon" icon="ui-icon-trash"></button></span></td>
+			  </tr>
+			  <tr>
+				<td><input name="users" type="checkbox" value=""><b></b></td>
+				<td class="searchRange" title="张学友">张学友</td>
+				<td class="searchRange" title="feichengwurao@163.com">feichengwurao@163.com</td>
+				<td class="searchRange" title="13012121212">13012121212</td>
+				<td><a href="#N" class="blue">同学</a></td>
+				<td><span class="hide"><button class="icon" icon="ui-icon-mail-closed"></button><button class="icon" icon="ui-icon-pencil"></button><button class="icon" icon="ui-icon-trash"></button></span></td>
+			  </tr>
+			</tbody>
+		</table>
+
+	</div>
+
+</div>
+
+
+
+<div id="infoBox" class="panelBox ui-corner-all">
+
+	<div class="panelContent">
+		<div class="panelLeft" style="width: 55px;"><img src="themes/cupertino/images/starcontacts_48.png" /></div>
+		<div class="panelRight" style="margin-left: 75px;">
+			<span style="font-size: 14px; font-weight: bold; color: #555555;">试试点击列表中的星星，将好友设为星标联系人吧！</span><br />
+			<span style="font-size: 14px; color: #555555;">设为星标联系人后，该联系人将添加至收件箱的左侧栏，可以很方便的查看他们的往来邮件。<br />
+			左侧栏的联系组也可以设为星标联系组哦!</span>
+		</div>
+	</div>
+
+</div>
+
+
+
+</div></div>
+
+
+
+
+<div id="bottomPartA"><div>
+
+<button class="green" style="position: absolute; left: 10px;">保存</button>
+<button class="normal" style="position: absolute; left: 70px;">取消</button>
+<button class="normal" style="position: absolute; right: 30px;">还原为默认</button>
+
+</div></div>
+</body>
+</html>

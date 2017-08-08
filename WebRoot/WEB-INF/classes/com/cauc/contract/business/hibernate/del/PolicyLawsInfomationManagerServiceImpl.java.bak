@@ -1,0 +1,208 @@
+package com.cauc.training.business.hibernate;
+
+import java.util.List;
+import java.util.Map;
+
+import org.hibernate.Criteria;
+import org.hibernate.HibernateException;
+import org.hibernate.criterion.Order;
+import org.hibernate.criterion.Restrictions;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.business.IPolicyLawsService;
+import com.cauc.training.business.dao.GenericHibernateDAO;
+import com.cauc.training.business.dao.support.Page;
+import com.cauc.training.pojos.PolicyLaws;
+
+import com.cauc.training.pojos.TFile;
+
+@Service("policyLawsInfomationManagerServiceImpl")
+public class PolicyLawsInfomationManagerServiceImpl extends GenericHibernateDAO implements IPolicyLawsService {
+
+	/**
+	 * 功能：根据政策法规量化信息内容，判断该政策法规量化信息是否已存在 
+	 * @param content：政策法规量化信息内容
+	*/
+
+	@SuppressWarnings("unchecked")
+	private boolean isExistPolicyLawsInfo(String content) throws FinanceServiceException {
+		//该标志位用于表示字典信息是否已存在，false:表示不存在
+		boolean flag = false;
+		String hql = "from PolicyLaws where VContent=?";
+		List<PolicyLaws> lawsList = super.find(hql, content);
+		if (lawsList != null && lawsList.size() > 0){
+			flag = true;
+			//System.out.println(lawsList.size());
+			//PolicyLaws p = lawsList.get(0);
+			//System.out.println(p.getVContent());
+		}
+		return flag;
+			
+	}
+	
+	/**
+	 * 功能：根据政策法规量化信息内容和主键，判断该政策法规量化信息是否已存在 ，主要用于编辑时判断
+	 * @param name：政策法规量化内容
+	*/
+	@SuppressWarnings("unchecked")
+	private boolean isExistPolicyLawsInfo(String vid, String content) throws FinanceServiceException {
+		//该标志位用于表示文件是否已存在，false:表示不存在
+		boolean flag = false;
+		String hql = "from PolicyLaws where VId!=? and VContent=?";
+		List<TFile> tFileList = super.find(hql, new Object[]{vid, content});
+		if (tFileList != null && tFileList.size() > 0){
+			flag = true;
+		}
+		return flag;
+			
+	}	
+	
+	/**
+	 * 保存政策法规量化信息
+	 * @param laws
+	 * @throws FinanceServiceException
+	 */
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void savePolicyLaws(PolicyLaws laws) throws FinanceServiceException {
+		
+		if(laws != null){
+			if(isExistPolicyLawsInfo(laws.getVContent())){
+				throw new FinanceServiceException("保存政策法规量化信息失败，该政策法规量化信息已经存在！");
+			}else{
+				try{
+					//获取序号，自动生成
+					List<PolicyLaws> list = super.getAll(PolicyLaws.class,QUERY_KEY_DATE,false);
+					if(list == null || list.size() == 0){
+						laws.setINo(1);
+
+					}else{
+						//读取数据库序号最大值
+						laws.setINo(list.get(0).getINo() + 1);
+					}
+
+					
+					super.save(laws);
+				}catch(HibernateException e){
+					throw new FinanceServiceException("保存政策法规量化信息失败！", e);
+				}
+			}
+
+		}else{
+			throw new FinanceServiceException("保存政策法规量化信息失败！");
+		}
+	}
+
+	
+	/**
+	 * 功能：查询政策法规量化信息，带分页查询
+	 * @param params：Map结构，key为PolicyLaws中的VContent，value为用户输入的关键字
+	 * @param pageNo：当前页号
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page searchPolicyLawsInfos(Map<String,Object> params, String pageNo) throws FinanceServiceException {
+		Page page = null;
+		//使用Criteria查询PolicyLaws对象
+		Criteria criteria = this.createCriteria(PolicyLaws.class);
+		//如果查询条件不为空，则添加按内容查询条件
+		if (params.get(QUERY_KEY_CONTENT) != null && !params.get(QUERY_KEY_CONTENT).equals("")){
+			
+			criteria.add(Restrictions.like(QUERY_KEY_CONTENT, "%" + params.get(QUERY_KEY_CONTENT) + "%"));
+		}
+		
+		//如果查询条件不为空，则添加按政策法规类型查询条件
+		if (params.get(QUERY_KEY_LAWSTYPE) != null && !params.get(QUERY_KEY_LAWSTYPE).equals("")){
+			
+			criteria.add(Restrictions.eq(QUERY_KEY_LAWSTYPE, params.get(QUERY_KEY_LAWSTYPE)));
+		}
+		
+		//如果查询条件不为空，则添加按内容时长类型查询条件
+		if (params.get(QUERY_KEY_CONTENTTYPE) != null && !params.get(QUERY_KEY_CONTENTTYPE).equals("")){
+			
+			criteria.add(Restrictions.eq(QUERY_KEY_CONTENTTYPE, params.get(QUERY_KEY_CONTENTTYPE)));
+		}
+		criteria.addOrder(Order.asc(QUERY_KEY_INO));
+		//System.out.println("key: " + params.get(QUERY_KEY_CONTENT));
+		Integer pageIndex = Integer.parseInt(pageNo);
+		try {
+			page = this.pagedQuery(criteria, pageIndex);
+		} catch (HibernateException e) {
+			e.printStackTrace();
+			throw new FinanceServiceException("查询政策法规量化信息列表失败", e);
+		}
+		return page;
+	}
+
+	/**
+	 * 功能：根据政策法规量化信息主键值，查询政策法规量化信息
+	 * @param id
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public PolicyLaws searchPolicyLawsInfoById(String id) throws FinanceServiceException {
+		return super.get(PolicyLaws.class, id);
+	}
+
+
+	/**
+	 * 更新政策法规量化信息
+	 * @param law
+	 * @throws FinanceServiceException
+	 */	
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void updatePolicyLawsInfo(PolicyLaws laws) throws FinanceServiceException {
+		if(laws != null){
+			System.out.println("laws_cont: " + laws.getVContent());
+			if(isExistPolicyLawsInfo(laws.getVId(), laws.getVContent())){
+				throw new FinanceServiceException("更新政策法规量化信息失败，该政策法规量化信息已经存在！");
+			}else{
+				try {
+					PolicyLaws old = super.get(PolicyLaws.class, laws.getVId());
+
+					old.setIType(laws.getIType());//法规类型
+					old.setVContent(laws.getVContent());//内容
+					old.setIContentType(laws.getIContentType()); //内容类型
+					old.setIContentTime(laws.getIContentTime()); //内容时长
+					old.setILimitTime(laws.getILimitTime()); //限制时长
+					
+					super.update(old);
+				}catch (HibernateException e) {
+					throw new FinanceServiceException("更新政策法规量化信息对象失败", e);
+				}
+			}
+		}else{
+			throw new FinanceServiceException("更新政策法规量化信息失败！");
+		}
+
+	}
+
+	/**删除政策法规量化信息（可单一删除，也可批量删除）
+	 * 
+	 * @param ids
+	 * @throws FinanceServiceException
+	 * 说明：String... ids 表示定义一个可变变量，即ids就是一个字符串数组，等价于String[] ids
+	 */
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void deletePolicyLawsInfoByIds(String... ids) throws FinanceServiceException {
+			if(ids != null && ids.length >0){
+				try {
+					for (String id : ids) {
+						System.out.println(id);
+//						if(super.findBy(TDiction.class, "TDictype.VId", id).size()>0){
+//							throw new FinanceServiceException("该字典类型已经被引用，不能删除！");
+//						}
+						super.removeById(PolicyLaws.class, id);
+					}
+				}catch (HibernateException e) {
+					e.printStackTrace();
+					throw new FinanceServiceException("删除政策法规量化信息失败", e);
+				}
+			}
+
+	}
+	
+	
+}

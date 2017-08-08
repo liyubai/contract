@@ -1,0 +1,733 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE struts PUBLIC
+    "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN"
+    "http://struts.apache.org/dtds/struts-2.0.dtd">
+<struts>
+	<package name="ajax_student" extends="ErsDefault" namespace="/system">
+		<!-- 显示班级信息 -->
+		<action name="showClassInfoById" class="com.cauc.training.ui.core.StudentManagentAction"
+			method="readClassInfoById">
+			<result name="success" type="json">
+		       <param name="root">viewSetClassContent</param>
+		    </result>
+		</action>
+		<!-- 显示成绩信息 -->
+		<action name="showStudentScoreById" class="com.cauc.training.ui.core.StudentManagentAction"
+			method="readStudentScoreById">
+			<result name="success" type="json">
+		       <param name="root">viewScoreList</param>
+		    </result>
+		</action>
+		<!-- 保存学员信息 -->
+		<action name="saveStudentBaseInfo" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="saveStudentBaseInfo">
+			<result name="success" type="json">
+				<param name="root">viewOrg</param>
+			</result>
+		</action>
+		<!-- 编辑学员信息 -->
+		<action name="updateStudentBaseInfo" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="updateStudentBaseInfo">
+			<result name="success" type="json">
+				<param name="root">viewOrg</param>
+			</result>
+		</action>
+		<!-- 显示执照信息 -->
+		<action name="showStudentLicenseDetail" class="com.cauc.training.ui.core.StudentManagentAction"
+			method="showStudentLicenseDetail">
+			<result name="success" type="json">
+		       <param name="root">viewStudentLicense</param>
+		    </result>
+		</action>
+		
+	</package>
+	<package name="student_management" extends="ErsDefault" namespace="/system">
+	
+		<!-- 历史成绩导入 -->
+		<action name="open_importHistoryScore" class="com.cauc.training.ui.core.StudentManagentAction" 
+			method="importHistoryScore">
+			<result name="success">/WEB-INF/student/importHistoryScore.jsp</result>
+		</action>
+		
+		<!-- 国内送培 -->
+		<action name="open_InternalSendPeiList" class="com.cauc.training.ui.core.StudentManagentAction" 
+			method="readInternalSendPeiList">
+			<result name="success">/WEB-INF/student/internalSendPeiList.jsp</result>
+		</action>
+		<!-- 国内送培 -->
+		<action name="open_accordAllCondtionList" class="com.cauc.training.ui.core.StudentManagentAction" 
+			method="readAccordAllCondtionList">
+			<result name="success">/WEB-INF/student/accordAllCondtionList.jsp</result>
+		</action>
+		
+		<!-- 国外送培 -->
+		<action name="open_abroadSendPeiList" class="com.cauc.training.ui.core.StudentManagentAction" 
+			method="readAbroadSendPeiList">
+			<result name="success">/WEB-INF/student/abroadSendPeiList.jsp</result>
+		</action>
+		
+		<!-- 显示图片 -->
+		<action name="viewOkPhoto" class="com.cauc.training.ui.core.DownloadAttachmentAction" method="viewOkPhoto">
+		</action>
+		<!-- 上传图片 -->
+		<action name="open_uploadStudentImg" class="com.cauc.training.ui.core.StudentManagentAction" 
+			method="forward">
+			<result name="success">/WEB-INF/student/uploadImg.jsp</result>
+		</action>
+
+		<action name="uploadStudentImg" class="com.cauc.training.ui.core.FileManagerAction"
+			 method="uploadStudentImg">
+			<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_uploadStudentImg</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		
+		<action name="saveChangeStudentCommpany" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="saveChangeStudentCommpany">
+			<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_studentBaseInfoList</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		
+		<!-- 上传excel  -->
+		<action name="uploadStudentExcel" class="com.cauc.training.ui.core.FileManagerAction"
+			 method="uploadStudentExcel">
+			<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_importStudentInfoPage</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 上传成绩 -->
+		<action name="uploadStudentScoreExcel" class="com.cauc.training.ui.core.FileManagerAction"
+			 method="uploadStudentScoreExcel">
+			<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_importStudentScorePage</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!--学员基础信息列表-->
+		<action name="open_studentBaseInfoList" class="com.cauc.training.ui.core.StudentManagentAction" 
+			method="readStudentBaseInfoList">
+			<result name="success">/WEB-INF/student/studentBaseInfoList.jsp</result>
+		</action>
+		<!--更多查询的学员基础信息列表-->
+		<action name="open_moreSeacrhStudentBaseInfoList" class="com.cauc.training.ui.core.StudentManagentAction" 
+			method="readMoreSeacrhStudentBaseInfoList">
+			<result name="success">/WEB-INF/student/moreSeacrhStudentBaseInfoList.jsp</result>
+		</action>
+		<!-- 导出学生信息 -->
+		<action name="downloadStudentBaseInfo" class="com.cauc.training.ui.core.StudentManagentAction" method="downloadFile">
+			<result name="success" type="stream">
+				<param name="contentType">
+					application/octet-stream;charset=ISO8859-1
+				</param>
+				<param name="inputStream">inputStream</param>
+				<param name="contentDisposition">
+					attachment;filename="${attachmentName}"
+				</param>
+				<param name="bufferSize">4096</param>
+			</result>
+		</action>
+		<!--学员分班信息列表-->
+		<action name="open_studentDistributionClass" class="com.cauc.training.ui.core.StudentManagentAction" 
+			method="readStudentDistributionClassList">
+			<result name="success">/WEB-INF/student/studentAssignClassList.jsp</result>
+		</action>
+		<!-- 打开注册学员的页面 -->
+		<action name="open_createStudentBaseInfoPage" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="openStudentBaseInfoPage">
+			<result name="success">/WEB-INF/student/createStudentBaseInfo.jsp</result>
+			<result name="input" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_studentBaseInfoList</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		
+		<!-- 打开学员的更多查询页面 -->
+		<action name="open_moreSearchPage" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="openStudentBaseInfoPage">
+			<result name="success">/WEB-INF/student/moreSearchPage.jsp</result>
+			<result name="input" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_studentBaseInfoList</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		
+		<!-- 打开编辑学员信息的页面 -->
+		<action name="open_editStudentBaseInfoPage" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="openEditStudentBaseInfoPage">
+			<result name="success">/WEB-INF/student/editStudentBaseInfo.jsp</result>
+			<result name="input" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_studentBaseInfoList</param>
+			<param name="statusMsg">${statusMsg}</param>
+			<param name="pageIndex">${pageIndex}</param>
+			</result>
+		</action>
+		
+		<!-- 打开导入学员信息的页面 -->
+		<action name="open_importStudentInfoPage" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="forward">
+			<result name="success">/WEB-INF/student/importStudentBaseInfo.jsp</result>
+			<result name="input" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_studentBaseInfoList</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		
+		<!-- 打开导入学员成绩的页面 -->
+		<action name="open_importStudentScorePage" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="forward">
+			<result name="success">/WEB-INF/student/importStudentScore.jsp</result>
+		</action>
+		
+		<!--新增班级-->
+		<action name="open_classInfoList" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="readClassInfoList">
+			<result name="success">/WEB-INF/student/classInfoList.jsp</result>
+		</action>
+		<!-- 课程设置 -->
+		<action name="open_setLesson" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="readSetLessonList">
+			<result name="success">/WEB-INF/student/setLessonList.jsp</result>
+		</action>
+		<!-- 为班级设置课程 -->
+		<action name="open_addClassLesson" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="forward">
+			<result name="success">/WEB-INF/student/addClassLesson.jsp</result>
+		</action>
+		<!-- 保存新增班级 -->
+		<action name="saveSetClass" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="saveSetClass">
+			<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_classInfoList</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 保存编辑班级 -->
+		<action name="updateSetClass" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="updateSetClass">
+			<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_classInfoList</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 保存删除班级 -->
+		<action name="deleteClassInfoById" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="deleteClassInfoById">
+			<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_classInfoList</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 编辑分配班级 -->
+		<action name="updateStudentAssignClass" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="updateStudentAssignClass">
+			<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_studentDistributionClass</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 删除分配班级 -->
+		<action name="deleteStudentAssignClassById" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="deleteStudentAssignClassById">
+			<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_studentDistributionClass</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 分配班级 -->
+		<action name="saveStudentAssignClass" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="saveStudentAssignClass">
+			<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_studentDistributionClass</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 保存编辑科目设置 -->
+		<action name="updatePointLine" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="updatePointLine">
+			<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_setLesson</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 删除科目设置 -->
+		<action name="deletePointLineById" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="deletePointLineById">
+			<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_setLesson</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 保存班级设置课程 -->
+		<action name="saveAddClassLesson" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="saveAddClassLesson">
+			<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_setLesson</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		
+		<!--成绩管理-->
+		<action name="open_scoreList" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="readSutdentScoreList">
+			<result name="success">/WEB-INF/student/sutdentScoreList.jsp</result>
+		</action>
+		<!-- 保存课程成绩 -->
+		<action name="saveAddLessonScore" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="saveAddLessonScore">
+			<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_scoreList</param>
+			<param name="statusMsg">${statusMsg}</param>
+			<param name="itype">${itype}</param>
+			<param name="isAssignid">${isAssignid}</param>
+			</result>
+		</action>
+		<!-- 修改课程成绩 -->
+		<action name="editLessonScore" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="editLessonScore">
+			<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_scoreList</param>
+			<param name="statusMsg">${statusMsg}</param>
+			<param name="isAssignid">${isAssignid}</param>
+			<param name="itype">${itype}</param>
+			<param name="pageIndex">${pageIndex}</param>
+			</result>
+		</action>
+		<!-- 删除改课程成绩 -->
+		<action name="deleteLessonScore" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="deleteLessonScore">
+			<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_scoreList</param>
+			<param name="statusMsg">${statusMsg}</param>
+			<param name="isAssignid">${isAssignid}</param>
+			<param name="itype">${itype}</param>
+			<param name="pageIndex">${pageIndex}</param>
+			</result>
+		</action>
+		<action name="updateAbroadtrain" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="updateAbroadtrain">
+			<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_interviewList</param>
+			<param name="statusMsg">${statusMsg}</param>
+			<param name="pageIndex">${pageIndex}</param>
+			</result>
+		</action>
+		<action name="deleteAbroadtrain" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="deleteAbroadtrain">
+			<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_interviewList</param>
+			<param name="statusMsg">${statusMsg}</param>
+			<param name="pageIndex">${pageIndex}</param>
+			</result>
+		</action>
+		<action name="updateForeignaviationschoolinterview" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="updateForeignaviationschoolinterview">
+			<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_interviewList</param>
+			<param name="statusMsg">${statusMsg}</param>
+			<param name="pageIndex">${pageIndex}</param>
+			</result>
+		</action>
+		<action name="deleteForeignaviationschoolinterview" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="deleteForeignaviationschoolinterview">
+			<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_interviewList</param>
+			<param name="statusMsg">${statusMsg}</param>
+			<param name="pageIndex">${pageIndex}</param>
+			</result>
+		</action>
+		<!-- 成绩审核 -->
+		<action name="saveAuditLessonScore" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="saveAuditLessonScore">
+			<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_scoreList</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 添加课程成绩页面 -->
+		<action name="open_addLessonScore" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="addLessonScore">
+			<result name="success">/WEB-INF/student/addLessonScore.jsp</result>
+		</action>
+		<!--推荐局方证照考试-->
+		<action name="open_sutdentLicenseExam" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="readSutdentLicenseExamList">
+			<result name="success">/WEB-INF/student/sutdentLicenseExamList.jsp</result>
+		</action>
+		<!--已推荐考试学生列表-->
+		<action name="open_recommendedList" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="readRecommendedList">
+			<result name="success">/WEB-INF/student/recommendedList.jsp</result>
+		</action>
+		<!--保存推荐局方证照考试-->
+		<action name="saveSutdentLicenseExam" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="saveSutdentLicenseExam">
+			<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_sutdentLicenseExam</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!--体检合格证-->
+		<action name="open_studentMedical" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="readStudentMedicalList">
+			<result name="success">/WEB-INF/student/studentMedicalList.jsp</result>
+		</action>
+		<!-- 添加体检合格证 -->
+		<action name="open_addStudentMedical" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="forward">
+			<result name="success">/WEB-INF/student/addSutdentMedical.jsp</result>
+		</action>
+		<!-- 保存体检合格证 -->
+		<action name="saveAddSutdentMedical" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="saveAddSutdentMedical">
+			<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_studentMedical</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!--执照信息操作列表-->
+		<action name="open_sutdentLicenseList" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="readSutdentLicenseList">
+			<result name="success">/WEB-INF/student/sutdentLicenseList.jsp</result>
+		</action>
+		<!--添加执照信息-->
+		<action name="open_addSutdentLicense" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="openAddSutdentLicense">
+			<result name="success">/WEB-INF/student/addSutdentLicense.jsp</result>
+		</action>
+		<!--编辑或升级执照信息-->
+		<action name="open_upSutdentLicense" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="openUpSutdentLicense">
+			<result name="success">/WEB-INF/student/editSutdentLicense.jsp</result>
+			<result name="input" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_sutdentLicenseList</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 查看执照 -->
+		<action name="showLicenseStudentById" class="com.cauc.training.ui.core.StudentManagentAction"	
+			method="readLicenseStudentById">
+			<result name="success">/WEB-INF/student/showSutdentLicense.jsp</result>
+		</action>
+		
+		<!-- 保存编辑或升级执照信息 -->
+		<action name="updateStudentLicense" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="updateStudentLicense">
+			<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_sutdentLicenseList</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 保存学生执照 -->
+		<action name="saveStudentLicense" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="saveStudentLicense">
+			<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_sutdentLicenseList</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!--学生状态更改操作列表-->
+		<action name="open_studentStatusList" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="readStudentStatusInfoList">
+			<result name="success">/WEB-INF/student/studentStatusList.jsp</result>
+		</action>
+		<!-- 保存学员改变状态 -->
+		<action name="saveChangeStudentStatus" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="saveChangeStudentStatus">
+			<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">${backUrl}</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!--国外航校面试管理操作列表-->
+		<action name="open_interviewList" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="readInterviewBaseInfoList">
+			<result name="success">/WEB-INF/student/interviewList.jsp</result>
+		</action>
+		<!-- 添加面试信息-->
+		<action name="open_addInterview" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="readInterviewBaseInfoList">
+			<result name="success">/WEB-INF/student/addInterview.jsp</result>
+		</action>
+		<!-- 保存分派面试-->
+		<action name="saveAssignAbroadSchool" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="saveAssignAbroadSchool">
+			<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_interviewList</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 保存调整航校-->
+		<action name="saveChangeAssignAbroadSchool" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="saveChangeAssignAbroadSchool">
+			<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_interviewList</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 保存面试信息-->
+		<action name="saveAddInterview" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="saveAddInterview">
+			<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_interviewList</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 学员基地管理 -->
+		<action name="open_studentAssignBase" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="readStudentAssignBaseList">
+			<result name="success">/WEB-INF/student/studentAssignBaseList.jsp</result>
+		</action>
+		<!-- 保存学员分配到基地 -->
+		<action name="saveStudentAssignBase" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="saveStudentAssignBase">
+			<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_studentAssignBase</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 取消学员分配到基地 -->
+		<action name="escStudentAssignBase" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="escStudentAssignBase">
+			<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_studentAssignBase</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 保存学员调换基地 -->
+		<action name="saveStudentChangeBase" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="saveStudentChangeBase">
+			<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_studentAssignBase</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 学员大队管理 -->
+		<action name="open_studentAssignGroup" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="readStudentAssignGroupList">
+			<result name="success">/WEB-INF/student/studentAssignGroupList.jsp</result>
+		</action>
+		<!-- 保存学员到大队 -->
+		<action name="saveStudentAssignGroup" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="saveStudentAssignGroup">
+			<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_studentAssignGroup</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 取消学员大队-->
+		<action name="escStudentAssignGroup" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="escStudentAssignGroup">
+			<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_studentAssignGroup</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 保存学员调换大队-->
+		<action name="saveStudentChangeGroup" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="saveStudentChangeGroup">
+			<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_studentAssignGroup</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 学员教员管理 -->
+		<action name="open_studentAssignTeacher" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="readStudentAssignTeacherList">
+			<result name="success">/WEB-INF/student/studentAssignTeacherList.jsp</result>
+		</action>
+		<!-- 保存学员分配教员 -->
+		<action name="saveStudentAssignTeacher" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="saveStudentAssignTeacher">
+			<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_studentAssignTeacher</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 取消学员教员-->
+		<action name="escStudentAssignTeacher" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="escStudentAssignTeacher">
+			<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_studentAssignTeacher</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 保存学员调换教员-->
+		<action name="saveStudentChangeTeacher" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="saveStudentChangeTeacher">
+			<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_studentAssignTeacher</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 完成训练 -->
+		<action name="open_finishTrainingList" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="readFinishTrainingStudentList">
+			<result name="success">/WEB-INF/student/finishTrainingStudentList.jsp</result>
+		</action>
+		<!-- 保存完成训练  -->
+		<action name="saveStudentFinishTraining" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="saveStudentFinishTraining">
+			<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_finishTrainingList</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 保存停飞  -->
+		<action name="saveStudentStopFly" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="saveStudentStopFly">
+			<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_finishTrainingList</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 保存派回学校  -->
+		<action name="saveStudentBackSchool" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="saveStudentBackSchool">
+			<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_finishTrainingList</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 保存停飞学籍  -->
+		<action name="saveStopFlyXjManage" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="saveStopFlyXjManage">
+			<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_finishTrainingList</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 停飞离校  -->
+		<action name="saveStudentStopFlyOffSchool" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="saveStudentStopFlyOffSchool">
+			<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_finishTrainingList</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 毕业 -->
+		<action name="open_offSchoolList" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="readOffSchoolList">
+			<result name="success">/WEB-INF/student/offSchoolList.jsp</result>
+		</action>
+		<!-- 确认毕设-->
+		<action name="open_confirmBiShe" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="forward">
+			<result name="success">/WEB-INF/student/confirmBiShe.jsp</result>
+		</action>
+		<!-- 保存确认毕设或领毕业证 -->
+		<action name="saveConfirmGraduationDesign" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="saveConfirmGraduationDesign">
+			<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_offSchoolList</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 毕业离校 -->
+		<action name="saveStudentGraduationOffSchool" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="saveStudentGraduationOffSchool">
+			<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_offSchoolList</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 毕业分配 -->
+		<action name="saveGraduationStudentAssign" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="saveGraduationStudentAssign">
+			<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_offSchoolList</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 雇员成绩录入 -->
+		<action name="saveNewWorkerAndChangeTrain" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="saveNewWorkerAndChangeTrain">
+			<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_offSchoolList</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 领取毕业证-->
+		<action name="open_lingZheng" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="forward">
+			<result name="success">/WEB-INF/student/lingZheng.jsp</result>
+		</action>
+		
+		<!-- 毕业离校 -->
+		<action name="open_biyelixiao" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="forward">
+			<result name="success">/WEB-INF/student/normalbiyelixiao.jsp</result>
+		</action>
+		<!-- 毕业分配 -->
+		<action name="open_biyefenpei" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="openGraduationStudentAssign">
+			<result name="success">/WEB-INF/student/graduationStudentAssign.jsp</result>
+		</action>
+		<!-- 新雇员培训-->
+		<action name="open_biyepeixun" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="forward">
+			<result name="success">/WEB-INF/student/biyepeixun.jsp</result>
+		</action>
+		
+		<!-- 改装训练-->
+		<action name="open_biyexunlian" class="com.cauc.training.ui.core.StudentManagentAction"
+			 method="forward">
+			<result name="success">/WEB-INF/student/biyexunlian.jsp</result>
+		</action>
+	</package>
+</struts> 

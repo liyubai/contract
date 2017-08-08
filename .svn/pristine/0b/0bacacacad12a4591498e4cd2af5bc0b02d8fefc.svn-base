@@ -1,0 +1,149 @@
+package com.cauc.contract.business.hibernate;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.cauc.contract.business.IContractWaitDealService;
+import com.cauc.contract.business.dao.GenericHibernateDAO;
+import com.cauc.contract.pojos.Contract;
+import com.cauc.contract.pojos.Payment;
+
+@Service
+public class ContractWaitDealServiceImpl extends GenericHibernateDAO implements IContractWaitDealService{
+	
+	private static Log log = LogFactory.getLog(ContractWaitDealServiceImpl.class);
+	private List<Contract> cont;
+	private List<Contract> con;
+	
+	//查看合同表
+	@SuppressWarnings("unchecked")
+	@Override
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public List<Contract> viewContractWaitDeal() {
+		try{
+			String hql = "from Contract";		
+			cont = super.find(hql);
+			return cont;	
+		}catch(Exception e){
+			System.out.println(e.getMessage());
+		}
+		return null;
+	}
+	
+	//CID查看合同表
+		@SuppressWarnings("unchecked")
+		@Override
+		@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+		public List<Contract> showContractWaitDeal(Contract contract) {
+			try{
+				String hql = "from Contract where CId = ?";	
+				Object[] ob = new Object[]{contract.getCId()};
+				con= super.find(hql,ob);
+				return con;			
+			}catch(Exception e){
+				System.out.println(e.getMessage());
+			}
+			return null;			
+		}
+
+		//查看待付款
+		@SuppressWarnings("unchecked")
+		@Override
+		@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+		public List<Payment> viewPaymentWaitDeal() {
+			try{
+				List<Payment> pay2 = new ArrayList<Payment>();
+				SimpleDateFormat dft = new SimpleDateFormat("yyyy-MM-dd");
+				Date beginDate = new Date();
+				Calendar date = Calendar.getInstance();
+				date.setTime(beginDate);
+				date.set(Calendar.DATE, date.get(Calendar.DATE) - 7);
+				//Date endDate = dft.parse(dft.format(date.getTime()));//获取七天之前的日期
+				String endDate = dft.format(date.getTime());//获取七天之前的日期字符串类型yyyy-mm-dd
+				String sql=" select p_id,P_CONTRACT_ID,p_Receive_Date,P_Arrears from Payment  "
+						  + "where P_Receive_Date<'"+endDate+"' or P_Arrears>'0'";
+				List<Object[]> obj = super.createSQLQuery(sql).list();
+				for(Object[] o:obj){
+					 Payment payment=new Payment();
+					 payment.setPId(Integer.parseInt(o[0].toString()));
+					 payment.setPContractId(o[1].toString());
+					 payment.setPReceiveDate((Date) o[2]);
+					 if(o[3]!=null && !o[3].equals("")){
+						 payment.setPArrears(Float.parseFloat(o[3].toString()));
+					 }else{
+						 payment.setPArrears(0);
+					 }
+					 pay2.add(payment);
+				}
+				System.out.println();
+				return pay2;					
+			}catch(Exception e){
+				System.out.println(e.getMessage());
+			}
+			return null;
+		}
+	
+	//查看付款
+	@SuppressWarnings("unchecked")
+	@Override
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public List<Payment> showPayWaitDeal(Payment payment) {
+		try{
+			List<Payment> pay = new ArrayList<Payment>();
+			String hql="from Payment where PId=? ";
+			/*String hql="select isnull(p.PArrears,''),isnull(p.PContractId,''),isnull(p.PReceiveDate,'')"
+					+ " from Payment p "
+					+ " where p.PArrears>0 "
+					+ " and GetDate()>p.PReceiveDate-7 ";*/
+			Object[] ob = new Object[]{payment.getPId()};
+			pay = super.createQuery(hql,ob).list();
+			return pay;	
+		}catch(Exception e){
+			System.out.println(e.getMessage());
+		}
+		return null;
+	}
+	
+	//查询合同
+	/*@SuppressWarnings("unchecked")
+	@Override
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public List<Contract> contractWaitDeal(Contract contract) {
+		try{
+			//contractQuerylist.contractQuerylist(contract);
+			if(contract!=null){			
+				String hql="from Contract where C_ID = ? ";
+			if (!contract.getCContractId().equals("") && contract.getCContractId() != null) {
+				hql += " and C_CONTRACT_ID = "+contract.getCContractId();
+			}
+			if(!contract.getCCompy().equals("") && contract.getCCompy()!=0 && contract.getCCompy()!=null){
+				hql += " and C_COMPY = "+contract.getCCompy();		
+			}
+			if(!contract.getCStatus().equals("") && contract.getCStatus()!=0 && contract.getCStatus()!=null){
+				hql += " and C_STATUS ="+contract.getCStatus();
+			}
+			
+			Object[] ob=new Object[]{
+					contract.getCId()	
+			};
+			cont = super.find(hql,ob);
+			return cont;
+			}
+		}catch(Exception e){
+			System.out.println(e.getMessage());
+		}
+		return null;
+	}*/
+
+
+}
+

@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>main</title>
+
+<link rel="stylesheet" href="themes/cupertino/jquery.ui.all.css">
+<script src="scripts/jquery.min.js"></script>
+<script src="scripts/jquery-ui.min.js"></script>
+<script src="scripts/ui/jquery.ui.position.min.js"></script>
+<script src="scripts/ui/jquery.ui.core.min.js"></script>
+<script src="scripts/ui/jquery.ui.widget.min.js"></script>
+<script src="scripts/ui/jquery.ui.button.min.js"></script>
+<script src="scripts/ui/jquery.ui.tabs.min.js"></script>
+<script src="scripts/ui/jquery.ui.dialog.min.js"></script>
+<script src="scripts/ui/jquery.ui.menu.min.js"></script>
+<script src="scripts/function.min.js"></script>
+
+<style>
+.testDiv { padding: 5px; }
+
+/*功能10*/
+.listBox { position: absolute; width: 180px; height: 320px; overflow: auto; border: solid 1px #CECECE; background-color: #FFFFFF; }
+#listBoxLeft { left: 23px; top: 98px; height: 292px;  }
+#listBoxRight { left: 253px; top: 70px; }
+#imgArrawToRight {position: absolute; top: 205px; left: 215px;}
+#searchBox { position: absolute; left: 23px; top: 70px; border-bottom: 0; border-radius: 0; box-shadow: none; background-color: #FFFFFF; }
+#searchText { width: 176px; height: 22px; margin: 2px; border: 0; color: #B7B7B7; }
+#listBoxRight li { padding: .2em .2em .2em .5em; }
+.foldList .itemList li.disabled { color: #B7B7B7; }
+/*功能10*/
+
+</style>
+<script>
+/*功能10*/
+var LEFT_TEXT_LENGTH=18;
+var RIGHT_TEXT_LENGTH=18;
+/*功能10*/
+
+$(function() {
+	$("#contentid").html("<li val=\"liudehua\" title=\"liudehua@sohu.com\">liudehua@sohu.com</li>");
+	//功能10
+	$("#listBoxLeft .itemList li")
+	//.attr("title", function() { return $(this).attr("txt"); }) //直接用title就完事了……干嘛用txt保存
+	.html(function() {
+		var html = $(this).html();
+		if(html.length>LEFT_TEXT_LENGTH)
+			return html.substring(0,LEFT_TEXT_LENGTH) + "...";
+		else
+			return html;
+	})
+	.click(function(){
+		if(!$(this).hasClass("disabled"))
+		{
+			var _clone = $(this).clone(false); //false表示移除带有的事件，但它是默认值，不写也没问题
+			//.attr("title", $(this).attr("txt"))
+			_clone.html(function() {
+				var html = $(this).attr("title"); //不要再从html里取了，因为html已经被加工过。如果需要保存和html的内容不一样的数值(类似于主键)，则应该再增加一个val属性。不要用value、text这类名称为属性命名，尽可能不和系统产生冲突
+				if(html.length>RIGHT_TEXT_LENGTH)
+					return html.substring(0,RIGHT_TEXT_LENGTH) + "...";
+				else
+					return html;
+			})
+			.click(function(){
+				rightListItem($(this));
+			})
+			.prepend("") //前后可以放一些图标之类的内容
+			.append("&nbsp;<span style='color: #0f6099; position: absolute; right: .2em;'>移除</span>") //如果这两处放了东西，那么listBoxRight里默认列出的li也需要包含这些内容，同时要修改RIGHT_TEXT_LENGTH为其它的数值
+			.appendTo("#listBoxRight > ul > ul");
+			$(this).addClass("disabled"); //列表里用jsp生成的元素，如果需要禁用，也要加上class="disabled"
+			rightListItem(); //不传参则不会移除元素
+		}
+	});
+	$( "#dialogForm2" ).dialog({
+		autoOpen: false,
+		height: 500,
+		width: 460,
+		modal: true,
+		resizable: false,
+		buttons: {
+			"确 定": function() {
+				//确定按钮的处理代码段：
+				var list = "";
+				$("#listBoxRight li").each( function(){
+					list = list + $(this).attr("title") + ", "
+				});
+				alert("保存的内容列表是："+list);
+				$( this ).dialog( "close" );
+			},
+			"取 消": function() {
+				$( this ).dialog( "close" );
+			}
+		},
+		close: function() {
+			
+		}
+	});
+	
+	//$( "#dialogForm2" ).dialog( "open" ); //千万不要取消这个注释，否则会死得很惨，哇哈哈
+	//alert($( "#dialogForm2" ).prev().parent()[0].outerHTML);
+
+
+	$("a").blur(); //加上这句话避免超链接默认处于聚焦状态，真是诡异
+	$("#modalDialogButton2").button().click(function(){
+		$( "#dialogForm2" ).dialog( "open" );
+		$("a").blur(); //加上这句话避免超链接默认处于聚焦状态，真是诡异
+	});
+	
+	
+	function genSearchList(text){
+		var listItems = $("#listBoxLeft .itemList li");
+		listItems.show().parent(":hidden").prev("li").click();
+		if(text!="搜索联系人")
+		{
+			listItems.each(function(){
+				var title = $(this).attr("title");
+				if(title.indexOf(text)==-1)
+					$(this).hide();
+				else
+					$(this).html(function() {
+						var textPara1=title.indexOf(text)+text.length, textPara2=text.length-textPara1+LEFT_TEXT_LENGTH;
+						if(title.length>LEFT_TEXT_LENGTH)
+							if(textPara1>LEFT_TEXT_LENGTH)
+								return title.substring(0,LEFT_TEXT_LENGTH).replace(text.substring(0,textPara2),"<span style='color: #3D882D; font-weight: bold;'>"+text.substring(0,textPara2)+"</span>") + "...";
+							else
+								return title.substring(0,LEFT_TEXT_LENGTH).replace(text,"<span style='color: #3D882D; font-weight: bold;'>"+text+"</span>") + "...";
+						else
+							return title.replace(text,"<span style='color: #3D882D; font-weight: bold;'>"+text+"</span>")
+					});
+			});
+		}
+	}
+	
+	$("#searchText").on("keyup change blur",function(){
+		genSearchList($(this).val());
+	}).focus(function(){
+		if($(this).val()=="搜索联系人") $(this).val("");
+	}).blur(function(){
+		if($(this).val()=="") $(this).val("搜索联系人");
+	});
+
+	$('#removeAll').click(function() {
+		$('#listBoxRight li').each(function(){
+			rightListItem($(this)); //要循环，不要直接全部移除
+		});
+	});
+
+	$('#listBoxRight li').click(function(){
+		rightListItem($(this));
+	});
+
+	rightListItem();
+	//功能10
+});
+
+//功能10
+function rightListItem(li)
+{
+	if(li)
+	{
+		//$("#listBoxLeft .itemList:hidden").prev("li").click(); //不展开应该也没事的
+		$("#listBoxLeft li[val='"+li.attr("val")+"']").removeClass("disabled"); //根据主键查找左侧的相同元素，并且重置样式
+		li.remove();
+	}
+	var count = $("#listBoxRight .itemList > li").size();
+	$("#removeAll").toggle(count>0);
+	$("#listCount").html("你已选择"+count+"个联系人");
+}
+//功能10
+</script>
+<!-- 此js务必放在所有页面自带的js后面加载 -->
+<script src="scripts/base.min.js"></script>
+</head>
+<body class="hide">
+
+<div id="leftPartA"><div>
+
+<ul class="itemList">
+	<li><a class="navLink" href="main1.html" id="navLink0" title="我的首页">我的首页</a><!-- (10) --></li>
+	<li><a class="navLink" href="peopleManage.html" id="navLink1" title="人员管理">人员管理</a></li>
+	<li><a class="navLink" href="trainingManage.html" id="navLink2" title="飞行训练管理">飞行训练管理</a></li>
+	<li><a class="navLink" href="aircraftManage.html" id="navLink3" title="航空器管理">航空器管理</a></li>
+	<li><a class="navLink" href="summaryManage.html" id="navLink4" title="飞行训练大纲管理">飞行训练大纲管理</a></li>
+	<li><a class="navLink" href="systemManage.html" id="navLink5" title="系统管理">系统管理</a></li>
+	<li><a class="navLink" href="marksManage.html" id="navLink6" title="成绩管理">成绩管理</a>
+</ul>
+<span class="panelLine"></span>
+<ul class="itemList">
+	<li><a class="navLink" href="Func1.html" id="navLink101" title="功能展示1">功能展示1</a></li>
+	<li><a class="navLink" href="Func2.html" id="navLink102" title="功能展示2">功能展示2</a></li>
+	<li><a class="navLink" href="Func3.html" id="navLink103" title="功能展示3">功能展示3</a></li>
+	<li><a class="navLink" href="Func4.html" id="navLink104" title="功能展示4">功能展示4</a></li>
+	<li><a class="navLink" href="Func5.html" id="navLink105" title="功能展示5">功能展示5</a></li>
+	<li><a class="navLink" href="Func6.html" id="navLink106" title="功能展示6">功能展示6</a></li>
+	<li><a class="navLink" href="Func7.html" id="navLink107" title="功能展示7">功能展示7</a></li>
+	<li><a class="navLink" href="Func8.html" id="navLink108" title="功能展示8">功能展示8</a></li>
+	<li><a class="navLink" href="Func9.html" id="navLink109" title="功能展示9">功能展示9</a></li>
+	<li class="active"><a class="navLink" href="Func10.html" id="navLink110" title="功能展示10">功能展示10</a></li>
+</ul>
+<ul class="foldList">
+	<li><span class="ui-icon ui-icon-carat-1-e"></span>功能展示11</li>
+	<ul class="itemList hide">
+		<li><a class="navLink" href="Func11.html" id="navLink111" title="功能展示11" tabTitle="功能展示11[HTML]">HTML版本</a></li>
+		<li><a class="navLink" href="Func11_1.html" id="navLink11101" title="功能展示11" tabTitle="功能展示11[JS]">JS版本</a></li>
+	</ul>
+</ul>
+<ul class="itemList">
+	<li><a class="navLink" href="Func12.html" id="navLink112" title="功能展示12">功能展示12</a></li>
+	<li><a class="navLink" href="Func13.html" id="navLink113" title="功能展示13">功能展示13</a></li>
+	<li><a class="navLink" href="Func14.html" id="navLink114" title="功能展示14">功能展示14</a></li>
+</ul>
+
+</div></div>
+
+
+
+<div id="rightPartA"><div>
+
+<div class="testDiv">
+功能10：左右互动列表<br>
+<div id="dialogForm2" title="添加联系人/联系组至左侧栏">
+	<div class="tips" style="position: relative; height: 50px;">
+	<span style="position: absolute; top: 10px; left: 12px; color: #999999;" class="blue">单击联系人邮箱，加入/移除联系人</span>
+	<span style="position: absolute; top: 40px; left: 12px; color: #999999;" class="blue">所有联系人</span>
+	<span id="listCount" style="position: absolute; top: 40px; left: 245px; color: #999999;" class="blue"></span>
+	<a href="#N" id="removeAll" style="position: absolute; top: 37px; right: 10px;" class="blue">移除全部</a>
+	</div>
+
+	<div>
+		<div id="searchBox" class="iconInput" iconSize="15" width="175">
+			<input title="搜索联系人" id="searchText" name="searchText" type="text" value="搜索联系人" />
+			<b class="ui-icon ui-icon-search nextIcon"></b>
+		</div>
+		<div id="listBoxLeft" class="listBox">
+			<ul class="foldList">
+				<li><span class="ui-icon ui-icon-carat-1-e"></span>未分组(2)</li>
+				<ul class="itemList hide" id="contentid">
+					<!--<li val="liudehua" title="liudehua@sohu.com">liudehua@sohu.com</li>
+					<li val="zhangxueyou" title="zhangxueyou@163.com">zhangxueyou@163.com</li>
+					<li val="wanglihong" title="wanglihong@sohu.com">wanglihong@sohu.com</li>
+					<li val="liyundi" title="liyundi@163.com">liyundi@163.com</li>
+					<li val="wangfei" title="wangfei@sohu.com">wangfei@sohu.com</li>
+					<li val="liliqun" title="liliqun@163.com">liliqun@163.com</li>-->
+				</ul>
+			</ul>
+			<span class="panelLine"></span>
+			<ul class="foldList">
+				<li><span class="ui-icon ui-icon-carat-1-e"></span>朋友(3)</li>
+				<ul class="itemList hide">
+					<li val="songdandan" title="songdandan@163.com" class="disabled">songdandan@163.com</li>
+					<li val="geyou" title="geyou@163.com">geyou@163.com</li>
+					<li val="fengxiaogang" title="fengxiaogang@163.com" class="disabled">fengxiaogang@163.com</li>
+					<li val="wangbaoqiang" title="wangbaoqiang@163.com">wangbaoqiang@163.com</li>
+					<li val="fanbingbing" title="fanbingbing@163.com">fanbingbing@163.com</li>
+					<li val="zhaowei" title="zhaowei@163.com">zhaowei@163.com</li>
+					<li val="wangxuebing" title="wangxuebing@163.com">wangxuebing@163.com</li>
+					<li val="chenbaoguo" title="chenbaoguo@163.com">chenbaoguo@163.com</li>
+					<li val="chendaoming" title="chendaoming@163.com"  class="disabled">chendaoming@163.com</li>
+				</ul>
+			</ul>
+		</div>
+	</div>
+
+		<img src="themes/cupertino/images/ui-arraw_toright.png" id="imgArrawToRight" style="position: absolute; top: 205px; left: 215px;" />
+
+	<div id="listBoxRight" class="listBox">
+		<ul class="foldList"><!-- 这里不加li，就不会有折叠效果，但是一样可以用到css -->
+			<ul class="itemList">
+				<li val="songdandan" title="songdandan@163.com">songdandan@163.c...&nbsp;<span style='color: #0f6099; position: absolute; right: .2em;'>移除</span></li>
+				<li val="fengxiaogang" title="fengxiaogang@163.com">fengxiaogang@163...&nbsp;<span style='color: #0f6099; position: absolute; right: .2em;'>移除</span></li>
+				<li val="chendaoming" title="chendaoming@163.com">chendaoming@163....&nbsp;<span style='color: #0f6099; position: absolute; right: .2em;'>移除</span></li>
+			</ul>
+		</ul>
+	</div>
+
+</div>
+
+<button id="modalDialogButton2">点击弹出</button>
+
+</div>
+
+</div></div>
+
+
+
+<div id="bottomPartA"><div>
+
+<button class="green" style="position: absolute; left: 10px;">保存</button>
+<button class="normal" style="position: absolute; left: 70px;">取消</button>
+<button class="normal" style="position: absolute; right: 30px;">还原为默认</button>
+
+</div></div>
+
+</body>
+</html>

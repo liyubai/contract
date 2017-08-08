@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts PUBLIC
+    "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN"
+    "http://struts.apache.org/dtds/struts-2.0.dtd">
+<struts>
+	<package name="dataDictionary_management" extends="ErsDefault"
+		namespace="/contract">
+		<!-- 显示数据字典管理信息 -->
+		<action name="dataDictionaryManagent_showManagent"
+			class="com.cauc.contract.ui.core.DataDictionaryManagentAction">
+			<result name="success">/pages/dataDictionary/cDataDictionaryManage.jsp
+			</result>
+		</action>
+		<!-- ajax传递数据字典管理信息 -->
+		<action name="ajaxGetDictionaryList"
+			class="com.cauc.contract.ui.core.DataDictionaryManagentAction"
+			method="showManagent">
+			<result name="success" type="json">
+			 <param name="root">dictList</param>
+			</result>
+		</action>
+		
+		<!-- 修改数据字典信息 -->
+		<action name="dataDictionaryManage_update"
+			class="com.cauc.contract.ui.core.DataDictionaryManagentAction"
+			method="updateDataDictionary">
+			<result name="success" type="json">
+			<param name="root">dictionary</param>
+			</result>
+		</action>
+		
+		<!-- 通过dictionaryid查询到实体类 -->
+		<action name="ajaxGetDictionary" class="com.cauc.contract.ui.core.DataDictionaryManagentAction"
+			method="ajaxGetDictionary">
+			<result name="success" type="json">
+		        <param name="root">ReturnStr</param>
+		    </result>
+		</action>
+		
+		
+		<!-- 新增数据字典信息 -->
+		<action name="dataDictionaryManage_save" class="com.cauc.contract.ui.core.DataDictionaryManagentAction"	method="addDataDictionary">
+			<result name="success" type="redirectAction">	
+				<param name="namespace">/contract</param>
+				<param name="actionName">dataDictionaryManagent_showManagent?dictionaryId=${dictionaryId}</param>
+			</result>
+		</action>
+
+		<!-- 删除数据字典信息 -->
+		<action name="ajaxDeleteDictionary"
+			class="com.cauc.contract.ui.core.DataDictionaryManagentAction"
+			method="deleteDataDictionary">
+			<result name="success" type="json">
+		    	<param name="root">DelReturnStr</param>
+			</result>
+		</action>
+			
+	</package>
+</struts>

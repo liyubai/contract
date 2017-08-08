@@ -1,0 +1,172 @@
+package com.cauc.training.business.hibernate;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.hibernate.HibernateException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.business.IAnotherDeptService;
+import com.cauc.training.business.dao.GenericHibernateDAO;
+import com.cauc.training.pojos.TDepartment;
+import com.cauc.training.pojos.TOtheruser;
+import com.cauc.training.vo.VDepartment;
+
+/**
+ * @功能描述：用于管理其他人员所在部门的实现类
+ * @author gfm
+ */
+@Service()
+public class AnotherDeptImpl extends GenericHibernateDAO implements IAnotherDeptService {
+
+	/**
+	 * @功能描述：保存其他人员所在部门
+	 * */
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public boolean saveDept(TDepartment department) throws FinanceServiceException {
+		boolean flag = false;
+		if(department != null){
+			if(isExistDept(department.getVName())){
+				throw new FinanceServiceException("保存部门失败，该部门已经存在！");
+			}else{
+				try{
+					super.save(department);
+					flag = true;
+				}catch(HibernateException e){
+					throw new FinanceServiceException("保存部门失败！", e);
+				}
+			}
+
+		}else{
+			throw new FinanceServiceException("保存部门失败！");
+		}
+		return flag;
+	}
+	
+	/**
+	 * 功能：根据部门名称，判断该部门是否已存在 
+	*/
+	@SuppressWarnings("unchecked")
+	private boolean isExistDept(String name) throws FinanceServiceException {
+		//该标志位用于表示部门是否已存在，false:表示不存在
+		boolean flag = false;
+		String hql = " from TDepartment where VName=?";
+		List<TDepartment> departmentList = super.find(hql, name);
+		if (departmentList != null && departmentList.size() > 0){
+			flag = true;
+		}
+		return flag;
+	}
+	/**
+	 * @功能描述：用于判断部门名称是否更改
+	 * @param name
+	 * @param vid
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	private boolean isExistsDept(String name,String vid) throws FinanceServiceException {
+		//该标志位用于表示部门名称是否已修改，false:表示未修改
+		boolean flag = true;
+		TDepartment old = super.get(TDepartment.class, vid);
+		if(old.getVName().equals(name)){
+			flag = false;
+		}
+		return flag;
+	}
+	/**
+	 * @功能描述：通过ID查询其他人员所在部门
+	 */
+	public VDepartment searchDeptById(String id) throws FinanceServiceException {
+		VDepartment vdepartment = new VDepartment();
+		TDepartment tdepartment = super.get(TDepartment.class, id);
+		vdepartment.setDCreatedate(tdepartment.getDCreatedate());
+		vdepartment.setIOrder(tdepartment.getIOrder());
+		vdepartment.setVId(tdepartment.getVId());
+		vdepartment.setVName(tdepartment.getVName());
+		vdepartment.setVParentid(tdepartment.getVParentid());
+		vdepartment.setUserId(tdepartment.getTUser().getVId());
+		return vdepartment;
+	}
+	/**
+	 * @功能描述：更新其他人员所在部门
+	 */
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void updateDept(TDepartment department)
+			throws FinanceServiceException {
+		if(department != null){
+			if(isExistsDept(department.getVName(),department.getVId()) && isExistDept(department.getVName())){
+				throw new FinanceServiceException("更新部门失败，该部门已经存在！");
+			}else{
+				try {
+					TDepartment old = super.get(TDepartment.class, department.getVId());
+					old.setVName(department.getVName());
+					old.setIOrder(department.getIOrder());
+					super.update(old);
+				}catch (HibernateException e) {
+					throw new FinanceServiceException("更新部门对象失败", e);
+				}
+			}
+		}else{
+			throw new FinanceServiceException("更新部门失败！");
+		}
+	}
+	/**
+	 * @功能描述：删除其他人员所在部门
+	 */
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public boolean deleteDeptByIds(String... ids) throws FinanceServiceException {
+		boolean flag = false;
+		if(ids != null && ids.length >0){
+			try {
+				for (String id : ids) {
+					if(super.findBy(TOtheruser.class, "TDepartment.VId", id).size()>0 || super.findBy(TDepartment.class, "VParentid", id).size()>0){
+						throw new FinanceServiceException("该部门已经被引用，不能删除！");
+					}
+					super.removeById(TDepartment.class, id);
+					flag = true;
+				}
+			}catch (HibernateException e) {
+				e.printStackTrace();
+				throw new FinanceServiceException("删除部门信息失败", e);
+			}
+		}
+		return flag;
+	}
+	/**
+	 * @功能描述：查询展示部门树
+	 */
+	public List<VDepartment> searchDeptTree() throws FinanceServiceException {
+		List<VDepartment> vlist = new ArrayList<VDepartment>();
+		List<TDepartment> list = super.getAll(TDepartment.class,"IOrder",true);
+		
+		if(list != null && list.size()>0){
+			for(int i=0; i<list.size(); i++){
+				VDepartment vdepartment = new VDepartment();
+				TDepartment tdepartment = list.get(i);
+				vdepartment.setDCreatedate(tdepartment.getDCreatedate());
+				vdepartment.setIOrder(tdepartment.getIOrder());
+				vdepartment.setVId(tdepartment.getVId());
+				vdepartment.setVName(tdepartment.getVName());
+				vdepartment.setVParentid(tdepartment.getVParentid());
+				vdepartment.setUserId(tdepartment.getTUser().getVId());
+				vlist.add(vdepartment);
+			}
+		}
+		return vlist;
+	}
+
+	public String searchDeptNameByIds(String... ids)
+			throws FinanceServiceException {
+		String result = "";
+		if(ids != null && ids.length>0){
+			for(int i=0; i<ids.length; i++){
+				TDepartment tdepartment = super.get(TDepartment.class, ids[i]);
+				result += tdepartment.getVName() + ",";
+			}
+		}
+		return result;
+	}
+}

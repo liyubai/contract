@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>main</title>
+
+<link rel="stylesheet" href="themes/cupertino/jquery.ui.all.css">
+<script src="scripts/jquery.min.js"></script>
+<script src="scripts/jquery-ui.min.js"></script>
+<script src="scripts/ui/jquery.ui.position.min.js"></script>
+<script src="scripts/ui/jquery.ui.core.min.js"></script>
+<script src="scripts/ui/jquery.ui.widget.min.js"></script>
+<script src="scripts/ui/jquery.ui.button.min.js"></script>
+<script src="scripts/ui/jquery.ui.tabs.min.js"></script>
+<script src="scripts/ui/jquery.ui.dialog.min.js"></script>
+<script src="scripts/ui/jquery.ui.menu.min.js"></script>
+<script src="scripts/function.min.js"></script>
+
+<style>
+.testDiv { padding: 5px; }
+
+/*功能13*/
+.reg_box .form_reg{width:100%;font-size:14px;position:relative;margin-left: -30px;}
+.reg_box .form_reg dl{margin-top:20px;line-height:32px}
+.reg_box .form_reg dl dt{width:70px;text-align:right;color:#666;line-height:1.5;padding:6px;float:left}
+.reg_box .form_reg dd{float:left;display:inline;color:#666}
+.reg_box .form_reg .fn-left{float:left}
+.reg_box .form_reg .mt9{margin-top:9px;*margin-top:4px}
+.reg_box .form_reg .first{margin-top:15px}
+.reg_box .form_reg .w12{width:272px;margin-left:10px}
+.reg_box .form_reg .ml43{margin-left:43px}
+.reg_box .form_reg .ml52{margin-left:52px}
+.reg_box .form_reg .ml40{margin-left:40px}
+.reg_box .form_reg .mt15{margin-top:15px;position:relative}
+.reg_box .form_reg .mt20{margin-top:20px}
+.reg_box .form_reg .mt16{margin-top:16px}
+.reg_box .form_reg .jy-sel{background:url('themes/cupertino/images/ui-bg_new_date.gif') no-repeat 0 0;width:86px;height:32px;position:relative;z-index:1}
+.reg_box .form_reg .jy-sel-i{cursor:pointer;outline:none;position:absolute;top:6px;left:2px;width:56px;border:none;*background:none;text-align:center;height:20px;line-height:20px;color:#333}
+.reg_box .form_reg .jy-sel-t{position:absolute;top:0;right:0;line-height:32px;width:30px;text-align:center}
+.reg_box .form_reg .jy-seled{display:none;position:absolute;top:0;left:0;width:86px;height:32px;z-index:100;text-align:center;background:url('themes/cupertino/images/ui-bg_new_date.gif') no-repeat 0 -32px;font-size:14px;color:#666}
+.reg_box .form_reg .jy-seled span{padding-right:4px}
+.reg_box .form_reg .jy-sel-o{background-color:#fff;border:1px solid #2d99b7;width:460px;font-size:12px;padding:0 0 5px 8px;position:absolute;z-index:99;top:31px;left:-44px;display:none;margin:0}
+.reg_box .form_reg .jy-sel-o ul{padding-top:5px; padding: 10px; list-style:none;}
+.reg_box .form_reg .jy-sel-o li{overflow:hidden;zoom:1;line-height:24px;font-size:12px;}
+.reg_box .form_reg .jy-sel-o li span{float:left;font-weight:bold;text-align:right;color:#333}
+.reg_box .form_reg .jy-sel-o li a{padding:0 5px;float:left;text-align:center;text-decoration:none;color:#333;white-space:nowrap;font-size:12px}
+.reg_box .form_reg .jy-sel-o li a { padding: .2em .4em .2em .4em; color: #0f6099; }
+.reg_box .form_reg .jy-sel-o li a:hover{background-color: #0f6099; border-radius: 2px; color: #FFFFFF;}
+.reg_box .form_reg .ml7{left:7px}
+.reg_box .form_reg .ml14{left:14px}
+.reg_box .form_reg .pl106{left:-137px;width:460px;padding:0}
+.reg_box .form_reg .pl106 ul li{padding:5px 0}
+.reg_box .form_reg .pl106 ul li a{padding:0 9px}
+.reg_box .form_reg .pl280{left:-230px;width:460px;padding:0}
+.reg_box .form_reg .pl280 ul li{padding:6px 0 11px}
+.reg_box .form_reg .pl280 ul li a{padding:0 10px}
+/*功能13*/
+</style>
+
+
+<script>
+$(function() {
+
+	//功能13
+	//隐藏select
+	hideSelect = function () {
+		$(".jy-sel-o").hide().parent().css({"z-index": 0});
+		$(".seled").hide();
+	},
+	//显示select
+	showSelect = function (obj) {
+		hideSelect();
+		obj.parent().css("z-index", 10);
+		obj.siblings(".jy-sel-o,.jy-seled").show();
+	},
+	//阻止默认行为
+	stopEvent = function (e) {
+	var e = e || window.event;
+	if (e.preventDefault) {
+		e.preventDefault();
+		e.stopPropagation();
+	} else {
+		e.returnValue = false;//IE
+		e.cancelBubble = true;//IE
+	}
+	},
+	//新版首页初始化方法（绑定各种事件）
+	init = function () {
+		var jydate = {
+			y: new Date().getFullYear(),
+			m: new Date().getMonth() + 1,
+			d: new Date().getDate(),
+			min: 0, //min: 18, 18是18年前，那么设置为0，就是今天之前的所有日期都可以
+			max: 99
+		};
+		function insertYear(){
+			var html = '';
+			for(var i = 11; i > 0; i--){ //修改9和2，可以调整上下限：for(var i = 9; i > 2; i--){
+				html += '<li><span class="aText">'; //padding值需要和蓝背景的a保持一致，所以这里用一个样式aText描述
+				html += i%10; //原来：html += i;
+				html += '0\u540e\uff1a'; //'0后'
+				html += '</span>';
+				for(var j = 0; j < 10; j++){
+					var temp = 1900 + i * 10 + j;
+					if(jydate.y - temp < jydate.min || jydate.y - temp > jydate.max){
+						continue;
+					}
+					html += '<a href="">';
+					html += temp;
+					html += '</a>';
+				}
+				html += '</li>';
+			}
+			return html;
+		}
+		function insertMD(arg){
+			var html = '<li>';
+			for (var i = 1; i <= arg; i++ ) {
+				html += '<a href="">';
+				html += i;
+				html += '</a>';
+			}
+			html += '</li>';
+			return html;
+		}
+		//生日
+		$("#year").click(function (e) {
+			is_change_reg_default = 1; //修改注册表单
+			//$("#year-o ul").html(writeYear());
+			$("#year-o ul").html(insertYear());
+			showSelect($(this));
+			stopEvent(e);
+		});
+		$("#year-o").delegate("a", "click", function (e) {
+			var text = $(this).text();
+			$(this).parents(".jy-sel-o").siblings(".jy-sel-i").val(text);
+			hideSelect();
+			//$("#month-o ul").html(writeMonth());
+			if( jydate.y - text === jydate.min ) $("#month-o ul").html(insertMD(jydate.m));
+			else $("#month-o ul").html(insertMD(12));
+			$("#month-o").show().prev(".jy-seled").show().parent().css("z-index", 10);
+			stopEvent(e);
+		});
+		$("#month").click(function (e) {
+			is_change_reg_default = 1; //修改注册表单
+			//$("#month-o ul").html(writeMonth());
+			showSelect($(this));
+			stopEvent(e);
+		});
+		$("#month-o").delegate("a", "click", function(e){
+			var text = $(this).html();
+			$(this).parents(".jy-sel-o").siblings(".jy-sel-i").val(text);
+			hideSelect();
+			//$("#day-o ul").html(writeDay(text));
+			if( jydate.m.toString() === text && jydate.y - $("#year").val() === jydate.min ){
+				$("#day-o ul").html(insertMD(jydate.d));
+			}else if( text === "2" ){
+				if($("#year").val() % 4 === 0 && $("#year").val() % 100 !== 0){ //闰年
+					$("#day-o ul").html(insertMD(29));
+				}else if( jydate.y % 400 === 0){ //闰年
+					$("#day-o ul").html(insertMD(29));
+				}else{ //平年
+					$("#day-o ul").html(insertMD(28));
+				}
+			}else if( text === "1" || text === "3" || text === "5" || text === "7" || text === "8" || text === "10" || text === "12" ){
+				$("#day-o ul").html(insertMD(31));
+			}else if( text === "4" || text === "6" || text === "9" || text === "11" ){
+				$("#day-o ul").html(insertMD(30));
+			}
+			$("#day-o").show().prev(".jy-seled").show().parent().css("z-index", 10);
+			stopEvent(e);
+		});
+		$("#day").click(function (e) {
+			is_change_reg_default = 1; //修改注册表单
+			//$("#day-o ul").html(writeDay($('#month').val()));
+			showSelect($(this));
+			stopEvent(e);
+		});
+		$("#day-o").delegate("a", "click", function (e) {
+			var text = $(this).text();
+			$(this).parents(".jy-sel-o").siblings(".jy-sel-i").val(text);
+			hideSelect();
+			stopEvent(e);
+		});
+		/*弹层绑定 开始*/
+		//生日
+		$("#year-p").click(function (e) {
+			is_change_reg_default = 1; //修改注册表单
+			//$("#year-p-o ul").html(writeYear());
+			$("#year-p-o ul").html(insertYear());
+			showSelect($(this));
+			stopEvent(e);
+		});
+		$("#year-p-o").delegate("a", "click", function (e) {
+			var text = $(this).text();
+			$(this).parents(".jy-sel-o").siblings(".jy-sel-i").val(text);
+			hideSelect();
+			//$("#month-p-o ul").html(writeMonth());
+			if( jydate.y - text === jydate.min ){
+				$("#month-p-o ul").html(insertMD(jydate.m));
+			}else{
+				$("#month-p-o ul").html(insertMD(12));
+			}
+			$("#month-p-o").show().prev(".jy-seled").show().parent().css("z-index", 10);
+			stopEvent(e);
+		});
+		$("#month-p").click(function (e) {
+			is_change_reg_default = 1; //修改注册表单
+			//$("#month-p-o ul").html(writeMonth());
+			showSelect($(this));
+			stopEvent(e);
+		});
+		$("#month-p-o").delegate("a", "click", function (e) {
+			var text = $(this).text();
+			$(this).parents(".jy-sel-o").siblings(".jy-sel-i").val(text);
+			hideSelect();
+			//$("#day-p-o ul").html(writeDay(text));
+			if( jydate.m.toString() === text && jydate.y - $("#year-p").val() === jydate.min ){
+				$("#day-o ul").html(insertMD(jydate.d));
+			}else if( text === "2" ){
+				if($("#year-p").val() % 4 === 0 && $("#year-p").val() % 100 !== 0){ //闰年
+					$("#day-p-o ul").html(insertMD(29));
+				}else if( jydate.y % 400 === 0){ //闰年
+					$("#day-p-o ul").html(insertMD(29));
+				}else{ //平年
+					$("#day-p-o ul").html(insertMD(28));
+				}
+			}else if( text === "1" || text === "3" || text === "5" || text === "7" || text === "8" || text === "10" || text === "12" ){
+				$("#day-p-o ul").html(insertMD(31));
+			}else if( text === "4" || text === "6" || text === "9" || text === "11" ){
+				$("#day-p-o ul").html(insertMD(30));
+			}
+			$("#day-p-o").show().prev(".jy-seled").show().parent().css("z-index", 10);
+			stopEvent(e);
+		});
+		$("#day-p").click(function (e) {
+			is_change_reg_default = 1; //修改注册表单
+			//$("#day-p-o ul").html(writeDay($('#month').val()));
+			showSelect($(this));
+			stopEvent(e);
+		});
+		$("#day-p-o").delegate("a", "click", function (e) {
+			var text = $(this).text();
+			$(this).parents(".jy-sel-o").siblings(".jy-sel-i").val(text);
+			hideSelect();
+			stopEvent(e);
+		});
+		/*弹层绑定 结束*/
+	};
+	init();
+
+	$("html,body").click(function(e) {
+		hideSelect();
+	});
+	//功能13
+});
+</script>
+<!-- 此js务必放在所有页面自带的js后面加载 -->
+<script src="scripts/base.min.js"></script>
+</head>
+<body class="hide">
+
+<div id="leftPartA"><div>
+
+<ul class="itemList">
+	<li><a class="navLink" href="main1.html" id="navLink0" title="我的首页">我的首页</a><!-- (10) --></li>
+	<li><a class="navLink" href="peopleManage.html" id="navLink1" title="人员管理">人员管理</a></li>
+	<li><a class="navLink" href="trainingManage.html" id="navLink2" title="飞行训练管理">飞行训练管理</a></li>
+	<li><a class="navLink" href="aircraftManage.html" id="navLink3" title="航空器管理">航空器管理</a></li>
+	<li><a class="navLink" href="summaryManage.html" id="navLink4" title="飞行训练大纲管理">飞行训练大纲管理</a></li>
+	<li><a class="navLink" href="systemManage.html" id="navLink5" title="系统管理">系统管理</a></li>
+	<li><a class="navLink" href="marksManage.html" id="navLink6" title="成绩管理">成绩管理</a>
+</ul>
+<span class="panelLine"></span>
+<ul class="itemList">
+	<li><a class="navLink" href="Func1.html" id="navLink101" title="功能展示1">功能展示1</a></li>
+	<li><a class="navLink" href="Func2.html" id="navLink102" title="功能展示2">功能展示2</a></li>
+	<li><a class="navLink" href="Func3.html" id="navLink103" title="功能展示3">功能展示3</a></li>
+	<li><a class="navLink" href="Func4.html" id="navLink104" title="功能展示4">功能展示4</a></li>
+	<li><a class="navLink" href="Func5.html" id="navLink105" title="功能展示5">功能展示5</a></li>
+	<li><a class="navLink" href="Func6.html" id="navLink106" title="功能展示6">功能展示6</a></li>
+	<li><a class="navLink" href="Func7.html" id="navLink107" title="功能展示7">功能展示7</a></li>
+	<li><a class="navLink" href="Func8.html" id="navLink108" title="功能展示8">功能展示8</a></li>
+	<li><a class="navLink" href="Func9.html" id="navLink109" title="功能展示9">功能展示9</a></li>
+	<li><a class="navLink" href="Func10.html" id="navLink110" title="功能展示10">功能展示10</a></li>
+</ul>
+<ul class="foldList">
+	<li><span class="ui-icon ui-icon-carat-1-e"></span>功能展示11</li>
+	<ul class="itemList hide">
+		<li><a class="navLink" href="Func11.html" id="navLink111" title="功能展示11" tabTitle="功能展示11[HTML]">HTML版本</a></li>
+		<li><a class="navLink" href="Func11_1.html" id="navLink11101" title="功能展示11" tabTitle="功能展示11[JS]">JS版本</a></li>
+	</ul>
+</ul>
+<ul class="itemList">
+	<li><a class="navLink" href="Func12.html" id="navLink112" title="功能展示12">功能展示12</a></li>
+	<li class="active"><a class="navLink" href="Func13.html" id="navLink113" title="功能展示13">功能展示13</a></li>
+	<li><a class="navLink" href="Func14.html" id="navLink114" title="功能展示14">功能展示14</a></li>
+</ul>
+
+</div></div>
+
+
+
+<div id="rightPartA"><div>
+
+<div class="testDiv">
+功能13：选择日期<br>
+
+
+
+
+
+<div class="reg_box">
+	<div class="form_reg">
+		<!--birthday-->
+		<dl class="clearfix mt15" style="z-index:21;">
+			<dt>生日</dt>
+			<dd class="w12 clearfix">
+				<!--select-->
+				<div class="jy-sel fn-left">
+					<input name="year" id="year" readonly="readonly" type="text" value="1990" class="jy-sel-i"/>
+
+					<div class="jy-sel-t">年</div>
+					<div class="jy-seled seled"><span>请选择</span>年</div>
+					<div id="year-o" class="jy-sel-o">
+						<ul></ul>
+					</div>
+				</div>
+				<!--/select-->
+				<!--select-->
+				<div class="jy-sel ml7 fn-left">
+					<input name="month" id="month" value="1" readonly="readonly" type="text" class="jy-sel-i"/>
+					<div class="jy-sel-t">月</div>
+					<div class="jy-seled seled"><span>请选择</span>月</div>
+					<div id="month-o" class="jy-sel-o pl106">
+						<ul><li><a href="">1</a><a href="">2</a><a href="">3</a><a href="">4</a><a href="">5</a><a href="">6</a><a href="">7</a><a href="">8</a><a href="">9</a><a href="">10</a><a href="">11</a><a href="">12</a></li></ul>
+					</div>
+				</div>
+				<!--/select-->
+				<!--select-->
+				<div class="jy-sel ml14 fn-left">
+					<input name="day" id="day" value="1" readonly="readonly" type="text" class="jy-sel-i"/>
+					<div class="jy-sel-t">日</div>
+					<div class="jy-seled seled"><span>请选择</span>日</div>
+					<div id="day-o" class="jy-sel-o pl280">
+						<ul><li><a href="">1</a><a href="">2</a><a href="">3</a><a href="">4</a><a href="">5</a><a href="">6</a><a href="">7</a><a href="">8</a><a href="">9</a><a href="">10</a><a href="">11</a><a href="">12</a><a href="">13</a><a href="">14</a><a href="">15</a><a href="">16</a><a href="">17</a><a href="">18</a><a href="">19</a><a href="">20</a><a href="">21</a><a href="">22</a><a href="">23</a><a href="">24</a><a href="">25</a><a href="">26</a><a href="">27</a><a href="">28</a><a href="">29</a><a href="">30</a><a href="">31</a></li></ul>
+					</div>
+				</div>
+				<!--/select-->
+			</dd>
+		</dl>
+	<!--/birthday-->
+	</div>
+</div>
+
+
+
+
+
+
+</div>
+
+</div></div>
+
+
+
+<div id="bottomPartA"><div>
+
+<button class="green" style="position: absolute; left: 10px;">保存</button>
+<button class="normal" style="position: absolute; left: 70px;">取消</button>
+<button class="normal" style="position: absolute; right: 30px;">还原为默认</button>
+
+</div></div>
+
+</body>
+</html>

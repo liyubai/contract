@@ -1,0 +1,106 @@
+﻿.pdfWrapper
+{
+	width:800px;
+	margin:0 auto;
+	font-size:14px;
+}
+.pdfHeader
+{
+	height:60px;
+}
+.pdfHeader .title
+{
+	margin:15px 0 0 0;
+	font-size:24px;
+	text-align:center;
+}
+.pdfHeader .number
+{
+	text-align:right;
+	font-size:14px;
+}
+.baseinfoSection
+{
+	margin:0;
+	padding:0;
+	list-style:none;
+	overflow:hidden;
+	clear:both;
+}
+.baseinfoSection .biItem
+{
+	float:left;
+}
+.baseinfoSection .biw1
+{
+	width:320px;
+	line-height:40px;
+}
+.baseinfoSection .biw
+{
+	width:240px;
+	line-height:40px;
+}
+.payDetailDes
+{
+	float:left;
+	width:70px;
+	line-height:40px;
+}
+.payDetail
+{
+	overflow:hidden;
+	line-height:40px;
+	font-size:14px;
+	float:left;
+	width:730px;
+}
+.oneRow
+{
+	overflow:hidden;
+	line-height:40px;
+	font-size:14px;
+	clear:both;
+}
+.oneRow .timeflight
+{
+	float:right;
+	width:200px;
+	text-align:center;
+	margin-bottom:10px;
+}
+.attachedListHeader
+{
+	line-height:40px;
+	text-align:center;
+	font-size:14px;
+	margin-bottom:10px;
+}
+.attachedList
+{
+	width:100%;
+	border-right:solid 1px #000;
+	border-top:solid 1px #000;
+	border-collapse:collapse;
+}
+.attachedList td
+{
+	border-left:solid 1px #000;
+	border-bottom:solid 1px #000;
+	line-height:30px;
+	text-align:center;
+	font-size:14px;
+}
+.pdfbtnbox
+{
+	text-align:center;
+	margin:10px auto;
+}
+.pr6
+{
+	padding-right:6px;
+}
+.pr4
+{
+	padding-right:4px;
+}

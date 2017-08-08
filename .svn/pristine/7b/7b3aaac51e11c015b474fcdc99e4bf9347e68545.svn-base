@@ -1,0 +1,14 @@
+package com.cauc.training.business;
+
+import com.cauc.training.pojos.Seq;
+
+public interface ISequenceManager {
+	
+	public long getNextId();
+	
+	public void init();
+	
+	public void insertTest(long seq);
+	
+	public void updateTest(Seq s);
+}

@@ -1,0 +1,281 @@
+package com.cauc.training.business.hibernate;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.lang.StringUtils;
+import org.hibernate.Criteria;
+import org.hibernate.HibernateException;
+import org.hibernate.criterion.Restrictions;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.business.IAnotherPeopleService;
+import com.cauc.training.business.dao.GenericHibernateDAO;
+import com.cauc.training.business.dao.support.Page;
+import com.cauc.training.pojos.TOtheruser;
+import com.cauc.training.vo.VAnotherPeople;
+
+/**
+ * @功能描述：用于管理其他人员的实现类
+ * @author gfm
+ */
+@Service()
+public class AnotherPeopleImpl extends GenericHibernateDAO implements IAnotherPeopleService {
+	/**
+	 * @功能描述：分页查询其他人员
+	 */
+	public Page searchAnotherPeople(Map<String, Object> params, String pageNo)
+			throws FinanceServiceException {
+		Page page = null;
+		//使用Criteria查询TRole对象
+		Criteria criteria = this.createCriteria(TOtheruser.class);
+		//如果查询条件不为空，则添加查询条件
+		if (params.get(QUERY_KEY_NAME) != null && !params.get(QUERY_KEY_NAME).equals("")){
+			criteria.add(Restrictions.like(QUERY_KEY_NAME, "%" + params.get(QUERY_KEY_NAME) + "%"));
+		}
+//		if (params.get("id") != null && !params.get("id").equals("")){
+//			criteria.add(Restrictions.eq("VParentid", "'"+params.get("id")+"'"));
+//		}else{
+//			criteria.add(Restrictions.eq("VParentid", "0"));
+//		}
+//		criteria.addOrder(Order.asc("IOrder"));
+		//System.out.println("key: " + params.get(QUERY_KEY_NAME));
+		Integer pageIndex = Integer.parseInt(pageNo);
+		try {
+			page = this.pagedQuery(criteria, pageIndex);
+		} catch (HibernateException e) {
+			e.printStackTrace();
+			throw new FinanceServiceException("查询其他人员信息列表失败！", e);
+		}
+		return page;
+	}
+	/**
+	 * @功能描述：通过ID查询其他人员所在部门
+	 */
+	public VAnotherPeople searchPeopleById(String id)
+			throws FinanceServiceException {
+		VAnotherPeople anotherPeople = new VAnotherPeople();
+		TOtheruser other = super.get(TOtheruser.class, id);
+		
+		anotherPeople.setDCreatedate(other.getDCreatedate());
+		anotherPeople.setDCrgzsj(other.getDCrgzsj());
+		anotherPeople.setDCsrq(other.getDCsrq());
+		anotherPeople.setDeptId(other.getTOrg().getVId());
+		anotherPeople.setUserId(other.getTUser().getVId());
+		anotherPeople.setVCardid(other.getVCardid());
+		anotherPeople.setVCode(other.getVCode());
+		anotherPeople.setVId(other.getVId());
+		anotherPeople.setVJg(other.getVJg());
+		anotherPeople.setVJtzz(other.getVJtzz());
+		anotherPeople.setVLxfs(other.getVLxfs());
+		anotherPeople.setVMz(other.getVMz());
+		anotherPeople.setVName(other.getVName());
+		anotherPeople.setVSex(other.getVSex());
+		anotherPeople.setVWhcd(other.getVWhcd());
+		anotherPeople.setVZzmm(other.getVZzmm());
+		
+		//TDepartment dept = super.get(TDepartment.class, other.getTDepartment().getVId());
+		
+		anotherPeople.setDeptName(other.getTOrg().getVName());
+		return anotherPeople;
+	}
+	/**
+	 * @功能描述：删除其他人员
+	 */
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void deletePeopleByIds(String... ids) throws FinanceServiceException {
+		if(ids != null && ids.length >0){
+			try {
+				for (String id : ids) {
+					super.removeById(TOtheruser.class, id);
+				}
+			}catch (HibernateException e) {
+				throw new FinanceServiceException("删除人员信息失败！", e);
+			}
+		}
+	}
+	/**
+	 * @功能描述：保存其他人员
+	 * */
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void savePeople(TOtheruser otheruser) throws FinanceServiceException {
+		if(otheruser != null){
+			try{
+				otheruser.setVCode(hqBh());
+				super.save(otheruser);
+			}catch(HibernateException e){
+				throw new FinanceServiceException("保存人员失败！", e);
+			}
+		}else{
+			throw new FinanceServiceException("保存人员失败！");
+		}
+	}
+	/**
+	 * 功能：添加人员时，获取人员编号
+	*/
+	@SuppressWarnings("unchecked")
+	private String hqBh() throws FinanceServiceException {
+		//该标志位用于表示人员编号是否已存在，false:表示不存在
+		String result = "";
+		String hql = " from TOtheruser order by DCreatedate desc";
+		List<TOtheruser> otheruserList = super.find(hql);
+		if (otheruserList != null && otheruserList.size() > 0){
+			TOtheruser user = otheruserList.get(0);
+			String code = user.getVCode();
+			String bgcode = code.substring(1,6);
+			int i = Integer.parseInt(bgcode)+1;
+			if(i<10){
+				result = "A0000"+i;
+			}else if(i>=10 && i<100){
+				result = "A000"+i;
+			}else if(i>=100 && i<1000){
+				result = "A00"+i;
+			}else if(i>=1000 && i<10000){
+				result = "A0"+i;
+			}else{
+				result = "A"+i;
+			}
+		}else{
+			result = "A00001";
+		}
+		return result;
+	}
+	/**
+	 * @功能描述：更新其他人员
+	 */
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void updatePeople(TOtheruser otheruser)
+			throws FinanceServiceException {
+		if(otheruser != null){
+			try {
+				TOtheruser old = super.get(TOtheruser.class, otheruser.getVId());
+				old.setVName(otheruser.getVName());//姓名
+				old.setDCrgzsj(otheruser.getDCrgzsj());//参加工作时间
+				old.setDCsrq(otheruser.getDCsrq());//出生日期
+				old.setVCardid(otheruser.getVCardid());//身份证
+				old.setVJg(otheruser.getVJg());//籍贯
+				old.setVJtzz(otheruser.getVJtzz());//家庭住址
+				old.setVLxfs(otheruser.getVLxfs());//联系方式
+				old.setVMz(otheruser.getVMz());//民族
+				old.setVSex(otheruser.getVSex());//性别
+				old.setVWhcd(otheruser.getVWhcd());//文化程度
+				old.setVZzmm(otheruser.getVZzmm());//政治面貌
+				old.setTOrg(otheruser.getTOrg());//部门
+				super.update(old);
+			}catch (HibernateException e) {
+				throw new FinanceServiceException("更新人员对象失败！", e);
+			}
+		}else{
+			throw new FinanceServiceException("更新人员失败！");
+		}
+	}
+	/**
+	 * @功能描述：通过关键字查询其他人员列表
+	 */
+	@SuppressWarnings("unchecked")
+	public List<TOtheruser> searchPeopleList(String key)
+			throws FinanceServiceException {
+		if(key == null){
+			key="";
+		}
+		String hql = " from TOtheruser where VName like '%"+key+"%'";
+		return super.find(hql);
+	}
+	/**
+	 * @功能描述：利用Ajax通过关键字查询其他人员列表
+	 */
+	@SuppressWarnings("unchecked")
+	public List<VAnotherPeople> searchPeopleListAjax(String id,String key)
+			throws FinanceServiceException {
+		
+		if(StringUtils.isBlank(id)){
+			id="";
+		}
+		//System.out.println(id);
+		String[] ids=null;
+	//	System.out.println("|"+id + "|");
+		
+		if(id != null && !id.equals("")){
+			ids = id.split(",");
+		}
+		
+		
+		
+		String idsa="";
+		if(ids != null && ids.length>0){
+			
+			for(int i=0; i<ids.length;i++){
+				if(ids[i].equals("0"))
+					continue;
+				if(i==0 && ids.length-1>0){
+					idsa+=" and (TOrg.VId like '"+ids[i]+"'";
+				}else if(i==ids.length-1 && ids.length-1>0){
+					idsa+=" or TOrg.VId like '"+ids[i]+"')";
+				}else if(i==0 && ids.length-1==0){
+					idsa+=" and TOrg.VId like '"+ids[i]+"'";
+				}else{
+					idsa+=" or TOrg.VId like '"+ids[i]+"'";
+				}
+			}
+			
+		}
+		
+		if(StringUtils.isBlank(key)){
+			key="";
+		}
+		String hql = " from TOtheruser where VName like '%"+key+"%' "+idsa;
+		//System.out.println(hql);
+		//System.out.println("|" + id + "|");
+		//String hql = " from TOtheruser where VName like ?  and (? like '%'+TOrg.VId+'%' or TOrg.VId like ?)";
+		//System.out.println(hql);
+		//List<TOtheruser> list = super.find(hql,"%" + key + "%",id,"%" + id + "%");
+		List<TOtheruser> list = super.find(hql);
+		List<VAnotherPeople> vlist = new ArrayList<VAnotherPeople>();
+		
+		if(list != null && list.size()>0){
+			for(int i=0; i<list.size(); i++){
+				VAnotherPeople anotherPeople = new VAnotherPeople();
+				TOtheruser other = list.get(i);
+				
+				anotherPeople.setDCreatedate(other.getDCreatedate());
+				anotherPeople.setDCrgzsj(other.getDCrgzsj());
+				anotherPeople.setDCsrq(other.getDCsrq());
+				if(other.getTOrg()!=null){
+					anotherPeople.setDeptId(other.getTOrg().getVId());
+					anotherPeople.setDeptName(other.getTOrg().getVName());
+				}
+				anotherPeople.setUserId(other.getTUser().getVId());
+				anotherPeople.setVCardid(other.getVCardid());
+				anotherPeople.setVCode(other.getVCode());
+				anotherPeople.setVId(other.getVId());
+				anotherPeople.setVJg(other.getVJg());
+				anotherPeople.setVJtzz(other.getVJtzz());
+				anotherPeople.setVLxfs(other.getVLxfs());
+				anotherPeople.setVMz(other.getVMz());
+				anotherPeople.setVName(other.getVName());
+				anotherPeople.setVSex(other.getVSex());
+				anotherPeople.setVWhcd(other.getVWhcd());
+				anotherPeople.setVZzmm(other.getVZzmm());
+
+				vlist.add(anotherPeople);
+			}
+		}
+		
+		return vlist;
+	}
+	public String searchPeopleNameByIds(String... ids)
+			throws FinanceServiceException {
+		String result = "";
+		if(ids != null && ids.length>0){
+			for(int i=0; i<ids.length; i++){
+				TOtheruser totheruser = super.get(TOtheruser.class, ids[i]);
+				result += totheruser.getVName() + ",";
+			}
+		}
+		return result;
+	}
+}

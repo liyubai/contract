@@ -1,0 +1,137 @@
+package com.cauc.contract.business.hibernate;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.cauc.contract.business.ISumStatisticService;
+import com.cauc.contract.business.dao.GenericHibernateDAO;
+import com.cauc.contract.pojos.Payment;
+import com.cauc.contract.pojos.PaymentExt;
+
+@Service
+public class SumStatisticServiceImpl extends GenericHibernateDAO implements ISumStatisticService {
+	
+//	private Date PReceiveDate;//到款日期
+//	private double PReceiveMoney;//到款金额
+//	private double trueMoney;//实际到款金额
+//	private double trueDate;//实际到款日期
+//	private String  PNotice;//通知
+	
+	//查看按年汇总统计
+	@SuppressWarnings("unchecked")
+	@Override
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public List<PaymentExt> showPayList(PaymentExt payment) {
+		List<Object[]> ob=new ArrayList<Object[]>();
+		List<PaymentExt> list = new ArrayList<PaymentExt>();
+		try{
+		String sql="select isnull(a.y,'0') as y,isnull(a.pm,'0') as pm,isnull(b.pm1,'0') as pm1 from "
+				+ "(select  sum(P_RECEIVE_MONEY) as pm,convert(varchar(4),P_RECEIVE_DATE,120) as y "
+				+ "from Payment group by convert(varchar(4),P_RECEIVE_DATE,120)) as a "
+				+ "left join"
+				+ "(select sum(P_RECEIVE_MONEY) as pm1,convert(varchar(4),P_RECEIVE_DATE,120) as y "
+				+ "from Payment where P_NOTICE_STATUS=2 or P_NOTICE_STATUS=3 "
+				+ "group by convert(varchar(4),P_RECEIVE_DATE,120)) as b on a.y=b.y";
+		ob=super.createSQLQuery(sql).list();
+		for(Object[] t:ob){
+			PaymentExt p =new PaymentExt();
+			p.setYear(Integer.parseInt(t[0].toString()));
+			//double数据不显示科学记数法
+			java.text.NumberFormat nf = java.text.NumberFormat.getInstance();   
+			nf.setGroupingUsed(false); 
+			p.setYPReceiveMoney(nf.format(new Double(t[1].toString())));
+			p.setTPReceiveMoney(nf.format(new Double(t[2].toString())));
+			list.add(p);
+		}
+		return list;
+		}catch(Exception e){
+			e.printStackTrace(); 
+		}
+		return list;	
+	}
+	// 查看实际到款
+	@SuppressWarnings("unchecked")
+	@Override
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public List<Payment> viewPayList(Payment payment){ 
+		List<Payment> pay=new ArrayList<Payment>(); 
+		try{
+		String sql="from Payment p where p.PRealityDate is not null"; 
+		pay=super.find(sql);
+		return pay;	
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		return pay;
+	}
+	//查看按月汇总
+	@SuppressWarnings("unchecked")
+	@Override
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public List<PaymentExt> showMonthList(PaymentExt extend) {
+		List<PaymentExt> paylist=new ArrayList<PaymentExt>(); 
+		List<Object[]> object=new ArrayList<Object[]>();
+		java.text.NumberFormat nf = java.text.NumberFormat.getInstance();   
+		nf.setGroupingUsed(false); //double数据不显示科学记数法
+		try{
+		String sql="select isnull(a.m,'0') as m,isnull(a.pm,'0') as pm,isnull(b.pm1,'0') as pm1 from "
+				+ "(select sum(P_RECEIVE_MONEY) as pm,convert(varchar(2),P_RECEIVE_DATE,101) as m "
+				+ "from payment ";
+		    if(StringUtils.isNotBlank(extend.getP_receivedate())&&(!("null".equals(extend.getP_receivedate())))){
+		    	//System.out.println(extend.getP_receivedate());
+			   sql+= "where convert(varchar(4),P_RECEIVE_DATE,120) like '"+extend.getP_receivedate()+"' ";
+		    }
+			   sql+=" group by convert(varchar(2),P_RECEIVE_DATE,101)) as a left join"
+				+ "(select sum(P_RECEIVE_MONEY) as pm1,convert(varchar(2),P_RECEIVE_DATE,101) as m "
+				+ "from payment ";
+			if(StringUtils.isNotBlank(extend.getP_receivedate())&&(!("null".equals(extend.getP_receivedate())))){
+				sql+= "where convert(varchar(4),P_RECEIVE_DATE,120) like '"+extend.getP_receivedate()+"' ";
+			}
+				sql+=" and P_NOTICE_STATUS=2 or P_NOTICE_STATUS=3 "
+					+ "group by convert(varchar(2),P_RECEIVE_DATE,101)) as b on a.m=b.m ";
+		object=super.createSQLQuery(sql).list();
+		for(Object[] t:object){
+			PaymentExt pm =new PaymentExt();
+			pm.setMonth(Integer.parseInt(t[0].toString()));
+			pm.setYPReceiveMoney(nf.format(new Double(t[1].toString())));
+			//System.out.println(pm.getYPReceiveMoney());
+			pm.setTPReceiveMoney(nf.format(new Double(t[2].toString())));
+			//System.out.println(pm.getTPReceiveMoney());
+			paylist.add(pm);
+		}
+		return paylist;
+		}catch(Exception e){
+			System.out.println(e.getMessage());
+			e.getStackTrace();
+		}
+		return paylist;
+	}
+
+ 
+	   // 查看实际到款
+		@SuppressWarnings("unchecked")
+		@Override
+		@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+		public List<Payment> viewMonthList(PaymentExt payment){ 
+			List<Payment> payMonth=new ArrayList<Payment>(); 
+			//List<Object[]> obj=new ArrayList<Object[]>();
+			try{
+			String hql="from Payment where PRealityDate is not null";
+			if(StringUtils.isNotBlank(payment.getP_receivedate())&&(!("null".equals(payment.getP_receivedate())))){
+				hql+=" and PRealityDate like '%"+payment.getP_receivedate()+"-%'"; 
+			}
+			payMonth=super.find(hql);//应该返回对象类型
+			return payMonth;
+			}catch(Exception e){
+				//System.out.println(e.getMessage());
+				e.printStackTrace();
+			}
+			return payMonth;
+		}
+
+}

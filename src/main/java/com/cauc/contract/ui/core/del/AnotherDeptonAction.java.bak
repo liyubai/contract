@@ -1,0 +1,281 @@
+package com.cauc.training.ui.core.del;
+
+import java.util.Date;
+import java.util.List;
+
+import org.apache.commons.lang.StringUtils;
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.pojos.TDepartment;
+import com.cauc.training.pojos.TFunction;
+import com.cauc.training.pojos.TUser;
+import com.cauc.training.ui.common.BaseActionSupport;
+import com.cauc.training.vo.VDepartment;
+import com.opensymphony.xwork2.ActionContext;
+
+/**
+ * @功能描述：用于管理其他人员所在部门的Action
+ * @author gfm
+ */
+public class AnotherDeptonAction extends BaseActionSupport {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -146226161066534208L;
+	// 其他人员所在部门的领域 对象
+	private TDepartment department;
+	// 其他人员所在部门的VO领域 对象
+	private com.cauc.training.vo.VDepartment vdepartment;
+	// 查询关键字
+	private String key;
+	// 主键
+	private String id;
+	// 存储要删除的部门id，各个部门的id使用逗号（,）分隔
+	private String deptids;
+	// 用于存储部门列表
+	private List<com.cauc.training.vo.VDepartment> list;
+	// 用于判断删除是否成功
+	private boolean flag;
+
+	/**
+	 * @功能描述：保存或者更新部门
+	 * @return
+	 */
+	public String saveDeptAnother() {
+		String result = "saveSuccess";
+		TUser tuser = null;
+		try {
+			tuser = getFactory().getFinanceProviderInstance()
+					.getSysUserService().readSysUserByLoginID(
+							this.getLoginContext().getLoginId());
+		} catch (FinanceServiceException e2) {
+			e2.printStackTrace();
+		}
+		Date date = new Date();
+		String logcontent = "";
+		// 日志文件
+//		TLog log = new TLog();
+//		log.setDCreateDate(date);
+//		log.setTUser(tuser);
+		String urlid = "";
+		try {
+			urlid = getFactory().getFinanceProviderInstance()
+					.getFunctionService().getVid(
+							ActionContext.getContext().getName());
+		} catch (FinanceServiceException e1) {
+			e1.printStackTrace();
+		}
+		TFunction tfunction = new TFunction();
+		tfunction.setVId(urlid);
+//		log.setTFunction(tfunction);
+		flag = false;
+		try {
+			if (StringUtils.isBlank(department.getVName())) {
+				setStatusMsg("部门名称不能为空！");
+				setStatusMsg("1");
+				return result;
+			}
+			if (StringUtils.isNotBlank(this.department.getVId())) {
+				String[] nids = { this.department.getVId() };
+				logcontent = "更新了其他人员所在部门！部门名称为："
+						+ getFactory().getFinanceProviderInstance()
+								.getAnotherDeptService().searchDeptNameByIds(
+										nids);
+//				log.setVContent(new SerialClob(logcontent.toCharArray()));
+//				log.setVOperateid(this.department.getVId());
+				getFactory().getFinanceProviderInstance()
+						.getAnotherDeptService().updateDept(department);
+			} else {
+				logcontent = "添加了其他人员所在部门！部门名称为：" + this.department.getVName();
+//				log.setVContent(new SerialClob(logcontent.toCharArray()));
+				// 获取用户对象,取得登录者，即创建该角色的人
+				this.department.setTUser(tuser);
+				// 设置创建时间
+				this.department.setDCreatedate(date);
+				if (department.getVParentid() == null
+						|| department.getVParentid().equals("")
+						|| department.getVParentid().equals("0")) {
+					// 设置父ID如果父ID为空或者0，则设置父ID为1
+					department.setVParentid("1");
+				}
+				getFactory().getFinanceProviderInstance()
+						.getAnotherDeptService().saveDept(department);
+			}
+//			flag = getFactory().getFinanceProviderInstance().getLogService()
+//					.saveLog(log);
+			// System.out.println(flag);
+
+			// setFlag(flag);
+			// setStatusMsg("部门保存成功！");
+		} catch (FinanceServiceException e) {
+			// setStatusMsg("部门保存失败！");
+		} 
+//		catch (SerialException e) {
+//			e.printStackTrace();
+//		} catch (SQLException e) {
+//			e.printStackTrace();
+//		}
+
+		return result;
+	}
+
+	/**
+	 * @功能描述：通过部门ID查询部门
+	 * @return
+	 */
+	public String searchDeptByIdAnother() {
+		String result = "searchDeptById";
+		if (StringUtils.isBlank(this.id)) {
+			setStatusMsg("部门ID不能为空");
+			setStatusMsg("1");
+		} else {
+			try {
+				vdepartment = getFactory().getFinanceProviderInstance()
+						.getAnotherDeptService().searchDeptById(this.id);
+			} catch (FinanceServiceException e) {
+				setStatusMsg("获取部门对象信息失败。");
+				setStatusMsg("1");
+				return result;
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * @功能描述：删除部门
+	 * @return
+	 */
+	public String deleteDeptAnother() {
+		String result = "deleteDept";
+		if (StringUtils.isBlank(getDeptids())) {
+			setStatusMsg("请选择要删除的部门！");
+			setStatusMsg("1");
+		} else {
+			TUser tuser = null;
+			try {
+				tuser = getFactory().getFinanceProviderInstance()
+						.getSysUserService().readSysUserByLoginID(
+								this.getLoginContext().getLoginId());
+			} catch (FinanceServiceException e1) {
+				e1.printStackTrace();
+			}
+			Date date = new Date();
+			// 日志
+//			TLog log = new TLog();
+//			log.setDCreateDate(date);
+//			log.setTUser(tuser);
+			String urlid = "";
+			try {
+				urlid = getFactory().getFinanceProviderInstance()
+						.getFunctionService().getVid(
+								ActionContext.getContext().getName());
+			} catch (FinanceServiceException e1) {
+				e1.printStackTrace();
+			}
+			TFunction tfunction = new TFunction();
+			tfunction.setVId(urlid);
+//			log.setTFunction(tfunction);
+
+			String[] ids = this.deptids.split(",");
+			if (ids != null && ids.length > 0) {
+				try {
+					String dname = getFactory().getFinanceProviderInstance()
+							.getAnotherDeptService().searchDeptNameByIds(ids);
+					String logcontent = "删除了其他人员所在部门！部门名称：" + dname;
+//					log.setVContent(new SerialClob(logcontent.toCharArray()));
+					// 删除部门
+					flag = getFactory().getFinanceProviderInstance()
+							.getAnotherDeptService().deleteDeptByIds(ids);
+					// 保存日志
+//					getFactory().getFinanceProviderInstance().getLogService()
+//							.saveLog(log);
+					setStatusMsg("删除部门成功！");
+					setStatusMsg("0");
+				} catch (FinanceServiceException e) {
+					setStatusMsg("删除部门出错！");
+					setStatusMsg("1");
+					return result;
+				} 
+//				catch (SerialException e) {
+//					e.printStackTrace();
+//				} catch (SQLException e) {
+//					e.printStackTrace();
+//				}
+			}
+
+		}
+		return result;
+	}
+
+	/**
+	 * @功能描述：读取部门树
+	 * @return
+	 */
+	public String showDeptTreeAnother() {
+		String result = "deptTree";
+		try {
+			list = getFactory().getFinanceProviderInstance()
+					.getAnotherDeptService().searchDeptTree();
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		return result;
+	}
+
+	// @JSON(serialize=false)
+	public TDepartment getDepartment() {
+		return department;
+	}
+
+	public void setDepartment(TDepartment department) {
+		this.department = department;
+	}
+
+	public String getKey() {
+		return key;
+	}
+
+	public void setKey(String key) {
+		this.key = key;
+	}
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
+	public String getDeptids() {
+		return deptids;
+	}
+
+	public void setDeptids(String deptids) {
+		this.deptids = deptids;
+	}
+
+	public List<VDepartment> getList() {
+		return list;
+	}
+
+	public void setList(List<VDepartment> list) {
+		this.list = list;
+	}
+
+	public boolean isFlag() {
+		return flag;
+	}
+
+	public void setFlag(boolean flag) {
+		this.flag = flag;
+	}
+
+	public VDepartment getVdepartment() {
+		return vdepartment;
+	}
+
+	public void setVdepartment(VDepartment vdepartment) {
+		this.vdepartment = vdepartment;
+	}
+}

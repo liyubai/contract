@@ -1,0 +1,754 @@
+package com.cauc.contract.ui.core;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.struts2.ServletActionContext;
+import com.cauc.contract.FinanceServiceException;
+import com.cauc.contract.business.IContractModifyService;
+import com.cauc.contract.business.IContractQuerylistService;
+import com.cauc.contract.pojos.Contract;
+import com.cauc.contract.pojos.Dictionary;
+import com.cauc.contract.pojos.PDateInfo;
+import com.cauc.contract.pojos.Payment;
+import com.cauc.contract.ui.common.BaseActionSupport;
+import com.cauc.contract.util.Constants;
+import com.cauc.contract.util.JsonToBean;
+
+import net.sf.ezmorph.object.DateMorpher;
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+import net.sf.json.util.JSONUtils;
+
+
+
+public class contractModifyAction extends BaseActionSupport {
+
+	/**
+	 * 新增合同 baib
+	 * 
+	 * @author baib
+	 */
+	private static final long serialVersionUID = 344938190059029608L;
+
+	// -----------------新增合同页面--Star---------------------------
+	// 合同名称
+	private String contractName;
+	// 合同编号
+	private String contractID;
+	// 合同类型
+	private String contractType;
+	// 学生类型
+	private String studentType;
+	// 合同状态
+	private String contractStatus;
+	// 合同性质
+	private String contractNature;
+	// 客户单位
+	private String compy;
+	// 签约时间
+	private String signTime;
+	// 自费生
+	private String privateName;
+	private String picture;
+
+	private Contract VContractID;
+
+	// ajax 合同ID 是否存在标志位
+	private boolean returnFlg = true;
+
+	// 合同生成enity;
+	Contract contractEnity;
+	
+	private List<Payment> payMenList;
+
+	// -----------------新增合同页面--End----------------------------
+
+	// -----------------经费初始化页面---Star--------------------------
+	// ajax 获取支付明细的Ztree
+	private List<Dictionary> payMentList;
+	// 合同ID
+	private String CID;
+	// 年级学生信息(JSON)
+	private String gradeInfo;
+	// 付款详细信息 json
+	private String paymentInfo;
+	// 成交价
+	private String dealPrice;
+	// 训练周期
+	private String trainCycle;
+	// 付款节点信息
+	private String payMentData;
+
+	// -----------------经费初始化页面-------End----------------------
+	private Contract selConEneity ;
+	
+	//节点显示
+	//付款表主键
+	private int pid;
+	//预收日期
+	private Date date;
+	private String array;
+	//合同编号
+	private String selcontractid;
+	private List<Contract> conList;
+	private List<Contract> oldConList;
+	/**
+	 * 合同登录
+	 * 
+	 * @throws ErsServiceException
+	 */
+	public String addContract() throws FinanceServiceException {
+
+		IContractModifyService contractModifyService = getFactory().getFinanceProviderInstance()
+				.getContractModifyService();
+		try {
+			if (StringUtils.isBlank(contractID)) {
+				// 页面合同编号为空
+				return "false";
+			}
+			// 生成合同ID
+			//int tempCID = subContractId(contractID);
+			int tempCID =contractModifyService.getMaxCID() + 1;
+			if (contractModifyService.isExistContract(tempCID)) {
+				// 合同ID存在
+				return SUCCESS;
+			} else {
+				// 合同ID不存在 可以继续插入
+				editContractID(tempCID, contractName, contractID, contractType, studentType, contractStatus,
+						contractNature, compy, signTime, privateName);				
+				contractModifyService.addContract(contractEnity);
+			}
+			//contractModifyService.addContract(contractEnity);
+		} catch (FinanceServiceException e) {
+			throw new FinanceServiceException("新增合同失败。");
+		}
+		return SUCCESS;
+	}
+
+	/**
+	 * 合同实体类插入数据
+	 * 
+	 * @throws ErsServiceException
+	 */
+	public void editContractID(int tempCID, String contractName, String contractID, String contractType,
+			String studentType, String contractStatus, String contractNature, String compy, String signTime,
+			String privateName) throws FinanceServiceException {
+		contractEnity = new Contract();
+		// 合同ID
+		contractEnity.setCId(tempCID);
+		// 合同名称
+		contractEnity.setCName(contractName);
+		// 合同编号
+		contractEnity.setCContractId(contractID);
+		// 合同类型
+		contractEnity.setCType(Integer.parseInt(contractType));
+		// 学员类型
+		contractEnity.setCStuType(Integer.parseInt(studentType));
+		// 合同状态
+		contractEnity.setCStatus(Integer.parseInt(contractStatus));
+		// 合同性质
+		contractEnity.setCNature(Integer.parseInt(contractNature));
+		// 客户单位
+		contractEnity.setCCompy(Integer.parseInt(compy));
+		// 签订时间
+		contractEnity.setCSignTime(signTime);
+		// 自费生姓名
+		contractEnity.setCPrivateName(privateName);
+		// 是否点击过经费初始化页面的保存区分
+		contractEnity.setCInitFlg(0);
+		// 新建记录者
+		// contractEnity.setCAddUser(getLoginContext().getUserId());
+		// 最后一次更新记录者
+		// contractEnity.setCLastModifyUser(getLoginContext().getUserId());
+	}
+
+	/**
+	 * 获得最新合同编号
+	 * 
+	 * @throws ErsServiceException
+	 */
+	public String showContractID() throws FinanceServiceException {
+		try {
+			// 创建合同对象
+			VContractID = new Contract();
+			// 创建service
+			IContractModifyService contractModifyService = getFactory().getFinanceProviderInstance()
+					.getContractModifyService();
+			// 获取最新合同ID
+			//int newMaxCID = contractModifyService.getMaxCID() + 1;
+			//获取合同编号G后最大
+			int  MaxContractId = contractModifyService.getMaxContractId()+1;
+			// 获取当前年份
+			Calendar tempYear = Calendar.getInstance();
+			// 生成最新合同ID
+			String newContractId = Constants.CONTRACT_ID + tempYear.get(Calendar.YEAR) + Constants.CONTRACT_ID_MIDDLE
+					+ MaxContractId;
+			VContractID.setCContractId(newContractId);
+			//VContractID.setCId(newMaxCID);
+		} catch (FinanceServiceException e) {
+			throw new FinanceServiceException("生成合同编号失败。");
+		}
+		return SUCCESS;
+	}
+
+	/**
+	 * 检查合同ID是否存在并且唯一
+	 * 
+	 * @throws ErsServiceException
+	 */
+	public String ajaxCheckCID() throws FinanceServiceException {
+
+		try {// 页面合同编号不为空
+			if (!StringUtils.isBlank(contractID)) {
+				// 创建合同对象
+				VContractID = new Contract();
+				// 创建service
+				IContractModifyService contractModifyService = getFactory().getFinanceProviderInstance()
+						.getContractModifyService();
+				//int CID = subContractId(contractID);
+				int CID =contractModifyService.getMaxCID() + 1;
+				// 获取CID
+				if (contractModifyService.isExistContract(CID)) {
+					// 合同ID存在
+					returnFlg = false;
+				} else {
+					// 合同ID不存在 可以继续使用
+					returnFlg = true;
+				}
+			}
+		} catch (FinanceServiceException e) {
+			throw new FinanceServiceException("合同ID主键已存在。");
+		}
+		return SUCCESS;
+	}
+
+	/**
+	 * 截取合同编号中的数字，即合同ID
+	 * 
+	 * @throws ErsServiceException
+	 */
+	public int subContractId(String contractId) {
+		String tempContractId = contractId.substring(contractId.indexOf(Constants.CONTRACT_ID_MIDDLE));
+		return Integer.parseInt(tempContractId.replace(Constants.CONTRACT_ID_MIDDLE, ""));
+	}
+
+	/**
+	 * 经费初始化页面Ztree
+	 * 
+	 * @throws FinanceServiceException
+	 * 
+	 * @throws ErsServiceException
+	 */
+	public String initContractZtree(int did) throws FinanceServiceException {
+		IContractModifyService contractModifyService = getFactory().getFinanceProviderInstance()
+				.getContractModifyService();
+		payMentList = contractModifyService.initZtree(did);
+		return SUCCESS;
+	}
+
+	/**
+	 * 经费初始化页面保存
+	 * 
+	 * @throws FinanceServiceException
+	 * @throws IOException 
+	 * 
+	 * @throws ErsServiceException
+	 */
+	@SuppressWarnings("unused")
+	public void savePaymentContract() throws FinanceServiceException, IOException {
+		IContractModifyService contractModifyService = getFactory().getFinanceProviderInstance()
+				.getContractModifyService();
+
+//		System.out.println();
+		Contract upConEneity = new Contract();
+		upConEneity.setCId(Integer.parseInt(CID));
+		// DB中存在该条合同信息，可以继续更新
+		// 所在年级，学员人数，入校时间等信息
+		upConEneity.setCGradeInfo(gradeInfo);
+		// 付款项目，及金额
+		upConEneity.setCPaymentInfo(paymentInfo);
+		// 成交价格
+		upConEneity.setCDealPrice(Integer.parseInt(dealPrice));
+		// 训练周期
+		upConEneity.setCTrainCycle(trainCycle);
+		//节点描述
+		upConEneity.setCPnameInfo(payMentData);
+		contractModifyService.updateContract(upConEneity);
+		if(upConEneity != null){
+			//付款表插入数据前删除对应原数据
+			contractModifyService.del(upConEneity);
+		}else{
+			throw new FinanceServiceException("删除付款表记录失败，该记录不存在！");
+		}
+		// 付款表中插入数据
+		contractModifyService.savePayMent(upConEneity, gradeInfo, payMentData);
+		HttpServletResponse response = ServletActionContext.getResponse();
+		response.sendRedirect("NodeShow.do?CID="+CID);
+		//return SUCCESS;
+	}
+
+	/**
+	 * 获得要修改的合同内容
+	 * 
+	 * @throws FinanceServiceException
+	 * 
+	 * @throws ErsServiceException
+	 */
+	public String selContractToUpdate() throws FinanceServiceException {
+		IContractModifyService contractModifyService = getFactory().getFinanceProviderInstance()
+				.getContractModifyService();
+
+		selConEneity = contractModifyService.selContract(Integer.parseInt(CID));
+		return SUCCESS;
+	}
+	/**
+	 * 修改合同内容修改跳转至经费初始化页面
+	 * 
+	 * @throws FinanceServiceException
+	 * 
+	 * @throws ErsServiceException
+	 */
+	public String contractRecPayment() throws FinanceServiceException {
+		IContractModifyService contractModifyService = getFactory().getFinanceProviderInstance()
+				.getContractModifyService();
+		selConEneity = contractModifyService.selContract(Integer.parseInt(CID));
+		selConEneity.setCName(contractName);
+		selConEneity.setCType(Integer.parseInt(contractType));
+		selConEneity.setCStuType(Integer.parseInt(studentType));
+		selConEneity.setCStatus(Integer.parseInt(contractStatus));
+		selConEneity.setCNature(Integer.parseInt(contractNature));
+		selConEneity.setCCompy(Integer.parseInt(compy));
+		selConEneity.setCSignTime(signTime);
+		selConEneity.setCPrivateName(privateName);
+		//selConEneity.setCGradeInfo(gradeInfo);
+		//selConEneity.setCPnameInfo(payMentData);
+		//System.out.println(selConEneity.getCPnameInfo());
+		return SUCCESS;
+	}	
+	
+	
+	/**
+	 * 修改合同内容页面
+	 * 
+	 * @throws FinanceServiceException
+	 * 
+	 * @throws ErsServiceException
+	 */
+	public String updateContract() throws FinanceServiceException {
+		IContractModifyService contractModifyService = getFactory().getFinanceProviderInstance()
+				.getContractModifyService();
+		Contract upConEneity = new Contract();
+		upConEneity = contractModifyService.selContract(Integer.parseInt(CID));
+		upConEneity.setCName(contractName);
+		upConEneity.setCType(Integer.parseInt(contractType));
+		upConEneity.setCStuType(Integer.parseInt(studentType));
+		upConEneity.setCStatus(Integer.parseInt(contractStatus));
+		upConEneity.setCNature(Integer.parseInt(contractNature));
+		upConEneity.setCCompy(Integer.parseInt(compy));
+		upConEneity.setCSignTime(signTime);
+		upConEneity.setCPrivateName(privateName);
+		upConEneity.setCOntractText(picture);
+		//upConEneity.setCGradeInfo(gradeInfo);
+		contractModifyService.updateContract(upConEneity);
+		
+		return SUCCESS;
+	}
+	/**
+	 * 根据pid修改预收日期
+	 */
+	@SuppressWarnings("unchecked")
+	public String ModifyDate() throws FinanceServiceException{
+		IContractModifyService contractModifyService = getFactory().getFinanceProviderInstance().getContractModifyService();		
+		//String str = array.substring(0,array.length()-1);
+		try{
+	    JSONArray arr = JSONArray.fromObject(array);
+	    List<PDateInfo> list = new ArrayList<PDateInfo>();
+	    for (int i = 0; i < arr.size(); i++) {
+	    	Payment pay =new Payment();
+	        JSONObject jsonObject = arr.getJSONObject(i);
+	        //处理时间避免获取当前系统时间——原因JSONObject不能识别“yyyy-MM-dd”的格式
+	        JSONUtils.getMorpherRegistry().registerMorpher(new DateMorpher(new String[]{"yyyy-MM-dd","yyyy-MM-dd HH:mm:ss"}));
+	        list.add((PDateInfo) JSONObject.toBean(jsonObject, PDateInfo.class));
+	        pay.setPId(list.get(i).getPid());
+			pay.setPReceiveDate(list.get(i).getStrdate());
+			contractModifyService.updatePayment(pay);
+	    }
+    } catch(Exception e) {
+        e.printStackTrace();
+    }		
+		return SUCCESS;
+		
+	}
+
+	/**
+	 * 通过合同编号获得要复制的合同内容
+	 */	
+	public String copyContract() throws FinanceServiceException {
+		IContractModifyService contractModifyService = getFactory().getFinanceProviderInstance()
+				.getContractModifyService();
+		selConEneity = new Contract();
+		Contract contract = new Contract();
+		contract.setCContractId(selcontractid);
+		oldConList = contractModifyService.ConContractId(contract);
+		int flag = contractModifyService.isNotExistContractId(selcontractid);
+		String temp = selcontractid;
+		int len = temp.length();
+		if(flag==0){
+			temp = temp+"-1";
+		}else{
+			conList = contractModifyService.copyContract(selcontractid);
+			String str = conList.get(0).getCContractId();
+			String str1 = str.substring(len+1);
+			String str2 = temp.substring(10);
+			Calendar tempYear = Calendar.getInstance();
+			String left = Constants.CONTRACT_ID + tempYear.get(Calendar.YEAR) + Constants.CONTRACT_ID_MIDDLE;
+			temp = left+str2+"-"+(Integer.parseInt(str1)+1);
+		}
+		int maxCId = contractModifyService.getMaxCID()+1;
+		selConEneity.setCId(maxCId);
+		selConEneity.setCContractId(temp); //复制后合同编号
+		selConEneity.setCName(oldConList.get(0).getCName());
+		selConEneity.setCSignTime(oldConList.get(0).getCSignTime());
+		selConEneity.setCCompy(oldConList.get(0).getCCompy());
+		selConEneity.setCType(oldConList.get(0).getCType());
+		selConEneity.setCPrivateName(oldConList.get(0).getCPrivateName());
+		selConEneity.setCStuType(oldConList.get(0).getCStuType());
+		selConEneity.setCStatus(2);//合同状态 初稿		
+		selConEneity.setCNature(oldConList.get(0).getCNature());
+		if(oldConList.get(0).getCDealPrice()!=null && !oldConList.get(0).getCDealPrice().equals("")){
+			selConEneity.setCDealPrice(oldConList.get(0).getCDealPrice());
+		}
+		if(oldConList.get(0).getCTrainCycle()!=null && !oldConList.get(0).getCTrainCycle().equals("")){
+			selConEneity.setCTrainCycle(oldConList.get(0).getCTrainCycle());
+		}
+		if(oldConList.get(0).getCPaymentInfo()!=null && !oldConList.get(0).getCPaymentInfo().equals("")){
+			selConEneity.setCPaymentInfo(oldConList.get(0).getCPaymentInfo());
+		}
+		if(oldConList.get(0).getCPnameInfo()!=null && !oldConList.get(0).getCPnameInfo().equals("")){
+			selConEneity.setCPnameInfo(oldConList.get(0).getCPnameInfo());
+		}		
+		contractModifyService.copyContractSave(selConEneity);
+		return SUCCESS;
+	}
+		
+	//学生年级
+	private String gradeyear;
+	public String getGradeyear() {
+		return gradeyear;
+	}
+	public void setGradeyear(String gradeyear) {
+		this.gradeyear = gradeyear;
+	}
+	/**
+	 * 通过年级查找学生信息
+	 */
+	public String searchStudent() throws FinanceServiceException, IOException {
+		HttpServletRequest request = ServletActionContext.getRequest();
+		HttpServletResponse response = ServletActionContext.getResponse();
+		IContractModifyService contractModifyService = getFactory().getFinanceProviderInstance().getContractModifyService();
+		int gradeyear = Integer.parseInt(request.getParameter("gradeyear"));
+		String resultStr = contractModifyService.searchStudent(gradeyear);
+        response.setContentType("application/json;charset=UTF-8");
+        PrintWriter out = response.getWriter();
+        out.print(resultStr);
+        out.flush();
+        out.close();
+        return resultStr;
+		
+	}
+	// ---------------------setter and getter-------------------------------
+
+	public String getContractName() {
+		return contractName;
+	}
+
+	public void setContractName(String contractName) {
+		this.contractName = contractName;
+	}
+
+	public String getContractID() {
+		return contractID;
+	}
+
+	public void setContractID(String contractID) {
+		this.contractID = contractID;
+	}
+
+	public String getContractType() {
+		return contractType;
+	}
+
+	public void setContractType(String contractType) {
+		this.contractType = contractType;
+	}
+
+	public String getStudentType() {
+		return studentType;
+	}
+
+	public void setStudentType(String studentType) {
+		this.studentType = studentType;
+	}
+
+	public String getContractStatus() {
+		return contractStatus;
+	}
+
+	public void setContractStatus(String contractStatus) {
+		this.contractStatus = contractStatus;
+	}
+
+	public String getContractNature() {
+		return contractNature;
+	}
+
+	public void setContractNature(String contractNature) {
+		this.contractNature = contractNature;
+	}
+
+	public String getCompy() {
+		return compy;
+	}
+
+	public void setCompy(String compy) {
+		this.compy = compy;
+	}
+
+	public String getSignTime() {
+		return signTime;
+	}
+
+	public void setSignTime(String signTime) {
+		this.signTime = signTime;
+	}
+
+	public String getPrivateName() {
+		return privateName;
+	}
+
+	public void setPrivateName(String privateName) {
+		this.privateName = privateName;
+	}
+
+	public Contract getVContractID() {
+		return VContractID;
+	}
+
+	public void setVContractID(Contract vContractID) {
+		VContractID = vContractID;
+	}
+
+	public boolean isReturnFlg() {
+		return returnFlg;
+	}
+
+	public void setReturnFlg(boolean returnFlg) {
+		this.returnFlg = returnFlg;
+	}
+
+	public List<Dictionary> getPayMentList() {
+		return payMentList;
+	}
+
+	public void setPayMentList(List<Dictionary> payMentList) {
+		this.payMentList = payMentList;
+	}
+
+	public String getCID() {
+		return CID;
+	}
+
+	public void setCID(String cID) {
+		CID = cID;
+	}
+
+	public String getGradeInfo() {
+		return gradeInfo;
+	}
+
+	public void setGradeInfo(String gradeInfo) {
+		this.gradeInfo = gradeInfo;
+	}
+
+	public String getPaymentInfo() {
+		return paymentInfo;
+	}
+
+	public void setPaymentInfo(String paymentInfo) {
+		this.paymentInfo = paymentInfo;
+	}
+
+	public String getDealPrice() {
+		return dealPrice;
+	}
+
+	public void setDealPrice(String dealPrice) {
+		this.dealPrice = dealPrice;
+	}
+
+	public String getTrainCycle() {
+		return trainCycle;
+	}
+
+	public void setTrainCycle(String trainCycle) {
+		this.trainCycle = trainCycle;
+	}
+
+	public String getPayMentData() {
+		return payMentData;
+	}
+
+	public void setPayMentData(String payMentData) {
+		this.payMentData = payMentData;
+	}
+
+	public Contract getSelConEneity() {
+		return selConEneity;
+	}
+
+	public void setSelConEneity(Contract selConEneity) {
+		this.selConEneity = selConEneity;
+	}
+
+	public List<Payment> getPayMenList() {
+		return payMenList;
+	}
+
+	public void setPayMenList(List<Payment> payMenList) {
+		this.payMenList = payMenList;
+	}
+	
+    //private Integer CID;
+	
+	private String viewContractId;
+	
+	private List<Contract> cont;
+	
+	private List<Payment> paymentList;
+	
+	private Contract con;
+	
+	private List<PaymentInfo> paymentInfoJson; 
+	
+	private PaymentInfo paymentInfolist;
+	
+    //节点显示
+	@SuppressWarnings("unchecked")
+	public String NodeShow(){
+		IContractQuerylistService contractQuerylistService = getFactory().getFinanceProviderInstance().getContractQuerylistService();
+		HttpServletRequest request = ServletActionContext.getRequest();
+		this.CID = request.getParameter("CID");
+		Contract contract = new Contract();
+		contract.setCId(Integer.parseInt(CID) );
+		Payment pm = new Payment();
+		pm.setPContractId(viewContractId);
+		pm.setPContractKey(Integer.parseInt(CID) );
+		//查询合同表
+		cont = contractQuerylistService.viewContract(contract);
+		con = cont.get(0);
+		paymentInfoJson = JsonToBean.makeJavaBean(con.getCPaymentInfo(), PaymentInfo.class);
+		setPaymentInfolist(paymentInfoJson.get(0));
+		//查询付款表
+		setPaymentList(contractQuerylistService.viewPayment(pm));
+		if(con!=null)
+		{
+			return SUCCESS;	     
+		}
+		else 
+		    return ERROR;	
+	}
+
+	public Contract getCon() {
+		return con;
+	}
+
+	public void setCon(Contract con) {
+		this.con = con;
+	}
+
+	public List<Payment> getPaymentList() {
+		return paymentList;
+	}
+
+	public void setPaymentList(List<Payment> paymentList) {
+		this.paymentList = paymentList;
+	}
+
+	public PaymentInfo getPaymentInfolist() {
+		return paymentInfolist;
+	}
+
+	public void setPaymentInfolist(PaymentInfo paymentInfolist) {
+		this.paymentInfolist = paymentInfolist;
+	}
+
+	public int getPid() {
+		return pid;
+	}
+
+	public void setPid(int pid) {
+		this.pid = pid;
+	}
+
+	public Date getDate() {
+		return date;
+	}
+
+	public void setDate(Date date) {
+		this.date = date;
+	}
+
+	public String getArray() {
+		return array;
+	}
+
+	public void setArray(String array) {
+		this.array = array;
+	}
+
+	public String getSelcontractid() {
+		return selcontractid;
+	}
+
+	public void setSelcontractid(String selcontractid) {
+		this.selcontractid = selcontractid;
+	}
+
+	public static long getSerialversionuid() {
+		return serialVersionUID;
+	}
+
+	public List<Contract> getConList() {
+		return conList;
+	}
+
+	public void setConList(List<Contract> conList) {
+		this.conList = conList;
+	}
+	public List<Contract> getOldConList() {
+		return oldConList;
+	}
+
+	public void setOldConList(List<Contract> oldConList) {
+		this.oldConList = oldConList;
+	}
+
+	public String getPicture() {
+		return picture;
+	}
+
+	public void setPicture(String picture) {
+		this.picture = picture;
+	}
+	
+	
+}

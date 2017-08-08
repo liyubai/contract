@@ -1,0 +1,175 @@
+package com.cauc.training.ui.core.del;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.pojos.TFunction;
+import com.cauc.training.pojos.TRole;
+import com.cauc.training.pojos.TRoleFunction;
+import com.cauc.training.pojos.TUser;
+import com.cauc.training.ui.common.BaseActionSupport;
+import com.cauc.training.vo.VRoleFunction;
+
+public class RoleFunctionAction extends BaseActionSupport {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -1616584232398779015L;
+
+	//存储当前角色ID
+	private String roleId;
+	
+	//存储当前角色所联系的功能Id，格式为：各个功能Id之间使用英文逗号分隔
+	private String functionIds;
+	
+	//角色-功能绑定成功标志位，0：成功；1：失败
+	private int flag = 1;
+	
+	private List<VRoleFunction> roleFuncList;
+	
+	//父节点ID
+	private String parentid;
+	
+	//查询关键字
+	private String key;
+	
+	public String saveRoleFunctions(){
+		//String result = SUCCESS;
+		String functionId = "";
+		//用于存储TRoleFunction对象
+		List<TRoleFunction> trfs = new ArrayList<TRoleFunction>();
+		if(this.roleId != null && !this.roleId.trim().equals("")){
+			//System.out.println("roleId: " + this.roleId);
+			try {
+				// 获取用户对象,取得登录者，即创建该角色的人
+				TUser tuser = getFactory().getFinanceProviderInstance().getSysUserService().readSysUserByLoginID(this.getLoginContext().getLoginId());
+				//获取角色对象
+				TRole role = getFactory().getFinanceProviderInstance().getRoleService().searchRoleById(this.roleId);
+				
+				
+				/**
+				 * 如果functionIds非null，则表示该角色已经与新的功能绑定了，操作的步骤是：
+				 *  1、先删除该角色原有的与功能绑定关系
+				 *  2、再将新的绑定关系进行存储
+				 * 
+				 * */
+				//System.out.println(this.functionIds);
+				if(this.functionIds != null && !this.functionIds.trim().equals("")){
+					TFunction function;
+					String[] temp = this.functionIds.split(";");
+					if(temp != null && temp.length > 0){
+						//删除该角色当前所关联的功能
+						getFactory().getFinanceProviderInstance().getRoleFunctionsManagerService().deleteAllTRoleFunction(this.roleId);
+						for(int i=0; i<temp.length; i++){
+							//System.out.println(temp[i]);
+							functionId = temp[i];
+							//获取TFunction对象
+							function = getFactory().getFinanceProviderInstance().
+							getFunctionService().readFunctionByIdForRole(functionId.split(",")[0]);
+						
+							//创建角色-功能绑定对象（即角色-功能关联对象）
+						    TRoleFunction trf = new TRoleFunction();
+						    trf.setTUser(tuser);
+						    trf.setTRole(role);
+						    trf.setTFunction(function);
+						    trf.setIIsWrite(Integer.parseInt(functionId.split(",")[1]));
+						    trf.setDCreateDate(new Date());
+						    
+						    trfs.add(trf);
+						}
+						//保存新的角色-功能关系
+						getFactory().getFinanceProviderInstance().getRoleFunctionsManagerService().saveTRoleFunction(trfs);
+						this.flag = 0;
+						setStatusMsg("角色-功能绑定成功！");
+						setStatusMsg("0");
+					}
+				}else{ //如果functionIds为null，表示该角色的所有与功能的绑定去除，这时删除该角色与功能的绑定关系
+					
+					//删除该角色当前所关联的功能
+					getFactory().getFinanceProviderInstance().getRoleFunctionsManagerService().deleteAllTRoleFunction(this.roleId);
+					this.flag = 0;
+				}
+
+			} catch (FinanceServiceException e) {
+				setStatusMsg("角色-功能绑定失败！");
+				setStatusMsg("1");
+				//e.printStackTrace();
+				this.flag = 1;
+			}
+		}else{
+			setStatusMsg("角色-功能绑定失败！");
+			setStatusMsg("1");
+			this.flag = 1;
+		}
+		
+		return SUCCESS;
+	}
+	
+	/**
+	 * 获取所有功能节点，包括与当前角色绑定的功能节点
+	 * */
+	public String readAllRoleFunctionTree(){
+		try {
+			roleFuncList = getFactory().getFinanceProviderInstance().getRoleFunctionsManagerService().readAllRoleFunctionList(this.roleId);
+			//System.out.println("roleFuncList: " + this.roleFuncList.size());
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+
+		return SUCCESS;
+	}
+	
+	public String getRoleId() {
+		return roleId;
+	}
+	
+	public void setRoleId(String roleId) {
+		this.roleId = roleId;
+	}
+	
+	public String getFunctionIds() {
+		return functionIds;
+	}
+	
+	public void setFunctionIds(String functionIds) {
+		this.functionIds = functionIds;
+	}
+	
+	public int getFlag() {
+		return flag;
+	}
+	
+	public void setFlag(int flag) {
+		this.flag = flag;
+	}
+
+	public List<VRoleFunction> getRoleFuncList() {
+		return roleFuncList;
+	}
+
+	public void setRoleFuncList(List<VRoleFunction> roleFuncList) {
+		this.roleFuncList = roleFuncList;
+	}
+
+	public String getParentid() {
+		return parentid;
+	}
+
+	public void setParentid(String parentid) {
+		this.parentid = parentid;
+	}
+
+	public String getKey() {
+		return key;
+	}
+
+	public void setKey(String key) {
+		this.key = key;
+	}
+	
+	
+	
+}

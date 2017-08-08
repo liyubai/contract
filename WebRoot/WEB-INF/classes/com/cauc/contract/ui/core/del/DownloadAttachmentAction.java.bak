@@ -1,0 +1,171 @@
+package com.cauc.training.ui.core.del;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
+
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.struts2.ServletActionContext;
+
+import com.cauc.training.ui.common.BaseActionSupport;
+
+/**
+ * 功能：用于备份数据库的Action
+ * */
+public class DownloadAttachmentAction extends BaseActionSupport {
+	
+	
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 8133019685219040237L;
+	//下载的文件名，还可以表示原始文件名
+	private String attachmentName; 
+	// 输入流
+	private InputStream inputStream;
+	
+	//下载文件名称
+	private String srcFileName;
+	/**
+	 * 该成员变量用于表示下载文件的类型，这个类型指的是下载的是数据库备份文件，还是下载的普通其它文件
+	 * 当 downloadFileType值为data时，表示下载数据库备份文件，这时获取的路径为项目根目录下的data目录，表示下载数据库备份文件
+	 * 否则获取附件目录路径，即attachement目录，表示下载普通附件
+	*/
+	private String downloadFileType;
+	
+	/**
+	 * 文件下载 
+	*/
+	public String downloadFile(){
+		
+		//下载文件所在路径
+		String path = "";
+		//下载文件的全路径，即路径+文件名的形式
+		File downloadFileFullName = null;
+	//	System.out.println("srcFileName：" + this.srcFileName);
+		/*
+		String  sname= this.attachmentName;
+		try {
+			if(sname!=null){
+				sname = new String(sname.getBytes("ISO-8859-1"),"utf-8");
+			}
+		} catch (UnsupportedEncodingException e1) {
+		}
+		*/
+		if(this.downloadFileType != null && this.downloadFileType.equals("data")){
+			path = super.getRealPath("/WEB-INF/data");
+			downloadFileFullName = new File(path + "/" + this.attachmentName);
+		}else{
+			path = super.getRealPath("/WEB-INF/attachment");
+			//如果下载普通附件文件，使用srcFileName属性中存储的文件名
+			downloadFileFullName = new File(path + "/" + this.srcFileName);
+			//取得扩展名
+			String fileExt = this.srcFileName.substring(this.srcFileName.lastIndexOf("."), this.srcFileName.length());
+		    this.attachmentName = this.attachmentName + fileExt;
+		}
+		//System.out.println(downloadFileFullName);
+		//如果文件存在，则下载
+		if (downloadFileFullName.exists()) {	
+			//System.out.println("下载文件路径：" + downloadFileFullName.getAbsolutePath());
+			try {
+				this.attachmentName = new String(this.attachmentName.getBytes(),"ISO8859-1");
+				InputStream in = new FileInputStream(downloadFileFullName);
+				this.inputStream = in;
+			} catch (UnsupportedEncodingException e) {
+				e.printStackTrace();
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			}
+		}else{
+			setStatusMsg("文件不存在");
+			setStatusMsg("1");
+		}
+
+		return SUCCESS;
+	}
+
+	public String viewOkPhoto() {
+		InputStream in = null;
+		HttpServletResponse response = this.getResponse();
+		try {
+
+			String path = "";
+			path = super.getRealPath("/WEB-INF/attachment");
+			response.setHeader("Pragma", "No-cache");
+			response.setHeader("Cache-Control", "no-cache");
+			
+			if (srcFileName != null && srcFileName.length() > 0) {
+				in = new FileInputStream(new File(path + File.separator+ srcFileName));
+				// BufferedImage bi = ImageIO.read();
+				// ImageIO.write(bi, "JPEG", response.getOutputStream());
+				byte[] b = new byte[1024];
+				int len;
+				while ((len = in.read(b)) > 0) {
+					response.getOutputStream().write(b, 0, len);
+				}
+				response.getOutputStream().flush();
+				//PrintWriter out = response.getWriter();
+				//out.close();
+			//	out.ServletActionContext.getPageContext().pushBody();
+				//response.getOutputStream().close();
+				//response.getWriter().close();
+				//response.getWriter().flush();
+				
+				//out.c;
+				//out = response.getWriter().pushBody();
+			}
+		} catch (Exception e) {
+			// e.printStackTrace();
+		} finally {
+			try {
+				in.close();
+				response.getOutputStream().close();
+			} catch (IOException e) {
+				//e.printStackTrace();
+			}
+		}
+		return SUCCESS;
+	}
+	
+	public void setInputStream(InputStream inputStream) {
+		this.inputStream = inputStream;
+	}
+
+	public InputStream getInputStream() {
+		return inputStream;
+	}
+	
+	public String getAttachmentName() {
+		return attachmentName;
+	}
+
+	public void setAttachmentName(String attachmentName) {
+		this.attachmentName = attachmentName;
+	}
+
+	public String getDownloadFileType() {
+		return downloadFileType;
+	}
+
+	public void setDownloadFileType(String downloadFileType) {
+		this.downloadFileType = downloadFileType;
+	}
+
+	public String getSrcFileName() {
+		return srcFileName;
+	}
+
+	public void setSrcFileName(String srcFileName) {
+		this.srcFileName = srcFileName;
+	}
+
+	
+
+	
+}

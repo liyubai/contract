@@ -1,0 +1,126 @@
+/**
+ * 初始化页面加载
+ */
+$(function(){
+	/**
+	 * 查询方法
+	 */
+	$("#searchPaylist").click(function(){//返回
+		$("#pensionerHide").val($("#pensioner").val());
+		$("#ccontractidHide").val($("#ccontractid").val());
+		var yearStr = $("#yearStr").text();
+		if(yearStr=="年份"){
+			$("#cyear").val("");	
+		}
+		else
+			$("#cyear").val(yearStr);
+		checkForm();
+		$( "#searchForm" ).submit();
+	});
+	/*设置时间格式*/
+	for (var i = 0; i < $('.date1').length; i++) {
+		var date = $(".date1:eq(" + i + ")").val();
+		if (date != null) {
+			date = date.substring(0, 10);
+			$(".pdate:eq(" + i + ")").html(date);
+		}
+	}		
+});
+$(document).ready(function(){
+	/**
+	 * 加载年份
+	 */
+	var myDate= new Date(); 
+	var startYear=myDate.getFullYear()-9;//起始年份 
+	var endYear=myDate.getFullYear()+10;//结束年份 
+	var html="<li><a href='#N' val='年份' class='inline'><span class='ui-icon ui-icon-bullet' style='margin-left: -1.3em;'></span>年份</a></li>";
+	for (var i=startYear;i<=startYear+9;i++) 
+	{ 
+		var j=i-startYear;
+			if(j==0)
+				{
+				html+="<li><a href='#' class='inline' val='"+i+"'>"+i+"</a><a href='#' class='inline' val='"+i+10+"'>"+(i+10)+"</a></li>";
+				}
+			else
+				{
+				html+="<li><a href='#' class='inline' val='"+i+"'>"+i+"</a><a href='#' class='inline' val='"+i+10+"'>"+(i+10)+"</a></li>";
+				}
+
+	} 
+    $("#classSelect").html(html);
+
+    /**
+     * 加载训练状态
+     */
+   
+    var  data =getDics(512);
+    
+    var resultHtml=""
+    for(var j=1;j<data.dics.length;j++){
+    	
+    	if(data.dics[j].level==1){
+    		 resultHtml+="<li><a href='javascript:traintype("+data.dics[j].id+")' val='"+data.dics[j].name+"'><span class='ui-icon ui-icon-bullet'></span>"+data.dics[j].name+"</a></li>";
+    	}
+    }
+
+   for(var i=1;i<data.dics.length;i++){
+    	if(data.dics[i].level==""||data.dics[i].level!=1){
+    		resultHtml+="<li><a href='javascript:traintype("+data.dics[i].id+")' id = '"+data.dics[i].id+"' val='"+data.dics[i].name+"'>"+data.dics[i].name+"</li>"
+    	}
+    	
+    }
+    $("#status").html(resultHtml);
+    
+    /**
+     * 加载付款单位
+     */
+    var  data1 =getDics(2);
+    var resultHtml1=""
+    for(var j=1;j<data1.dics.length;j++){ 	
+    	if(data.dics[j].level==1){
+    		 resultHtml1+="<li><a href='javascript:getcompy("+data1.dics[j].id+")' val='"+data1.dics[j].name+"'><span class='ui-icon ui-icon-bullet'></span>"+data1.dics[j].name+"</a></li>";
+    	
+    	}
+    }
+    for(var i=1;i<data1.dics.length;i++){
+    	if(data1.dics[i].level==""||data1.dics[i].level!=1){
+    		resultHtml1+="<li><a href='javascript:getcompy("+data1.dics[i].id+")' id = '"+data1.dics[i].id+"' val='"+data1.dics[i].name+"'>"+data1.dics[i].name+"</li>"
+    	}
+    	
+    }
+    $("#paycompany").html(resultHtml1);
+    
+    new $.dropDownList(0, true, 150);
+    new $.dropDownList(1, true, 150);
+    new $.dropDownList(2, true, 150);
+	});
+
+function SearchUpdate(pid){
+	$("#serialHide").val(pid);
+	$("#searchUpdate").submit();
+}
+//获取训练状态的ID
+function traintype(id){
+	$("#trainingstatusHide").val(id);
+	$("#TrainingStatusStr").val(id);
+	
+}
+//获取付款单位的ID
+function getcompy(id){
+	$("#compyId").val(id);
+	$("#compyIdStr").val(id);
+}
+function checkForm(){
+	var TrainingStatusStr = $("#TrainingStatusStr").val();
+	var compyIdStr = $("#compyIdStr").val();
+	if(TrainingStatusStr==""){
+		$("#trainingstatusHide").val("0");
+	}
+	if(compyIdStr==""){
+		$("#compyId").val("0");
+	}
+	$("#trainingstatusHide").val(TrainingStatusStr);
+	$("#compyId").val(compyIdStr);	
+}
+
+	

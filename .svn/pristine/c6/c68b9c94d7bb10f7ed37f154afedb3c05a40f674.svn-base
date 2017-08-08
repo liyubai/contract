@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE struts PUBLIC
+    "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN"
+    "http://struts.apache.org/dtds/struts-2.0.dtd">
+<struts>
+	<package name="search_paylist" extends="ErsDefault" namespace="/">
+		<!-- 查询付款列表页面 -->
+		<action name="showPaylist" class="com.cauc.contract.ui.core.PayListAction"
+			method="showPaylist">
+			<result name="success">/pages/payment/cPaylist.jsp</result>
+		</action>
+		
+		<!-- 跳转修改页面 -->
+		<action name="updateSearch" class="com.cauc.contract.ui.core.PayListAction"
+			method="updateSearch">
+			<result name="success">/pages/payment/cUpdateContract.jsp</result>	
+		</action>
+		<!-- 保存修改付款页面 -->
+		<action name="updatepay" class="com.cauc.contract.ui.core.PayListAction"
+			method="updatePay">
+			<result name="success" type="redirectAction">
+			<param name="namespace">/</param>
+			<param name="actionName">showPaylist</param>
+			</result>
+			
+		</action>
+		<!--点击生成通知设置付款状态 -->
+		<action name="noticeStatus" class="com.cauc.contract.ui.core.PayListAction" method="noticeStatus">
+		</action>
+		<!-- 上传图片 -->
+		<action name="ProcessUpload" class="com.cauc.contract.ui.core.ProcessUpload"
+			method="ProcessUpload">
+			<result type="json">
+            </result>
+		</action>
+		
+		<!-- 生成通知的保存 -->
+		<action name="saveNotice" class="com.cauc.contract.ui.core.PayListAction"
+			method="saveNotice">
+		</action>
+		
+		<!-- 生成通知的保存并生成pdf-->
+		<action name="saveAndGenerateNotice" class="com.cauc.contract.ui.core.PayListAction"
+			method="saveAndGenerateNotice">
+		</action>
+		
+		<!-- 下载pdf-->
+		<action name="downloadPdf" class="com.cauc.contract.ui.core.PayListAction"
+			method="downloadPdf">
+		</action>
+		
+		<!-- 删除下载的pdf-->
+		<action name="delNoticeUrl" class="com.cauc.contract.ui.core.PayListAction"
+			method="delNoticeUrl">
+		</action>
+		
+
+	</package>
+</struts>

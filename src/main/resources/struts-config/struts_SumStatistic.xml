@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE struts PUBLIC
+    "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN"
+    "http://struts.apache.org/dtds/struts-2.0.dtd">
+<struts>
+	<package name="sumStatistic" extends="ErsDefault" namespace="/">
+		<!-- 显示按年统计结果 -->
+		<action name="sumStatistic" class="com.cauc.contract.ui.core.SumStatisticAction"
+			 	method="showStatistic">
+			 	<result name="success">/pages/collection/cCollectStatistics.jsp</result>	
+		</action>
+	   <!-- 显示按月统计结果-->
+		<action name="sumStatisticMonth" class="com.cauc.contract.ui.core.SumStatisticAction"
+			 	method="sumStatisticMonth">
+			 	<result name="success">/pages/collection/cCollectStatisticsMonth.jsp</result>	
+		</action> 	
+	</package>
+</struts> 

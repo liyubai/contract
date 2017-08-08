@@ -1,0 +1,744 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE struts PUBLIC
+    "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN"
+    "http://struts.apache.org/dtds/struts-2.0.dtd">
+<struts>
+	<package name="ajax_ontline" extends="ErsDefault" namespace="/system">
+	
+		<!-- 根据周与开始日期获取周的日期 -->
+		<action name="showDateByWeekAndSelectDate" class="com.cauc.training.ui.core.OutLineAction"
+		method="readDateByWeekAndSelectDate">
+			<result name="success" type="json">
+				<param name="root">id</param>
+			</result>
+		</action>
+		<!-- 点大纲获取单元、阶段课程合计 -->
+		<action name="showOutlineUnitPhaseListByOutlineId" class="com.cauc.training.ui.core.OutLineAction"
+		method="readOutlineUnitPhaseListByOutlineId">
+			<result name="success" type="json">
+				<param name="root">viewCompletionList</param>
+			</result>
+		</action>
+		<!-- 点单元获取阶段课程合计 -->
+		<action name="showUnitPhaseListByOutlineId" class="com.cauc.training.ui.core.OutLineAction"
+		method="readUnitPhaseListByOutlineId">
+			<result name="success" type="json">
+				<param name="root">viewCompletionList</param>
+			</result>
+		</action>
+		<!-- 课程排序 -->
+		<action name="saveTrainingLessonOrderByNum" class="com.cauc.training.ui.core.OutLineAction"
+		method="saveTrainingLessonOrderByNum">
+			<result name="success" type="json">
+				<param name="root">viewOrg</param>
+			</result>
+		</action>
+		<!-- 节点类型 -->
+		<action name="readTreeNodeTypeById" class="com.cauc.training.ui.core.OutLineAction"
+		method="readTreeNodeType">
+			<result name="success" type="json">
+				<param name="root">viewOrg</param>
+			</result>
+		</action>
+		<!-- 大纲下是否直接有加课 -->
+		<action name="isHasLessonById" class="com.cauc.training.ui.core.OutLineAction"
+		method="isHasLessonById">
+			<result name="success" type="json">
+				<param name="root">viewOrg</param>
+			</result>
+		</action>
+		<!-- 单元是否能加课 -->
+		<action name="ifCanAddLessonById" class="com.cauc.training.ui.core.OutLineAction"
+		method="ifCanAddLessonById">
+			<result name="success" type="json">
+				<param name="root">viewOrg</param>
+			</result>
+		</action>
+		<!-- 大纲下是否有阶段 -->
+		<action name="existOutlinePhaseById" class="com.cauc.training.ui.core.OutLineAction"
+		method="existOutlinePhaseById">
+			<result name="success" type="json">
+				<param name="root">viewOrg</param>
+			</result>
+		</action>
+		<!-- 大纲下是否有单元 -->
+		<action name="existOutlineUnitById" class="com.cauc.training.ui.core.OutLineAction"
+		method="existOutlineUnitById">
+			<result name="success" type="json">
+				<param name="root">viewOrg</param>
+			</result>
+		</action>
+		<!-- 显示分配大纲内容-->
+		<action name="showAssignOutlineDetailById" class="com.cauc.training.ui.core.OutLineAction"
+		method="readAssignOutlineDetailById">
+			<result name="success" type="json">
+				<param name="root">viewOutlineDetail</param>
+			</result>
+		</action>
+		<!-- 提交大纲-->
+		<action name="execOutlineSubmitAuditById" class="com.cauc.training.ui.core.OutLineAction"
+		method="execOutlineSubmitAuditById">
+			<result name="success" type="json">
+				<param name="root">viewOrg</param>
+			</result>
+		</action>
+		<!-- 复制大纲-->
+		<action name="execOutlineCopyById" class="com.cauc.training.ui.core.OutLineAction"
+		method="execOutlineCopyById">
+			<result name="success" type="json">
+				<param name="root">viewOrg</param>
+			</result>
+		</action>
+		<!-- 删除大纲-->
+		<action name="deleteOutlineById" class="com.cauc.training.ui.core.OutLineAction"
+		method="deleteOutlineById">
+			<result name="success" type="json">
+				<param name="root">viewOrg</param>
+			</result>
+		</action>
+		<!-- 删除分配课程 -->
+		<action name="deleteOutlinePhaseAndLessonRelation" class="com.cauc.training.ui.core.OutLineAction"
+		method="deleteOutlinePhaseAndLessonRelation">
+			<result name="success" type="json">
+				<param name="root">viewOrg</param>
+			</result>
+		</action>
+		<!-- 保存分配课程 -->
+		<action name="saveOutlinePhaseAndLessonRelation" class="com.cauc.training.ui.core.OutLineAction"
+		method="saveOutlinePhaseAndLessonRelation">
+			<result name="success" type="json">
+				<param name="root">lessonList</param>
+			</result>
+		</action>
+		<!-- 显示节点课目列表 -->
+		<action name="showVTrainingLessonListByParentId" class="com.cauc.training.ui.core.OutLineAction"
+			method="readVTrainingLessonListByParentId">
+			<result name="success" type="json">
+		       <param name="root">page</param>
+		    </result>
+		</action>
+		<!-- 显示分配课程列表 -->
+		<action name="showVTrainingLessonContentList" class="com.cauc.training.ui.core.OutLineAction"
+			method="readVTrainingLessonContentList">
+			<result name="success" type="json">
+		       <param name="root">page</param>
+		    </result>
+		</action>
+		<!-- 显示大纲列表 -->
+		<action name="showCanUsedOutlineList" class="com.cauc.training.ui.core.OutLineAction"
+			method="readCanUsedOutlineList">
+			<result name="success" type="json">
+		       <param name="root">page</param>
+		    </result>
+		</action>
+		<!-- 显示大纲阶段已分配课程列表 -->
+		<action name="showOutlinePhaseLessonList" class="com.cauc.training.ui.core.OutLineAction" method="readOutlinePhaseLessonList">
+			<result name="success" type="json">
+		       <param name="root">voutlineList</param>
+		    </result>
+		</action>
+		<!-- 显示大纲阶段列表 -->
+		<action name="showOutlinePhaseList" class="com.cauc.training.ui.core.OutLineAction" method="readOutlinePhaseList">
+			<result name="success" type="json">
+		       <param name="root">voutlineList</param>
+		    </result>
+		</action>
+		<!-- 显示大纲阶段对象 -->
+		<action name="showOutlinePhaseById" class="com.cauc.training.ui.core.OutLineAction" method="readOutlinePhaseById">
+			<result name="success" type="json">
+		       <param name="root">viewTrainlessonunit</param>
+		    </result>
+		</action>
+		<!-- 显示大纲单元对象 -->
+		<action name="showOutlineUnitById" class="com.cauc.training.ui.core.OutLineAction" method="readOutlineUnitById">
+			<result name="success" type="json">
+		       <param name="root">viewTrainlessonunit</param>
+		    </result>
+		</action>
+		<!-- 显示大纲单元列表 -->
+		<action name="showOutlineUnitList" class="com.cauc.training.ui.core.OutLineAction" method="readOutlineUnitList">
+			<result name="success" type="json">
+		       <param name="root">voutlineList</param>
+		    </result>
+		</action>
+		<!-- 保存大纲阶段 -->
+		<action name="saveOutlinePhase" class="com.cauc.training.ui.core.OutLineAction" method="saveOutlinePhase">
+			<result name="success" type="json">
+		       <param name="root">viewOrg</param>
+		    </result>
+		</action>
+		<!-- 更新大纲阶段 -->
+		<action name="updateOutlinePhase" class="com.cauc.training.ui.core.OutLineAction" method="updateOutlinePhase">
+			<result name="success" type="json">
+		       <param name="root">viewOrg</param>
+		    </result>
+		</action>
+		<!-- 删除大纲阶段-->
+		<action name="deleteOutlinePhase" class="com.cauc.training.ui.core.OutLineAction" method="deleteOutlinePhaseById">
+			<result name="success" type="json">
+		       <param name="root">viewOrg</param>
+		    </result>
+		</action>
+		<!-- 保存大纲单元 -->
+		<action name="saveOutlineUnit" class="com.cauc.training.ui.core.OutLineAction" method="saveOutlineUnit">
+			<result name="success" type="json">
+		       <param name="root">viewOrg</param>
+		    </result>
+		</action>
+		<!-- 更新大纲单元 -->
+		<action name="updateOutlineUnit" class="com.cauc.training.ui.core.OutLineAction" method="updateOutlineUnit">
+			<result name="success" type="json">
+		       <param name="root">viewOrg</param>
+		    </result>
+		</action>
+		<!-- 删除大纲单元 -->
+		<action name="deleteOutlineUnit" class="com.cauc.training.ui.core.OutLineAction" method="deleteOutlineUnitById">
+			<result name="success" type="json">
+		       <param name="root">viewOrg</param>
+		    </result>
+		</action>
+		<!-- 获取大纲单元科目对象 -->
+		<action name="showUnitSubjectDictionaryById" class="com.cauc.training.ui.core.OutLineAction" method="readUnitSubjectDictionaryById">
+			<result name="success" type="json">
+		       <param name="root">viewTimesubject</param>
+		    </result>
+		</action>
+		<!-- 获取大纲对象 -->
+		<action name="showTrainingOutlineContentById" class="com.cauc.training.ui.core.OutLineAction"
+		 method="readTrainingOutlineContentById">
+			<result name="success" type="json">
+		       <param name="root">viewOutlineDetail</param>
+		    </result>
+		</action>
+		<!-- 获取大纲列表 -->
+		<action name="showVOutlineDetailList" class="com.cauc.training.ui.core.OutLineAction" method="readVOutlineDetailList">
+			<result name="success" type="json">
+		       <param name="root">voutlineDetailList</param>
+		    </result>
+		</action>
+		<!-- 删除课程科目 -->
+		<action name="deleteSetTrainingLessonSubject" class="com.cauc.training.ui.core.OutLineAction" 
+			method="deleteSetTrainingLessonSubject">
+			<result name="success" type="json">
+				<param name="root">viewOrg</param>
+			</result>
+		</action>
+		<!-- 更新课程科目 -->
+		<action name="updateSetTrainingLessonSubject" class="com.cauc.training.ui.core.OutLineAction" 
+			method="updateSetTrainingLessonSubject">
+			<result name="success" type="json">
+				<param name="root">viewOrg</param>
+			</result>
+		</action>
+		<!-- 根据课程id获取课程已设置的科目列表 -->
+		<action name="showTrainingLessonSubjectListById" 
+		class="com.cauc.training.ui.core.OutLineAction" method="readTrainingLessonSubjectListById">
+			<result name="success" type="json">
+		       <param name="root">viewTrainsubjectList</param>
+		    </result>
+		</action>
+		<!-- 根据课程id获取课程已设置的科目列表 -->
+		<action name="showSetTrainsubjectListById" 
+		class="com.cauc.training.ui.core.OutLineAction" method="readSetTrainsubjectListById">
+			<result name="success" type="json">
+		       <param name="root">viewTrainsubjectList</param>
+		    </result>
+		</action>
+		<!-- 根据课程id获取课程科目列表 -->
+		<action name="showVTrainsubjectListById" 
+		class="com.cauc.training.ui.core.OutLineAction" method="readVTrainsubjectListById">
+			<result name="success" type="json">
+		       <param name="root">viewTrainsubjectList</param>
+		    </result>
+		</action>
+		
+		<!-- 根据课程id获取课程科目列表 -->
+		<action name="showTraininglessonSubjectRelationListById" 
+		class="com.cauc.training.ui.core.OutLineAction" method="readTraininglessonSubjectRelationListById">
+			<result name="success" type="json">
+		       <param name="root">viewTimesubjectList</param>
+		    </result>
+		</action>
+		
+		<!-- 根据课程id获取课程对象 -->
+		<action name="showTraininglessonContentById" 
+		class="com.cauc.training.ui.core.OutLineAction" method="readTraininglessonContentById">
+			<result name="success" type="json">
+		       <param name="root">trainingLessonContent</param>
+		    </result>
+		</action>
+		<!-- 根据课程id获取课程对象
+		<action name="showTraininglessonContentByNoId" 
+		class="com.cauc.training.ui.core.OutLineAction" method="readTraininglessonContentByNoId">
+			<result name="success" type="json">
+		       <param name="root">trainingLessonContent</param>
+		    </result>
+		</action> -->
+		
+		<!-- 获取站名对象 -->
+		<action name="showStationById" class="com.cauc.training.ui.core.OutLineAction" method="readStationById">
+			<result name="success" type="json">
+		       <param name="root">viewStation</param>
+		    </result>
+		</action>
+		<!-- 获取课程单元科目列表 -->
+		<action name="showTimesubjectByLessonUnitIdById" class="com.cauc.training.ui.core.OutLineAction" method="readTimesubjectByLessonUnitId">
+			<result name="success" type="json">
+		       <param name="root">viewTimesubjectList</param>
+		    </result>
+		</action>
+		<!-- 获取课程单元字典对象 -->
+		<action name="showTraininglessonunitdictionById" class="com.cauc.training.ui.core.OutLineAction" method="readTraininglessonunitdictionById">
+			<result name="success" type="json">
+		       <param name="root">viewStation</param>
+		    </result>
+		</action>
+		<!-- 获取课程单元字典对象 -->
+		<action name="showTraininglessonunitdictionByNoId" class="com.cauc.training.ui.core.OutLineAction"
+			method="readTraininglessonunitdictionByNoId">
+			<result name="success" type="json">
+		       <param name="root">viewStation</param>
+		    </result>
+		</action>
+		<!-- 获取训练科目分类对象 -->
+		<action name="showSubjectsortById" class="com.cauc.training.ui.core.OutLineAction" method="readSubjectsortById">
+			<result name="success" type="json">
+		       <param name="root">viewStation</param>
+		    </result>
+		</action>
+		<!-- 获取训练科目对象 -->
+		<action name="showTrainsubjectById" class="com.cauc.training.ui.core.OutLineAction" method="readTrainsubjectById">
+			<result name="success" type="json">
+		       <param name="root">viewTrainsubject</param>
+		    </result>
+		</action>
+		<!-- 获取站名列表 -->
+		<action name="showAllStationList" class="com.cauc.training.ui.core.OutLineAction" method="readStationList">
+			<result name="success" type="json">
+		       <param name="root">stationList</param>
+		    </result>
+		</action>
+		<!-- 获取航线对象 -->
+		<action name="showChangedbaseflylineById" class="com.cauc.training.ui.core.OutLineAction" method="readVChangedbaseflylineById">
+			<result name="success" type="json">
+		       <param name="root">viewLine</param>
+		    </result>
+		</action>
+		<!-- 根据训练课程id获取大纲列表-->
+		<action name="showOutlineListByLessonId" class="com.cauc.training.ui.core.OutLineAction" method="readOutlineListByLessonId">
+			<result name="success" type="json">
+		       <param name="root">voutlineList</param>
+		    </result>
+		</action>
+	</package>
+	<package name="outline_management" extends="ErsDefault" namespace="/system">	
+		<!-- 左侧导航列表 -->
+		
+		<action name="open_leftList" class="com.cauc.training.ui.core.OutLineAction" method="readLeftList">
+			<result name="success">/WEB-INF/outline/left.jsp</result>
+		</action>
+		
+		<!-- 创建大纲单元科目字典 -->
+		<action name="createUnitSubjectDictionary" class="com.cauc.training.ui.core.OutLineAction" method="createUnitSubjectDictionary">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_unitSubjectDictionaryList</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 更新大纲单元科目字典 -->
+		<action name="updateUnitSubjectDictionary" class="com.cauc.training.ui.core.OutLineAction" method="updateUnitSubjectDictionary">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_unitSubjectDictionaryList</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 删除大纲单元科目字典 -->
+		<action name="deleteUnitSubjectDictionary" class="com.cauc.training.ui.core.OutLineAction" method="deleteUnitSubjectDictionary">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_unitSubjectDictionaryList</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 大纲单元科目字典列表页面-->
+		<action name="open_unitSubjectDictionaryList" class="com.cauc.training.ui.core.OutLineAction"	method="readUnitSubjectDictionaryList">
+			<result name="success">/WEB-INF/outline/unitSubjectDictionaryList.jsp</result>
+		</action>
+		<!--以下为站名管理-->
+		<!-- 创建站名-->
+		<action name="createStation" class="com.cauc.training.ui.core.OutLineAction" method="createStation">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_stationList</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 更新站名-->
+		<action name="updateStation" class="com.cauc.training.ui.core.OutLineAction" method="updateStation">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_stationList</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 删除站名-->
+		<action name="deleteStation" class="com.cauc.training.ui.core.OutLineAction" method="deleteStation">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_stationList</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 站名列表页面-->
+		<action name="open_stationList" class="com.cauc.training.ui.core.OutLineAction"	method="readStationList">
+			<result name="success">/WEB-INF/outline/stationList.jsp</result>
+		</action>
+		
+		<!--以下为课程单元字典管理-->
+		<!-- 创建-->
+		<action name="createTraininglessonunitdiction" class="com.cauc.training.ui.core.OutLineAction"
+		method="createTraininglessonunitdiction">
+		<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_traininglessonunitdictionList</param>
+			<param name="statusMsg">${statusMsg}</param>
+		</result>
+	</action>
+	<!-- 更新-->
+	<action name="updateTraininglessonunitdiction" class="com.cauc.training.ui.core.OutLineAction"
+		method="updateTraininglessonunitdiction">
+		<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_traininglessonunitdictionList</param>
+			<param name="statusMsg">${statusMsg}</param>
+		</result>
+	</action>
+	<!-- 删除-->
+	<action name="deleteTraininglessonunitdiction" class="com.cauc.training.ui.core.OutLineAction"
+		method="deleteTraininglessonunitdiction">
+		<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_traininglessonunitdictionList</param>
+			<param name="statusMsg">${statusMsg}</param>
+		</result>
+	</action>
+		<!-- 列表页面-->
+		<action name="open_traininglessonunitdictionList" class="com.cauc.training.ui.core.OutLineAction"	
+			method="readTraininglessonunitdictionList">
+			<result name="success">/WEB-INF/outline/traininglessonunitdictionList.jsp</result>
+		</action>
+		
+
+		<!--以下为转场航线管理-->
+		<!-- 创建转场航线-->
+		<action name="createChangedbaseflyline" class="com.cauc.training.ui.core.OutLineAction" method="createChangedbaseflyline">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_changedbaseflylineList</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 更新转场航线-->
+		<action name="updateChangedbaseflyline" class="com.cauc.training.ui.core.OutLineAction" method="updateChangedbaseflyline">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_changedbaseflylineList</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 删除转场航线-->
+		<action name="deleteChangedbaseflyline" class="com.cauc.training.ui.core.OutLineAction" method="deleteChangedbaseflyline">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_changedbaseflylineList</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 转场航线列表 -->
+		<action name="open_changedbaseflylineList" class="com.cauc.training.ui.core.OutLineAction"	method="readChangedbaseflylineList">
+			<result name="success">/WEB-INF/outline/changedbaseflylineList.jsp</result>
+		</action>
+		
+		<!--以下为训练科目分类管理-->
+		<!-- 创建-->
+		<action name="createSubjectsort" class="com.cauc.training.ui.core.OutLineAction" method="createSubjectsort">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_subjectsortList</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 更新-->
+		<action name="updateSubjectsort" class="com.cauc.training.ui.core.OutLineAction" method="updateSubjectsort">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_subjectsortList</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 删除-->
+		<action name="deleteSubjectsort" class="com.cauc.training.ui.core.OutLineAction" method="deleteSubjectsort">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_subjectsortList</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 列表页面-->
+		<action name="open_subjectsortList" class="com.cauc.training.ui.core.OutLineAction"	method="readSubjectsortList">
+			<result name="success">/WEB-INF/outline/subjectsortList.jsp</result>
+		</action>
+		
+		<!--以下为训练科目管理-->
+		<!-- 创建-->
+		<action name="createTrainsubject" class="com.cauc.training.ui.core.OutLineAction" method="createTrainsubject">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_trainsubjectList</param>
+				<param name="statusMsg">${statusMsg}</param>
+				<param name="id">${id}</param>
+			</result>
+		</action>
+		<!-- 更新-->
+		<action name="updateTrainsubject" class="com.cauc.training.ui.core.OutLineAction" method="updateTrainsubject">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_trainsubjectList</param>
+				<param name="statusMsg">${statusMsg}</param>
+				<param name="id">${id}</param>
+			</result>
+		</action>
+		<!-- 删除-->
+		<action name="deleteTrainsubject" class="com.cauc.training.ui.core.OutLineAction" method="deleteTrainsubject">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_trainsubjectList</param>
+				<param name="statusMsg">${statusMsg}</param>
+				<param name="id">${id}</param>
+			</result>
+		</action>
+		<!-- 列表页面-->
+		<action name="open_trainsubjectList" class="com.cauc.training.ui.core.OutLineAction" method="readTrainsubjectList">
+			<result name="success">/WEB-INF/outline/trainsubjectList.jsp</result>
+		</action>
+		
+		<!--以下为训练课程管理-->
+		<!-- 创建-->
+		<action name="createTrainingLesson" class="com.cauc.training.ui.core.OutLineAction" method="createTrainingLesson">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_createTrainingLessonPage</param>
+				<param name="statusMsg">${statusMsg}</param>
+				<param name="unitid">${unitid}</param>
+			</result>
+		</action>
+		<!-- 复制-->
+		<action name="copyTrainingLesson" class="com.cauc.training.ui.core.OutLineAction" method="copyTrainingLesson">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_updateTrainingLessonPage</param>
+				<!--<param name="statusMsg">${statusMsg}</param>
+				<param name="unitid">${unitid}</param>
+				<param name="pageIndex">${pageIndex}</param>-->
+				<param name="id">${id}</param>
+			</result>
+		</action>
+		<!-- 更新-->
+		<action name="updateTrainingLesson" class="com.cauc.training.ui.core.OutLineAction" method="updateTrainingLesson">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_updateTrainingLessonPage</param>
+				<param name="statusMsg">${statusMsg}</param>
+				<param name="id">${id}</param>
+				<param name="unitid">${unitid}</param>
+			</result>
+		</action>
+		
+		<!-- 删除-->
+		<action name="deleteTrainingLesson" class="com.cauc.training.ui.core.OutLineAction" method="deleteTrainingLesson">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_trainingLessonList</param>
+				<param name="statusMsg">${statusMsg}</param>
+				<param name="unitid">${unitid}</param>
+			</result>
+		</action>
+		<!-- 打开创建课程页面-->
+		<action name="open_createTrainingLessonPage" class="com.cauc.training.ui.core.OutLineAction" method="openTrainingLessonPage">
+			<result name="success">/WEB-INF/outline/createTrainingLessonPage.jsp</result>
+			<result name="input" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_trainingLessonList</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 打开更新页面-->
+		<action name="open_updateTrainingLessonPage" class="com.cauc.training.ui.core.OutLineAction" method="readTrainingLessonById">
+			<result name="success">/WEB-INF/outline/updateTrainingLessonPage.jsp</result>
+			<result name="input" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_trainingLessonList</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 列表页面-->
+		<action name="open_trainingLessonList" class="com.cauc.training.ui.core.OutLineAction" method="readTrainingLessonList">
+			<result name="success">/WEB-INF/outline/trainingLessonList.jsp</result>
+		</action>
+		
+		<!-- 设置课程科目列表页面-->
+		<action name="open_setTrainingLessonSubjectList" class="com.cauc.training.ui.core.OutLineAction" 
+			method="readSetTrainingLessonSubjectList">
+			<result name="success">/WEB-INF/outline/setTrainingLessonSubjectList.jsp</result>
+		</action>
+		
+		<!-- 转场课程列表页面-->
+		<action name="open_changeBasetrainingLessonList" class="com.cauc.training.ui.core.OutLineAction"
+			 method="readChangeBaseTrainingLessonList">
+			<result name="success">/WEB-INF/outline/changeBaseTrainingLessonList.jsp</result>
+		</action>
+		<!-- 为转场的课程分配转场航线 -->
+		<action name="saveTrainingLessonChangeBaseLine" class="com.cauc.training.ui.core.OutLineAction" 
+			method="saveTrainingLessonChangeBaseLine">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_changeBasetrainingLessonList</param>
+				<param name="statusMsg">${statusMsg}</param>
+				<param name="unitid">${unitid}</param>
+			</result>
+		</action>
+		<!-- 保存课程科目设置 -->
+		<action name="saveSetTrainingLessonSubject" class="com.cauc.training.ui.core.OutLineAction" method="saveSetTrainingLessonSubject">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_setTrainingLessonSubjectList</param>
+				<param name="statusMsg">${statusMsg}</param>
+				<param name="unitid">${unitid}</param>
+			</result>
+		</action>
+		<!--课程科目排序 -->
+		<action name="subjectOrder" class="com.cauc.training.ui.core.OutLineAction" method="subjectOrder">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_trainsubjectList</param>
+				<param name="id">${id}</param>
+			</result>
+		</action>
+		<action name="saveOrderByNum" class="com.cauc.training.ui.core.OutLineAction" method="saveOrderByNum">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">${changeBase}</param>
+				<param name="id">${id}</param>
+			</result>
+		</action>
+		<!--课程科目分类排序 -->
+		<action name="subjectSortOrder" class="com.cauc.training.ui.core.OutLineAction" method="subjectSortOrder">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_subjectsortList</param>
+			</result>
+		</action>
+		<!-- 删除转场课程分配的航线 -->
+		<action name="deleteTrainingLessonChangeBaseLine" class="com.cauc.training.ui.core.OutLineAction" 
+		 method="deleteTrainingLessonChangeBaseLine">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_changeBasetrainingLessonList</param>
+				<param name="statusMsg">${statusMsg}</param>
+				<param name="unitid">${unitid}</param>
+			</result>
+		</action>
+		<!-- 大纲管理 -->
+		<action name="open_outLineList" class="com.cauc.training.ui.core.OutLineAction"	method="readOutLineList">
+			<result name="success">/WEB-INF/outline/outLineList.jsp</result>
+		</action>
+		<!-- 打开创建大纲页面-->
+		<action name="open_createOutlinePage" class="com.cauc.training.ui.core.OutLineAction" method="openCreateOutlinePage">
+			<result name="success">/WEB-INF/outline/createOutlinePage.jsp</result>
+			<result name="input" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_outLineList</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 打开编辑大纲页面-->
+		<action name="open_editOutlinePage" class="com.cauc.training.ui.core.OutLineAction" method="openUpdateOutlinePage">
+			<result name="success">/WEB-INF/outline/updateOutlinePage.jsp</result>
+			<result name="input" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_outLineList</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 创建大纲-->
+		<action name="createOutline" class="com.cauc.training.ui.core.OutLineAction" method="createOutline">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_createOutlinePage</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 更新大纲-->
+		<action name="updateOutline" class="com.cauc.training.ui.core.OutLineAction" method="updateOutline">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_editOutlinePage</param>
+				<param name="statusMsg">${statusMsg}</param>
+				<param name="id">${id}</param>
+			</result>
+		</action>
+		
+		<!-- 大纲 符合性校验 -->
+		<action name="open_outlineCheckList" class="com.cauc.training.ui.core.OutLineAction" method="readOutLineCheckList">
+			<result name="success">/WEB-INF/outline/outLineCheckList.jsp</result>
+		</action>
+		<!-- 大纲 审批-->
+		<action name="open_outlineAuditList" class="com.cauc.training.ui.core.OutLineAction" method="readOutLineAuditList">
+			<result name="success">/WEB-INF/outline/outlineAuditList.jsp</result>
+		</action>
+		<!-- 审批大纲-->
+		<action name="auditOutline" class="com.cauc.training.ui.core.OutLineAction" method="auditOutlineById">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_outlineAuditList</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 分配大纲-->
+		<action name="assignOutline" class="com.cauc.training.ui.core.OutLineAction" method="assignOutline">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_studentAssignOutlineList</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 更换大纲-->
+		<action name="changedOutline" class="com.cauc.training.ui.core.OutLineAction" method="changedOutline">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_studentOutlineChanged</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 分配大纲-->
+		<action name="escAssignOutline" class="com.cauc.training.ui.core.OutLineAction" method="escAssignOutline">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_studentAssignOutlineList</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 学员分配大纲  -->
+		<action name="open_studentAssignOutlineList" class="com.cauc.training.ui.core.OutLineAction"
+			 method="readStudentAssignOutlineList">
+			<result name="success">/WEB-INF/outline/studentAssignOutlineList.jsp</result>
+		</action>
+		<!-- 学员大纲变更-->
+		<action name="open_studentOutlineChanged" class="com.cauc.training.ui.core.OutLineAction"
+			 method="readStudentOutlineChangedList">
+			<result name="success">/WEB-INF/outline/studentOutlineChanged.jsp</result>
+		</action>
+	</package>
+</struts> 

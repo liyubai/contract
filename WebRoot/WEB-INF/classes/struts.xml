@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE struts PUBLIC
+    "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN"
+    "http://struts.apache.org/dtds/struts-2.0.dtd">
+<struts>
+    <constant name="struts.enable.DynamicMethodInvocation" value="false" />  
+    <constant name="struts.devMode" value="true" />  
+    <constant name="struts.i18n.encoding" value="UTF-8" /> 
+    <constant name="struts.action.extension" value="do" />
+    <constant name="struts.ui.theme" value="simple" />
+    <constant name="struts.ui.templateDir" value="template" /> 
+    <constant name="struts.ui.templateSuffix" value="ftl" /> 
+    <constant name="struts.multipart.maxSize" value="50428800" />
+    <constant name="struts.url.https.port" value="8443" />
+    <constant name="struts.custom.i18n.resources" value="applicationResource"/>
+    <package name="ErsDefault" extends="json-default" namespace="/"> 
+     	<interceptors>
+            <interceptor name="loginInterceptor" class="com.cauc.contract.ui.common.LoginInterceptor"/>
+            <interceptor name="fileUploadInteceptor" class="com.cauc.contract.ui.common.FileUploadIntercepter"/>     	
+            <interceptor-stack name="systemDefaultStack">
+                <!--登录校验-->
+                <interceptor-ref name="loginInterceptor"/>
+                <!--对上传文件的.校验-->
+                <interceptor-ref name="fileUploadInteceptor">
+                	<param name="maximumSize">50485760</param>
+                </interceptor-ref>
+                <interceptor-ref name="defaultStack"/>
+            </interceptor-stack>     	
+     	</interceptors>
+     	<!--baib  <default-interceptor-ref name="systemDefaultStack"/>-->
+     	<default-action-ref name="pageNotFund"/>
+    	<global-results>   	 
+            <result name="login" type="redirectAction">             
+                <param name="namespace">/</param>     
+                <param name="actionName">open_login</param>
+                <param name="redirectTo">${#request.redirectTo}</param>
+            </result>   	
+            <result name="error" type="redirectAction">
+                <param name="namespace">/</param>
+                <param name="actionName">open_error</param>
+                <param name="errorMessage">${errorMessage}</param>
+            </result>  
+            <result name="index" type="redirectAction">
+                <param name="namespace">/</param>
+                <param name="actionName">index</param>
+            </result>              		
+    	</global-results>  
+        <action name="open_error" class="com.cauc.contract.ui.common.BaseActionSupport" method="forward">            
+            <result name="success">/pages/common/defaultErrorPage.jsp</result>
+        </action> 
+        <action name="pageNotFund" class="com.cauc.contract.ui.common.BaseActionSupport" method="forward"> 
+		   <result>/pages/error.html</result> 
+		</action>
+    </package>    
+    <package name="login" extends="ErsDefault" namespace="/">
+        <action name="*Login" class="com.cauc.contract.ui.common.LoginSupportAction" method ="{1}Login">            
+            <result name="success" type="redirect">${redirectTo}</result>
+            <result name="input">${loginPage}</result>
+        </action>
+        <!-- 子系统跳转 删除 Baib
+        <action name="open_login" class="com.cauc.training.ui.common.LoginSupportAction" method ="openLogin">            
+            <result name="success">${loginPage}</result>
+        </action>-->
+        <!-- 删除 Baib
+         <action name="open_signLogin" class="com.cauc.training.ui.common.LoginSupportAction" method ="openSignLoginPage">            
+            <result name="success">WEB-INF/system/usbkLogin.jsp</result>
+        </action>
+        <action name="open_secondLogin" class="com.cauc.training.ui.common.LoginSupportAction" method ="openSignSecondLoginPage">            
+            <result name="success">WEB-INF/system/usbkSecondLogin.jsp</result>
+            <result name="input" type="redirectAction">
+				<param name="actionName">open_signLogin</param>
+			</result>
+        </action>-->
+        <!-- USB登录 删除 Baib
+        <action name="usbKeyUserLoginWith" class="com.cauc.training.ui.common.LoginSupportAction" method ="usbKeyUserLogin">            
+             <result name="success" type="redirectAction">
+                <param name="namespace">/</param>     
+                <param name="actionName">open_secondLogin</param>
+            </result>
+            <result name="input" type="redirectAction">
+				<param name="actionName">open_signLogin</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+			
+        </action> -->
+         <!-- USB登录 删除 Baib
+         	<action name="systemUserSecondLogin" class="com.cauc.training.ui.common.LoginSupportAction" method ="usbKeyUserSecondLogin">
+            <result name="success" type="redirect">${redirectTo}</result>
+            <result name="input">WEB-INF/system/usbkSecondLogin.jsp</result>
+            <result name="login" type="redirectAction">             
+                <param name="namespace">/</param>     
+                <param name="actionName">open_signLogin</param>
+            </result>  
+        </action> -->
+    </package>  
+    <package name="logout" extends="ErsDefault" namespace="/">
+        <action name="logout" class="com.cauc.contract.ui.common.LoginSupportAction" method ="logout">
+            <result name="success" type="redirectAction">
+                <param name="namespace">${nameSpace}</param>     
+                <param name="actionName">index</param>
+            </result>
+        </action>
+    </package>  
+        
+     <package name="getDics" extends="ErsDefault" namespace="/dics">
+        <action name="getDics" class="com.cauc.contract.ui.common.DictionaryAction" method ="getDics">
+            <result type="json">
+            </result>
+        </action>
+    </package> 
+    <!--getAllDics -->
+    <package name="getAllDics" extends="ErsDefault" namespace="/dics">
+        <action name="getAllDics" class="com.cauc.contract.ui.common.DictionaryAction" method ="getAllDics">
+            <result type="json">
+            </result>
+        </action>
+    </package>    
+       <package name="pagehelp" extends="ErsDefault" namespace="/contract">
+            <action name="pageTest" class="com.cauc.contract.ui.core.pagetestAction" method="showPage"> 
+		   <result>/pages/common/pageTest.jsp</result> 
+		</action>
+    </package>  
+    
+    <!-- 合同管理  -->
+    <include file="struts-config/struts_contractList.xml"/>
+    <!-- 具体业务struts配置文件 baib star -->
+    <!-- 新增合同 baib-->
+	<include file="struts-config/struts_contract_modify.xml"/> 
+	<!-- 学生管理CY-->
+	<include file="struts-config/struts_student.xml"/> 
+    <!-- 具体业务 baib End -->
+	<!-- 查询付款列表 Pxy-->
+    <include file="struts-config/struts_paylist.xml"/>
+    <!-- 主页Gt -->
+    <include file="struts-config/struts_mainDeal.xml"></include>
+    <!-- 汇总统计Gt-->
+    <include file="struts-config/struts_SumStatistic.xml"></include>
+    <!-- 平均统计Gt -->
+    <include file="struts-config/struts_AverageStatistic.xml"></include>
+    	<!-- 原框架中具体业务删除 baib End -->
+	<!-- 数据字典管理 -->
+	<include file="struts-config/struts_DataDictionaryManage.xml" />
+    <!-- 原框架中具体业务删除 baib star -->
+	<!-- 待办管理 
+	<include file="struts-config/struts_todoing.xml"/>-->
+	<!-- 大纲管理 
+	<include file="struts-config/struts_outline.xml"/>-->
+	<!-- 航空器管理 
+	<include file="struts-config/struts_plane.xml"/>-->
+	<!-- 功能模块管理 
+	<include file="struts-config/struts_function.xml"/>-->
+	<!-- 机构管理
+	<include file="struts-config/struts_org.xml"/>-->
+	<!-- 学员管理 -
+	<include file="struts-config/struts_student.xml"/>-->
+	<!-- 教员管理
+	<include file="struts-config/struts_teacher.xml"/>-->
+	<!-- 其他人员管理
+	<include file="struts-config/struts_anotherPeople.xml"/>-->
+	<!-- 飞行训练管理
+	<include file="struts-config/struts_training.xml"/>-->
+	<!-- 统计报表
+	<include file="struts-config/struts_statistics.xml"/> -->
+	<!-- 管理员使用的站点 
+	<include file="struts-config/struts_system.xml"/>-->
+	<!-- 合同管理
+	<include file="struts-config/struts_contract.xml"/> -->
+	<!-- 原框架中具体业务删除 baib End -->
+	<include file="struts-config/struts_account.xml"/> 
+         <include file="struts-config/struts_dataDictionary.xml"/>
+    <include file="struts-config/struts_RoleList.xml"/>
+    <include file="struts-config/struts_contractUser.xml"/>
+    <include file="struts-config/struts_userLogin.xml"/>
+    <include file="struts-config/struts_payStatistics.xml"/>
+    
+
+</struts>

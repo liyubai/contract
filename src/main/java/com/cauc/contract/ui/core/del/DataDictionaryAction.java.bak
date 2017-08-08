@@ -1,0 +1,42 @@
+package com.cauc.training.ui.core.del;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.pojos.TDiction;
+import com.cauc.training.ui.common.BaseActionSupport;
+
+public class DataDictionaryAction extends BaseActionSupport{
+	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -3189665413527444770L;
+	private TDiction dic;
+	
+	public String saveDataDictionary(){
+		
+		try {
+			getFactory().getFinanceProviderInstance().getDataDictionaryService().saveDataDic(dic);
+		} catch (FinanceServiceException e) {
+			addActionError(e.getMessage());
+			e.printStackTrace();
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		
+		return SUCCESS;
+	}
+
+
+	
+	
+	//setter and getter-----------
+	
+		public TDiction getDic() {
+		return dic;
+	}
+
+	public void setDic(TDiction dic) {
+		this.dic = dic;
+	}
+
+}

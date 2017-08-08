@@ -1,0 +1,105 @@
+package com.cauc.training.business.hibernate;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import org.hibernate.HibernateException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.business.IOrgService;
+import com.cauc.training.business.dao.GenericHibernateDAO;
+import com.cauc.training.pojos.TOrg;
+import com.cauc.training.pojos.TStuassigngroup;
+import com.cauc.training.vo.VOrg;
+
+@Service
+public class OrgServiceImpl extends GenericHibernateDAO implements IOrgService {
+
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void deleteOrgById(String id)
+			throws FinanceServiceException {
+
+		try {
+				if(super.findBy(TStuassigngroup.class, "TOrg.VId", id).size()>0){
+					
+					throw new FinanceServiceException("机构已经被引用，不能删除。");
+				}
+			
+				if(super.findBy(TOrg.class, "VParentid", id).size()>0){
+					throw new FinanceServiceException("该机构已经有下级机构不能删除。");
+				}
+			
+				super.removeById(TOrg.class, id);
+		}catch (HibernateException e) {
+			e.printStackTrace();
+			throw new FinanceServiceException("删除机构失败", e);
+		}
+	}
+	
+
+	@SuppressWarnings("unchecked")
+	public List<VOrg> readOrgList(String id)
+			throws FinanceServiceException {
+		
+		try {
+			List<VOrg> vList = new ArrayList<VOrg>();
+			String hql = " from TOrg order by DCreateDate";
+			List<TOrg> list = super.find(hql);
+			VOrg vo;
+			for(TOrg t:list){
+				vo = new VOrg();
+				vo.setVId(t.getVId());
+				vo.setVParentid(t.getVParentid());
+				vo.setMessage(t.getVName());
+				vList.add(vo);
+			}
+			
+			return vList;
+		} catch (HibernateException e) {
+			throw new FinanceServiceException("读取机构信息列表失败", e);
+		}
+	}
+
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void saveOrg(TOrg org)
+			throws FinanceServiceException {
+		try {
+			org.setDCreateDate(new Date());
+			org.setIStatus(QUERY_KEY_STATUS_EFFECT);
+			super.save(org);
+		}catch (HibernateException e) {
+			throw new FinanceServiceException("保存机构失败", e);
+			
+		}
+		
+	}
+
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void updateOrg(TOrg org)
+			throws FinanceServiceException {
+		try {
+			TOrg old = super.get(TOrg.class, org.getVId());
+			old.setVName(org.getVName());
+			super.update(old);
+		}catch (HibernateException e) {
+			throw new FinanceServiceException("更新机构对象失败", e);
+		}
+		
+	}
+
+
+	@SuppressWarnings("unchecked")
+	public List<TOrg> readBaseList(String parentid,String id)
+			throws FinanceServiceException {
+		try {
+			String hql = " from TOrg where VParentid=? and VId<>?";
+			return super.find(hql, parentid,id);
+		}
+		catch (HibernateException e) {
+			throw new FinanceServiceException("获取基地列表失败", e);
+		}	
+	}
+
+}

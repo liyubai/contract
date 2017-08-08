@@ -1,0 +1,49 @@
+package com.cauc.training.util.del;
+
+import java.math.BigInteger;
+
+public class CheckInfoBean implements java.io.Serializable{
+	private static final long serialVersionUID = 531353494713264792L;
+	private BigInteger ableStuNum = new BigInteger("0");//有效的考生数量
+	private BigInteger stuBmdjbNum = new BigInteger("0");//报名登记表数量
+	private BigInteger seatNum = new BigInteger("0");//座位的数量
+	private BigInteger noSeatNum = new BigInteger("0");//没有座位的数量
+	private BigInteger emptySeatNum = new BigInteger("0");//空座数量
+	private BigInteger noSameNum =new BigInteger("0");//判断数据库中考场号、座位号、考点号三个在一起，是否与准考证号形成了严格对应规则。该项结果必须为0
+	public BigInteger getAbleStuNum() {
+		return ableStuNum;
+	}
+	public void setAbleStuNum(BigInteger ableStuNum) {
+		this.ableStuNum = ableStuNum;
+	}
+	public BigInteger getStuBmdjbNum() {
+		return stuBmdjbNum;
+	}
+	public void setStuBmdjbNum(BigInteger stuBmdjbNum) {
+		this.stuBmdjbNum = stuBmdjbNum;
+	}
+	public BigInteger getSeatNum() {
+		return seatNum;
+	}
+	public void setSeatNum(BigInteger seatNum) {
+		this.seatNum = seatNum;
+	}
+	public BigInteger getNoSeatNum() {
+		return noSeatNum;
+	}
+	public void setNoSeatNum(BigInteger noSeatNum) {
+		this.noSeatNum = noSeatNum;
+	}
+	public BigInteger getEmptySeatNum() {
+		return emptySeatNum;
+	}
+	public void setEmptySeatNum(BigInteger emptySeatNum) {
+		this.emptySeatNum = emptySeatNum;
+	}
+	public BigInteger getNoSameNum() {
+		return noSameNum;
+	}
+	public void setNoSameNum(BigInteger noSameNum) {
+		this.noSameNum = noSameNum;
+	}
+}

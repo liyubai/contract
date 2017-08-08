@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>main</title>
+
+<link rel="stylesheet" href="themes/cupertino/jquery.ui.all.css">
+<script src="scripts/jquery.min.js"></script>
+<script src="scripts/jquery-ui.min.js"></script>
+<script src="scripts/ui/jquery.ui.position.min.js"></script>
+<script src="scripts/ui/jquery.ui.core.min.js"></script>
+<script src="scripts/ui/jquery.ui.widget.min.js"></script>
+<script src="scripts/ui/jquery.ui.button.min.js"></script>
+<script src="scripts/ui/jquery.ui.tabs.min.js"></script>
+<script src="scripts/ui/jquery.ui.dialog.min.js"></script>
+<script src="scripts/ui/jquery.ui.menu.min.js"></script>
+<script src="scripts/function.min.js"></script>
+
+<style>
+/*功能9*/
+fieldset { padding: 0 1em 0 1em; border:0; width: 85%; }
+div#usersContain { width: 350px; }
+div#usersContain table { border-collapse: collapse; width: 100%; }
+div#usersContain table td, div#users-contain table th { border: 1px solid #eee; text-align: left; }
+.validateTips { border: 1px solid transparent; padding: 0 0.5em 0 0.5em; margin: 0; line-height: 30px; }
+/*功能9*/
+
+</style>
+<script>
+$(function() {
+
+	//功能9
+	var name = $( "#name" ),
+		email = $( "#email" ),
+		phone = $( "#phone" ),
+		allFields = $( [] ).add( name ).add( email ).add( phone ),
+		tips = $( ".validateTips" );
+
+	function updateTips( t ) {
+		tips.html( t ).addClass( "ui-state-highlight" );
+		setTimeout(function() {
+			tips.removeClass( "ui-state-highlight", 1500 );
+		}, 2000 );
+	}
+
+	function checkLength( o, n, min, max ) {
+		if ( o.val().length > max || o.val().length < min ) {
+			o.addClass( "error" ).focus();
+			updateTips( "<span class='ui-icon-custom ui-icon-custom-warning' style='margin-top: 6px;'></span>" + n + "的长度必须在" +
+				min + "和" + max + "之间" );
+			return false;
+		} else {
+			return true;
+		}
+	}
+
+	function checkRegexp( o, regexp, n ) {
+		if ( !( regexp.test( o.val() ) ) ) {
+			o.addClass( "error" ).focus();
+			updateTips( "<span class='ui-icon-custom ui-icon-custom-warning' style='margin-top: 6px;'></span>" + n );
+			return false;
+		} else {
+			return true;
+		}
+	}
+
+	$( "#dialogForm1" ).dialog({
+		autoOpen: false,
+		height: 300,
+		width: 500,
+		background: '#FF0000', // 背景色
+		opacity: 0.27,     // 透明度
+		modal: true,
+		resizable: false,
+		buttons: {
+			"确 定": function() {
+				//确定按钮的处理代码段：
+				var bValid = true;
+				allFields.removeClass( "error" );
+
+				bValid = bValid && checkLength( name, "姓名", 3, 16 );
+				bValid = bValid && checkLength( email, "邮箱地址", 6, 80 );
+				bValid = bValid && checkLength( phone, "手机号", 11, 11 );
+
+				bValid = bValid && checkRegexp( name, /^([\u4e00-\u9fa5])+$/i, "姓名的格式不正确" );
+				// From jquery.validate.js (by joern), contributed by Scott Gonzalez: http://projects.scottsplayground.com/email_address_validation/
+				bValid = bValid && checkRegexp( email, /^((([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+(\.([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+)*)|((\x22)((((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(([\x01-\x08\x0b\x0c\x0e-\x1f\x7f]|\x21|[\x23-\x5b]|[\x5d-\x7e]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(\\([\x01-\x09\x0b\x0c\x0d-\x7f]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]))))*(((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(\x22)))@((([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.)+(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.?$/i, "邮箱地址的格式不正确" );
+				bValid = bValid && checkRegexp( phone, /^1([0-9])+$/, "请填写正确的手机号" );
+
+				if ( bValid ) {
+					$( "#users tbody" ).append( "<tr>" +
+						"<td>" + name.val() + "</td>" +
+						"<td>" + email.val() + "</td>" +
+						"<td>" + phone.val() + "</td>" +
+					"</tr>" );
+					$( this ).dialog( "close" );
+				}
+			},
+			"取 消": function() {
+				$( this ).dialog( "close" );
+			}
+		},
+		close: function() {
+			allFields.val( "" ).removeClass( "error" );
+		}
+	});
+
+	$("#modalDialogButton1").click(function(){
+		tips.removeClass("ui-state-highlight").html("请填写所有信息");
+		$("#modalDialogButton1 input.error").removeClass("error");
+		$( "#dialogForm1" ).dialog( "open" );
+	});
+	$("#modalDialogButton2").click(function(){
+		tips.removeClass("ui-state-highlight").html("请填写所有信息");
+		$("#modalDialogButton1 input.error").removeClass("error");
+		$( "#dialogForm1" ).dialog( "open" );
+	});
+	//功能9
+});
+</script>
+<!-- 此js务必放在所有页面自带的js后面加载 -->
+<script src="scripts/base.min.js"></script>
+</head>
+<body class="hide">
+
+<div id="leftPartA"><div>
+
+<ul class="itemList">
+	<li><a class="navLink" href="main1.html" id="navLink0" title="我的首页">我的首页</a><!-- (10) --></li>
+	<li><a class="navLink" href="peopleManage.html" id="navLink1" title="人员管理">人员管理</a></li>
+	<li><a class="navLink" href="trainingManage.html" id="navLink2" title="飞行训练管理">飞行训练管理</a></li>
+	<li><a class="navLink" href="aircraftManage.html" id="navLink3" title="航空器管理">航空器管理</a></li>
+	<li><a class="navLink" href="summaryManage.html" id="navLink4" title="飞行训练大纲管理">飞行训练大纲管理</a></li>
+	<li><a class="navLink" href="systemManage.html" id="navLink5" title="系统管理">系统管理</a></li>
+	<li><a class="navLink" href="marksManage.html" id="navLink6" title="成绩管理">成绩管理</a>
+</ul>
+<span class="panelLine"></span>
+<ul class="itemList">
+	<li><a class="navLink" href="Func1.html" id="navLink101" title="功能展示1">功能展示1</a></li>
+	<li><a class="navLink" href="Func2.html" id="navLink102" title="功能展示2">功能展示2</a></li>
+	<li><a class="navLink" href="Func3.html" id="navLink103" title="功能展示3">功能展示3</a></li>
+	<li><a class="navLink" href="Func4.html" id="navLink104" title="功能展示4">功能展示4</a></li>
+	<li><a class="navLink" href="Func5.html" id="navLink105" title="功能展示5">功能展示5</a></li>
+	<li><a class="navLink" href="Func6.html" id="navLink106" title="功能展示6">功能展示6</a></li>
+	<li><a class="navLink" href="Func7.html" id="navLink107" title="功能展示7">功能展示7</a></li>
+	<li><a class="navLink" href="Func8.html" id="navLink108" title="功能展示8">功能展示8</a></li>
+	<li class="active"><a class="navLink" href="Func9.html" id="navLink109" title="功能展示9">功能展示9</a></li>
+	<li><a class="navLink" href="Func10.html" id="navLink110" title="功能展示10">功能展示10</a></li>
+</ul>
+<ul class="foldList">
+	<li><span class="ui-icon ui-icon-carat-1-e"></span>功能展示11</li>
+	<ul class="itemList hide">
+		<li><a class="navLink" href="Func11.html" id="navLink111" title="功能展示11" tabTitle="功能展示11[HTML]">HTML版本</a></li>
+		<li><a class="navLink" href="Func11_1.html" id="navLink11101" title="功能展示11" tabTitle="功能展示11[JS]">JS版本</a></li>
+	</ul>
+</ul>
+<ul class="itemList">
+	<li><a class="navLink" href="Func12.html" id="navLink112" title="功能展示12">功能展示12</a></li>
+	<li><a class="navLink" href="Func13.html" id="navLink113" title="功能展示13">功能展示13</a></li>
+	<li><a class="navLink" href="Func14.html" id="navLink114" title="功能展示14">功能展示14</a></li>
+</ul>
+
+</div></div>
+
+
+
+<div id="rightPartA"><div>
+
+<div class="testDiv">
+功能9：模态弹出窗
+<div id="dialogForm1" title="快速添加联系人">
+	<p class="validateTips">请填写所有信息</p>
+	<form>
+	<fieldset>
+		<label for="name">姓名</label>
+		<input type="text" name="name" id="name" class="text ui-widget-content ui-corner-all" />
+		<label for="email">邮箱地址</label>
+		<input type="text" name="email" id="email" value="" class="text ui-widget-content ui-corner-all" />
+		<label for="phone">手机号</label>
+		<input type="text" name="phone" id="phone" value="" class="text ui-widget-content ui-corner-all" />
+	</fieldset>
+	</form>
+</div>
+
+
+<div id="usersContain" class="ui-widget">
+	<table id="users" class="ui-widget ui-widget-content">
+		<thead>
+			<tr class="ui-widget-header ">
+				<th>姓名</th>
+				<th>邮箱地址</th>
+				<th>手机/电话</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td>刘德华</td>
+				<td>liudehua@163.com</td>
+				<td>13896009800</td>
+			</tr>
+		</tbody>
+	</table>
+</div>
+<button id="modalDialogButton1" class="green" primary="ui-icon-button-addperson">点击弹出</button>
+<button id="modalDialogButton2" class="green" primary="ui-icon-button-addnew">点击弹出</button>
+</div>
+
+</div></div>
+
+
+
+<div id="bottomPartA"><div>
+
+<button class="green" style="position: absolute; left: 10px;">保存</button>
+<button class="normal" style="position: absolute; left: 70px;">取消</button>
+<button class="normal" style="position: absolute; right: 30px;">还原为默认</button>
+
+</div></div>
+
+</body>
+</html>

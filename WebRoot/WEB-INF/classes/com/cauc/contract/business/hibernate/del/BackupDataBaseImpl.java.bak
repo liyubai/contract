@@ -1,0 +1,76 @@
+package com.cauc.training.business.hibernate;
+
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+
+import org.springframework.stereotype.Service;
+import com.cauc.training.config.CuacConfig;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.business.IBackupDataBase;
+import com.cauc.training.business.dao.GenericHibernateDAO;
+
+@Service
+public class BackupDataBaseImpl extends GenericHibernateDAO implements IBackupDataBase {
+/*
+	public boolean backupDataBase(String path, String fileName) throws FinanceServiceException {
+		boolean flag = false;
+		
+	try {
+			path+="/" +fileName;
+			String sql="backup database trainingRecord to disk=? with init";
+			super.createSQLQuery(sql,path);
+			flag = true;
+		} catch (HibernateException e){
+			e.printStackTrace();
+			throw new FinanceServiceException("备份数据库失败！");
+		} 
+		return flag;
+	}
+	*/
+	public boolean backupDataBase(String path, String fileName) throws FinanceServiceException {
+		
+		String url = CuacConfig.getProperty("jdbc.url");
+		String username = CuacConfig.getProperty("jdbc.username");
+		String password = CuacConfig.getProperty("jdbc.password");
+		boolean flag = false;
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		
+		String sql = "BACKUP DATABASE [trainingRecord] TO  DISK = N'" + path 
+				+"/" + fileName + "' WITH  INIT ,  NOUNLOAD ,  NAME = N'trainingRecord 备份',  NOSKIP ,  STATS = 10,  NOFORMAT";
+		try {
+			conn = DriverManager.getConnection(url, username, password);
+			pstmt = conn.prepareStatement(sql);
+			pstmt.executeUpdate();
+			flag = true;
+		} catch (SQLException e){
+			e.printStackTrace();
+			throw new FinanceServiceException("备份数据库失败！");
+		} finally {
+			try {
+				if(pstmt != null){
+					pstmt.close();
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+				throw new FinanceServiceException("备份数据库失败！");
+			} finally{
+				try {
+					if(conn != null){
+						conn.close();
+					}
+				} catch (SQLException e) {
+					e.printStackTrace();
+					throw new FinanceServiceException("备份数据库失败！");
+				}
+			}
+		}
+		return flag;
+		
+	}
+	
+}

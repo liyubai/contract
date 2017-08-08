@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE struts PUBLIC
+    "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN"
+    "http://struts.apache.org/dtds/struts-2.0.dtd">
+<struts>
+	<package name="ajax_anotherPeople" extends="ErsDefault" namespace="/system">
+		<!-- 其他人员所在部门信息管理 --> 
+		<action name="*anotherDeptAction" class="com.cauc.training.ui.core.AnotherDeptonAction"	method="{1}Another">
+			<result name="saveSuccess" type="json">
+				<param name="root">flag</param>
+			</result>
+			<result name="searchDeptById" type="json">
+				<param name="root">vdepartment</param>
+			</result>
+			<result name="deleteDept" type="json">
+				<param name="root">flag</param>
+			</result>
+			<result name="deptTree" type="json">
+				<param name="root">list</param>
+			</result>
+		</action>
+		<action name="*AnotherPeopleAjaxAction" class="com.cauc.training.ui.core.AnotherPeopleAction"	method="{1}Another">
+			<result name="ajaxPeopleList" type="json">
+				<param name="root">list</param>
+			</result>
+		</action>
+	</package>
+	<package name="anotherPeople_management" extends="ErsDefault" namespace="/system">	
+		<action name="*AnotherPeopleAction" class="com.cauc.training.ui.core.AnotherPeopleAction"	method="{1}Another">
+			<result name="peopleList">/WEB-INF/another/anotherDeptList.jsp</result>
+			<result name="toAddPeople">/WEB-INF/another/addPeople.jsp</result>
+			<result name="toEditPeople">/WEB-INF/another/editPeople.jsp</result>
+			<result name="toShowPeople">/WEB-INF/another/showPeople.jsp</result>
+			<result name="deletePeople" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">searchPeopleListAnotherPeopleAction</param>
+				<param name="deptId">${deptId}</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+			<result name="saveSuccess" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">searchPeopleListAnotherPeopleAction</param>
+				<param name="deptId">${deptId}</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+	</package>
+</struts> 

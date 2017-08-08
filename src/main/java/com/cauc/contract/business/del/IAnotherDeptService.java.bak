@@ -1,0 +1,59 @@
+package com.cauc.training.business;
+
+import java.util.List;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.pojos.TDepartment;
+import com.cauc.training.vo.VDepartment;
+
+/***
+ * @功能说明：用于管理其他人员所在部门的接口
+ * @author gfm
+ */
+public interface IAnotherDeptService {
+	/**
+	 * 名称
+	 */
+	public static final String  QUERY_KEY_NAME="VName";
+	/**
+	 * 时间
+	 */
+	public static final String  QUERY_KEY_DATE="DCreateDate";
+	/**
+	 * @功能描述：保存其他人员所在部门
+	 * @param department
+	 * @throws FinanceServiceException
+	 */
+	public boolean saveDept(TDepartment department) throws FinanceServiceException;
+	/**
+	 * @功能描述：通过ID查询其他人员所在部门
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public VDepartment searchDeptById(String id) throws FinanceServiceException;
+	/**
+	 * @功能描述：更新其他人员所在部门
+	 * @param department
+	 * @throws FinanceServiceException
+	 */
+	public void updateDept(TDepartment department) throws FinanceServiceException;
+	/**
+	 * @功能描述：删除其他人员所在部门
+	 * @param ids
+	 * @throws FinanceServiceException
+	 */
+	public boolean deleteDeptByIds(String... ids) throws FinanceServiceException;
+	/**
+	 * @功能描述：查询展示部门树
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<VDepartment> searchDeptTree() throws FinanceServiceException;
+	/**
+	 * @功能描述：通过ID查询部门名称
+	 * @param ids 
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public String searchDeptNameByIds(String... ids) throws FinanceServiceException;
+}

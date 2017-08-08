@@ -1,0 +1,129 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>修改编号</title>
+    <link href="themes/cupertino/jquery.ui.all.css" rel="stylesheet" type="text/css" />
+    <link href="themes/cupertino/selfStyle.css" rel="stylesheet" type="text/css" />
+    <link href="themes/cupertino/date.css" rel="stylesheet" type="text/css" />
+    <script src="scripts/jquery.min.js"></script>
+    <script src="scripts/jquery-ui.min.js"></script>
+    <script src="scripts/ui/jquery.ui.position.min.js"></script>
+    <script src="scripts/ui/jquery.ui.core.min.js"></script>
+    <script src="scripts/ui/jquery.ui.widget.min.js"></script>
+    <script src="scripts/ui/jquery.ui.button.min.js"></script>
+    <script src="scripts/ui/jquery.ui.tabs.min.js"></script>
+    <script src="scripts/ui/jquery.ui.dialog.min.js"></script>
+    <script src="scripts/ui/jquery.ui.menu.min.js"></script>
+    <script src="scripts/function.min.js"></script>
+    <script src="scripts/datepicker4.8/WdatePicker.js" type="text/javascript"></script>
+    <script>
+    $(function() {
+        new $.dropDownList(0, true, 243);
+        new $.dropDownList(1, true, 243);
+        new $.dropDownList(2, true, 243);
+        new $.dropDownList(3, true, 243);
+        new $.dropDownList(4, true, 243);
+        new $.dropDownList(5, true, 160);
+    });
+</script>
+    <!-- 此js务必放在所有页面自带的js后面加载 -->
+    <script src="scripts/base.min.js"></script>
+</head>
+<body>
+<div id="indexHead">
+  <div class="headercontent">
+      <img src="themes/cupertino/images/logo.png" />
+      <span class="sysNameC">中国民航大学飞行培训合同管理系统</span>
+      <div class="sysNameE">Civil aviation university of china Contract management system </div>
+      <div class="logout">
+          <span class="today">2016-6-6</span>
+          <span class="wel">欢迎</span>
+          <a href="">张雪</a>
+          <span class="sep"></span>
+          <a href="">退出</a>
+      </div>
+  </div>
+</div>
+<div id="leftPartA">
+    <ul class="itemList">
+	    <li class="active"><a style="display:block;" href="cMain.htm" title="主页">主页</a></li>
+	    <li><a href="cContractList.htm" title="合同管理">合同管理</a></li>
+	    <li><a href="cStudentList.htm" title="学生管理">学生管理</a></li>
+	    <li><a href="cPaylist.htm" title="付款管理">付款管理</a></li>
+	    <li><a href="cClearingList.htm" title="结算管理">结算管理</a></li>
+    </ul>
+    <ul class="foldList">
+	    <li title="统计">统计</li>
+	    <ul class="itemList">
+	        <li><a href="cPayStatistics.htm">付款统计</a></li>
+	        <li><a href="cCollectStatistics.htm">汇总统计</a></li>
+	        <li><a href="cAverageStatistics.htm">平均统计</a></li>
+	    </ul>
+	</ul>
+	<ul class="foldList">
+        <li title="用户管理">用户管理</li>
+        <ul class="itemList">
+	        <li><a href="cUserList.htm">用户列表</a></li>
+	        <li><a href="cRoleList.htm">角色列表</a></li>
+	    </ul>
+    </ul>
+	<ul class="itemList">
+	    <li><a href="cDataDictionary.htm" title="数据字典">数据字典</a></li>
+	</ul>
+</div>
+<div id="rightPartA" style="overflow-x:hidden;">
+    <div>
+    <div class="Panel" style="min-height:300px;">
+        <div class="panelHead">
+            <span>修改结算编号</span>
+        </div>
+        <div class="panelContent" class=>
+            <table class="modifyTable">
+                <tr>
+                    <td class="col40_ textR">结算编号</td>
+                    <td><input id="Text1" type="text" class="tableinput" value="G01" /></td>
+                </tr>
+                <tr>
+                    <td class="col40_ textR">结算状态</td>
+                    <td>
+                    <div class="dropDownList" id="Div3">
+	<button class="tableselect">结算状态</button>
+	<ul>
+	    <li><a href="#N" val="1"><span class="ui-icon ui-icon-bullet"></span>结算状态</a></li>
+		<li><a href="#N" val="2">已结算</a></li>
+		<li><a href="#N" val="3">未结算</a></li>
+	</ul>
+	<input type="hidden" name="结算状态" value="1" />
+</div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="col40_ textR">结算通知</td>
+                    <td>
+                        <div class="fjWrap" style="margin-left:0;">
+                            <img src="themes/cupertino/images/pdfimg.png" />
+                            <div class="fj_descript">pdf附件</div>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="4" class="tCenter">
+                        <input id="Button1" type="button" class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-icon-primary ml10" value="确定" />
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    </div>
+</div>
+<script>
+    $(function() {
+    $('#Button1').click(function() {
+    window.location.href = 'cClearingList.htm';
+        });
+
+    });
+</script>
+</body>
+</html>

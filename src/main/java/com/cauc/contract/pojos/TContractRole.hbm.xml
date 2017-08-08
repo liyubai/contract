@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<!-- 
+    
+-->
+<hibernate-mapping>
+    <class name="com.cauc.contract.pojos.TContractRole" table="Role" schema="dbo" catalog="trainingRecord">
+        <id name="Role_Id" type="integer">
+            <column name="RoleId"  />
+            <generator class="identity"/>
+        </id>
+        <property name="Role_Name" type="string">
+            <column name="RoleName" length="20"/>
+        </property>
+        <property name="Power_Ids" type="string">
+            <column name="PowerIds" length="200"/>
+        </property>
+        <property name="Add_Time"  generated="insert" type="timestamp">
+            <column name="AddTime"  default="CURRENT_TIMESAMP" length="23" />
+        </property>
+        <property name="Add_User" type="integer">
+            <column name="AddUser" />
+        </property>
+        
+        <property name="LastModify_Time"  generated="always"  type="timestamp">
+            <column name="LastModifyTime"  default="CURRENT_TIMESAMP"  length="23" />
+        </property>
+        <property name="LastModify_User" type="integer">
+            <column name="LastModifyUser" />
+        </property>
+    </class>
+</hibernate-mapping>

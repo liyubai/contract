@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE struts PUBLIC
+    "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN"
+    "http://struts.apache.org/dtds/struts-2.0.dtd">
+<struts>
+	<package name="ajax_org" extends="ErsDefault" namespace="/system">
+		<!-- 获取树形根目录 -->
+		<action name="showOrgTree" class="com.cauc.training.ui.core.OrgAction" method="readOrgTree">
+			 <result name="success" type="json">
+		       <param name="root">orgList</param>
+		    </result>
+		</action>
+		
+		<action name="createOrg" class="com.cauc.training.ui.core.OrgAction" method="createOrg">
+			<result name="success" type="json">
+			<param name="root">id</param>
+			</result>
+		</action>
+		
+		<action name="updateOrg" class="com.cauc.training.ui.core.OrgAction" method="updateOrg">
+			<result name="success" type="json">
+			<param name="root">viewOrg</param>
+			</result>
+		</action>
+		
+		<action name="deleteOrg" class="com.cauc.training.ui.core.OrgAction" method="deleteOrg">
+			<result name="success" type="json">
+			<param name="root">viewOrg</param>
+			</result>
+		</action>
+	</package>
+	<package name="org_management" extends="ErsDefault" namespace="/system">	
+
+		<action name="open_orgInfoList" class="com.cauc.training.ui.core.OrgAction"	method="readOrgInfoList">
+			<result name="success">/WEB-INF/orgInfo/orgInfoList.jsp</result>
+		</action>
+		<action name="open_checkbokOrgInfoList" class="com.cauc.training.ui.core.OrgAction"	method="readOrgInfoList">
+			<result name="success">/WEB-INF/orgInfo/orgInfoList2.jsp</result>
+		</action>
+	</package>
+</struts> 

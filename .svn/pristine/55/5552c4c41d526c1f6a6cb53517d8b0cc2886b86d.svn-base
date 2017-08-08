@@ -1,0 +1,84 @@
+package com.cauc.training.business;
+
+import java.util.Map;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.business.dao.support.Page;
+import com.cauc.training.pojos.PolicyLaws;
+import com.cauc.training.pojos.TDiction;
+
+
+/**
+ * 政策法规量化
+ * */
+public interface IPolicyLawsService {
+	
+	/**
+	 * 内容
+	 */
+	public static final String  QUERY_KEY_CONTENT = "VContent";
+	
+	/**
+	 * 政策法规类型
+	 */
+	
+	public static final String  QUERY_KEY_LAWSTYPE = "IType";
+	
+	/**
+	 * 内容时长类型
+	 */
+	public static final String  QUERY_KEY_CONTENTTYPE = "IContentType";
+	
+	/**
+	 * 时间
+	 */
+	public static final String  QUERY_KEY_DATE = "DCreatedate";
+	
+	
+	/**
+	 * 序号
+	 */
+	public static final String  QUERY_KEY_INO = "INo";
+	
+	/**
+	 * 保存政策法规量化信息
+	 * @param laws
+	 * @throws FinanceServiceException
+	 */
+	public void savePolicyLaws(PolicyLaws laws) throws FinanceServiceException;
+	
+	/**
+	 * 功能：查询政策法规量化信息，带分页查询
+	 * @param params：Map结构，key为PolicyLaws中的VContent，value为用户输入的关键字
+	 * @param pageNo：当前页号
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page searchPolicyLawsInfos(Map<String,Object> params, String pageNo) throws FinanceServiceException;
+
+
+	/**
+	 * 功能：根据政策法规量化信息主键值，查询政策法规量化信息
+	 * @param id
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public PolicyLaws searchPolicyLawsInfoById(String id) throws FinanceServiceException;
+	
+	/**
+	 * 更新政策法规量化信息
+	 * @param law
+	 * @throws FinanceServiceException
+	 */
+	public void updatePolicyLawsInfo(PolicyLaws law) throws FinanceServiceException;
+	
+	/**删除政策法规量化信息（可单一删除，也可批量删除）
+	 * 
+	 * @param ids
+	 * @throws FinanceServiceException
+	 * 说明：String... ids 表示定义一个可变变量，即ids就是一个字符串数组，等价于String[] ids
+	 */
+	public void deletePolicyLawsInfoByIds(String... ids) throws FinanceServiceException;
+
+
+}

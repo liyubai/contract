@@ -1,0 +1,241 @@
+package com.cauc.training.ui.core.del;
+
+
+
+import java.text.ParseException;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.business.IRole;
+import com.cauc.training.pojos.TRole;
+import com.cauc.training.pojos.TUser;
+import com.cauc.training.ui.common.BaseActionSupport;
+import com.cauc.training.vo.VORole;
+
+/**
+ * 功能：用于角色管理的Action
+ * */
+
+public class RoleAction extends BaseActionSupport {
+	
+	
+	private static final long serialVersionUID = 6994057486139187705L;
+	//获取日志生成器
+	private static Log log = LogFactory.getLog(RoleAction.class);
+	private TRole role;
+
+	//用于Ajax请求返回role对象
+	private VORole vrole;
+	
+	//用于存储主键值
+	private String id;
+	
+	//查询关键字
+	private String key;
+
+	//存储要删除的角色id，各个角色的id使用逗号（,）分隔
+	private String roleids;
+	/**
+	 * 功能：保存角色
+	 * @return
+	 */
+	
+	public String saveRole(){
+		String result = SUCCESS;
+		if(StringUtils.isBlank(role.getVName())) {
+			setStatusMsg("角色名称不能为空！");
+			setStatusMsg("1");
+		}else if(StringUtils.isBlank(role.getVDescription())){
+			setStatusMsg("角色描述不能为空！");
+			setStatusMsg("1");
+		}else{
+			try {
+				// 获取用户对象,取得登录者，即创建该角色的人
+				TUser tuser = getFactory().getFinanceProviderInstance()
+						.getSysUserService().readSysUserByLoginID(
+								this.getLoginContext().getLoginId());
+				this.role.setTUser(tuser);
+				//设置创建时间
+				this.role.setDCreateDate(new Date());
+				getFactory().getFinanceProviderInstance().getRoleService().saveRole(role);
+				setStatusMsg("角色保存成功！");
+				setStatusMsg("0");
+
+			} catch (FinanceServiceException e) {
+				setStatusMsg(e.getMessage());
+				setStatusMsg("1");
+				//e.printStackTrace();
+
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * 功能：根据关键字分页查询角色
+	 */
+	public String searchRoles()throws ParseException{
+		//System.out.println("key" + this.key);
+		IRole roleService = getFactory().getFinanceProviderInstance().getRoleService();
+		//构造查询参数
+		Map<String,Object> queryMap=new HashMap<String,Object>();
+		queryMap.put(IRole.QUERY_KEY_NAME, this.key);
+	
+		try {
+			setPage(roleService.searchRole(queryMap, getPageIndex()));
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+			setStatusMsg("查询角色列表失败");
+			setStatusMsg("1");
+		}
+		return SUCCESS;
+	}
+	
+	/**
+	 * 功能：根据主键查询角色
+	 * @return
+	 */
+	public String searchRoleById(){
+		//System.out.println("id: " + this.id);
+		
+		//String result = ERROR;
+		if (StringUtils.isBlank(this.getId())) {
+			setStatusMsg("角色id不能为空");
+			setStatusMsg("1");
+		}else{
+			try {
+				role = getFactory().getFinanceProviderInstance().getRoleService().searchRoleById(this.id);
+				this.vrole = new VORole();
+				this.vrole.setVId(role.getVId());
+				this.vrole.setVName(role.getVName());
+				this.vrole.setVDescription(role.getVDescription());
+				
+				//System.out.println(this.vrole.getVName());
+				//result = SUCCESS;
+			} catch (FinanceServiceException e) {
+				setStatusMsg("获取角色对象信息失败。");
+				e.printStackTrace();
+				setStatusMsg("1");
+			}
+		}
+
+		return SUCCESS;
+	}
+	
+	/**
+	 * 更新角色信息
+	 * 
+	 * @return
+	 */
+	public String updateRole() {
+
+	//	String result = ERROR;
+		if (StringUtils.isBlank(this.role.getVId())) {
+			setStatusMsg("角色id不能为空");
+			setStatusMsg("1");
+		}else if (StringUtils.isBlank(this.role.getVName())) {
+			setStatusMsg("角色名称不能为空");
+			setStatusMsg("1");
+		}else if (StringUtils.isBlank(this.role.getVDescription())) {
+			setStatusMsg("角色描述不能为空");
+			setStatusMsg("1");
+		}else{
+			try {
+				getFactory().getFinanceProviderInstance().getRoleService().updateRole(this.role);
+				setStatusMsg("更新角色信息成功！");
+				setStatusMsg("0");
+			//	result = SUCCESS;
+	        } catch (FinanceServiceException e) {
+	        	setStatusMsg("更新角色信息失败。" + e.getMessage());
+	        	setStatusMsg("1");
+	        	//e.printStackTrace();
+	        }
+
+		}
+			
+		return SUCCESS;
+	}
+	
+	/**
+	 * 删除角色信息
+	 * 
+	 * @return
+	 */
+	public String deleteRole(){
+		String result = SUCCESS;
+		//System.out.println("del: key=" + this.key);
+		//System.out.println("del: pageIndex=" + getPageIndex());
+		if(StringUtils.isBlank(getRoleids())){
+			setStatusMsg("请选择要删除的角色！");
+			setStatusMsg("1");
+		}else{
+			String[] ids = this.roleids.split(",");
+			if(ids != null && ids.length > 0){
+				try {
+					//删除角色
+					getFactory().getFinanceProviderInstance().getRoleService().deleteRoleByIds(ids);							
+					setStatusMsg("删除角色成功！");
+					setStatusMsg("0");
+				} catch (FinanceServiceException e) {
+					//输出日志信息
+					log.error("删除角色出错：" + e.getMessage());
+					setStatusMsg("删除角色出错");
+					setStatusMsg("1");
+				}
+			}
+	
+		}
+
+		return result;
+	}
+	
+	
+	public TRole getRole() {
+		return role;
+	}
+
+	public void setRole(TRole role) {
+		this.role = role;
+	}
+
+	public String getKey() {
+		return key;
+	}
+
+	public void setKey(String key) {
+		this.key = key;
+	}
+
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
+
+	public VORole getVrole() {
+		return vrole;
+	}
+
+	public void setVrole(VORole vrole) {
+		this.vrole = vrole;
+	}
+
+	public String getRoleids() {
+		return roleids;
+	}
+
+	public void setRoleids(String roleids) {
+		this.roleids = roleids;
+	}
+	
+}

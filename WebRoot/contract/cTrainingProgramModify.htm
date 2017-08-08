@@ -1,0 +1,447 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>培训项目</title>
+    <link href="themes/cupertino/jquery.ui.all.css" rel="stylesheet" type="text/css" />
+    <link href="themes/cupertino/selfStyle.css" rel="stylesheet" type="text/css" />
+    <script src="scripts/jquery.min.js"></script>
+    <script src="scripts/jquery-ui.min.js"></script>
+    <script src="scripts/ui/jquery.ui.position.min.js"></script>
+    <script src="scripts/ui/jquery.ui.core.min.js"></script>
+    <script src="scripts/ui/jquery.ui.widget.min.js"></script>
+    <script src="scripts/ui/jquery.ui.button.min.js"></script>
+    <script src="scripts/ui/jquery.ui.tabs.min.js"></script>
+    <script src="scripts/ui/jquery.ui.dialog.min.js"></script>
+    <script src="scripts/ui/jquery.ui.menu.min.js"></script>
+    <script src="scripts/function.min.js" type="text/javascript"></script>
+    <script src="scripts/dropdownlist.js" type="text/javascript"></script>
+    <script>
+        $(function() {
+            new $.treeView(0);
+            new $.dropDownList(0, true, 160);
+            new $.dropDownList(1, true, 180);
+            new $.dropDownList(2, true, 60);
+        });
+</script>
+    <!-- 此js务必放在所有页面自带的js后面加载 -->
+    <script src="scripts/base.min.js"></script>
+</head>
+<body>
+<div id="indexHead">
+  <div class="headercontent">
+      <img src="themes/cupertino/images/logo.png" />
+      <span class="sysNameC">中国民航大学飞行培训合同管理系统</span>
+      <div class="sysNameE">Civil aviation university of china Contract management system </div>
+      <div class="logout">
+          <span class="today">2016-6-6</span>
+          <span class="wel">欢迎</span>
+          <a href="">张雪</a>
+          <span class="sep"></span>
+          <a href="">退出</a>
+      </div>
+  </div>
+</div>
+<div id="leftPartA">
+    <ul class="itemList">
+	    <li class="active"><a style="display:block;" href="cMain.htm" title="主页">主页</a></li>
+	    <li><a href="cContractList.htm" title="合同管理">合同管理</a></li>
+	    <li><a href="cStudentList.htm" title="学生管理">学生管理</a></li>
+	    <li><a href="cPaylist.htm" title="付款管理">付款管理</a></li>
+	    <li><a href="cClearingList.htm" title="结算管理">结算管理</a></li>
+    </ul>
+    <ul class="foldList">
+	    <li title="统计">统计</li>
+	    <ul class="itemList">
+	        <li><a href="cPayStatistics.htm">付款统计</a></li>
+	        <li><a href="cCollectStatistics.htm">汇总统计</a></li>
+	        <li><a href="cAverageStatistics.htm">平均统计</a></li>
+	    </ul>
+	</ul>
+	<ul class="foldList">
+        <li title="用户管理">用户管理</li>
+        <ul class="itemList">
+	        <li><a href="cUserList.htm">用户列表</a></li>
+	        <li><a href="cRoleList.htm">角色列表</a></li>
+	    </ul>
+    </ul>
+	<ul class="itemList">
+	    <li><a href="cDataDictionary.htm" title="数据字典">数据字典</a></li>
+	</ul>
+</div>
+<div id="rightPartA" style="overflow-x:hidden;">
+    <div>
+    <div class="Panel">
+        <div class="panelHead">
+            <span>经费初始化</span>
+        </div>
+        <div class="panelContent">
+            <div class="treeView" id="treeView0">
+<ul>
+	<li class="folderNode rootNode"><span class="ui-icon ui-icon-circlesmall-plus">+</span><input type="checkbox" name="tree" value="0"><b></b><span>合作共建</span></li>
+	<ul>
+		<li class="folderNode"><span class="ui-icon ui-icon-circlesmall-plus">+</span><input type="checkbox" name="tree" value="0"><b></b><span>招飞经费</span></li>
+		<ul>
+			<li class="treeNode"><input type="checkbox" name="tree" value="0"><b></b><span>招飞经费</span><input type="text" class="ddlJF" value="" /><label class="ml10">元</label></li>
+		</ul>
+		<li class="folderNode"><span class="ui-icon ui-icon-circlesmall-plus">+</span><input type="checkbox" name="tree" value="0"><b></b><span>体检费</span></li>
+		<ul>
+			<li class="treeNode"><input type="checkbox" name="tree" value="0"><b></b><span>体检费</span><input type="text" class="ddlJF" value="" /><label class="ml10">元</label></li>
+		</ul>
+		<li class="folderNode"><span class="ui-icon ui-icon-circlesmall-plus">+</span><input type="checkbox" name="tree" value="0"><b></b><span>共建费</span></li>
+		<ul>
+			<li class="treeNode"><input type="checkbox" name="tree" value="0"><b></b><span>服装费</span><input type="text" class="ddlJF" value="" /><label class="ml10">元</label></li>
+			<li class="treeNode"><input type="checkbox" name="tree" value="0"><b></b><span>伙食费</span><input type="text" class="ddlJF" value="" /><label class="ml10">元</label></li>
+			<li class="treeNode"><input type="checkbox" name="tree" value="0"><b></b><span>住宿费</span><input type="text" class="ddlJF" value="" /><label class="ml10">元</label></li>
+		    <li class="treeNode"><input type="checkbox" name="tree" value="0"><b></b><span>英语培训费</span><input type="text" class="ddlJF" value="" /><label class="ml10">元</label></li>
+			<li class="treeNode"><input type="checkbox" name="tree" value="0"><b></b><span>奖教奖学基金</span><input type="text" class="ddlJF" value="" /><label class="ml10">元</label></li>
+			<li class="treeNode"><input type="checkbox" name="tree" value="0"><b></b><span>理论培训费</span><input type="text" class="ddlJF" value="" /><label class="ml10">元</label></li>
+		</ul>
+	</ul>
+	<li class="folderNode rootNode"><span class="ui-icon ui-icon-circlesmall-plus">+</span><input type="checkbox" name="tree" value="0"><b></b><span>理论培训</span></li>
+	<ul>
+	    <li class="folderNode"><span class="ui-icon ui-icon-circlesmall-plus">+</span><input type="checkbox" name="tree" value="0"><b></b><span>执照理论</span></li>
+		<ul>
+			<li class="treeNode"><input type="checkbox" name="tree" value="0"><b></b><span>私照理论</span><input type="text" class="ddlJF" value="" /><label class="ml10">元</label></li>
+		    <li class="treeNode"><input type="checkbox" name="tree" value="0"><b></b><span>商照理论</span><input type="text" class="ddlJF" value="" /><label class="ml10">元</label></li>
+		    <li class="treeNode"><input type="checkbox" name="tree" value="0"><b></b><span>仪表等级</span><input type="text" class="ddlJF" value="" /><label class="ml10">元</label></li>
+		    <li class="treeNode"><input type="checkbox" name="tree" value="0"><b></b><span>回国换证</span><input type="text" class="ddlJF" value="" /><label class="ml10">元</label></li>
+		</ul>
+		<li class="folderNode"><span class="ui-icon ui-icon-circlesmall-plus">+</span><input type="checkbox" name="tree" value="0"><b></b><span>基础理论</span></li>
+		<ul>
+			<li class="treeNode"><input type="checkbox" name="tree" value="0"><b></b><span>课程一</span><input type="text" class="ddlJF" value="" /><label class="ml10">元</label></li>
+		    <li class="treeNode"><input type="checkbox" name="tree" value="0"><b></b><span>课程二</span><input type="text" class="ddlJF" value="" /><label class="ml10">元</label></li>
+		</ul>
+		<li class="folderNode"><span class="ui-icon ui-icon-circlesmall-plus">+</span><input type="checkbox" name="tree" value="0"><b></b><span>高性能</span></li>
+		<ul>
+			<li class="treeNode"><input type="checkbox" name="tree" value="0"><b></b><span>高性能</span><input type="text" class="ddlJF" value="" /><label class="ml10">元</label></li>
+		</ul>
+	</ul>
+	<li class="folderNode rootNode"><span class="ui-icon ui-icon-circlesmall-plus">+</span><input type="checkbox" name="tree" value="0"><b></b><span>飞行训练</span></li>
+    <ul>
+	    <li class="folderNode"><span class="ui-icon ui-icon-circlesmall-plus">+</span><input type="checkbox" name="tree" value="0"><b></b><span>整体250</span></li>
+		<ul>
+			<li class="treeNode"><input type="checkbox" name="tree" value="0"><b></b><span>单发飞机</span><input type="text" class="ddlJF" value="" /><label class="ml10">元</label></li>
+		    <li class="treeNode"><input type="checkbox" name="tree" value="0"><b></b><span>双发飞机</span><input type="text" class="ddlJF" value="" /><label class="ml10">元</label></li>
+		    <li class="treeNode"><input type="checkbox" name="tree" value="0"><b></b><span>双发练习器</span><input type="text" class="ddlJF" value="" /><label class="ml10">元</label></li>
+		    <li class="treeNode"><input type="checkbox" name="tree" value="0"><b></b><span>单发练习器</span><input type="text" class="ddlJF" value="" /><label class="ml10">元</label></li>
+		    <li class="treeNode"><input type="checkbox" name="tree" value="0"><b></b><span>HPA</span><input type="text" class="ddlJF" value="" /><label class="ml10">元</label></li>
+		    <li class="treeNode"><input type="checkbox" name="tree" value="0"><b></b><span>HPA FFS</span><input type="text" class="ddlJF" value="" /><label class="ml10">元</label></li>
+		</ul>
+		<li class="folderNode"><span class="ui-icon ui-icon-circlesmall-plus">+</span><input type="checkbox" name="tree" value="0"><b></b><span>单体课程</span></li>
+		<ul>
+			<li class="treeNode"><input type="checkbox" name="tree" value="0"><b></b><span>单发飞机</span><input type="text" class="ddlJF" value="" /><label class="ml10">元</label></li>
+		    <li class="treeNode"><input type="checkbox" name="tree" value="0"><b></b><span>双发飞机</span><input type="text" class="ddlJF" value="" /><label class="ml10">元</label></li>
+		    <li class="treeNode"><input type="checkbox" name="tree" value="0"><b></b><span>双发练习器</span><input type="text" class="ddlJF" value="" /><label class="ml10">元</label></li>
+		    <li class="treeNode"><input type="checkbox" name="tree" value="0"><b></b><span>单发练习器</span><input type="text" class="ddlJF" value="" /><label class="ml10">元</label></li>
+		    <li class="treeNode"><input type="checkbox" name="tree" value="0"><b></b><span>HPA</span><input type="text" class="ddlJF" value="" /><label class="ml10">元</label></li>
+		    <li class="treeNode"><input type="checkbox" name="tree" value="0"><b></b><span>HPA FFS</span><input type="text" class="ddlJF" value="" /><label class="ml10">元</label></li>
+		</ul>
+	</ul>
+</ul>
+            </div>
+            <div class="payCon">
+            <div class="paybatch">
+						<span class="batchfont">所在年级</span>
+						<div class="dropDownList ml10" id="Div2">
+					<button class="tableselect1">学生年级</button>
+					<ul>
+						<li><a href="#N" val="1" class="inline">学生年级</a></li>
+						<li><a href="#N" val="2" class="inline"><span class="ui-icon ui-icon-bullet"></span>2006</a><a href="#N" val="12" class="inline">2016</a></li>
+						<li><a href="#N" val="3" class="inline">2007</a><a href="#N" val="13" class="inline">2017</a></li>
+						<li><a href="#N" val="4" class="inline">2008</a><a href="#N" val="14" class="inline">2018</a></li>
+						<li><a href="#N" val="5" class="inline">2009</a><a href="#N" val="15" class="inline">2019</a></li>
+						<li><a href="#N" val="6" class="inline">2010</a><a href="#N" val="16" class="inline">2020</a></li>
+						<li><a href="#N" val="7" class="inline">2011</a><a href="#N" val="17" class="inline">2021</a></li>
+						<li><a href="#N" val="8" class="inline">2012</a><a href="#N" val="18" class="inline">2022</a></li>
+						<li><a href="#N" val="9" class="inline">2013</a><a href="#N" val="19" class="inline">2023</a></li>
+						<li><a href="#N" val="10" class="inline">2014</a><a href="#N" val="20" class="inline">2024</a></li>
+						<li><a href="#N" val="11" class="inline">2015</a><a href="#N" val="21" class="inline">2025</a></li>
+					</ul>
+					<input type="hidden" name="合同类型" value="1" />
+					
+				</div>
+				<button id="addStudentInfoBtn" class="greenBtn" style="margin-left:10px;">+</button>
+				<span class="ml20">学员人数</span>
+				<input id="Text3" type="text" class="tableinput3 ml10" />
+				<button id="bindStuBtn" class="greenBtn" style="margin-left:10px;">绑定学号</button>
+				<span class="ml20">入校时间</span>
+				<input id="Text4" type="text" class="tableinput2 ml10 date" onmouseup="WdatePicker()" />
+            </div>
+            <div class="paybatch">
+                <span class="batchfont">成交价</span>
+                <input id="Text2" type="text" class="tableinput3 ml10" />
+                <span>元/人</span>
+            </div>
+            <div class="paybatch">
+                <span class="batchfont">训练周期</span>
+                <input id="Text1" type="text" class="tableinput3 ml10 left" />
+            </div>
+            <div class="paybatch">
+                <span class="batchfont mt20">节点描述</span>
+                <input class="tableinput3 ml10 mt20 left" type="text">
+                <!--<span class="batchUnit1"><button id="btnAddBatch" class="greenBtn">+</button></span>-->
+                <span class="batchfont1 mt20">飞行学院经费类型</span>
+                <div class="dropDownList left ml10 mt20">
+                    <button class="tableselect2">飞行技术学院经费类型</button>
+                    <ul>
+                        <li><a href="#N" val="1"><span class="ui-icon ui-icon-bullet"></span>飞行技术学院经费类型</a></li>
+                        <li><a href="#N" val="2">HPA理论</a></li>
+                        <li><a href="#N" val="3">飞行基础理论</a></li>
+                        <li><a href="#N" val="4">高性能理论培训费</a></li>
+                        <li><a href="#N" val="5">合作共建+执照理论</a></li>
+                        <li><a href="#N" val="6">合作共建费</a></li>
+                        <li><a href="#N" val="7">基础理论</a></li>
+                        <li><a href="#N" val="8">基础理论+执照理论</a></li>
+                        <li><a href="#N" val="9">招飞经费</a></li>
+                        <li><a href="#N" val="10">执照理论</a></li>
+                    </ul>    
+                </div>
+                
+            </div>
+            <div class="paybatch">
+                <span class="batchfont">收款进程</span>
+                <input class="tableinput3 ml10 left" type="text">
+                <span class="batchUnit">
+                <div class="dropDownList barMiddle" id="Div3">
+	                <button>月</button>
+	                <ul>
+	                    <li><a href="#N" val="1"><span class="ui-icon ui-icon-bullet"></span>月</a></li>
+		                <li><a href="#N" val="2">年</a></li>
+	                </ul>
+	                <input type="hidden" name="月" value="1" />
+                </div>
+                </span>
+                <span class="batchfont1">飞行学院合作共建费收费标准</span>
+                <input class="tableinput3 ml10 left" type="text">
+                <span class="batchUnit">元</span>
+            </div>
+            <div class="paybatch">
+                <span class="batchfont">百分比</span>
+                <input class="tableinput3 ml10 left" type="text">
+                <span class="batchUnit">%</span>
+                <span class="batchfont1">飞行学院参与分成培训费收费标准</span>
+                <input class="tableinput3 ml10 left" type="text">
+                <span class="batchUnit">元</span>
+            </div>
+        </div>
+        <div class="payWrap tCenter">
+                <input id="Button2" type="button" class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-icon-primary mt10" value="保存" />
+            </div>
+    </div>
+    </div>
+</div>
+
+<div id="dialogForm1" class="bindStuWrap" title="绑定学号">
+	<div class="">
+	    <div>
+            <input id="Checkbox1" type="checkbox" class="checkAll" />
+            <label>全选</label>
+	    </div>
+	    <ul class="stuInfo">
+	        <li class="stuItem">
+	            <input id="Checkbox2" type="checkbox" class="stuCheck" />
+                <label>01</label>
+                <span>哈哈</span>
+	        </li>
+	        <li class="stuItem">
+	            <input id="Checkbox3" type="checkbox" class="stuCheck" />
+                <label>0001</label>
+                <span>哈哈哈哈</span>
+	        </li>
+	        <li class="stuItem">
+	            <input id="Checkbox4" type="checkbox" class="stuCheck" />
+                <label>0001</label>
+                <span>哈哈哈哈</span>
+	        </li>
+	        <li class="stuItem">
+	            <input id="Checkbox5" type="checkbox" class="stuCheck" />
+                <label>0001</label>
+                <span>哈哈哈哈</span>
+	        </li>
+	        <li class="stuItem">
+	            <input id="Checkbox6" type="checkbox" class="stuCheck" />
+                <label>0001</label>
+                <span>哈哈哈哈</span>
+	        </li>
+	        <li class="stuItem">
+	            <input id="Checkbox7" type="checkbox" class="stuCheck" />
+                <label>0001</label>
+                <span>哈哈哈哈</span>
+	        </li>
+	        <li class="stuItem">
+	            <input id="Checkbox8" type="checkbox" class="stuCheck" />
+                <label>0001</label>
+                <span>哈哈哈哈</span>
+	        </li>
+	        <li class="stuItem">
+	            <input id="Checkbox9" type="checkbox" class="stuCheck" />
+                <label>0001</label>
+                <span>哈哈哈哈</span>
+	        </li>
+	        <li class="stuItem">
+	            <input id="Checkbox10" type="checkbox" class="stuCheck" />
+                <label>0001</label>
+                <span>哈哈哈哈</span>
+	        </li>
+	        <li class="stuItem">
+	            <input id="Checkbox11" type="checkbox" class="stuCheck" />
+                <label>0001</label>
+                <span>哈哈哈哈</span>
+	        </li>
+	        <li class="stuItem">
+	            <input id="Checkbox12" type="checkbox" class="stuCheck" />
+                <label>0001</label>
+                <span>哈哈哈哈</span>
+	        </li>
+	        <li class="stuItem">
+	            <input id="Checkbox13" type="checkbox" class="stuCheck" />
+                <label>0001</label>
+                <span>哈哈哈哈</span>
+	        </li>
+	    </ul>
+	</div>
+</div>
+
+<script>
+    $(function() {
+        var clickNum = 1;
+        $('#btnAddBatch').click(function() {
+
+            var _div = $('.payCon');
+
+            var _div2 = $('<div class="paybatch"></div>');
+            var _span2 = $('<span class="batchfont mt20">节点描述</span>');
+            var _text2 = $('<input>');
+            _text2.attr('type', 'text');
+            _text2.attr('class', 'tableinput2 ml10 mt20 left');
+            var _span7 = $('<span class="batchUnit1"></span>');
+            var _span5 = $('<span class="batchfont1 mt20">飞行技术学院经费类型</span>');
+            var _strDDL = '<div class="dropDownList left ml10  mt20">' +
+                          '<button class="tableselect">飞行技术学院经费类型</button>' +
+                          '<ul>' +
+            '<li><a href="#N" val="1"><span class="ui-icon ui-icon-bullet"></span>飞行技术学院经费类型</a></li>' +
+'<li><a href="#N" val="2">HPA理论</a></li>' +
+'<li><a href="#N" val="3">飞行基础理论</a></li>' +
+'<li><a href="#N" val="4">高性能理论培训费</a></li>' +
+'<li><a href="#N" val="5">合作共建+执照理论</a></li>' +
+'<li><a href="#N" val="6">合作共建费</a></li>' +
+'<li><a href="#N" val="7">基础理论</a></li>' +
+'<li><a href="#N" val="8">基础理论+执照理论</a></li>' +
+'<li><a href="#N" val="9">招飞经费</a></li>' +
+'<li><a href="#N" val="10">执照理论</a></li>' +
+'</ul>' +
+'<input type="hidden" name="飞行技术学院经费类型" value="1" />'
+            '</div>';
+            _div2.append(_span2);
+            _div2.append(_text2);
+            _div2.append(_span7);
+            _div2.append(_span5);
+            _div2.append(_strDDL);
+
+            var _div3 = $('<div class="paybatch"></div>');
+            var _span3 = $('<span class="batchfont">收款进程</span>');
+            var _text3 = $('<input>');
+            _text3.attr('type', 'text');
+            _text3.attr('class', 'tableinput2 ml10 left');
+            var _span9 = $('<span class="batchUnit">' +
+                '<div class="dropDownList barMiddle" id="Div3">' +
+	                '<button>月</button>' +
+	                '<ul>' +
+	                    '<li><a href="#N" val="1"><span class="ui-icon ui-icon-bullet"></span>月</a></li>' +
+		                '<li><a href="#N" val="2">年</a></li>' +
+	                '</ul>' +
+	                '<input type="hidden" name="月" value="1" />' +
+                '</div>' +
+                '</span>');
+            var _span6 = $('<span class="batchfont1">飞行技术学院应分配合作共建费收费标准</span>');
+            var _text5 = $('<input>');
+            _text5.attr('type', 'text');
+            _text5.attr('class', 'tableinput2 ml10 left');
+            var _span8 = $('<span class="batchUnit">元</span>');
+
+            _div3.append(_span3);
+            _div3.append(_text3);
+            _div3.append(_span9);
+            _div3.append(_span6);
+            _div3.append(_text5);
+            _div3.append(_span8);
+
+            var _div4 = $('<div class="paybatch"></div>');
+            var _span4 = $('<span class="batchfont">百分比</span>');
+            var _text4 = $('<input>');
+            _text4.attr('type', 'text');
+            _text4.attr('class', 'tableinput2 ml10 left');
+            var _span11 = $('<span class="batchUnit">%</span>');
+            var _span7 = $('<span class="batchfont1">飞行技术学院应分配参与分成培训费收费标准</span>');
+            var _text6 = $('<input>');
+            _text6.attr('type', 'text');
+            _text6.attr('class', 'tableinput2 ml10 left');
+            var _span10 = $('<span class="batchUnit">元</span>');
+
+            _div4.append(_span4);
+            _div4.append(_text4);
+            _div4.append(_span11);
+            _div4.append(_span7);
+            _div4.append(_text6);
+            _div4.append(_span10);
+
+
+            _div.append(_div2);
+            _div.append(_div3);
+            _div.append(_div4);
+
+            $('.payCon').append(_div);
+
+            clickNum++;
+
+            new $.dropDownList(clickNum, true, 243);
+
+            clickNum++;
+
+            new $.dropDownList(clickNum, true, 60);
+
+
+        });
+
+        $('#Button2').click(function() {
+            window.location.href = 'cNodeShow.htm';
+        });
+
+
+
+        $('#bindStuBtn').click(function() {
+            $("#dialogForm1").dialog("open");
+        });
+
+        $("#dialogForm1").dialog({
+            autoOpen: false,
+            height: 300,
+            width: 700,
+            background: '#FF0000',
+            opacity: 0.27,
+            modal: true,
+            resizable: false,
+            buttons: {
+                "确 定": function() {
+                    $(this).dialog("close");
+                }
+            },
+            close: function() {
+
+            }
+        });
+
+        $('.bindStuWrap .checkAll').prop('checked', false);
+        $('.bindStuWrap .checkAll').click(function() {
+            if ($(this).prop('checked')) {
+                $(this).parent().siblings().find('.stuCheck').prop('checked', true);
+            }
+            else {
+                $(this).parent().siblings().find('.stuCheck').prop('checked', false);
+            }
+        });
+    });
+   </script>
+</body>
+</html>

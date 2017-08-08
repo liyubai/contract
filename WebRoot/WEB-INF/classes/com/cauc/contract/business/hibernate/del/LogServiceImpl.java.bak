@@ -1,0 +1,1512 @@
+package com.cauc.training.business.hibernate;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.lang.StringUtils;
+import org.hibernate.HibernateException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.business.IFlightTrainingRecordService;
+import com.cauc.training.business.ILogService;
+import com.cauc.training.business.dao.GenericHibernateDAO;
+import com.cauc.training.business.dao.support.Page;
+import com.cauc.training.config.FinanceConfig;
+import com.cauc.training.pojos.StudentBaseInfo;
+import com.cauc.training.pojos.StudentLicense;
+import com.cauc.training.pojos.StudentLicensehistory;
+import com.cauc.training.pojos.TBackrecord;
+import com.cauc.training.pojos.TDgdistribution;
+import com.cauc.training.pojos.TDiction;
+import com.cauc.training.pojos.TExperiencerecordEdit;
+import com.cauc.training.pojos.TFlightTrainingrecord;
+import com.cauc.training.pojos.TFlightexperiencerecord;
+import com.cauc.training.pojos.THistoryrecord;
+import com.cauc.training.pojos.TLessonFitCheck;
+import com.cauc.training.pojos.TLog;
+import com.cauc.training.pojos.TPhase;
+import com.cauc.training.pojos.TTeaLicense;
+import com.cauc.training.pojos.TTrainingLesson;
+import com.cauc.training.pojos.TrainingLessonSort;
+import com.cauc.training.pojos.TraininglessonRelation;
+import com.cauc.training.pojos.Trainlessonunit;
+import com.cauc.training.util.Utilities;
+import com.cauc.training.vo.VFlightTrainingrecordDetail;
+import com.cauc.training.vo.VFlightTrainingrecordEdit;
+import com.cauc.training.vo.VOTTeaLicenseskilledcheck;
+import com.cauc.training.vo.VOrg;
+import com.cauc.training.vo.VStudentLicense;
+import com.cauc.training.vo.VTimesubject;
+import com.cauc.training.vo.VTrainingRecordCompletion;
+/***
+ * @功能说明：用于管理日志文件实现类
+ * @author ch.fu
+ */
+@Service()
+public class LogServiceImpl extends GenericHibernateDAO implements ILogService {
+
+	/**
+	 * @功能描述：保存日志文件
+	 * */
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public boolean saveLog(TLog log) throws FinanceServiceException {
+		boolean flag = false;
+		if(!StringUtils.isBlank(log.getTUser().getVId())){
+			super.save(log);
+			flag = true;
+		}else{
+			throw new FinanceServiceException("保存日志失败，请检查填写内容是否完整！");
+		}
+		return flag;
+	}
+
+	@SuppressWarnings("unchecked")
+	public Page readTrainingHistoryRecordLogList(Map<String, Object> params,
+			String pageNo) throws FinanceServiceException {
+		int pageSize = FinanceConfig.getIntProperty("default.system.pagesize");
+		
+		String hql ="";
+		String cond = "";
+
+		if(params.get(QUERY_CODE)!=null && !params.get(QUERY_CODE).equals("")){
+			cond+=" and studentBaseInfo.VCode='"+params.get(QUERY_CODE)+"'";
+		}
+		if(params.get(QUERY_KEY)!=null && !params.get(QUERY_KEY).equals("")){
+			cond+=" and studentBaseInfo.VName like '%"+params.get(QUERY_KEY)+"%'";
+		}
+		
+		if (params.get(QUERY_KEY_BEGIN_DATE) != null
+				&& !params.get(QUERY_KEY_BEGIN_DATE).equals(""))
+			cond+=" and DFlydate>='"+ params.get(QUERY_KEY_BEGIN_DATE)+"'";
+	
+		if (params.get(QUERY_KEY_EDN_DATE) != null
+				&& !params.get(QUERY_KEY_EDN_DATE).equals("")){
+			
+			cond+=" and DFlydate<='"+ params.get(QUERY_KEY_EDN_DATE)+"'";
+		}	
+
+		hql=" from TFlightTrainingrecord where VId in (select TFlightTrainingrecord.VId from THistoryrecord)" + cond;
+		hql+=" order by studentBaseInfo.VId,DFlydate desc,VId";
+
+		Integer pageIndex = Integer.parseInt(pageNo);
+		try {
+			Page page = this.pagedQuery(hql, pageIndex, pageSize);
+			List<TFlightTrainingrecord> list = page.getResult();
+			String expHql =" from TFlightexperiencerecord where TFlightTrainingrecord.VId=?";
+			
+			List<VFlightTrainingrecordEdit> blist = new ArrayList<VFlightTrainingrecordEdit>();
+			VFlightTrainingrecordEdit vf;
+			//飞行经历
+			TFlightexperiencerecord exp;
+			List<TFlightexperiencerecord> elist;
+			
+			//历史
+			List<VFlightTrainingrecordDetail> vhlist;
+			VFlightTrainingrecordDetail his;
+			
+			String hhql = " from THistoryrecord where TFlightTrainingrecord.VId=? order by DCreatedate asc,VId asc";
+			List<THistoryrecord> hlist;
+			//历史经历
+			String jhql =" from TExperiencerecordEdit where TFlightexperiencerecord.TFlightTrainingrecord.VId=?";
+			List<TExperiencerecordEdit> jlist;
+			TExperiencerecordEdit edit;
+			
+			//修改原因，教员打回原因
+			String rhql =" from TBackrecord where TFlightTrainingrecord.VId=? order by DCreatedate asc,VId asc";
+			List<TBackrecord> backlist;
+			
+			
+			for(TFlightTrainingrecord t:list){
+				
+				//打回原因
+				backlist = super.find(rhql, t.getVId());
+
+				vf = new VFlightTrainingrecordEdit();
+				vf.setVId(t.getVId());
+				vf.setVFlytype(t.getTDiction().getVName());
+				vf.setStudentName(t.getStudentBaseInfo().getVName());
+				vf.setStudentVCode(t.getStudentBaseInfo().getVCode());
+				if(t.getStationByVFpos()!=null && t.getStationByVFpos().getVCode()!=null){
+					vf.setVFpos(t.getStationByVFpos().getVCode());
+				}else{
+					vf.setVFpos("");
+				}
+				if(t.getStationByVLpos()!=null && t.getStationByVLpos().getVCode()!=null){
+					vf.setVLpos(t.getStationByVLpos().getVCode());
+				}else{
+					vf.setVLpos("");
+				}
+				
+				if(t.getTeacherBaseInfoByVTeacherid()!=null){
+					vf.setTeacherName(t.getTeacherBaseInfoByVTeacherid().getVName());
+				}else{
+					vf.setTeacherName("");
+				}
+				
+				if(t.getTeacherBaseInfoByVMonitorteacherid()!=null){
+					vf.setMonitorteacherName(t.getTeacherBaseInfoByVMonitorteacherid().getVName());
+				}else{
+					vf.setMonitorteacherName("");
+				}
+				vf.setDCreatedate(Utilities.format(t.getDCreatedate()));
+				vf.setVNo(t.getTTrainingLesson().getVNo());
+				vf.setLessonName(t.getTTrainingLesson().getVName());
+				vf.setPlaneCode(t.getPlaneinfo().getVPlanecode());
+				vf.setPlaneForm(t.getPlaneinfo().getPlaneform().getVName());
+				vf.setDFlydate(Utilities.format(t.getDFlydate()));
+				vf.setDFlymoment(Utilities.format(t.getDFlymoment(), "HH:mm"));
+				vf.setDEndmoment(Utilities.format(t.getDEndmoment(), "HH:mm"));
+				vf.setDTrantime(Utilities.formatTime(t.getDTrantime()));
+				if(t.getILanddaytimes()!=null && t.getILanddaytimes()>0){
+					vf.setILanddaytimes(t.getILanddaytimes());
+					}
+				if(t.getILangnighttimes()!=null && t.getILangnighttimes()>0){
+					vf.setILangnighttimes(t.getILangnighttimes());
+				}
+				vf.setVSecondstudent(t.getVSecondstudent());
+				vf.setIAuditstatus(t.getIAuditstatus());
+				elist = super.find(expHql, t.getVId());
+				if(elist.size()>0){
+					exp = elist.get(0);
+					vf.setDJizhangtime(Utilities.formatTime(exp.getDJizhangtime()));
+					vf.setDDanfeitime(Utilities.formatTime(exp.getDDanfeitime()));
+					vf.setDZhuanchangtime(Utilities.formatTime(exp.getDZhuanchangtime()));
+					vf.setDYejiantime(Utilities.formatTime(exp.getDYejiantime()));
+					vf.setDJiashiyuantime(Utilities.formatTime(exp.getDJiashiyuantime()));
+					vf.setDFujiashitime(Utilities.formatTime(exp.getDFujiashitime()));
+					vf.setDDaifeitime(Utilities.formatTime(exp.getDDaifeitime()));
+					vf.setDFjszhuanchangtime(Utilities.formatTime(exp.getDFjszhuanchangtime()));
+					vf.setDFjszcyjtime(Utilities.formatTime(exp.getDFjszcyjtime()));
+					vf.setDMoniyibiaotime(Utilities.formatTime(exp.getDMoniyibiaotime()));
+					vf.setDZhenshiyibiao(Utilities.formatTime(exp.getDZhenshiyibiao()));
+					vf.setVLhy(Utilities.formatTime(exp.getDYejiantime()+exp.getDFjszcyjtime()));
+					vf.setVTxy(Utilities.formatTime(t.getDTrantime()-exp.getDYejiantime()-exp.getDFjszcyjtime()));
+					if(exp.getVTranpos().equals("0")){
+						vf.setVTranpos("");
+					}else{
+						vf.setVTranpos(exp.getVTranpos());
+					}
+					vf.setDMnjsj(Utilities.formatTime(exp.getDMnjsj()));
+					vf.setDXlqsj(Utilities.formatTime(exp.getDXlqsj()));
+					if(exp.getVBz().equals("0")){
+						vf.setVBz("");
+					}else{
+						vf.setVBz(exp.getVBz());
+					}
+					
+				}
+				 vhlist = new ArrayList<VFlightTrainingrecordDetail>();
+				//获取历史记录
+				hlist = super.find(hhql, t.getVId());
+				for(int i=0;i<hlist.size();i++){
+					his = new VFlightTrainingrecordDetail();
+					his.setVId(hlist.get(i).getVId());
+					his.setVFlytype(hlist.get(i).getTDiction().getVName());
+					his.setStudentName(hlist.get(i).getStudentBaseInfo().getVName());
+					his.setStudentVCode(hlist.get(i).getStudentBaseInfo().getVCode());
+					if(hlist.get(i).getStationByVFpos()!=null && hlist.get(i).getStationByVFpos().getVCode()!=null){
+						his.setVFpos(hlist.get(i).getStationByVFpos().getVCode());
+					}else{
+						his.setVFpos("");
+					}
+					if(hlist.get(i).getStationByVLpos()!=null && hlist.get(i).getStationByVLpos().getVCode()!=null){
+						his.setVLpos(hlist.get(i).getStationByVLpos().getVCode());
+					}else{
+						his.setVLpos("");
+					}
+					
+					if(hlist.get(i).getTeacherBaseInfoByVTeacherid()!=null){
+						his.setTeacherName(hlist.get(i).getTeacherBaseInfoByVTeacherid().getVName());
+					}else{
+						his.setTeacherName("");
+					}
+					
+					if(hlist.get(i).getTeacherBaseInfoByVMonitorteacherid()!=null){
+						his.setMonitorteacherName(hlist.get(i).getTeacherBaseInfoByVMonitorteacherid().getVName());
+					}else{
+						his.setMonitorteacherName("");
+					}
+					his.setDCreatedate(Utilities.format(hlist.get(i).getDCreatedate()));
+					his.setVNo(hlist.get(i).getTTrainingLesson().getVNo());
+					his.setLessonName(hlist.get(i).getTTrainingLesson().getVName());
+					his.setPlaneCode(hlist.get(i).getPlaneinfo().getVPlanecode());
+					his.setPlaneForm(hlist.get(i).getPlaneinfo().getPlaneform().getVName());
+					his.setDFlydate(Utilities.format(hlist.get(i).getDFlydate()));
+					his.setDFlymoment(Utilities.format(hlist.get(i).getDFlymoment(), "HH:mm"));
+					his.setDEndmoment(Utilities.format(hlist.get(i).getDEndmoment(), "HH:mm"));
+					his.setDTrantime(Utilities.formatTime(hlist.get(i).getDTrantime()));
+					if(hlist.get(i).getILanddaytimes()!=null && hlist.get(i).getILanddaytimes()>0){
+						his.setILanddaytimes(hlist.get(i).getILanddaytimes());
+						}
+					if(hlist.get(i).getILangnighttimes()!=null && hlist.get(i).getILangnighttimes()>0){
+						his.setILangnighttimes(hlist.get(i).getILangnighttimes());
+					}
+					his.setVSecondstudent(hlist.get(i).getVSecondstudent());
+					his.setIAuditstatus(hlist.get(i).getIAuditstatus());
+					if(backlist.size()>i){
+						his.setDTeachertime(backlist.get(i).getVReason());
+					}
+					
+					//历史经历
+					jlist = super.find(jhql, t.getVId());
+					if(elist.size()>0){
+						edit = jlist.get(0);
+						his.setDJizhangtime(Utilities.formatTime(edit.getDJizhangtime()));
+						his.setDDanfeitime(Utilities.formatTime(edit.getDDanfeitime()));
+						his.setDZhuanchangtime(Utilities.formatTime(edit.getDZhuanchangtime()));
+						his.setDYejiantime(Utilities.formatTime(edit.getDYejiantime()));
+						his.setDJiashiyuantime(Utilities.formatTime(edit.getDJiashiyuantime()));
+						his.setDFujiashitime(Utilities.formatTime(edit.getDFujiashitime()));
+						his.setDDaifeitime(Utilities.formatTime(edit.getDDaifeitime()));
+						his.setDFjszhuanchangtime(Utilities.formatTime(edit.getDFjszhuanchangtime()));
+						his.setDFjszcyjtime(Utilities.formatTime(edit.getDFjszcyjtime()));
+						his.setDMoniyibiaotime(Utilities.formatTime(edit.getDMoniyibiaotime()));
+						his.setDZhenshiyibiao(Utilities.formatTime(edit.getDZhenshiyibiao()));
+						his.setVLhy(Utilities.formatTime(edit.getDYejiantime()+edit.getDFjszcyjtime()));
+						his.setVTxy(Utilities.formatTime(t.getDTrantime()-edit.getDYejiantime()-edit.getDFjszcyjtime()));
+						if(edit.getVTranpos().equals("0")){
+							his.setVTranpos("");
+						}else{
+							his.setVTranpos(edit.getVTranpos());
+						}
+						his.setDMnjsj(Utilities.formatTime(edit.getDMnjsj()));
+						his.setDXlqsj(Utilities.formatTime(edit.getDXlqsj()));
+						if(edit.getVBz().equals("0")){
+							his.setVBz("");
+						}else{
+							his.setVBz(edit.getVBz());
+						}
+						
+					}
+					vhlist.add(his);
+				}
+				vf.setHistoryList(vhlist);
+				blist.add(vf);
+			}
+			page.setData(blist);
+			return page;
+		} catch (HibernateException e) {
+			throw new FinanceServiceException("读取信息列表失败："+e.getMessage());
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	public Page readAFL52TrainingLessonRecordList(Map<String, Object> params,
+			String pageNo) throws FinanceServiceException {
+		
+		int pageSize = FinanceConfig.getIntProperty("default.system.pagesize");
+
+		String cond = "";
+
+		if(params.get(QUERY_CODE)!=null && !params.get(QUERY_CODE).equals("")){
+			cond+=" and studentBaseInfo.v_code='"+params.get(QUERY_CODE)+"'";
+		}
+		if(params.get(QUERY_KEY)!=null && !params.get(QUERY_KEY).equals("")){
+			cond+=" and studentBaseInfo.v_name like '%"+params.get(QUERY_KEY)+"%'";
+		}
+		
+		if(params.get(QUERY_KEY_LESSON)!=null && !params.get(QUERY_KEY_LESSON).equals("")){
+			cond+=" and t_trainingLesson.v_no='"+params.get(QUERY_KEY_LESSON)+"'";
+		}
+		
+		if (params.get(QUERY_KEY_BEGIN_DATE) != null
+				&& !params.get(QUERY_KEY_BEGIN_DATE).equals(""))
+			cond+=" and t_flightTrainingrecord.D_Flydate>='"+ params.get(QUERY_KEY_BEGIN_DATE)+"'";
+	
+		if (params.get(QUERY_KEY_EDN_DATE) != null
+				&& !params.get(QUERY_KEY_EDN_DATE).equals("")){
+			
+			cond+=" and t_flightTrainingrecord.D_Flydate<='"+ params.get(QUERY_KEY_EDN_DATE)+"'";
+		}	
+		
+		String sql = "select studentBaseInfo.v_id as studentid,studentBaseInfo.v_name,studentBaseInfo.v_code," +
+				"t_trainingLesson.v_id as lessonid,t_trainingLesson.v_no,t_trainingLesson.v_name as lessonname," +
+				"t_trainingLesson.i_isthree," +
+				" t_trainingLesson.i_oneNum,t_trainingLesson.i_totalNum from studentBaseInfo INNER JOIN t_flightTrainingrecord" +
+				" ON studentBaseInfo.v_id = t_flightTrainingrecord.v_flyStuId INNER JOIN t_trainingLesson" +
+				" ON t_flightTrainingrecord.v_lessonid = t_trainingLesson.v_id where (t_trainingLesson.i_oneNum>0" +
+				" or t_trainingLesson.i_totalNum>0) "+cond+" group by studentBaseInfo.v_name, studentBaseInfo.v_code," +
+				" t_trainingLesson.v_no, t_trainingLesson.v_name,studentBaseInfo.v_id, t_trainingLesson.v_id," +
+				" t_trainingLesson.i_isthree, t_trainingLesson.i_oneNum,t_trainingLesson.i_totalNum";
+		sql+=" order by studentBaseInfo.v_code asc";
+
+		//System.out.println(sql);
+		
+		Integer pageIndex = Integer.parseInt(pageNo);
+		try {
+			Page page = this.pagedSQLQuery(sql, pageIndex, pageSize);
+			List<Object[]> list = page.getResult();
+			
+			String hql =" from TFlightTrainingrecord where studentBaseInfo.VId=? and TTrainingLesson.VId=?";
+			List<TFlightTrainingrecord> recordList;
+			
+			String expHql =" from TFlightexperiencerecord where TFlightTrainingrecord.VId=?";
+			
+			List<VFlightTrainingrecordEdit> blist = new ArrayList<VFlightTrainingrecordEdit>();
+			VFlightTrainingrecordEdit vf;
+			
+			//飞行经历
+			TFlightexperiencerecord exp;
+			List<TFlightexperiencerecord> elist;
+			
+			List<VFlightTrainingrecordDetail> vhlist;
+			VFlightTrainingrecordDetail his;
+			
+			for(Object[] t:list){
+				
+				vf = new VFlightTrainingrecordEdit();
+				vf.setStudentid(t[0].toString());
+				vf.setStudentName(t[1].toString());
+				vf.setStudentVCode(t[2].toString());
+				vf.setLessonId(t[3].toString());
+				vf.setVNo(t[4].toString());
+				vf.setLessonName(t[5].toString());
+				vf.setIIsthree(Integer.parseInt(t[6].toString()));
+				vf.setIOneNum(Integer.parseInt(t[7].toString()));
+				vf.setITotalNum(Integer.parseInt(t[8].toString()));	
+				vhlist = new ArrayList<VFlightTrainingrecordDetail>();
+				recordList = super.find(hql, vf.getStudentid(),vf.getLessonId());
+				
+				for(TFlightTrainingrecord rec:recordList){
+					his = new VFlightTrainingrecordDetail();
+					his.setVId(rec.getVId());
+					his.setVFlytype(rec.getTDiction().getVName());
+					his.setStudentName(rec.getStudentBaseInfo().getVName());
+					his.setStudentVCode(rec.getStudentBaseInfo().getVCode());
+					if(rec.getStationByVFpos()!=null && rec.getStationByVFpos().getVCode()!=null){
+						his.setVFpos(rec.getStationByVFpos().getVCode());
+					}else{
+						his.setVFpos("");
+					}
+					if(rec.getStationByVJtpos()!=null && rec.getStationByVJtpos().getVCode()!=null){
+						his.setVJtpos(rec.getStationByVJtpos().getVCode());
+					}else{
+						his.setVLpos("");
+					}
+					if(rec.getStationByVLpos()!=null && rec.getStationByVLpos().getVCode()!=null){
+						his.setVLpos(rec.getStationByVLpos().getVCode());
+					}else{
+						his.setVLpos("");
+					}
+					
+					if(rec.getTeacherBaseInfoByVTeacherid()!=null){
+						his.setTeacherName(rec.getTeacherBaseInfoByVTeacherid().getVName());
+					}else{
+						his.setTeacherName("");
+					}
+					
+					if(rec.getTeacherBaseInfoByVMonitorteacherid()!=null){
+						his.setMonitorteacherName(rec.getTeacherBaseInfoByVMonitorteacherid().getVName());
+					}else{
+						his.setMonitorteacherName("");
+					}
+					his.setDCreatedate(Utilities.format(rec.getDCreatedate()));
+					his.setVNo(rec.getTTrainingLesson().getVNo());
+					his.setLessonName(rec.getTTrainingLesson().getVName());
+					his.setPlaneCode(rec.getPlaneinfo().getVPlanecode());
+					his.setPlaneForm(rec.getPlaneinfo().getPlaneform().getVName());
+					his.setDFlydate(Utilities.format(rec.getDFlydate()));
+					his.setDFlymoment(Utilities.format(rec.getDFlymoment(), "HH:mm"));
+					his.setDEndmoment(Utilities.format(rec.getDEndmoment(), "HH:mm"));
+					his.setDTrantime(Utilities.formatTime(rec.getDTrantime()));
+					if(rec.getILanddaytimes()!=null && rec.getILanddaytimes()>0){
+						his.setILanddaytimes(rec.getILanddaytimes());
+						}
+					if(rec.getILangnighttimes()!=null && rec.getILangnighttimes()>0){
+						his.setILangnighttimes(rec.getILangnighttimes());
+					}
+					his.setVSecondstudent(rec.getVSecondstudent());
+					his.setIAuditstatus(rec.getIAuditstatus());
+					elist = super.find(expHql, rec.getVId());
+					if(elist.size()>0){
+						exp = elist.get(0);
+						his.setDJizhangtime(Utilities.formatTime(exp.getDJizhangtime()));
+						his.setDDanfeitime(Utilities.formatTime(exp.getDDanfeitime()));
+						his.setDZhuanchangtime(Utilities.formatTime(exp.getDZhuanchangtime()));
+						his.setDYejiantime(Utilities.formatTime(exp.getDYejiantime()));
+						his.setDJiashiyuantime(Utilities.formatTime(exp.getDJiashiyuantime()));
+						his.setDFujiashitime(Utilities.formatTime(exp.getDFujiashitime()));
+						his.setDDaifeitime(Utilities.formatTime(exp.getDDaifeitime()));
+						his.setDFjszhuanchangtime(Utilities.formatTime(exp.getDFjszhuanchangtime()));
+						his.setDFjszcyjtime(Utilities.formatTime(exp.getDFjszcyjtime()));
+						his.setDMoniyibiaotime(Utilities.formatTime(exp.getDMoniyibiaotime()));
+						his.setDZhenshiyibiao(Utilities.formatTime(exp.getDZhenshiyibiao()));
+						his.setVLhy(Utilities.formatTime(exp.getDYejiantime()+exp.getDFjszcyjtime()));
+						his.setVTxy(Utilities.formatTime(rec.getDTrantime()-exp.getDYejiantime()-exp.getDFjszcyjtime()));
+						if(exp.getVTranpos().equals("0")){
+							his.setVTranpos("");
+						}else{
+							his.setVTranpos(exp.getVTranpos());
+						}
+						his.setDMnjsj(Utilities.formatTime(exp.getDMnjsj()));
+						his.setDXlqsj(Utilities.formatTime(exp.getDXlqsj()));
+						if(exp.getVBz().equals("0")){
+							his.setVBz("");
+						}else{
+							his.setVBz(exp.getVBz());
+						}
+					}
+					vhlist.add(his);
+				}
+				vf.setHistoryList(vhlist);
+				blist.add(vf);
+			}
+			
+			page.setData(blist);
+			return page;
+		} catch (HibernateException e) {
+			throw new FinanceServiceException("读取信息列表失败："+e.getMessage());
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	public Page readZhuanChangNoSameDayRecordList(Map<String, Object> params,
+			String pageNo) throws FinanceServiceException {
+		
+		int pageSize = FinanceConfig.getIntProperty("default.system.pagesize");
+
+		String cond = "";
+
+		if(params.get(QUERY_CODE)!=null && !params.get(QUERY_CODE).equals("")){
+			cond+=" and d.v_code='"+params.get(QUERY_CODE)+"'";
+		}
+		if(params.get(QUERY_KEY)!=null && !params.get(QUERY_KEY).equals("")){
+			cond+=" and d.v_name like '%"+params.get(QUERY_KEY)+"%'";
+		}
+		
+		if(params.get(QUERY_KEY_LESSON)!=null && !params.get(QUERY_KEY_LESSON).equals("")){
+			cond+=" and d.v_no='"+params.get(QUERY_KEY_LESSON)+"'";
+		}
+				
+		String sql ="";
+
+		sql ="select top 100000000  d.studentid,d.v_name,d.v_code,d.lessonid,d.v_no,d.i_isthree,d.i_oneNum," +
+				"d.i_totalNum,e.onedaynumber1," +
+				"e.onelessonnumber from (select studentBaseInfo.v_id as studentid,studentBaseInfo.v_name,studentBaseInfo.v_code" +
+				",t_trainingLesson.v_id as lessonid,t_trainingLesson.v_no,t_trainingLesson.v_name as lessonname," +
+				"t_trainingLesson.i_isthree, t_trainingLesson.i_oneNum,t_trainingLesson.i_totalNum from studentBaseInfo" +
+				" INNER JOIN t_flightTrainingrecord ON studentBaseInfo.v_id = t_flightTrainingrecord.v_flyStuId " +
+				" INNER JOIN t_trainingLesson ON t_flightTrainingrecord.v_lessonid = t_trainingLesson.v_id where" +
+				" (t_trainingLesson.i_oneNum>0 or t_trainingLesson.i_totalNum>0) group by studentBaseInfo.v_name," +
+				" studentBaseInfo.v_code,t_trainingLesson.v_no, t_trainingLesson.v_name,studentBaseInfo.v_id," +
+				"t_trainingLesson.v_id, t_trainingLesson.i_isthree, t_trainingLesson.i_oneNum,t_trainingLesson.i_totalNum )" +
+				" d left join ( select top 10000000  b.studentid,b.lessonid,b.onedaynumber1,c.onelessonnumber from (" +
+				" select a.studentid,a.lessonid,count(*) as onedaynumber1 from ( select  1 as onedaynumber," +
+				" studentBaseInfo.v_id as studentid,t_trainingLesson.v_id as lessonid,t_flightTrainingrecord.d_flydate" +
+				" from studentBaseInfo INNER JOIN t_flightTrainingrecord ON studentBaseInfo.v_id = t_flightTrainingrecord.v_flyStuId" +
+				" INNER JOIN t_trainingLesson ON t_flightTrainingrecord.v_lessonid = t_trainingLesson.v_id where" +
+				" (t_trainingLesson.i_oneNum>0 or t_trainingLesson.i_totalNum>0) group by studentBaseInfo.v_id" +
+				" ,t_trainingLesson.v_id ,t_flightTrainingrecord.d_flydate) a group by a.studentid,a.lessonid) b left join (" +
+				" select top 10000000 count(*) as onelessonnumber, studentBaseInfo.v_id as studentid,t_trainingLesson.v_id" +
+				" as lessonid from studentBaseInfo INNER JOIN t_flightTrainingrecord ON studentBaseInfo.v_id =" +
+				" t_flightTrainingrecord.v_flyStuId INNER JOIN t_trainingLesson ON t_flightTrainingrecord.v_lessonid =" +
+				" t_trainingLesson.v_id where (t_trainingLesson.i_oneNum>0 or t_trainingLesson.i_totalNum>0) group by" +
+				" studentBaseInfo.v_id ,t_trainingLesson.v_id ) c on b.studentid=c.studentid and b.lessonid=c.lessonid" +
+				" order by b.studentid,b.lessonid) e on d.studentid=e.studentid and d.lessonid=e.lessonid where " +
+				" onedaynumber1=onelessonnumber and onedaynumber1>1" + cond+	" order by d.v_code";
+		//System.out.println(sql);
+		
+		Integer pageIndex = Integer.parseInt(pageNo);
+		try {
+			Page page = this.pagedSQLHasOrderQuery(sql, pageIndex, pageSize);
+			List<Object[]> list = page.getResult();
+			
+			String hql =" from TFlightTrainingrecord where studentBaseInfo.VId=? and TTrainingLesson.VId=?";
+			List<TFlightTrainingrecord> recordList;
+			
+			String expHql =" from TFlightexperiencerecord where TFlightTrainingrecord.VId=?";
+			
+			List<VFlightTrainingrecordEdit> blist = new ArrayList<VFlightTrainingrecordEdit>();
+			VFlightTrainingrecordEdit vf;
+			
+			//飞行经历
+			TFlightexperiencerecord exp;
+			List<TFlightexperiencerecord> elist;
+			
+			List<VFlightTrainingrecordDetail> vhlist;
+			VFlightTrainingrecordDetail his;
+			
+			for(Object[] t:list){
+				
+				vf = new VFlightTrainingrecordEdit();
+				vf.setStudentid(t[0].toString());
+				vf.setStudentName(t[1].toString());
+				vf.setStudentVCode(t[2].toString());
+				vf.setLessonId(t[3].toString());
+				vf.setVNo(t[4].toString());
+				//vf.setLessonName(t[5].toString());
+				//vf.setIIsthree(Integer.parseInt(t[6].toString()));
+				//vf.setIOneNum(Integer.parseInt(t[7].toString()));
+				//vf.setITotalNum(Integer.parseInt(t[8].toString()));	
+				vhlist = new ArrayList<VFlightTrainingrecordDetail>();
+				recordList = super.find(hql, vf.getStudentid(),vf.getLessonId());
+				
+				for(TFlightTrainingrecord rec:recordList){
+					his = new VFlightTrainingrecordDetail();
+					his.setVId(rec.getVId());
+					his.setVFlytype(rec.getTDiction().getVName());
+					his.setStudentName(rec.getStudentBaseInfo().getVName());
+					his.setStudentVCode(rec.getStudentBaseInfo().getVCode());
+					if(rec.getStationByVFpos()!=null && rec.getStationByVFpos().getVCode()!=null){
+						his.setVFpos(rec.getStationByVFpos().getVCode());
+					}else{
+						his.setVFpos("");
+					}
+					if(rec.getStationByVJtpos()!=null && rec.getStationByVJtpos().getVCode()!=null){
+						his.setVJtpos(rec.getStationByVJtpos().getVCode());
+					}else{
+						his.setVLpos("");
+					}
+					if(rec.getStationByVLpos()!=null && rec.getStationByVLpos().getVCode()!=null){
+						his.setVLpos(rec.getStationByVLpos().getVCode());
+					}else{
+						his.setVLpos("");
+					}
+					
+					if(rec.getTeacherBaseInfoByVTeacherid()!=null){
+						his.setTeacherName(rec.getTeacherBaseInfoByVTeacherid().getVName());
+					}else{
+						his.setTeacherName("");
+					}
+					
+					if(rec.getTeacherBaseInfoByVMonitorteacherid()!=null){
+						his.setMonitorteacherName(rec.getTeacherBaseInfoByVMonitorteacherid().getVName());
+					}else{
+						his.setMonitorteacherName("");
+					}
+					his.setDCreatedate(Utilities.format(rec.getDCreatedate()));
+					his.setVNo(rec.getTTrainingLesson().getVNo());
+					his.setLessonName(rec.getTTrainingLesson().getVName());
+					his.setPlaneCode(rec.getPlaneinfo().getVPlanecode());
+					his.setPlaneForm(rec.getPlaneinfo().getPlaneform().getVName());
+					his.setDFlydate(Utilities.format(rec.getDFlydate()));
+					his.setDFlymoment(Utilities.format(rec.getDFlymoment(), "HH:mm"));
+					his.setDEndmoment(Utilities.format(rec.getDEndmoment(), "HH:mm"));
+					his.setDTrantime(Utilities.formatTime(rec.getDTrantime()));
+					if(rec.getILanddaytimes()!=null && rec.getILanddaytimes()>0){
+						his.setILanddaytimes(rec.getILanddaytimes());
+						}
+					if(rec.getILangnighttimes()!=null && rec.getILangnighttimes()>0){
+						his.setILangnighttimes(rec.getILangnighttimes());
+					}
+					his.setVSecondstudent(rec.getVSecondstudent());
+					his.setIAuditstatus(rec.getIAuditstatus());
+					elist = super.find(expHql, rec.getVId());
+					if(elist.size()>0){
+						exp = elist.get(0);
+						his.setDJizhangtime(Utilities.formatTime(exp.getDJizhangtime()));
+						his.setDDanfeitime(Utilities.formatTime(exp.getDDanfeitime()));
+						his.setDZhuanchangtime(Utilities.formatTime(exp.getDZhuanchangtime()));
+						his.setDYejiantime(Utilities.formatTime(exp.getDYejiantime()));
+						his.setDJiashiyuantime(Utilities.formatTime(exp.getDJiashiyuantime()));
+						his.setDFujiashitime(Utilities.formatTime(exp.getDFujiashitime()));
+						his.setDDaifeitime(Utilities.formatTime(exp.getDDaifeitime()));
+						his.setDFjszhuanchangtime(Utilities.formatTime(exp.getDFjszhuanchangtime()));
+						his.setDFjszcyjtime(Utilities.formatTime(exp.getDFjszcyjtime()));
+						his.setDMoniyibiaotime(Utilities.formatTime(exp.getDMoniyibiaotime()));
+						his.setDZhenshiyibiao(Utilities.formatTime(exp.getDZhenshiyibiao()));
+						his.setVLhy(Utilities.formatTime(exp.getDYejiantime()+exp.getDFjszcyjtime()));
+						his.setVTxy(Utilities.formatTime(rec.getDTrantime()-exp.getDYejiantime()-exp.getDFjszcyjtime()));
+						if(exp.getVTranpos().equals("0")){
+							his.setVTranpos("");
+						}else{
+							his.setVTranpos(exp.getVTranpos());
+						}
+						his.setDMnjsj(Utilities.formatTime(exp.getDMnjsj()));
+						his.setDXlqsj(Utilities.formatTime(exp.getDXlqsj()));
+						if(exp.getVBz().equals("0")){
+							his.setVBz("");
+						}else{
+							his.setVBz(exp.getVBz());
+						}
+					}
+					vhlist.add(his);
+				}
+				vf.setHistoryList(vhlist);
+				blist.add(vf);
+			}
+			
+			page.setData(blist);
+			return page;
+		} catch (HibernateException e) {
+			throw new FinanceServiceException("读取信息列表失败："+e.getMessage());
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	public Page readZhuanChangNoTreePosRecordList(Map<String, Object> params,
+			String pageNo) throws FinanceServiceException {
+		
+		int pageSize = FinanceConfig.getIntProperty("default.system.pagesize");
+
+		String cond = "";
+		String cond1 = "";
+
+		if(params.get(QUERY_CODE)!=null && !params.get(QUERY_CODE).equals("")){
+			cond+=" and v_flystuid in ( select v_id from studentbaseinfo where v_code='"+params.get(QUERY_CODE)+"')";
+		}
+		if(params.get(QUERY_KEY)!=null && !params.get(QUERY_KEY).equals("")){
+			cond+=" and v_flystuid in ( select v_id from studentbaseinfo where v_name like '%"+params.get(QUERY_KEY)+"%')";
+		}
+		
+		if(params.get(QUERY_KEY_LESSON)!=null && !params.get(QUERY_KEY_LESSON).equals("")){
+			cond1+=" and v_no='"+params.get(QUERY_KEY_LESSON)+"'";
+		}
+				
+		String sql ="";
+
+		sql ="select a.v_flystuid,a.v_lessonid from (select v_flystuid ,v_lessonid,v_fpos as station from" +
+				" t_flightTrainingrecord where v_lessonid in (select v_id from t_trainingLesson where i_isthree=1"+cond1+")" +cond+
+				" union all select v_flystuid ,v_lessonid,v_lpos as station from t_flightTrainingrecord where" +
+				" v_lessonid in (select v_id from t_trainingLesson where i_isthree=1"+cond1+")"+cond+" union all select" +
+				" v_flystuid ,v_lessonid,v_jtpos as station from t_flightTrainingrecord where v_jtpos is not null and" +
+				"  v_lessonid in (select v_id from t_trainingLesson where i_isthree=1"+cond1+")"+cond+") a group by a.v_flystuid," +
+				"a.v_lessonid having count(distinct(a.station))<>3";
+		//System.out.println(sql);
+		
+		Integer pageIndex = Integer.parseInt(pageNo);
+		try {
+			Page page = this.pagedSQLHasOrderQuery(sql, pageIndex, pageSize);
+			List<Object[]> list = page.getResult();
+			
+			String hql =" from TFlightTrainingrecord where studentBaseInfo.VId=? and TTrainingLesson.VId=?";
+			List<TFlightTrainingrecord> recordList;
+			
+			String expHql =" from TFlightexperiencerecord where TFlightTrainingrecord.VId=?";
+			
+			List<VFlightTrainingrecordEdit> blist = new ArrayList<VFlightTrainingrecordEdit>();
+			VFlightTrainingrecordEdit vf;
+			
+			//飞行经历
+			TFlightexperiencerecord exp;
+			List<TFlightexperiencerecord> elist;
+			
+			List<VFlightTrainingrecordDetail> vhlist;
+			VFlightTrainingrecordDetail his;
+			
+			for(Object[] t:list){
+				
+				vf = new VFlightTrainingrecordEdit();
+				vf.setStudentid(t[0].toString());
+				//vf.setStudentName(t[1].toString());
+				//vf.setStudentVCode(t[2].toString());
+				vf.setLessonId(t[1].toString());
+				//vf.setVNo(t[4].toString());
+				//vf.setLessonName(t[5].toString());
+				//vf.setIIsthree(Integer.parseInt(t[6].toString()));
+				//vf.setIOneNum(Integer.parseInt(t[7].toString()));
+				//vf.setITotalNum(Integer.parseInt(t[8].toString()));	
+				vhlist = new ArrayList<VFlightTrainingrecordDetail>();
+				recordList = super.find(hql, vf.getStudentid(),vf.getLessonId());
+				
+				for(TFlightTrainingrecord rec:recordList){
+					his = new VFlightTrainingrecordDetail();
+					his.setVId(rec.getVId());
+					his.setVFlytype(rec.getTDiction().getVName());
+					his.setStudentName(rec.getStudentBaseInfo().getVName());
+					his.setStudentVCode(rec.getStudentBaseInfo().getVCode());
+					if(rec.getStationByVFpos()!=null && rec.getStationByVFpos().getVCode()!=null){
+						his.setVFpos(rec.getStationByVFpos().getVCode());
+					}else{
+						his.setVFpos("");
+					}
+					if(rec.getStationByVJtpos()!=null && rec.getStationByVJtpos().getVCode()!=null){
+						his.setVJtpos(rec.getStationByVJtpos().getVCode());
+					}else{
+						his.setVLpos("");
+					}
+					if(rec.getStationByVLpos()!=null && rec.getStationByVLpos().getVCode()!=null){
+						his.setVLpos(rec.getStationByVLpos().getVCode());
+					}else{
+						his.setVLpos("");
+					}
+					
+					if(rec.getTeacherBaseInfoByVTeacherid()!=null){
+						his.setTeacherName(rec.getTeacherBaseInfoByVTeacherid().getVName());
+					}else{
+						his.setTeacherName("");
+					}
+					
+					if(rec.getTeacherBaseInfoByVMonitorteacherid()!=null){
+						his.setMonitorteacherName(rec.getTeacherBaseInfoByVMonitorteacherid().getVName());
+					}else{
+						his.setMonitorteacherName("");
+					}
+					his.setDCreatedate(Utilities.format(rec.getDCreatedate()));
+					his.setVNo(rec.getTTrainingLesson().getVNo());
+					his.setLessonName(rec.getTTrainingLesson().getVName());
+					his.setPlaneCode(rec.getPlaneinfo().getVPlanecode());
+					his.setPlaneForm(rec.getPlaneinfo().getPlaneform().getVName());
+					his.setDFlydate(Utilities.format(rec.getDFlydate()));
+					his.setDFlymoment(Utilities.format(rec.getDFlymoment(), "HH:mm"));
+					his.setDEndmoment(Utilities.format(rec.getDEndmoment(), "HH:mm"));
+					his.setDTrantime(Utilities.formatTime(rec.getDTrantime()));
+					if(rec.getILanddaytimes()!=null && rec.getILanddaytimes()>0){
+						his.setILanddaytimes(rec.getILanddaytimes());
+						}
+					if(rec.getILangnighttimes()!=null && rec.getILangnighttimes()>0){
+						his.setILangnighttimes(rec.getILangnighttimes());
+					}
+					his.setVSecondstudent(rec.getVSecondstudent());
+					his.setIAuditstatus(rec.getIAuditstatus());
+					elist = super.find(expHql, rec.getVId());
+					if(elist.size()>0){
+						exp = elist.get(0);
+						his.setDJizhangtime(Utilities.formatTime(exp.getDJizhangtime()));
+						his.setDDanfeitime(Utilities.formatTime(exp.getDDanfeitime()));
+						his.setDZhuanchangtime(Utilities.formatTime(exp.getDZhuanchangtime()));
+						his.setDYejiantime(Utilities.formatTime(exp.getDYejiantime()));
+						his.setDJiashiyuantime(Utilities.formatTime(exp.getDJiashiyuantime()));
+						his.setDFujiashitime(Utilities.formatTime(exp.getDFujiashitime()));
+						his.setDDaifeitime(Utilities.formatTime(exp.getDDaifeitime()));
+						his.setDFjszhuanchangtime(Utilities.formatTime(exp.getDFjszhuanchangtime()));
+						his.setDFjszcyjtime(Utilities.formatTime(exp.getDFjszcyjtime()));
+						his.setDMoniyibiaotime(Utilities.formatTime(exp.getDMoniyibiaotime()));
+						his.setDZhenshiyibiao(Utilities.formatTime(exp.getDZhenshiyibiao()));
+						his.setVLhy(Utilities.formatTime(exp.getDYejiantime()+exp.getDFjszcyjtime()));
+						his.setVTxy(Utilities.formatTime(rec.getDTrantime()-exp.getDYejiantime()-exp.getDFjszcyjtime()));
+						if(exp.getVTranpos().equals("0")){
+							his.setVTranpos("");
+						}else{
+							his.setVTranpos(exp.getVTranpos());
+						}
+						his.setDMnjsj(Utilities.formatTime(exp.getDMnjsj()));
+						his.setDXlqsj(Utilities.formatTime(exp.getDXlqsj()));
+						if(exp.getVBz().equals("0")){
+							his.setVBz("");
+						}else{
+							his.setVBz(exp.getVBz());
+						}
+					}
+					vhlist.add(his);
+				}
+				vf.setHistoryList(vhlist);
+				blist.add(vf);
+			}
+			
+			page.setData(blist);
+			return page;
+		} catch (HibernateException e) {
+			throw new FinanceServiceException("读取信息列表失败："+e.getMessage());
+		}
+	}
+	@SuppressWarnings("unchecked")
+	public List<TTrainingLesson> readZhuanChangLessonList()
+			throws FinanceServiceException {
+		String hql =" from TTrainingLesson where IOneNum>0 or ITotalNum>0";
+		return super.find(hql);
+	}
+
+	@SuppressWarnings("unchecked")
+	public Page trainingLessonFitCheck(Map<String, Object> params, String pageNo)
+			throws FinanceServiceException {
+		try{
+			
+			String cond = "";
+			//if(params.get(QUERY_CODE)!=null && !params.get(QUERY_CODE).equals("")){
+			//	cond+=" and studentBaseInfo.VCode='"+params.get(QUERY_CODE)+"'";
+			//}
+			if(params.get(QUERY_KEY)!=null && !params.get(QUERY_KEY).equals("")){
+				cond+=" and (studentBaseInfo.VName like '%"+params.get(QUERY_KEY)+"%' or" +
+						"  studentBaseInfo.VCode='"+params.get(QUERY_KEY)+"')";
+			}
+			
+			String hql =" from TDgdistribution where studentBaseInfo.TDictionByVStuStatusid.VId='"+
+			IFlightTrainingRecordService.STUDENT_STATUS_GUO_NEI_TRAINING+"' "+cond;
+			
+			int pageSize = FinanceConfig.getIntProperty("default.index.min");
+			pageSize=5;
+			Integer pageIndex = Integer.parseInt(pageNo);
+			Page page = this.pagedQuery(hql, pageIndex, pageSize);
+			
+			List<TDgdistribution> dlist = page.getResult();
+			List<VTrainingRecordCompletion> blist = new ArrayList<VTrainingRecordCompletion>();
+			VTrainingRecordCompletion vf;
+			List<Object> scoreList;
+			String shql ="select sum(DTrantime) from TFlightTrainingrecord where" +
+			" (IAuditstatus=1 or IAuditstatus=3 or IAuditstatus=4 or IAuditstatus=5 ) and TOutline.VId=? and studentBaseInfo.VId=?";//审核通过
+
+			//大纲时间科目
+			String sub = "select TTimesubject.VUnitid,TTimesubject.TDiction.VName,TTimesubject.VName,sum(DTime),TTimesubject.VId" +
+					" from TraininglessonSubjectRelation where TTrainingLesson.VId in" +
+					" (select TTrainingLesson.VId from TraininglessonRelation where TPhase.trainlessonunit.TOutline.VId=?)" +
+					" group by TTimesubject.VUnitid,TTimesubject.TDiction.VName,TTimesubject.VName,TTimesubject.VId " +
+					"order by TTimesubject.VUnitid,TTimesubject.TDiction.VName,TTimesubject.VName";
+			String hasFit = " from TLessonFitCheck where TOutline.VId=? and studentBaseInfo.VId=? and VParentid=? and IType=0";
+			for(TDgdistribution t:dlist){
+				vf = new VTrainingRecordCompletion();
+				vf.setVId(t.getStudentBaseInfo().getVId());
+				vf.setVCode(t.getStudentBaseInfo().getVCode());
+				vf.setStuid(t.getStudentBaseInfo().getVId());
+				vf.setVName(t.getStudentBaseInfo().getVName());
+				
+				vf.setOutlineId(t.getTOutline().getVId());
+				vf.setOutlineName(t.getTOutline().getVName());
+				vf.setTotalTime(t.getTOutline().getDTraintime());//总时间
+				vf.setHasFit(super.find(hasFit, t.getTOutline().getVId(),t.getStudentBaseInfo().getVId(),t.getTOutline().getVId()).size());
+				scoreList = super.find(shql,t.getTOutline().getVId(),vf.getVId());
+				for(Object o:scoreList){
+					if(o==null){
+						vf.setFinishTime(0);
+					}else{
+						vf.setFinishTime(Double.parseDouble(o.toString()));
+					}
+
+				}
+				vf.setViewTotalTime(Utilities.formatTime(vf.getTotalTime()));
+				vf.setViewFinishTime(Utilities.formatzoneTime(vf.getFinishTime()));
+				
+				//获取时间科目列表
+				vf.setSubList(getTimeSubjectList(sub,vf.getOutlineId(),t.getStudentBaseInfo().getVCode(),vf.getOutlineId(),0));
+				blist.add(vf);
+			}
+			
+			page.setData(blist);
+			return page;
+		}
+		catch (HibernateException e) {
+			throw new FinanceServiceException("查询信息失败", e);
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	private List<VTimesubject> getTimeSubjectList(String hql,String parentid,String code,String outlineid,int type){
+		
+		//科目已飞时间大纲：机长或单飞（机长、单飞、转场、夜间）；带飞（副驾驶、带飞、转场、夜间）
+		/*
+		String fhql ="select sum(DJizhangtime),sum(DDanfeitime),sum(DZhuanchangtime),sum(DYejiantime),sum(DFujiashitime)" +
+				",sum(DDaifeitime),sum(DFjszhuanchangtime),sum(DFjszcyjtime),sum(DMoniyibiaotime),sum(DZhenshiyibiao)" +
+				" from TFlightexperiencerecord f where "+
+				" (f.TFlightTrainingrecord.IAuditstatus=1 or f.TFlightTrainingrecord.IAuditstatus=3 or" +
+				" f.TFlightTrainingrecord.IAuditstatus=4 or f.TFlightTrainingrecord.IAuditstatus=5 )" +
+				" and f.TFlightTrainingrecord.TOutline.VId='"+outlineid+"' and f.TFlightTrainingrecord.studentBaseInfo.VCode='"+code+"'";
+		*/
+		
+		String fhql =" from TFlightexperiencerecord f where "+
+		" (f.TFlightTrainingrecord.IAuditstatus=1 or f.TFlightTrainingrecord.IAuditstatus=3 or" +
+		" f.TFlightTrainingrecord.IAuditstatus=4 or f.TFlightTrainingrecord.IAuditstatus=5 )" +
+		" and f.TFlightTrainingrecord.TOutline.VId='"+outlineid+"' and f.TFlightTrainingrecord.studentBaseInfo.VCode='"+code+"'";
+
+		//单元科目已飞时间
+		if(type==1){
+			fhql+=" and f.TFlightTrainingrecord.TTrainingLesson.VId in (select r.TTrainingLesson.VId " +
+				"from TraininglessonRelation r where r.TPhase.trainlessonunit.VId='"+parentid+"')";
+		}
+		//阶段科目已飞时间
+		if(type==2){
+			fhql+=" and f.TFlightTrainingrecord.TTrainingLesson.VId in (select r.TTrainingLesson.VId " +
+				"from TraininglessonRelation r where r.TPhase.VId='"+parentid+"')";
+		}
+		//System.out.println(fhql);
+		List<TFlightexperiencerecord> list = super.find(fhql);
+		List<VTimesubject> addSubList = new ArrayList<VTimesubject>();
+		VTimesubject timeSub;
+		List<Object[]> subList = super.find(hql, parentid);
+		double[] d = new double[18];
+
+		for(Object[] o:subList){
+			
+			for(int i=0;i<18;i++){
+				d[i] = 0;
+			}
+			if(o[2].toString().equals("多发复杂飞机") || o[2].toString().equals("特技")){
+				continue;
+			}
+			
+			if(Double.parseDouble(o[3].toString())==0)
+				continue;
+			
+			timeSub = new VTimesubject();
+			timeSub.setVUnit(super.get(TrainingLessonSort.class,o[0].toString()).getVName().replace("课目", ""));
+			
+			timeSub.setVGroup(o[1].toString());
+			timeSub.setVName(o[2].toString());
+			timeSub.setDefaultTime(Double.parseDouble(o[3].toString()));
+
+			for(TFlightexperiencerecord s:list){
+				if(s.getTTrainingLesson().getVBeiyong().equals("4028816a4746e160014746f0f6600001")){//单发私照
+					
+					if(o[1].toString().equals("带飞")){
+						if(timeSub.getVName().equals("带飞")){
+							
+							d[0]+=s.getDDaifeitime();
+							
+						}else if(timeSub.getVName().equals("带飞夜航")){
+							
+							d[1]+=s.getDFjszcyjtime();
+							
+						}else if(timeSub.getVName().equals("带飞夜间转场")){
+							
+							if(s.getDFjszcyjtime()>0){
+								d[2]+=s.getDFjszhuanchangtime();
+							}
+							
+						}else if(timeSub.getVName().equals("带飞昼间转场")){
+
+							if(s.getDFjszcyjtime()==0){
+								d[3]+=s.getDFjszhuanchangtime();
+							}
+							
+						}else if(timeSub.getVName().equals("仪表")){
+							d[4]+=s.getDZhenshiyibiao()+s.getDMoniyibiaotime();
+						}
+					}else if(o[1].toString().equals("单飞/机长")){
+						if(timeSub.getVName().equals("单飞")){
+							d[5]+=s.getDDanfeitime();
+						}else if(timeSub.getVName().equals("单飞转场")){
+							d[6]+=s.getDZhuanchangtime();
+						}
+					}
+				}else if(s.getTTrainingLesson().getVBeiyong().equals("4028816a4746e160014746f162900003")){//多发商照
+
+					if(o[1].toString().equals("带飞")){
+
+						if(timeSub.getVName().equals("带飞")){
+							if(s.getTFlightTrainingrecord().getTTrainingLesson().getIFxxz()==0){
+								d[7]+=s.getDDaifeitime();
+							}
+						}else if(timeSub.getVName().equals("多发复杂飞机")){
+							timeSub.setFinishTime(0);
+						}else if(timeSub.getVName().equals("特技")){
+							timeSub.setFinishTime(0);
+						}else if(timeSub.getVName().equals("夜间带飞")){
+							
+							if(s.getTFlightTrainingrecord().getTTrainingLesson().getIFxxz()==0){
+								d[8]+=s.getDFjszcyjtime();
+							}
+							
+						}else if(timeSub.getVName().equals("仪表")){
+							
+							if(s.getTFlightTrainingrecord().getTTrainingLesson().getIFxxz()==0){
+								d[9]+=s.getDZhenshiyibiao()+s.getDMoniyibiaotime();
+							}
+							
+							
+						}else if(timeSub.getVName().equals("转场")){
+							
+							if(s.getTFlightTrainingrecord().getTTrainingLesson().getIFxxz()==0){
+								d[10]+=s.getDFjszhuanchangtime();
+							}
+
+						}else{
+							
+						}
+						
+					}else if(o[1].toString().equals("机长")){
+						
+						if(timeSub.getVName().equals("机长")){
+							if(s.getTFlightTrainingrecord().getTTrainingLesson().getIFxxz()==2){
+								d[11]+=s.getDJizhangtime();
+							}
+
+						}else if(timeSub.getVName().equals("夜间机长")){
+							if(s.getTFlightTrainingrecord().getTTrainingLesson().getIFxxz()==2){
+								d[12]+=s.getDYejiantime();
+							}
+						}else if(timeSub.getVName().equals("转场")){
+							if(s.getTFlightTrainingrecord().getTTrainingLesson().getIFxxz()==2){
+								d[13]+=s.getDZhuanchangtime();
+							}
+						}else{
+							
+						}
+						
+					}
+				}else if(s.getTTrainingLesson().getVBeiyong().equals("4028816a4746e160014746f1a0640004")){//仪表等级课目
+					if(o[1].toString().equals("带飞")){
+						if(timeSub.getVName().equals("带飞")){
+							if(s.getTFlightTrainingrecord().getTTrainingLesson().getIFxxz()==0)
+								d[14]+=s.getDDaifeitime();
+						}else if(timeSub.getVName().equals("仪表")){
+							if(s.getTFlightTrainingrecord().getTTrainingLesson().getIFxxz()==0)
+								d[15]+=s.getDZhenshiyibiao()+s.getDMoniyibiaotime();
+						}else if(timeSub.getVName().equals("仪表转场")){
+							if(s.getTFlightTrainingrecord().getTTrainingLesson().getIFxxz()==0)
+								d[16]+=s.getDFjszhuanchangtime();
+						}else{
+							
+						}
+					}
+				}else{
+					
+				}
+			}
+
+			
+			for(int j=0;j<18;j++){
+				if(d[j]>0) timeSub.setFinishTime(d[j]);
+			}
+			timeSub.setViewTotalTime(Utilities.formatTime(timeSub.getDefaultTime()));
+			timeSub.setViewFinishTime(Utilities.formatzoneTime(timeSub.getFinishTime()));
+			//System.out.println(timeSub.getVUnit()+"-"+timeSub.getVGroup()+"-"+timeSub.getVName() + "-" + timeSub.getFinishTime());
+			addSubList.add(timeSub);
+		}
+		return addSubList;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public List<VTrainingRecordCompletion> readUnitTrainingRecordFitCheckListByOutlineId(
+			String outlineid, String studentCode)
+			throws FinanceServiceException {
+		try{
+			String hql =" from Trainlessonunit where TOutline.VId=? order by VNo";
+			List<VTrainingRecordCompletion> blist = new ArrayList<VTrainingRecordCompletion>();
+			VTrainingRecordCompletion vs;
+			List<Trainlessonunit> list = super.find(hql, outlineid);
+			List<Object> scoreList;
+			List<TPhase> plist;
+			List<TraininglessonRelation> lessonList;
+			double d = 0;
+			String lhql =" from TraininglessonRelation where TPhase.trainlessonunit.VId=?";
+			
+			//单元时间科目
+			String sub = "select TTimesubject.VUnitid,TTimesubject.TDiction.VName,TTimesubject.VName,sum(DTime),TTimesubject.VId" +
+					" from TraininglessonSubjectRelation where TTrainingLesson.VId in" +
+					" (select TTrainingLesson.VId from TraininglessonRelation where TPhase.trainlessonunit.VId=?)" +
+					" group by TTimesubject.VUnitid,TTimesubject.TDiction.VName,TTimesubject.VName,TTimesubject.VId" +
+					" order by TTimesubject.VUnitid,TTimesubject.TDiction.VName,TTimesubject.VName";
+			
+			//已审核的飞行训练记录,单元所有课程；除了大纲id还要有学号
+			String shql ="select sum(f.DTrantime) from TFlightTrainingrecord f where f.TOutline.VId=? " +
+			" and f.studentBaseInfo.VCode=? and (f.IAuditstatus=1 or " +
+			"f.IAuditstatus=3 or f.IAuditstatus=4 or f.IAuditstatus=5 )" +
+			" and f.TTrainingLesson.VId in (select r.TTrainingLesson.VId " +
+			"from TraininglessonRelation r where r.TPhase.trainlessonunit.VId=?)";
+			
+			String hasFit = " from TLessonFitCheck where TOutline.VId=? and studentBaseInfo.VCode=? and VParentid=? and IType=1";
+			for(Trainlessonunit t:list){
+				d = 0;
+				vs = new VTrainingRecordCompletion();
+				vs.setVId(t.getVId());//避免重复，获取大纲与单元关联的id
+				vs.setVName(t.getVName());
+				plist = super.find("from TPhase where trainlessonunit.VId=?",t.getVId());
+				vs.setIsChild(plist.size());//下级的阶段是否存在
+				vs.setHasFit(super.find(hasFit, outlineid,studentCode,t.getVId()).size());
+				scoreList = super.find(shql,outlineid,studentCode,t.getVId());
+
+				for(Object o:scoreList){
+					if(o==null){
+						vs.setFinishTime(0);
+					}else{
+						vs.setFinishTime(Double.parseDouble(o.toString()));
+					}
+	
+				}
+				vs.setViewFinishTime(Utilities.formatzoneTime(vs.getFinishTime()));
+				//课程定义的时长
+				
+				lessonList = super.find(lhql, t.getVId());
+				
+				for(TraininglessonRelation l:lessonList){
+
+					if(l.getTTrainingLesson().getDFjsj()>0)
+						d+=l.getTTrainingLesson().getDFjsj();
+					else if(l.getTTrainingLesson().getDXlqsj()>0){
+						d+=l.getTTrainingLesson().getDXlqsj();
+					}else {
+						d+=l.getTTrainingLesson().getDMnjsj();
+					}
+					
+				}
+				vs.setTotalTime(d);
+				vs.setViewTotalTime(Utilities.formatTime(d));
+				
+				//获取单元的时间科目列表
+				vs.setSubList(getTimeSubjectList(sub,vs.getVId(),studentCode,outlineid,1));
+				blist.add(vs);
+			}
+			
+			return blist;
+		}catch(HibernateException e){
+			throw new FinanceServiceException("读取信息列表失败："+e.getMessage());
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	public List<VTrainingRecordCompletion> readPhaseTrainingRecordFitCheckListByOutlineId(
+			String unitid, String studentCode) throws FinanceServiceException {
+		String hql =" from TPhase where trainlessonunit.VId=? order by VNo";
+		List<VTrainingRecordCompletion> blist = new ArrayList<VTrainingRecordCompletion>();
+		VTrainingRecordCompletion vs;
+		List<TPhase> list = super.find(hql, unitid);
+		List<Object> scoreList;
+		List<TraininglessonRelation> plist;
+		List<TraininglessonRelation> lessonList;
+		double d = 0;
+		
+		//阶段时间科目
+		String sub = "select TTimesubject.VUnitid,TTimesubject.TDiction.VName,TTimesubject.VName,sum(DTime),TTimesubject.VId" +
+					" from TraininglessonSubjectRelation where TTrainingLesson.VId in" +
+					" (select TTrainingLesson.VId from TraininglessonRelation where TPhase.VId=?)" +
+					" group by TTimesubject.VUnitid,TTimesubject.TDiction.VName,TTimesubject.VName,TTimesubject.VId" +
+					" order by TTimesubject.VUnitid,TTimesubject.TDiction.VName,TTimesubject.VName";
+		
+		//阶段完成情况；学号
+		//已审核的飞行训练记录,阶段所有课程；除了大纲id还要有学号
+		String shql ="select sum(f.DTrantime) from TFlightTrainingrecord f where f.TOutline.VId=? " +
+					" and f.studentBaseInfo.VCode=? and (f.IAuditstatus=1 or " +
+					"f.IAuditstatus=3 or f.IAuditstatus=4 or f.IAuditstatus=5 )" +
+					" and f.TTrainingLesson.VId in (select r.TTrainingLesson.VId " +
+					"from TraininglessonRelation r where r.TPhase.VId=?)";
+		String hasFit = " from TLessonFitCheck where TOutline.VId=? and studentBaseInfo.VCode=? and VParentid=? and IType=2";
+		for(TPhase t:list){
+			d=0;
+			vs = new VTrainingRecordCompletion();
+			vs.setVId(t.getVId());
+			vs.setVName(t.getVName());
+			vs.setOutlineId(t.getTrainlessonunit().getTOutline().getVId());
+			plist = super.find(" from TraininglessonRelation where TPhase.VId=?",t.getVId());
+			vs.setIsChild(plist.size());
+			vs.setHasFit(super.find(hasFit, t.getTrainlessonunit().getTOutline().getVId(),studentCode,t.getVId()).size());
+			scoreList = super.find(shql,t.getTrainlessonunit().getTOutline().getVId(),studentCode,t.getVId());
+			for(Object o:scoreList){
+				if(o==null){
+					vs.setFinishTime(0);
+				}else{
+					vs.setFinishTime(Double.parseDouble(o.toString()));
+				}
+
+			}
+			vs.setViewFinishTime(Utilities.formatzoneTime(vs.getFinishTime()));
+			//课程定义的时长
+			hql ="  from TraininglessonRelation where TPhase.VId=?)";
+			lessonList = super.find(hql, t.getVId());
+			
+			
+			
+			for(TraininglessonRelation l:lessonList){
+				if(l.getTTrainingLesson().getDFjsj()>0)
+					d+=l.getTTrainingLesson().getDFjsj();
+				else if(l.getTTrainingLesson().getDXlqsj()>0){
+					d+=l.getTTrainingLesson().getDXlqsj();
+				}else{	
+					d+=l.getTTrainingLesson().getDMnjsj();
+				}
+			}
+			vs.setTotalTime(d);
+			vs.setViewTotalTime(Utilities.formatTime(d));
+			
+			//获取单元的时间科目列表
+			vs.setSubList(getTimeSubjectList(sub,vs.getVId(),studentCode,t.getTrainlessonunit().getTOutline().getVId(),2));
+			
+			blist.add(vs);
+		}
+		return blist;
+	}
+
+	@SuppressWarnings("unchecked")
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void saveTrainingLessonFitCheck(TLessonFitCheck fitCheck)
+			throws FinanceServiceException {
+		String hql= " from TLessonFitCheck where TOutline.VId=? and studentBaseInfo.VCode=? and VParentid=?";
+		if(super.find(hql, fitCheck.getTOutline().getVId(),fitCheck.getStudentBaseInfo().getVCode(),fitCheck.getVParentid()).size()>0){
+			throw new FinanceServiceException("操作失败：该部分已经符合过。");
+		}
+		String code = fitCheck.getStudentBaseInfo().getVCode();
+		hql =" from StudentBaseInfo where VCode=?";
+		List<StudentBaseInfo> list = super.find(hql, code);
+		StudentBaseInfo s =list.get(0);
+		fitCheck.setStudentBaseInfo(s);
+		fitCheck.setDCreatedate(new Date());
+		super.save(fitCheck);
+	}
+
+	//整体课程
+	@SuppressWarnings("unchecked")
+	public List<VStudentLicense> statisticsWholeLessonBase(
+			Map<String, Object> params) throws FinanceServiceException {
+		String cond = "";
+		if (params.get(QUERY_KEY_BEGIN_DATE) != null
+				&& !params.get(QUERY_KEY_BEGIN_DATE).equals(""))
+			cond+=" and DEnterDate>='"+ params.get(QUERY_KEY_BEGIN_DATE)+"'";
+	
+		if (params.get(QUERY_KEY_EDN_DATE) != null
+				&& !params.get(QUERY_KEY_EDN_DATE).equals("")){
+			
+			cond+=" and DEnterDate<='"+ params.get(QUERY_KEY_EDN_DATE)+"'";
+		}
+		if (params.get(QUERY_TYPE)!= null
+				&& !params.get(QUERY_TYPE).equals("")){
+			if(params.get(QUERY_TYPE).equals("all")){
+				cond+=" and TOutline.VId='f1866a954a98a956014ab98a957b0788'";
+			}else{
+				cond+=" and TOutline.VId<>'f1866a954a98a956014ab98a957b0788'";
+			}
+		}
+		List<StudentLicense> slist = super.getAll(StudentLicense.class);//获取所有执照
+		List<StudentLicensehistory> hlist = super.getAll(StudentLicensehistory.class);//历史执照
+		List<VOTTeaLicenseskilledcheck> checkList;//历史执照列表
+		VOTTeaLicenseskilledcheck vo;
+		String hql = " from TDgdistribution where  1=1 " + cond;
+		
+		List<TDgdistribution> list = super.find(hql);
+		List<VStudentLicense> blist=new ArrayList<VStudentLicense>();
+		VStudentLicense vs;
+		for(TDgdistribution d:list){
+			checkList = new ArrayList<VOTTeaLicenseskilledcheck>();
+			vs = new VStudentLicense();
+			vs.setVCardid(d.getStudentBaseInfo().getVCardid());
+			vs.setVGender(d.getStudentBaseInfo().getVGender());
+			vs.setYear(Utilities.format(d.getStudentBaseInfo().getDBirthday(),"yyyy"));
+			vs.setDChecktime(Utilities.format(d.getDEnterDate()));
+			vs.setVBeizhu(d.getStudentBaseInfo().getTDictionByVStuStatusid().getVName());//存储状态
+			vs.setILevel("");
+			vs.setDIssuetime("");
+			vs.setVHangkongqileibie("");
+			vs.setDUsedTime("");//学生驾驶员执照颁发时间
+			for(StudentLicense s:slist){
+				if(s.getStudentBaseInfo().getVId().equals(d.getStudentBaseInfo().getVId())){
+					vs.setILevel(s.getTDiction().getVName());
+					if(s.getTDiction().getVId().equals("4028aa494765f33d01476602cc330044")){//学生驾驶员执照,不存在从历史执照里面获取
+						vs.setDUsedTime(Utilities.format(s.getDIssuetime()));
+					}
+					vs.setDIssuetime(Utilities.format(s.getDIssuetime()));
+					if(s.getVHangkongqileibie()!=null){
+						vs.setVHangkongqileibie(super.get(TDiction.class,s.getVHangkongqileibie()).getVName());
+					}
+				
+					for(StudentLicensehistory h:hlist){//历史执照列表
+						if(s.getVId().equals(h.getStudentLicense().getVId())){
+							if(h.getTDiction().getVId().equals("4028aa494765f33d01476602cc330044")){
+								vs.setDUsedTime(Utilities.format(h.getDIssuetime()));
+							}
+							vo = new VOTTeaLicenseskilledcheck();
+							vo.setVFlyform(h.getTDiction().getVName());
+							vo.setVBz(Utilities.format(h.getDIssuetime()));
+							checkList.add(vo);
+						}
+					}
+					vs.setCheckList(checkList);
+				}
+			}
+			
+			
+			blist.add(vs);
+		}
+		return blist;
+	}
+	@SuppressWarnings("unchecked")
+	public VOrg statisticsWholeLessonHz(Map<String, Object> params)
+			throws FinanceServiceException {
+		VOrg o = new VOrg();
+		String hql = " from StudentLicense where TDiction.VId=? "+getCond(params);
+		List<StudentLicense> list =super.find(hql, "4028aa494765f33d01476602cc330044");//学生驾驶员执照
+		o.setXue(list.size());
+		list =super.find(hql, "4028aa494765f33d01476602f15f0045");//私照
+		o.setSi(list.size());
+		list =super.find(hql, "4028aa494765f33d014766031e5b0046");//商照
+		o.setShang(list.size());
+		o.setHeji(o.getXue()+o.getSi()+o.getShang());
+		return o;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public VOrg statisticsWholeLessonZc(Map<String, Object> params)
+			throws FinanceServiceException {
+		
+		VOrg o = new VOrg();
+
+		String hql = " from StudentLicense where TDiction.VId=? "+getCond(params);
+		List<StudentLicense> list;
+		list =super.find(hql, "4028aa494765f33d01476602f15f0045");//私照
+		o.setSi(list.size());
+		list =super.find(hql, "4028aa494765f33d014766031e5b0046");//商照
+		o.setShang(list.size());
+		hql = " from TDgdistribution where  1=1 " + getCond(params);
+		List<TDgdistribution> dlist = super.find(hql);
+		o.setHeji(dlist.size());
+		return o;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public List<VOrg> statisticsWholeLessonXb(Map<String, Object> params)
+			throws FinanceServiceException {
+		String cond = "";
+		if (params.get(QUERY_KEY_BEGIN_DATE) != null
+				&& !params.get(QUERY_KEY_BEGIN_DATE).equals(""))
+			cond+=" and DEnterDate>='"+ params.get(QUERY_KEY_BEGIN_DATE)+"'";
+	
+		if (params.get(QUERY_KEY_EDN_DATE) != null
+				&& !params.get(QUERY_KEY_EDN_DATE).equals("")){
+			
+			cond+=" and DEnterDate<='"+ params.get(QUERY_KEY_EDN_DATE)+"'";
+		}
+		List<VOrg> blist = new ArrayList<VOrg>();
+		VOrg v;
+		String hql = "select year(studentBaseInfo.DBirthday)" +
+		" from TDgdistribution where studentBaseInfo.DBirthday is not null" +
+		" and TOutline.VId='f1866a954a98a956014ab98a957b0788' " +cond+ 
+		" group by year(studentBaseInfo.DBirthday) order by year(studentBaseInfo.DBirthday)";
+		
+		List<Object> ylist = super.find(hql);
+		
+		hql = "select count(studentBaseInfo.VGender),studentBaseInfo.VGender,year(studentBaseInfo.DBirthday)" +
+				" from TDgdistribution " +
+				"where studentBaseInfo.VGender<>'' and studentBaseInfo.DBirthday is not null" +
+				" and TOutline.VId='f1866a954a98a956014ab98a957b0788' " +cond+ 
+				" group by studentBaseInfo.VGender,year(studentBaseInfo.DBirthday)";
+		
+		
+		List<Object[]> list = super.find(hql);
+		for(Object o:ylist){
+			v = new VOrg();
+			if(o==null){
+				continue;
+			}
+			v.setMessage(o.toString());
+			v.setXue(0);
+			v.setSi(0);
+			for(Object[] t:list){
+				if(t[2].equals(o) && t[1].equals("男") && t[0]!=null){
+					v.setXue(Integer.parseInt(t[0].toString()));
+				}
+				if(t[2].equals(o) && t[1].equals("女") && t[0]!=null){
+					v.setSi(Integer.parseInt(t[0].toString()));
+				}
+			}
+			v.setShang(v.getXue()+v.getSi());
+			blist.add(v);
+		}
+		
+		return blist;
+	}
+	private String getCond(Map<String, Object> params){
+		String cond = "";
+		if (params.get(QUERY_KEY_BEGIN_DATE) != null
+				&& !params.get(QUERY_KEY_BEGIN_DATE).equals(""))
+			cond+=" and DEnterDate>='"+ params.get(QUERY_KEY_BEGIN_DATE)+"'";
+	
+		if (params.get(QUERY_KEY_EDN_DATE) != null
+				&& !params.get(QUERY_KEY_EDN_DATE).equals("")){
+			
+			cond+=" and DEnterDate<='"+ params.get(QUERY_KEY_EDN_DATE)+"'";
+		}
+		String cond_ok=" and studentBaseInfo.VId in (select studentBaseInfo.VId" +
+				" from TDgdistribution where  TOutline.VId='f1866a954a98a956014ab98a957b0788'"+cond+")";
+		//ATP（A）整体课程训练大纲=f1866a954a98a956014ab98a957b0788
+		
+		return cond_ok;
+	}
+
+	//非整体课程
+	@SuppressWarnings("unchecked")
+	public List<VOrg> statisticsNoWholeLessonAll(Map<String, Object> params)
+			throws FinanceServiceException {
+		String cond = "";
+		if (params.get(QUERY_KEY_BEGIN_DATE) != null
+				&& !params.get(QUERY_KEY_BEGIN_DATE).equals(""))
+			cond+=" and DEnterDate>='"+ params.get(QUERY_KEY_BEGIN_DATE)+"'";
+	
+		if (params.get(QUERY_KEY_EDN_DATE) != null
+				&& !params.get(QUERY_KEY_EDN_DATE).equals("")){
+			
+			cond+=" and DEnterDate<='"+ params.get(QUERY_KEY_EDN_DATE)+"'";
+		}
+		if(params.get(QUERY_TYPE) != null
+				&& !params.get(QUERY_TYPE).equals("")){
+			
+			cond+=" and studentBaseInfo.VId in (select studentBaseInfo.VId" +
+					" from StudentLicense where TDiction.VId='"+params.get(QUERY_TYPE)+"')";
+		}
+		List<VOrg> blist = new ArrayList<VOrg>();
+		VOrg v;
+		String hql = "select year(studentBaseInfo.DBirthday)" +
+		" from TDgdistribution where studentBaseInfo.DBirthday is not null" +
+		" and TOutline.VId<>'f1866a954a98a956014ab98a957b0788' " +cond+ 
+		" group by year(studentBaseInfo.DBirthday) order by year(studentBaseInfo.DBirthday)";
+		
+		List<Object> ylist = super.find(hql);
+		
+		hql = "select count(studentBaseInfo.VGender),studentBaseInfo.VGender,year(studentBaseInfo.DBirthday)" +
+				" from TDgdistribution " +
+				"where studentBaseInfo.VGender<>'' and studentBaseInfo.DBirthday is not null" +
+				" and TOutline.VId<>'f1866a954a98a956014ab98a957b0788' " +cond+ 
+				" group by studentBaseInfo.VGender,year(studentBaseInfo.DBirthday)";
+		
+		
+		List<Object[]> list = super.find(hql);
+		for(Object o:ylist){
+			v = new VOrg();
+			if(o==null){
+				continue;
+			}
+			v.setMessage(o.toString());
+			v.setXue(0);
+			v.setSi(0);
+			for(Object[] t:list){
+				if(t[2].equals(o) && t[1].equals("男") && t[0]!=null){
+					v.setXue(Integer.parseInt(t[0].toString()));
+				}
+				if(t[2].equals(o) && t[1].equals("女") && t[0]!=null){
+					v.setSi(Integer.parseInt(t[0].toString()));
+				}
+			}
+			v.setShang(v.getXue()+v.getSi());
+			blist.add(v);
+		}
+		
+		return blist;
+	}
+
+	@SuppressWarnings("unchecked")
+	public VOrg statisticsFlyTeacherSort(Map<String, Object> params)
+			throws FinanceServiceException {
+		VOrg o = new VOrg();
+		String cond = "";
+		if (params.get(QUERY_KEY_BEGIN_DATE) != null
+				&& !params.get(QUERY_KEY_BEGIN_DATE).equals(""))
+			cond+=" and DIssuetime>='"+ params.get(QUERY_KEY_BEGIN_DATE)+"'";
+	
+		if (params.get(QUERY_KEY_EDN_DATE) != null
+				&& !params.get(QUERY_KEY_EDN_DATE).equals("")){
+			
+			cond+=" and DIssuetime<='"+ params.get(QUERY_KEY_EDN_DATE)+"'";
+		}
+		String hql = " from TTeaLicense where VCardid<>'0' and  VYbdj like ? "+cond;
+		List<TTeaLicense> list =super.find(hql, "%297ea69a483310cd0148332474990008%");//仪表-飞机
+		o.setXue(list.size());
+		hql = " from TTeaLicense where VCardid<>'0' and (VFjjbdj like ? or  VFjjbdj like ?) "+cond;
+		list =super.find(hql, "%297ea69a483310cd0148332267790003%","%297ea69a483310cd01483322bd260005%");//单发
+		o.setSi(list.size());
+		list =super.find(hql, "%297ea69a483310cd014833228f850004%","%297ea69a483310cd01483322dd790006%");//多发
+		o.setShang(list.size());
+		return o;
+	}
+
+	@SuppressWarnings("unchecked")
+	public List<TTeaLicense> statisticsFlyTeacherBase(Map<String, Object> params)
+			throws FinanceServiceException {
+		String cond = "";
+		if (params.get(QUERY_KEY_BEGIN_DATE) != null
+				&& !params.get(QUERY_KEY_BEGIN_DATE).equals(""))
+			cond+=" and DIssuetime>='"+ params.get(QUERY_KEY_BEGIN_DATE)+"'";
+	
+		if (params.get(QUERY_KEY_EDN_DATE) != null
+				&& !params.get(QUERY_KEY_EDN_DATE).equals("")){
+			
+			cond+=" and DIssuetime<='"+ params.get(QUERY_KEY_EDN_DATE)+"'";
+		}
+		String hql = " from TTeaLicense where VCardid<>'0' "+cond;
+		List<TTeaLicense> list = super.find(hql);
+		return list;
+	}
+
+	public String planeTimeAndEngineTimeCheck(Map<String, Object> params)
+			throws FinanceServiceException {
+		
+		return null;
+	}
+
+	public String studentTimeAndDispatchTimeCheck(Map<String, Object> params)
+			throws FinanceServiceException {
+		
+		return null;
+	}
+
+	
+}

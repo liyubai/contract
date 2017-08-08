@@ -1,0 +1,49 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>执照管理</title>
+<style type="text/css">
+<!--
+body {
+	margin-left: 0px;
+	margin-top: 0px;
+	margin-right: 0px;
+	margin-bottom: 0px;
+}
+td{ font-size:10pt; line-height:21px;}
+-->
+</style></head>
+
+<body>
+<table width="100%" border="0" align="left" cellpadding="0" cellspacing="0" background="images/bj.gif">
+  <tr>
+    <td colspan="3" background="images/top_bj.gif"><img src="images/top.gif" width="1186" height="90" /></td>
+  </tr>
+  <tr>
+    <td width="200" height="500" valign="top"><img src="images/left6.gif" width="200" height="390" usemap="#Map3" border="0"  /></td>
+    <td width="10" align="center" valign="top">&nbsp;</td>
+    <td valign="top" bgcolor="#FFFFFF"><p><br />
+      录入、更新、升级、查询（执照到期提醒） 、熟练检查   新页面录入<br />
+      </p>
+    
+    </td>
+  </tr>
+</table>
+<map name="Map3" id="Map3">
+  <area shape="rect" coords="16,6,111,32" href="stulist.html" />
+  <area shape="rect" coords="23,59,99,87" href="addclass.html" />
+  <area shape="rect" coords="27,91,92,116" href="setlesson.html" />
+  <area shape="rect" coords="20,117,95,140" href="scoreList.html" />
+  <area shape="rect" coords="19,145,127,166" href="kaoshi.html" />
+  <area shape="rect" coords="19,166,109,195" href="tijian.html" />
+  <area shape="rect" coords="16,198,103,222" href="zhizhao.html" />
+  <area shape="rect" coords="18,226,96,250" href="zhuangtai.html" />
+  <area shape="rect" coords="19,254,99,275" href="mianshi.html" />
+  <area shape="rect" coords="18,279,116,305" href="jidi.html" />
+  <area shape="rect" coords="17,308,114,329" href="dadui.html" />
+  <area shape="rect" coords="14,330,117,354" href="wancheng.html" />
+  <area shape="rect" coords="14,356,115,380" href="biye.html" />
+</map>
+</body>
+</html>

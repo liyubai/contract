@@ -1,0 +1,443 @@
+<%@page contentType="text/html; charset=UTF-8"%><%@ taglib prefix="s"
+	uri="/struts-tags"%>
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>复制合同</title>
+<link
+	href="<%=request.getContextPath()%>/contract/themes/cupertino/jquery.ui.all.css"
+	rel="stylesheet" type="text/css" />
+<link
+	href="<%=request.getContextPath()%>/contract/themes/cupertino/selfStyle.css"
+	rel="stylesheet" type="text/css" />
+<link
+	href="<%=request.getContextPath()%>/contract/themes/cupertino/date.css"
+	rel="stylesheet" type="text/css" />
+<script
+	src="<%=request.getContextPath()%>/contract/scripts/jquery.min.js"></script>
+<script
+	src="<%=request.getContextPath()%>/contract/scripts/jquery-ui.min.js"></script>
+<script
+	src="<%=request.getContextPath()%>/contract/scripts/ui/jquery.ui.position.min.js"></script>
+<script
+	src="<%=request.getContextPath()%>/contract/scripts/ui/jquery.ui.core.min.js"></script>
+<script
+	src="<%=request.getContextPath()%>/contract/scripts/ui/jquery.ui.widget.min.js"></script>
+<script
+	src="<%=request.getContextPath()%>/contract/scripts/ui/jquery.ui.button.min.js"></script>
+<script
+	src="<%=request.getContextPath()%>/contract/scripts/ui/jquery.ui.tabs.min.js"></script>
+<script
+	src="<%=request.getContextPath()%>/contract/scripts/ui/jquery.ui.dialog.min.js"></script>
+<script
+	src="<%=request.getContextPath()%>/contract/scripts/ui/jquery.ui.menu.min.js"></script>
+<script
+	src="<%=request.getContextPath()%>/contract/scripts/function.min.js"></script>
+<script
+	src="<%=request.getContextPath()%>/contract/scripts/datepicker4.8/WdatePicker.js"
+	type="text/javascript"></script>
+<script>
+	
+    $(document).ready(function(){
+    	/* var myDate= new Date(); 
+    	var startYear=myDate.getFullYear()-9;//起始年份 
+    	var endYear=myDate.getFullYear()+10;//结束年份 
+    	var html="<li><a href='#N' val='0' class='inline'>学生年级</a></li>";
+    	for (var i=startYear;i<=startYear+9;i++) 
+    	{ 
+    		var j=i-startYear;
+    			if(j==0)
+    				{
+    				html+="<li><a href='#' class='inline' val='"+i+"'><span class='ui-icon ui-icon-bullet'></span>"+i+"</a><a href='#' class='inline' val='"+i+10+"'>"+(i+10)+"</a></li>";
+    				}
+    			else
+    				{
+    				html+="<li><a href='#' class='inline' val='"+i+"'>"+i+"</a><a href='#' class='inline' val='"+(i+10)+"'>"+(i+10)+"</a></li>";
+    				}
+
+    	} 
+        $("#classSelect").html(html); */
+        
+    
+
+        /* 合同类型 */
+        var params = {};
+           $.ajax({
+    		type:"post",
+    		url:"/contract/system/studentManagent_getDictionary.do?DictionaryId=322",
+    		data:params,
+    		dataType:"json",
+    		async:false,
+    		success:function(data){
+    	           var  data2 =data;
+    	           
+    	            var compyHtml=""
+    	            if(data2!=null)
+    	            	{
+    	                for(var j=0;j<data2.dics.length;j++){
+    	                	if(data2.dics[j].level==1){
+    	                		compyHtml+="<li><a href='#N' val='0'><span class='ui-icon ui-icon-bullet'></span>"+data2.dics[j].name+"</a></li>";
+    	                		break;
+    	                	}
+    	                }
+
+    	             for(var j=0;j<data2.dics.length;j++){
+    	                	if(data2.dics[j].level==""||data2.dics[j].level!=1){
+    	                	
+    	                		compyHtml+="<li><a href='#N' val='"+data2.dics[j].id+"'>"+data2.dics[j].name+"</a></li>"
+    	                	}
+    	                }
+    	            	}
+
+    	            $("#status").html(compyHtml);
+    			
+    		}
+    	});
+           /* 学员类型 */
+           var params = {};
+              $.ajax({
+       		type:"post",
+       		url:"/contract/system/studentManagent_getDictionary.do?DictionaryId=3",
+       		data:params,
+       		dataType:"json",
+       		async:false,
+       		success:function(data){
+       	           var  data2 =data;
+       	           
+       	            var compyHtml=""
+       	            if(data2!=null)
+       	            	{
+       	                for(var j=0;j<data2.dics.length;j++){
+       	                	if(data2.dics[j].level==1){
+       	                		compyHtml+="<li><a href='#N' val='0'><span class='ui-icon ui-icon-bullet'></span>"+data2.dics[j].name+"</a></li>";
+       	                		break;
+       	                	}
+       	                }
+
+       	             for(var j=0;j<data2.dics.length;j++){
+       	                	if(data2.dics[j].level==""||data2.dics[j].level!=1){
+       	                	
+       	                		compyHtml+="<li><a href='#N' val='"+data2.dics[j].id+"'>"+data2.dics[j].name+"</a></li>"
+       	                	}
+       	                }
+       	            	}
+
+       	            $("#stu").html(compyHtml);
+       			
+       		}
+       	});
+              /* 客户单位 */
+              var params = {};
+                 $.ajax({
+          		type:"post",
+          		url:"/contract/system/studentManagent_getDictionary.do?DictionaryId=2",
+          		data:params,
+          		dataType:"json",
+          		async:false,
+          		success:function(data){
+          	           var  data2 =data;
+          	           
+          	            var compyHtml=""
+          	            if(data2!=null)
+          	            	{
+          	                for(var j=0;j<data2.dics.length;j++){
+          	                	if(data2.dics[j].level==1){
+          	                		compyHtml+="<li><a href='#N' val='0'><span class='ui-icon ui-icon-bullet'></span>"+data2.dics[j].name+"</a></li>";
+          	                		break;
+          	                	}
+          	                }
+
+          	             for(var j=0;j<data2.dics.length;j++){
+          	                	if(data2.dics[j].level==""||data2.dics[j].level!=1){
+          	                	
+          	                		compyHtml+="<li><a href='#N' val='"+data2.dics[j].id+"'>"+data2.dics[j].name+"</a></li>"
+          	                	}
+          	                }
+          	            	}
+
+          	            $("#compys").html(compyHtml);
+          			
+          		}
+          	});
+                 /* 合同性质 */
+                 var params = {};
+                    $.ajax({
+             		type:"post",
+             		url:"/contract/system/studentManagent_getDictionary.do?DictionaryId=557",
+             		data:params,
+             		dataType:"json",
+             		async:false,
+             		success:function(data){
+             	           var  data2 =data;
+             	           
+             	            var compyHtml=""
+             	            if(data2!=null)
+             	            	{
+             	                for(var j=0;j<data2.dics.length;j++){
+             	                	if(data2.dics[j].level==1){
+             	                		compyHtml+="<li><a href='#N' val='0'><span class='ui-icon ui-icon-bullet'></span>"+data2.dics[j].name+"</a></li>";
+             	                		break;
+             	                	}
+             	                }
+
+             	             for(var j=0;j<data2.dics.length;j++){
+             	                	if(data2.dics[j].level==""||data2.dics[j].level!=1){
+             	                	
+             	                		compyHtml+="<li><a href='#N' val='"+data2.dics[j].id+"'>"+data2.dics[j].name+"</a></li>"
+             	                	}
+             	                }
+             	            	}
+
+             	            $("#ContractNature").html(compyHtml);
+             			
+             		}
+             	});
+        new $.dropDownList(0, true, 243);
+   		new $.dropDownList(1, true, 243);
+   		new $.dropDownList(2, true, 243);
+   		new $.dropDownList(3, true, 243);
+   		new $.dropDownList(4, true, 243);
+    	});
+</script>
+<!-- 此js务必放在所有页面自带的js后面加载 -->
+<script src="<%=request.getContextPath()%>/contract/scripts/base.min.js"></script>
+<script src="<%=request.getContextPath()%>/contract/scripts/time.js"></script>
+</head>
+<body>
+	<jsp:include page="/pages/common/topPart.jsp" />
+	<jsp:include page="/pages/common/leftPart.jsp" />
+	
+	<div id="rightPartA" style="overflow-x: hidden;">
+		<div>
+			<div class="Panel">
+				<div class="panelHead">
+					<span>复制合同</span>
+				</div>
+				<div class="panelContent">
+					<table class="modifyTable">
+						<tr>
+							<td class="col20_ textR">合同名称</td>
+							<td class="col15_"><input id="strContractName" type="text"
+								class="tableinput" value="${selConEneity.CName }" /></td>
+							<td class="col20_ textR">合同编号</td>
+							<td><input id="strContractID"  type="text" value="${selConEneity.CContractId }" class="tableinput" /></td>
+						</tr>
+						<tr>
+							<td class="col20_ textR">合同类型</td>
+							<td class="col15_">
+								<div class="dropDownList" id="Div1">
+									<button class="tableselect">合同类型</button>
+									<ul id="status">
+										<%-- <li><a href="#N" val="1"><span
+												class="ui-icon ui-icon-bullet"></span>合同类型</a></li>
+										<li><a href="#N" val="2">自费通航</a></li>
+										<li><a href="#N" val="3">自费整体</a></li>
+										<li><a href="#N" val="4">整体大包</a></li>
+										<li><a href="#N" val="5">整体课程</a></li>
+										<li><a href="#N" val="6">通航</a></li>
+										<li><a href="#N" val="7">军转民</a></li>
+										<li><a href="#N" val="8">自费高性能</a></li>
+										<li><a href="#N" val="9">基础理论+招飞</a></li>
+										<li><a href="#N" val="10">基础理论+执照理论</a></li>
+										<li><a href="#N" val="11">执照理论</a></li>
+										<li><a href="#N" val="8">基础理论</a></li>
+										<li><a href="#N" val="9">合作共建</a></li> --%>
+									</ul>
+										<input type="hidden" id="strContractType"
+										name="strContractType" value="${selConEneity.CType }" />
+								</div>
+							</td>
+							<td class="col20_ textR">学员类型</td>
+							<td>
+								<div class="dropDownList" id="Div4">
+									<button class="tableselect">学员类型</button>
+									<ul id="stu">
+										<%-- <li><a href="#N" val="1"><span
+												class="ui-icon ui-icon-bullet"></span>学员类型</a></li>
+										<li><a href="#N" val="2">4+1</a></li>
+										<li><a href="#N" val="3">高招生</a></li>
+										<li><a href="#N" val="4">高中生</a></li>
+										<li><a href="#N" val="5">军转民</a></li>
+										<li><a href="#N" val="6">通航</a></li>
+										<li><a href="#N" val="7">通航转整体</a></li>
+										<li><a href="#N" val="8">整体大包</a></li>
+										<li><a href="#N" val="9">整体课程</a></li>
+										<li><a href="#N" val="10">整体自费</a></li> --%>
+									</ul>
+									<input type="hidden" id="strStudentType" name="strStudentType" value="${selConEneity.CStuType }"/>
+								</div>
+							</td>
+						</tr>
+						<tr>
+							<td class="col20_ textR">合同状态</td>
+							<td class="col15_">
+								<div class="dropDownList" id="Div3">
+									<button class="tableselect">合同状态</button>
+									<ul>
+										<li><a href="#N" val="1"><span
+												class="ui-icon ui-icon-bullet"></span>意向</a></li>
+										<li><a href="#N" val="2">初稿</a></li>
+										<li><a href="#N" val="3">定稿</a></li>
+										<li><a href="#N" val="4">生效</a></li>
+										<li><a href="#N" val="5">完成</a></li>
+									</ul>
+									<input type="hidden" id="strContractStatus"
+										name="strContractStatus" value="${selConEneity.CStatus }" />
+								</div>
+							</td>
+							<td class="col20_ textR">合同性质</td>
+							<td>
+								<div class="dropDownList" id="Div6">
+									<button class="tableselect">合同性质</button>
+									<ul id="ContractNature">
+										<%-- <li><a href="#N" val="1"><span
+												class="ui-icon ui-icon-bullet"></span>飞行培训</a></li>
+										<li><a href="#N" val="2">整体大包</a></li>
+										<li><a href="#N" val="3">通航</a></li>
+										<li><a href="#N" val="4">合作共建</a></li>
+										<li><a href="#N" val="5">基础理论</a></li>
+										<li><a href="#N" val="6">生源基地</a></li>
+										<li><a href="#N" val="7">招飞+基础理论</a></li>
+										<li><a href="#N" val="8">招飞/基础理论</a></li>
+										<li><a href="#N" val="9">基础理论/执照理论</a></li>
+										<li><a href="#N" val="10">理论+飞行</a></li>
+										<li><a href="#N" val="11">执照理论</a></li>
+										<li><a href="#N" val="12">高性能训练</a></li>
+										<li><a href="#N" val="13">实践考试</a></li>
+										<li><a href="#N" val="14">私照外包</a></li>
+										<li><a href="#N" val="15">招飞</a></li>
+										<li><a href="#N" val="16">6+1</a></li> --%>
+									</ul>
+									<input type="hidden" id="strContractNature"
+										name="strContractNature" value="${selConEneity.CNature }" />
+								</div>
+
+							</td>
+						</tr>
+						<tr>
+							<td class="col20_ textR">客户单位</td>
+							<td class="col15_">
+								<div class="dropDownList" id="Div5">
+									<button class="tableselect">客户单位</button>
+									<ul id="compys">
+										<%-- <li><a href="#N" val="1"><span
+												class="ui-icon ui-icon-bullet"></span>客户单位</a></li>
+										<li><a href="#N" val="2">客户单位</a></li> --%>
+									</ul>
+									<input type="hidden" id="strCompy" name="strCompy"
+										name="strCompy" value="${selConEneity.CCompy }" />
+								</div>
+							</td>
+							<td class="col20_ textR">签订时间</td>
+							<td><input id="strSignTime" name="strSignTime" type="text"
+								class="tableinput date" onmouseup="WdatePicker()"
+								value="${selConEneity.CSignTime }" /></td>
+						</tr>
+						<tr>
+							<td class="col20_ textR">自费生姓名</td>
+							<td class="col15_"><input id="strPrivateName"
+								name="strPrivateName" type="text" class="tableinput"
+								value="${selConEneity.CPrivateName }" /></td>
+						</tr>
+						<tr>
+							
+						</tr>
+					
+						<tr>
+							<td colspan="4" class="tCenter"><input id="Button1"
+								type="button"
+								class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-icon-primary ml10"
+								value="经费初始化" /> <input id="Button2" type="button"
+								class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-icon-primary ml10"
+								value="保存" /></td>
+						</tr>
+					</table>
+				</div>
+			</div>
+		</div>
+	</div>
+	<input id="hCInitFlg" type="hidden" value="${selConEneity.CInitFlg }" />
+	<form action="<%=request.getContextPath()%>/contract/contractRecPayment.do?${CID}" method="post" id="contractRecPayment">
+		  <!-- 合同主键 -->
+		<input type="hidden" name="CID" id="CID" value="${selConEneity.CId}">
+		<input type="hidden" name="contractName" id="contractName" value="${selConEneity.CName}">
+		<input type="hidden" name="contractID" id="contractID" value="${selConEneity.CContractId}">
+		<input type="hidden" name="contractType" id="contractType" value="${selConEneity.CType}" /> 
+  		<input type="hidden" name="studentType" id="studentType" value="${selConEneity.CStuType}" /> 
+  		<input type="hidden" name="contractStatus" id="contractStatus" value="${selConEneity.CStatus}" /> 
+  		<input type="hidden" name="contractNature" id="contractNature" value="${selConEneity.CNature}" /> 
+  		<input type="hidden" name="compy" id="compy" value="${selConEneity.CCompy}" /> 
+  		<input type="hidden" name="signTime" id="signTime" value="${selConEneity.CSignTime}" /> 
+  		<input type="hidden" name="privateName" id="privateName" value="${selConEneity.CPrivateName}" /> 
+  		<%-- <input type="hidden" name="gradeInfo" id="gradeInfo" value='${selConEneity.CGradeInfo}' /> --%>
+  	</form>
+  	<form action="<%=request.getContextPath()%>/contract/updateContract.do" method="post" id="updateContract">
+		  <!-- 合同主键 -->
+		<input type="hidden" name="CID" id="CID" value="${selConEneity.CId}">
+		<input type="hidden" name="contractName" id="contractName1" value="${selConEneity.CName}">
+		<input type="hidden" name="contractID" id="contractID1" value="${selConEneity.CContractId}">
+		<input type="hidden" name="contractType" id="contractType1" value="${selConEneity.CType}" /> 
+  		<input type="hidden" name="studentType" id="studentType1" value="${selConEneity.CStuType}" /> 
+  		<input type="hidden" name="contractStatus" id="contractStatus1" value="${selConEneity.CStatus}" /> 
+  		<input type="hidden" name="contractNature" id="contractNature1" value="${selConEneity.CNature}" /> 
+  		<input type="hidden" name="compy" id="compy1" value="${selConEneity.CCompy}" /> 
+  		<input type="hidden" name="signTime" id="signTime1" value="${selConEneity.CSignTime}" /> 
+  		<input type="hidden" name="privateName" id="privateName1" value="${selConEneity.CPrivateName}" /> 
+  		<%-- <input type="hidden" name="gradeInfo" id="gradeInfo1" value='${selConEneity.CGradeInfo}' /> --%>
+  </form>
+	<script>	
+		$(function() {
+			$('#Button2').click(function() {
+				/* if(getGradeInfo()){ */
+					
+					updateFormSubmit();
+					
+					//window.location.href = '/contract/contractRecPayment.jsp?CID=1&gradeInfo='+strgGradeInfo;		
+				/* }else{
+					alert("请至少填写一个年级的学生信息");
+				} */
+				//window.location.href = 'cContractList.htm';
+			});
+			$('#Button1').click(function() {
+								/* if(getGradeInfo()){ */
+									formSubmit();
+									//window.location.href = '/contract/contractRecPayment.jsp?CID=1&gradeInfo='+strgGradeInfo;		
+								/* }else{
+									alert("请至少填写一个年级的学生信息");
+								} */
+			});
+
+			
+		});
+		function formSubmit(){
+			$("#contractName").val($.trim($("#strContractName").val()));
+			$("#contractID").val($.trim($("#strContractID").val()));
+			$("#contractType").val($.trim($("#strContractType").val()));
+			$("#studentType").val($.trim($("#strStudentType").val()));
+			$("#contractStatus").val($.trim($("#strContractStatus").val()));
+			$("#contractNature").val($.trim($("#strContractNature").val()));
+			$("#compy").val($.trim($("#strCompy").val()));
+			$("#signTime").val($.trim($("#strSignTime").val()));
+			$("#privateName").val($.trim($("#strPrivateName").val()));
+		/* 	$("#gradeInfo").val($.trim(strgGradeInfo)); */
+			$("#contractRecPayment").submit();
+		}
+		//updateForm
+		function updateFormSubmit(){
+			$("#contractName1").val($.trim($("#strContractName").val()));
+			$("#contractID1").val($.trim($("#strContractID").val()));
+			$("#contractType1").val($.trim($("#strContractType").val()));
+			$("#studentType1").val($.trim($("#strStudentType").val()));
+			$("#contractStatus1").val($.trim($("#strContractStatus").val()));
+			$("#contractNature1").val($.trim($("#strContractNature").val()));
+			$("#compy1").val($.trim($("#strCompy").val()));
+			$("#signTime1").val($.trim($("#strSignTime").val()));
+			$("#privateName1").val($.trim($("#strPrivateName").val()));
+			/* $("#gradeInfo1").val($.trim(strgGradeInfo)); */
+			//alert($("#gradeInfo1").val());
+			$("#updateContract").submit();
+		}
+	</script>
+</body>
+</html>

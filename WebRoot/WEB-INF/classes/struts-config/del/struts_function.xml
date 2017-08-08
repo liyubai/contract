@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE struts PUBLIC
+    "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN"
+    "http://struts.apache.org/dtds/struts-2.0.dtd">
+<struts>
+	<package name="ajax_function" extends="ErsDefault" namespace="/system">
+		<!-- 获取树形根目录 -->
+		<action name="showFunctionTree" class="com.cauc.training.ui.core.FunctionAction" method="readFunctionTree">
+			 <result name="success" type="json">
+		       <param name="root">functionList</param>
+		    </result>
+		</action>
+		
+		<!-- 获取树形目录，采用非延时加载方式生成树形 -->
+		<action name="showAllFunctionTree" class="com.cauc.training.ui.core.FunctionAction" method="readAllFunctionTree">
+			 <result name="success" type="json">
+		       <param name="root">functionList</param>
+		    </result>
+		</action>		
+		
+
+		
+		<action name="createFunction" class="com.cauc.training.ui.core.FunctionAction" method="createFunction">
+			<result name="success" type="json">
+			<param name="root">viewOrg</param>
+			</result>
+		</action>
+		
+		<action name="updateFunction" class="com.cauc.training.ui.core.FunctionAction" method="updateFunction">
+			<result name="success" type="json">
+			<param name="root">viewOrg</param>
+			</result>
+		</action>
+		
+		<action name="deleteFunction" class="com.cauc.training.ui.core.FunctionAction" method="deleteFunction">
+			<result name="success" type="json">
+			<param name="root">viewOrg</param>
+			</result>
+		</action>
+		<action name="showFunctionById" class="com.cauc.training.ui.core.FunctionAction" method="readFunctionById">
+			<result name="success" type="json">
+		       <param name="root">viewOrg</param>
+		    </result>
+		</action>
+	</package>
+	<package name="function_management" extends="ErsDefault" namespace="/system">	
+
+		<action name="open_functionInfoList" class="com.cauc.training.ui.core.FunctionAction" method="readFunctionInfoList">
+			<result name="success">/WEB-INF/functionInfo/functionInfoList.jsp</result>
+		</action>
+		<action name="open_checkbokFunctionInfoList" class="com.cauc.training.ui.core.FunctionAction" method="readFunctionInfoList">
+			<result name="success">/WEB-INF/functionInfo/checkBoxFunctionInfoList.jsp</result>
+		</action>
+	</package>
+</struts> 

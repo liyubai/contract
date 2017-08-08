@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<!-- Generated 2016-7-22 15:08:04 by Hibernate Tools 3.4.0.CR1 -->
+<hibernate-mapping>
+    <class name="com.cauc.contract.pojos.Power" table="Power" schema="dbo" catalog="trainingRecord">
+        <id name="powerId" type="int">
+            <column name="PowerId" />
+            <generator class="native" />
+        </id>
+        <property name="powerName" type="string">
+            <column name="PowerName" length="50" />
+        </property>
+        <property name="level" type="java.lang.Integer">
+            <column name="Level" />
+        </property>
+        <property name="parentId" type="java.lang.Integer">
+            <column name="ParentId" />
+        </property>
+        <property name="description" type="string">
+            <column name="Description" length="100" />
+        </property>
+    </class>
+</hibernate-mapping>

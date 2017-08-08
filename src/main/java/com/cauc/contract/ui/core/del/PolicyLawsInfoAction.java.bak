@@ -1,0 +1,323 @@
+package com.cauc.training.ui.core.del;
+
+import java.text.ParseException;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.business.IPolicyLawsService;
+import com.cauc.training.pojos.PolicyLaws;
+import com.cauc.training.pojos.TUser;
+import com.cauc.training.ui.common.BaseActionSupport;
+import com.cauc.training.vo.VOPolicyLaws;
+
+public class PolicyLawsInfoAction extends BaseActionSupport{
+	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -3189665413527444770L;
+	//获取日志生成器
+    private static Log log = LogFactory.getLog(PolicyLawsInfoAction.class);
+	
+    private PolicyLaws laws;
+	
+	//用于存储主键值
+	private String id;
+		
+	//查询关键字，用于存储政策法规内容
+	private String key;
+	
+	//查询关键字，用于存储政策法规类型，10：表示全部
+	private int searchlawstypeid = 10;
+	
+	//查询关键字，用于存储内容时长类型，10：表示全部
+	private int searchcontenttypeid = 10;
+
+	//存储要删除的政策法规量化信息id，各个政策法规量化信息信息的id使用逗号（,）分隔
+	private String lawsids;
+	
+	
+	//该VO对象用于为编辑页面提供数据，即采用JSON将VO对象数据传递给JSP页面显示
+	private VOPolicyLaws voLawsInfo;
+	
+	
+	
+	public String savePolicyLawsInfo(){
+		//System.out.println("laws.content: " + this.laws.getVContent());
+
+		if(StringUtils.isBlank(this.laws.getVContent())) {
+			setStatusMsg("政策法规量化信息内容不能为空！");
+			setStatusMsg("1");
+		}else if(StringUtils.isBlank(String.valueOf(this.laws.getIType()))){
+			setStatusMsg("政策法规量化信息法规类型不能为空！");
+			setStatusMsg("1");
+		}else if(StringUtils.isBlank(String.valueOf(this.laws.getIContentType()))){
+			setStatusMsg("政策法规量化信息内容时长类型不能为空！");
+			setStatusMsg("1");
+		}else if(StringUtils.isBlank(String.valueOf(this.laws.getIContentTime()))){
+			setStatusMsg("政策法规量化信息内容时长不能为空！");
+			setStatusMsg("1");
+		}else if(StringUtils.isBlank(String.valueOf(this.laws.getILimitTime()))){
+			setStatusMsg("政策法规量化信息限制时长不能为空！");
+			setStatusMsg("1");
+		}else{
+			try {
+				// 获取用户对象,取得登录者，即创建该角色的人
+				TUser tuser = getFactory().getFinanceProviderInstance().getSysUserService().readSysUserByLoginID(this.getLoginContext().getLoginId());
+				this.laws.setTUser(tuser);
+				//设置创建时间
+				this.laws.setDCreatedate(new Date());
+				getFactory().getFinanceProviderInstance().getPolicyLawsInfomationManagerService().savePolicyLaws(this.laws);
+				setStatusMsg("政策法规量化信息保存成功！");
+				setStatusMsg("0");
+
+			} catch (FinanceServiceException e) {
+				setStatusMsg("政策法规量化信息保存失败！");
+				setStatusMsg("1");
+				//e.printStackTrace();
+
+			}
+		}
+		return SUCCESS;
+	}
+
+	/**
+	 * 功能：根据关键字分页查询政策法规量化信息
+	*/
+	public String searchPolicyLawsInfos()throws ParseException{
+		//System.out.println("key: " + this.key);
+		IPolicyLawsService policyLawsServiceService = getFactory().getFinanceProviderInstance().getPolicyLawsInfomationManagerService();
+		//构造查询参数
+		Map<String,Object> queryMap=new HashMap<String,Object>();
+		queryMap.put(IPolicyLawsService.QUERY_KEY_CONTENT, this.key);//按内容查询
+		if(this.searchlawstypeid != 10){
+			queryMap.put(IPolicyLawsService.QUERY_KEY_LAWSTYPE, this.searchlawstypeid);//按政策法规类型查询
+		}
+		if(this.searchcontenttypeid != 10){
+			queryMap.put(IPolicyLawsService.QUERY_KEY_CONTENTTYPE, this.searchcontenttypeid);//按内容时长类型查询
+		}
+		
+		try {
+			setPage(policyLawsServiceService.searchPolicyLawsInfos(queryMap, getPageIndex()));
+
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+			setStatusMsg("查询政策法规量化信息列表失败");
+			setStatusMsg("1");
+		}
+		return SUCCESS;
+	}
+	
+	/**
+	 * 功能：根据主键查询政策法规量化信息
+	 * @return
+	 */
+	public String searchPolicyLawsInfoById(){
+		//System.out.println("id: " + this.id);
+		
+		if (StringUtils.isBlank(this.getId())) {
+			setStatusMsg("政策法规量化信息id不能为空");
+			setStatusMsg("1");
+		}else{
+			try {
+				this.laws = getFactory().getFinanceProviderInstance().getPolicyLawsInfomationManagerService().searchPolicyLawsInfoById(this.id);
+				//System.out.println(this.vrole.getVName());
+				//result = SUCCESS;
+			} catch (FinanceServiceException e) {
+				setStatusMsg("获取政策法规量化信息对象失败。");
+				setStatusMsg("1");
+				e.printStackTrace();
+			}
+		}
+
+		return SUCCESS;
+	}
+
+	
+	/**
+	 * 功能：根据主键查询政策法规量化信息，为编辑页面和查看页面提供信息使用
+	 * @return
+	 */
+	public String searchPolicyLawsInfoByIdForEditAndView(){
+		//System.out.println("id: " + this.id);
+		
+		//String result = ERROR;
+		if (StringUtils.isBlank(this.getId())) {
+			setStatusMsg("政策法规量化信息id不能为空");
+			setStatusMsg("1");
+		}else{
+			try {
+				this.laws = getFactory().getFinanceProviderInstance().getPolicyLawsInfomationManagerService().searchPolicyLawsInfoById(this.id);
+				
+				this.voLawsInfo = new VOPolicyLaws();
+				
+				this.voLawsInfo.setVId(this.laws.getVId());
+				this.voLawsInfo.setINo(this.laws.getINo());
+				this.voLawsInfo.setIType(this.laws.getIType());
+				this.voLawsInfo.setVContent(this.laws.getVContent());
+				this.voLawsInfo.setIContentType(this.laws.getIContentType());
+				this.voLawsInfo.setIContentTime(this.laws.getIContentTime());
+				this.voLawsInfo.setILimitTime(this.laws.getILimitTime());
+				this.voLawsInfo.setDCreatedate(this.laws.getDCreatedate());
+				
+
+			} catch (FinanceServiceException e) {
+				setStatusMsg("获取政策法规量化信息对象失败。");
+				setStatusMsg("1");
+				e.printStackTrace();
+			}
+		}
+
+		return SUCCESS;
+	}
+	
+	/**
+	 * 更新政策法规量化信息
+	 * 
+	 * @return
+	 */
+	public String updatePolicyLawsInfo() {
+
+		//String result = ERROR;
+		if (StringUtils.isBlank(this.laws.getVId())) {
+			setStatusMsg("政策法规量化信息id不能为空");
+			setStatusMsg("1");
+		}else if(StringUtils.isBlank(this.laws.getVContent())) {
+			setStatusMsg("政策法规量化信息内容不能为空！");
+			setStatusMsg("1");
+		}else if(StringUtils.isBlank(String.valueOf(this.laws.getIType()))){
+			setStatusMsg("政策法规量化信息法规类型不能为空！");
+			setStatusMsg("1");
+		}else if(StringUtils.isBlank(String.valueOf(this.laws.getIContentType()))){
+			setStatusMsg("政策法规量化信息内容时长类型不能为空！");
+			setStatusMsg("1");
+		}else if(StringUtils.isBlank(String.valueOf(this.laws.getIContentTime()))){
+			setStatusMsg("政策法规量化信息内容时长不能为空！");
+			setStatusMsg("1");
+		}else if(StringUtils.isBlank(String.valueOf(this.laws.getILimitTime()))){
+			setStatusMsg("政策法规量化信息限制时长不能为空！");
+			setStatusMsg("1");
+		}else{
+			try {
+				IPolicyLawsService policyLawsServiceService = getFactory().getFinanceProviderInstance().getPolicyLawsInfomationManagerService();
+
+				policyLawsServiceService.updatePolicyLawsInfo(this.laws);
+				setStatusMsg("更新政策法规量化信息成功！");
+				setStatusMsg("0");
+			//	result = SUCCESS;
+	        } catch (FinanceServiceException e) {
+	        	setStatusMsg(e.getMessage());
+	            e.printStackTrace();
+	            setStatusMsg("1");
+	        }
+
+		}
+			
+		return SUCCESS;
+	}
+	
+	/**
+	 * 删除政策法规量化信息
+	 * 
+	 * @return
+	 */
+	public String deletePolicyLawsInfo(){
+		String result = SUCCESS;
+		//System.out.println("del: key=" + this.key);
+		//System.out.println("del: pageIndex=" + getPageIndex());
+		if(StringUtils.isBlank(this.lawsids)){
+			setStatusMsg("请选择要删除的政策法规量化信息！");
+			setStatusMsg("1");
+		}else{
+			String[] ids = this.lawsids.split(",");
+			if(ids != null && ids.length > 0){
+				try {
+					//删除政策法规量化信息
+					getFactory().getFinanceProviderInstance().getPolicyLawsInfomationManagerService().deletePolicyLawsInfoByIds(ids);						
+					setStatusMsg("删除政策法规量化信息成功！");
+					setStatusMsg("0");
+				} catch (FinanceServiceException e) {
+					//输出日志信息
+					log.error("删除政策法规量化信息出错：" + e.getMessage());
+					setStatusMsg("删除政策法规量化信息出错");
+					setStatusMsg("1");
+				}
+			}
+	
+		}
+
+		return result;
+	}
+	
+	
+	
+	//setter and getter-----------
+	
+	public PolicyLaws getLaws() {
+		return laws;
+	}
+
+	public void setLaws(PolicyLaws laws) {
+		this.laws = laws;
+	}
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
+	public String getKey() {
+		return key;
+	}
+
+	public void setKey(String key) {
+		this.key = key;
+	}
+
+	public String getLawsids() {
+		return lawsids;
+	}
+
+	public void setLawsids(String lawsids) {
+		this.lawsids = lawsids;
+	}
+
+	public VOPolicyLaws getVoLawsInfo() {
+		return voLawsInfo;
+	}
+
+	public void setVoLawsInfo(VOPolicyLaws voLawsInfo) {
+		this.voLawsInfo = voLawsInfo;
+	}
+
+	public int getSearchlawstypeid() {
+		return searchlawstypeid;
+	}
+
+	public void setSearchlawstypeid(int searchlawstypeid) {
+		this.searchlawstypeid = searchlawstypeid;
+	}
+
+	public int getSearchcontenttypeid() {
+		return searchcontenttypeid;
+	}
+
+	public void setSearchcontenttypeid(int searchcontenttypeid) {
+		this.searchcontenttypeid = searchcontenttypeid;
+	}
+	
+	
+
+	
+
+
+}

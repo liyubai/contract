@@ -1,0 +1,469 @@
+package com.cauc.contract.business.hibernate;
+
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import javax.servlet.http.HttpSession;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.struts2.ServletActionContext;
+import org.hibernate.HibernateException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.cauc.contract.FinanceServiceException;
+import com.cauc.contract.business.AccountService;
+import com.cauc.contract.business.IContractQuerylistService;
+import com.cauc.contract.business.dao.GenericHibernateDAO;
+import com.cauc.contract.pojos.Account;
+import com.cauc.contract.pojos.Dictionary;
+
+@Service
+public class AccountServiceImpl extends GenericHibernateDAO implements AccountService {
+	private static Log log = LogFactory.getLog(AccountServiceImpl.class);
+
+	@Override
+	public List<Account> selectAccountById(int accountState, int paymentState) {
+		List<Account> list = new ArrayList<Account>();
+		StringBuffer hql = new StringBuffer("from Account a");
+		if (1 == accountState && 1 == paymentState) {
+			hql = hql;
+			list = find(hql.toString());
+		} else if (1 != accountState && 1 == paymentState) {
+			hql = hql.append(" where a.AAccountState = ?");
+			list = find(hql.toString(), accountState);
+		} else if (1 == accountState && 1 != paymentState) {
+			hql = hql.append(" where a.APaymentState = ?");
+			list = find(hql.toString(), paymentState);
+		} else {
+			hql = hql.append(" where a.APaymentState = ? and a.AAccountState = ?");
+			Object[] params = { paymentState, accountState };
+			list = find(hql.toString(), params);
+		}
+		return list;
+	}
+
+	@Override
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void updateAccountById(Account account) {
+		Account accountUpdate = get(Account.class, account.getAId());
+		accountUpdate.setAAccountId(account.getAAccountId());
+		accountUpdate.setAAccountState(account.getAAccountState());
+		accountUpdate.setALastModifyPerson(account.getALastModifyPerson());
+		accountUpdate.setALastModifyTime(account.getALastModifyTime());
+		update(accountUpdate);
+	}
+
+	@Override
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public List<Account> selectFileUrl(int aid) {
+		List<Account> list = new ArrayList<Account>();
+		String hql = "from Account where AId = ?";
+		Object[] params = { aid };
+		list = find(hql, params);
+		return list;
+	}
+
+	/**
+	 * 初次加载，查询页面总条数
+	 * 
+	 * @throws FinanceServiceException
+	 * 
+	 */
+	@Override
+	public int getTotalRowCount(String str) throws FinanceServiceException {
+		try {
+			String hql = "select count(1) from  " + str;
+			List<Object[]> tempList = super.createSQLQuery(hql).list();
+			Object object = tempList.get(0);
+			return (Integer.parseInt(object.toString()));
+
+		} catch (HibernateException e) {
+			throw new FinanceServiceException("查询失败！");
+		}
+	}
+
+	/**
+	 * 查询全部 分页
+	 */
+	@Override
+	public List<Account> selectAllAccount(String tbName, int pageIndex, int pageSize, String primaryKey,
+			String strWhere, String strOrder) {
+		String afieleds = " A_ID , A_ACCOUNT_ID  ,C_CONTRACT_ID , P_ID , A_FUNDS_TYPE , P_BUILD_FEE_STANDARD_PRICE , P_TRAIN_FEE_STANDARD_PRICE , P_GRADE_STUDENT_COUNT , A_ACCOUNT_STATE, A_PAYMENT_STATE ";
+
+		if (strWhere != "") {
+			strWhere = " where " + strWhere;
+		}
+		String hql = "select top " + pageSize + " " + afieleds + " from " + tbName + strWhere + " " + strOrder;
+		if (pageIndex > 1) {
+			String addafieleds = " a.A_ID , a.A_ACCOUNT_ID  ,a.C_CONTRACT_ID , a.P_ID , a.A_FUNDS_TYPE , a.P_BUILD_FEE_STANDARD_PRICE , a.P_TRAIN_FEE_STANDARD_PRICE , a.P_GRADE_STUDENT_COUNT , a.A_ACCOUNT_STATE, a.A_PAYMENT_STATE ";
+			hql = "select " + addafieleds + " from " + tbName + " as a inner join (select " + afieleds
+					+ " from (select row_number() over(" + strOrder + ") as rownum," + afieleds + " from " + tbName
+					+ strWhere + ") as t where rownum between " + ((pageIndex - 1) * pageSize + 1) + " and "
+					+ pageIndex * pageSize + ") as b on a." + primaryKey + "=b." + primaryKey + " order by b.A_ID";
+
+		}
+		List<Object[]> tempList = super.createSQLQuery(hql).list();
+		List<Account> accountList1 = new ArrayList<Account>();
+		Account account1 = null;
+		for (Object[] o : tempList) {
+			account1 = new Account();
+
+			account1.setAId(Integer.parseInt(o[0].toString()));
+			account1.setAAccountId(o[1] == null ? null : o[1].toString());
+			account1.setCContractId(o[2].toString());
+			account1.setPId(Integer.parseInt(o[3].toString()));
+			account1.setAFundsType(Integer.parseInt(o[4].toString()));
+			account1.setPBuildFeeStandardPrice(Float.parseFloat(o[5].toString()));
+			account1.setPTrainFeeStandardPrice(Float.parseFloat(o[6].toString()));
+			account1.setPGradeStudentCount(Integer.parseInt(o[7].toString()));
+			account1.setAAccountState(Integer.parseInt(o[8].toString()));
+			account1.setAPaymentState(Integer.parseInt(o[9].toString()));
+			accountList1.add(account1);
+		}
+		return accountList1;
+	}
+
+	/**
+	 * 条件查询，查询记录的条数
+	 * 
+	 * @throws FinanceServiceException
+	 */
+	@Override
+	public int getPartTotalRowCount(String str, int accountState, int paymentState) throws FinanceServiceException {
+		try {
+			String strWhere = "select count(1) from " + str + " where 1=1";
+
+			if (1 == accountState && 1 == paymentState) {
+				strWhere += "";
+			} else if (1 != accountState && 1 == paymentState) {
+				strWhere += " and A_ACCOUNT_STATE =" + accountState;
+			} else if (1 == accountState && 1 != paymentState) {
+				strWhere += " and A_PAYMENT_STATE =" + paymentState;
+			} else {
+				strWhere += " and A_PAYMENT_STATE =" + paymentState + " and A_ACCOUNT_STATE =" + accountState;
+			}
+			List<Object[]> tempList = super.createSQLQuery(strWhere).list();
+			Object object = tempList.get(0);
+			return (Integer.parseInt(object.toString()));
+		} catch (HibernateException e) {
+			throw new FinanceServiceException("查询失败！");
+		}
+	}
+
+	/**
+	 * 条件查询 分页
+	 */
+	@Override
+	public List<Account> getPartListByPage(String tbName, int pageIndex, int pageSize, String primaryKey,
+			int accountState, int paymentState, String strOrder) {
+		String afieleds = " A_ID , A_ACCOUNT_ID  ,C_CONTRACT_ID , P_ID , A_FUNDS_TYPE , P_BUILD_FEE_STANDARD_PRICE , P_TRAIN_FEE_STANDARD_PRICE , P_GRADE_STUDENT_COUNT , A_ACCOUNT_STATE, A_PAYMENT_STATE  ";
+		String strWhere = "";
+		if (1 == accountState && 1 == paymentState) {
+			strWhere += "";
+		} else if (1 != accountState && 1 == paymentState) {
+			strWhere += " and A_ACCOUNT_STATE =" + accountState;
+		} else if (1 == accountState && 1 != paymentState) {
+			strWhere += " and A_PAYMENT_STATE =" + paymentState;
+		} else {
+			strWhere += " and A_PAYMENT_STATE =" + paymentState + " and A_ACCOUNT_STATE =" + accountState;
+		}
+
+		if (strWhere != "") {
+			strWhere = " where 1=1 " + strWhere;
+		}
+		String hql = "select top " + pageSize + " " + afieleds + " from " + tbName + strWhere + " " + strOrder;
+		if (pageIndex > 1) {
+			String addafieleds = " a.A_ID , a.A_ACCOUNT_ID  ,a.C_CONTRACT_ID , a.P_ID , a.A_FUNDS_TYPE , a.P_BUILD_FEE_STANDARD_PRICE , a.P_TRAIN_FEE_STANDARD_PRICE , a.P_GRADE_STUDENT_COUNT , a.A_ACCOUNT_STATE, a.A_PAYMENT_STATE ";
+			hql = "select " + addafieleds + " from " + tbName + " as a inner join (select " + afieleds
+					+ " from (select row_number() over(" + strOrder + ") as rownum," + afieleds + " from " + tbName
+					+ strWhere + ") as t where rownum between " + ((pageIndex - 1) * pageSize + 1) + " and "
+					+ pageIndex * pageSize + ") as b on a." + primaryKey + "=b." + primaryKey + " order by b.A_ID";
+
+		}
+		List<Object[]> tempList = super.createSQLQuery(hql).list();
+		List<Account> accountList1 = new ArrayList<Account>();
+		Account account1 = null;
+		for (Object[] o : tempList) {
+			account1 = new Account();
+			account1.setAId(Integer.parseInt(o[0].toString()));
+			account1.setAAccountId(o[1] != null ? o[1].toString() : null);
+			account1.setCContractId(o[2].toString());
+			account1.setPId(Integer.parseInt(o[3].toString()));
+			account1.setAFundsType(Integer.parseInt(o[4].toString()));
+			account1.setPBuildFeeStandardPrice(Float.parseFloat(o[5].toString()));
+			account1.setPTrainFeeStandardPrice(Float.parseFloat(o[6].toString()));
+			account1.setPGradeStudentCount(Integer.parseInt(o[7].toString()));
+			account1.setAAccountState(Integer.parseInt(o[8].toString()));
+			account1.setAPaymentState(Integer.parseInt(o[9].toString()));
+			accountList1.add(account1);
+		}
+		return accountList1;
+	}
+
+	/**
+	 * 根据结算编号生成新的结算Id
+	 */
+	@Override
+	public String newAccountId() {
+		String accountId = "";
+		String hql = "select max(A_ACCOUNT_ID) from Account";
+		List<Object[]> tempList = super.createSQLQuery(hql).list();
+		Object object = tempList.get(0);
+		if (object != null) {
+			String str = object.toString().replaceAll("[^0-9]", "");//把数字滤出来
+			str = str.substring(4);                                 //去掉前面的前份
+			if (str != "") {
+				int id = Integer.parseInt(str) + 1;
+				accountId = String.format("%03d", id);              //补齐前面的0，一共是4位
+			} else {
+				accountId = "001";
+			}
+		} else {
+			accountId = "001";
+		}
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy");
+		Date date = new Date();
+		return "G" + sdf.format(date) + accountId;
+	}
+
+	/**
+	 * 将新生成的结算添加到列表中
+	 * 
+	 * @throws FinanceServiceException
+	 */
+	@Override
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void addAccount(String accountId, String[] accountIdArray) throws FinanceServiceException {
+		HttpSession httpSession = ServletActionContext.getRequest().getSession();
+		String realun = (String) httpSession.getAttribute("realun");
+		List<Account> excelAccountList = new ArrayList<Account>();
+		try {
+			for (int i = 0; i < accountIdArray.length; i++) {
+				/*
+				 * String hql = "from Account where AId ="+accountIdArray[i];
+				 * List<Account> accountList = new ArrayList<Account>();
+				 * 
+				 * accountList = find(hql);
+				 */
+				String newUrl = System.getProperty("user.dir") + "/excel/" + accountId + ".xls";
+				// Account account = new Account();
+				// Account account;
+				try {
+					Account account = get(Account.class, Integer.parseInt(accountIdArray[i]));
+					account.setAAccountId(accountId);
+					account.setAAccountState(2);
+					account.setALastModifyPerson(realun);
+					account.setALastModifyTime(new Date());
+					account.setANoticeUrl(accountId + ".xls");
+					update(account);
+				} catch (Exception e) {
+					System.out.println(e.getMessage());
+					e.printStackTrace();
+				}
+				/*
+				 * // account.setAAccountId(accountId);
+				 * account.setAAccountState(2); // account.setAAccountTime(new
+				 * Date()); //
+				 * account.setAFundsType(accountList.get(0).getAFundsType());
+				 * account.setALastModifyPerson(realun);
+				 * account.setALastModifyTime(new Date());
+				 * account.setANoticeUrl(newUrl); //
+				 * account.setAPaymentState(accountList.get(0).getAPaymentState(
+				 * )); //
+				 * account.setCContractId(accountList.get(0).getCContractId());
+				 * // account.setPBuildFeeStandardPrice(accountList.get(0).
+				 * getPBuildFeeStandardPrice());; //
+				 * account.setPGradeStudentCount(accountList.get(0).
+				 * getPGradeStudentCount()); //
+				 * account.setPId(accountList.get(0).getPId()); //
+				 * account.setPTrainFeeStandardPrice(accountList.get(0).
+				 * getPTrainFeeStandardPrice()); // save(account);
+				 * update(account);
+				 */
+				// excelAccountList.add(account);
+			}
+			for (int i = 0; i < accountIdArray.length; i++) {
+				try {
+					String hql = "from Account where A_Id =" + accountIdArray[i];
+					List<Account> accountList = new ArrayList<Account>();
+					Account acc = new Account();
+					accountList = find(hql);
+					acc = accountList.get(0);
+					excelAccountList.add(acc);
+				} catch (Exception e) {
+					System.out.println(e.getMessage());
+				}
+			}
+			addExcel(excelAccountList, accountId);
+
+		} catch (HibernateException e) {
+			throw new FinanceServiceException("查询失败！");
+		}
+
+	}
+
+	/**
+	 * 生成Excel 表格
+	 * 
+	 * @param excelAccountList
+	 * @param accountId
+	 */
+	private void addExcel(List<Account> excelAccountList, String accountId) {
+		try {
+			HSSFWorkbook wb = new HSSFWorkbook();
+			String FilePath = System.getProperty("user.dir") + "/excel/";
+			File headPath = new File(FilePath);// 获取文件夹路径
+			if (!headPath.exists()) {// 判断文件夹是否创建，没有创建则创建新文件夹
+				headPath.mkdirs();
+			}
+			FileOutputStream os = new FileOutputStream(FilePath + accountId + ".xls ");
+			// 创建一个张表
+			Sheet sheet = wb.createSheet();
+			// 创建第一行
+			Row row = sheet.createRow(0);
+			// 创建第二行
+			Row row1 = sheet.createRow(1);
+			// 文件头字体
+			Font font0 = createFonts(wb, Font.BOLDWEIGHT_BOLD, "宋体", false, (short) 200);
+			Font font1 = createFonts(wb, Font.BOLDWEIGHT_NORMAL, "宋体", false, (short) 200);
+			// 合并第一行的单元格
+			sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 1));
+			// 设置第一列的文字
+			createCell(wb, row, 0, "结算管理", font0);
+			// 合并第一行的2列以后到8列（不包含第二列）
+			sheet.addMergedRegion(new CellRangeAddress(0, 0, 2, 8));
+			// 设置第二列的文字
+			createCell(wb, row, 2, "基本信息", font0);
+			// 给第二行添加文本
+			createCell(wb, row1, 0, "结算编号", font1);
+			createCell(wb, row1, 1, "付款编号", font1);
+			createCell(wb, row1, 2, "合同号", font1);
+			createCell(wb, row1, 3, "经费类型", font1);
+			createCell(wb, row1, 4, "飞行技术学院应分配合作共建费收费标准", font1);
+			createCell(wb, row1, 5, "飞行技术学院应分配参与分成培训费收费标准", font1);
+			createCell(wb, row1, 6, "飞行技术学院收费人数", font1);
+			createCell(wb, row1, 7, "经费小计", font1);
+			// 第三行表示
+			int l = 2;
+			// 这里将学员的信心存入到表格中
+			for (int i = 0; i < excelAccountList.size(); i++) {
+				// 创建一行
+				Row rowData = sheet.createRow(l++);
+				createCell(wb, rowData, 0, excelAccountList.get(i).getAAccountId(), font1);
+				createCell(wb, rowData, 1, excelAccountList.get(i).getPId() + "", font1);
+				createCell(wb, rowData, 2, excelAccountList.get(i).getCContractId(), font1);
+				String FundsName = "";
+				try {
+					List<Dictionary> dictionaryList = new ArrayList<Dictionary>();
+					String hql = "from Dictionary where DictionaryId =" + excelAccountList.get(i).getAFundsType();
+					dictionaryList = find(hql);
+					FundsName = dictionaryList.get(0).getDictionaryName();
+				} catch (Exception e) {
+					System.out.println(e.getMessage().toString());
+				}
+				createCell(wb, rowData, 3, FundsName, font1);
+				float count = (excelAccountList.get(i).getPBuildFeeStandardPrice()
+						+ excelAccountList.get(i).getPTrainFeeStandardPrice())
+						* excelAccountList.get(i).getPGradeStudentCount();
+				createCell(wb, rowData, 4, excelAccountList.get(i).getPBuildFeeStandardPrice() + "", font1);
+				createCell(wb, rowData, 5, excelAccountList.get(i).getPTrainFeeStandardPrice() + "", font1);
+				createCell(wb, rowData, 6, excelAccountList.get(i).getPGradeStudentCount() + "", font1);
+				createCell(wb, rowData, 7, count + "", font1);
+			}
+			wb.write(os);
+			os.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+	}
+
+	/**
+	 * 设置字体
+	 * 
+	 * @param wb
+	 * @return
+	 */
+	public static Font createFonts(Workbook wb, short bold, String fontName, boolean isItalic, short hight) {
+		Font font = wb.createFont();
+		font.setFontName(fontName);
+		font.setBoldweight(bold);
+		font.setItalic(isItalic);
+		font.setFontHeight(hight);
+		return font;
+	}
+
+	/**
+	 * 创建单元格并设置样式,值
+	 * 
+	 * @param wb
+	 * @param row
+	 * @param column
+	 * @param
+	 * @param
+	 * @param value
+	 */
+	public static void createCell(Workbook wb, Row row, int column, String value, Font font) {
+		Cell cell = row.createCell(column);
+		cell.setCellValue(value);
+		CellStyle cellStyle = wb.createCellStyle();
+		/*
+		 * cellStyle.setAlignment(XSSFCellStyle.ALIGN_CENTER);
+		 * cellStyle.setVerticalAlignment(XSSFCellStyle.VERTICAL_BOTTOM);
+		 */
+		cellStyle.setFont(font);
+		cell.setCellStyle(cellStyle);
+	}
+
+	/**
+	 * 下载Excel 文件
+	 * 
+	 * @throws IOException
+	 */
+	@Override
+	public String downloadExcel(String downloadExcelStr, String excelName) {
+		try {
+			// 原文件的位置
+			FileInputStream fis = new FileInputStream(System.getProperty("user.dir") + "\\excel\\" + downloadExcelStr);
+			BufferedInputStream bufferedInputStream = new BufferedInputStream(fis);
+			// 下载后保存的位置
+			FileOutputStream fos = new FileOutputStream("d:/" + excelName + ".xls");
+			BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(fos);
+			int len = 0;
+			try {
+				while ((len = bufferedInputStream.read()) != -1) {
+					bufferedOutputStream.write(len);
+				}
+				bufferedOutputStream.close();
+				bufferedInputStream.close();
+			} catch (IOException e) {
+				System.out.println(e.getMessage());
+				e.printStackTrace();
+			}
+		} catch (FileNotFoundException e) {
+			System.out.println(e.getMessage());
+			e.printStackTrace();
+		}
+		return "success";
+	}
+}

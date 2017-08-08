@@ -1,0 +1,173 @@
+package com.cauc.training.business.hibernate;
+
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.hibernate.Criteria;
+import org.hibernate.HibernateException;
+import org.hibernate.criterion.Order;
+import org.hibernate.criterion.Restrictions;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.business.IRole;
+import com.cauc.training.business.dao.GenericHibernateDAO;
+import com.cauc.training.business.dao.support.Page;
+import com.cauc.training.pojos.TRole;
+import com.cauc.training.pojos.TRoleFunction;
+
+@Service
+public class RoleImpl extends GenericHibernateDAO implements IRole {
+
+	
+	/**
+	 * 功能：根据角色名称，判断该角色是否已存在 
+	 * @param role：角色对象
+	*/
+	@SuppressWarnings("unchecked")
+	private boolean isExistRole(String name) throws FinanceServiceException {
+		//该标志位用于表示角色是否已存在，false:表示不存在
+		boolean flag = false;
+		String hql = " from TRole where VName=?";
+		List<TRole> roleList = super.find(hql, name);
+		if (roleList != null && roleList.size() > 0){
+			flag = true;
+		}
+		return flag;
+			
+	}
+	
+	/**
+	 * 功能：保存角色信息 
+	 * @param role：角色对象
+	*/
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void saveRole(TRole role) throws FinanceServiceException {
+		if(role != null){
+			if(isExistRole(role.getVName())){
+				throw new FinanceServiceException("保存角色失败，该角色已经存在！");
+			}else{
+				try{
+					super.save(role);
+				}catch(HibernateException e){
+					throw new FinanceServiceException("保存角色失败！", e);
+				}
+			}
+
+		}else{
+			throw new FinanceServiceException("保存角色失败！");
+		}
+	}
+
+	/**
+	 * 功能：根据关键字分页查询角色信息 
+	 * @param params：Map结构，key为TRole中的VName，value为用户输入的关键字
+	 * @param pageNo：当前页号
+	*/
+	public Page searchRole(Map<String,Object> params, String pageNo) throws FinanceServiceException {
+		Page page = null;
+		//使用Criteria查询TRole对象
+		Criteria criteria = this.createCriteria(TRole.class);
+		//如果查询条件不为空，则添加查询条件
+		if (params.get(QUERY_KEY_NAME) != null && !params.get(QUERY_KEY_NAME).equals("")){
+			
+			criteria.add(Restrictions.like(QUERY_KEY_NAME, "%" + params.get(QUERY_KEY_NAME) + "%"));
+		}
+		criteria.addOrder(Order.desc(QUERY_KEY_DATE));
+		//System.out.println("key: " + params.get(QUERY_KEY_NAME));
+		Integer pageIndex = Integer.parseInt(pageNo);
+		try {
+			page = this.pagedQuery(criteria, pageIndex);
+		} catch (HibernateException e) {
+			e.printStackTrace();
+			throw new FinanceServiceException("查询角色信息列表失败", e);
+		}
+		return page;
+	}
+	/**
+	 * 功能：根据主键查询角色
+	 * @return
+	 */
+	public TRole searchRoleById(String id) throws FinanceServiceException {
+		
+		/*
+		VRole vrole = new VRole();
+		try{
+			TRole role =  super.get(TRole.class, id);
+			vrole.setVId(role.getVId());
+			vrole.setVName(role.getVName());
+			vrole.setVDescription(role.getVDescription());
+			vrole.setDCreateDate(role.getDCreateDate());
+		}catch(HibernateException e){
+			throw new FinanceServiceException("读取角色对象信息失败", e);
+		}
+		*/
+		return super.get(TRole.class, id);
+	}
+
+
+	/**
+	 * 更新角色
+	 * @param role
+	 * @throws FinanceServiceException
+	 */
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void updateRole(TRole role) throws FinanceServiceException {
+		if(role != null){
+			if(isExistRole(role.getVName())){
+				throw new FinanceServiceException("更新角色失败，该角色已经存在！");
+			}else{
+				try {
+					TRole old = super.get(TRole.class, role.getVId());
+					old.setVName(role.getVName());
+					old.setVDescription(role.getVDescription());
+					super.update(old);
+				}catch (HibernateException e) {
+					throw new FinanceServiceException("更新角色对象失败", e);
+				}
+			}
+		}else{
+			throw new FinanceServiceException("更新角色失败！");
+		}
+		
+		
+	}
+
+	/**
+	 * 功能：删除角色（可单一删除，也可批量删除）
+	 * @param ids
+	 * @throws FinanceServiceException
+	 * 说明：String... ids 表示定义一个可变变量，即Ids就是一个字符串数组，等价于String[] ids
+	 */
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void deleteRoleByIds(String... ids) throws FinanceServiceException {
+		if(ids != null && ids.length >0){
+			try {
+				for (String id : ids) {
+					//System.out.println(id);
+//					if(super.findBy(TRoleFunction.class, "TRole.VId", id).size()>0){
+//						throw new FinanceServiceException("该角色已经被引用，不能删除！");
+//					}
+					
+					TRole role = super.get(TRole.class, id);
+					Set trfs = role.getTRoleFunctions();
+					Iterator iter = trfs.iterator();
+					while(iter.hasNext()){
+						TRoleFunction trf = (TRoleFunction)iter.next();
+						super.remove(trf);
+					}
+					super.removeById(TRole.class, id);
+				}
+			}catch (HibernateException e) {
+				e.printStackTrace();
+				throw new FinanceServiceException("删除角色信息失败", e);
+			}
+		}
+	}
+
+	
+}

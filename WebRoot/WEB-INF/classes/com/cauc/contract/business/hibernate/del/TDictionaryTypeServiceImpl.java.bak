@@ -1,0 +1,172 @@
+package com.cauc.training.business.hibernate;
+
+import java.util.List;
+import java.util.Map;
+
+import org.hibernate.Criteria;
+import org.hibernate.HibernateException;
+import org.hibernate.criterion.Order;
+import org.hibernate.criterion.Restrictions;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.business.IDictionaryType;
+import com.cauc.training.business.dao.GenericHibernateDAO;
+import com.cauc.training.business.dao.support.Page;
+import com.cauc.training.pojos.TDiction;
+import com.cauc.training.pojos.TDictype;
+
+@Service("tDictionaryTypeServiceImpl")
+public class TDictionaryTypeServiceImpl extends GenericHibernateDAO implements IDictionaryType {
+
+	/**
+	 * 功能：根据字典类型名称，判断该字典类型是否已存在 
+	 * @param name：字典类型名称
+	*/
+
+	@SuppressWarnings("unchecked")
+	private boolean isExistTDictype(String name) throws FinanceServiceException {
+		//该标志位用于表示字典类型是否已存在，false:表示不存在
+		boolean flag = false;
+		String hql = "from TDictype where VName=?";
+		List<TDictype> tdictypeList = super.find(hql, name);
+		if (tdictypeList != null && tdictypeList.size() > 0){
+			flag = true;
+			System.out.println(tdictypeList.size());
+			TDictype t = tdictypeList.get(0);
+			System.out.println(t.getVName());
+		}
+		return flag;
+			
+	}
+	
+	/**
+	 * 功能：保存字典类型信息 
+	 * @param dic：字典类型
+	*/
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void saveDictype(TDictype dic) throws FinanceServiceException {
+		if(dic != null){
+			if(isExistTDictype(dic.getVName())){
+				throw new FinanceServiceException("保存字典类型失败，该字典类型已经存在！");
+			}else{
+				try{
+					super.save(dic);
+				}catch(HibernateException e){
+					throw new FinanceServiceException("保存字典类型失败！", e);
+				}
+			}
+
+		}else{
+			throw new FinanceServiceException("保存字典类型失败！");
+		}
+
+	}
+
+	/**
+	 * 功能：根据关键字分页查询字典类型 
+	 * @param params：Map结构，key为TDictype中的VName，value为用户输入的关键字
+	 * @param pageNo：当前页号
+	*/
+	public Page searchDictypes(Map<String, Object> params, String pageNo) throws FinanceServiceException {
+		Page page = null;
+		//使用Criteria查询TDictype对象
+		Criteria criteria = this.createCriteria(TDictype.class);
+		//如果查询条件不为空，则添加查询条件
+		if (params.get(QUERY_KEY_NAME) != null && !params.get(QUERY_KEY_NAME).equals("")){
+			
+			criteria.add(Restrictions.like(QUERY_KEY_NAME, "%" + params.get(QUERY_KEY_NAME) + "%"));
+		}
+		criteria.addOrder(Order.desc(QUERY_KEY_DATE));
+		//System.out.println("key: " + params.get(QUERY_KEY_NAME));
+		Integer pageIndex = Integer.parseInt(pageNo);
+		try {
+			page = this.pagedQuery(criteria, pageIndex);
+		} catch (HibernateException e) {
+			e.printStackTrace();
+			throw new FinanceServiceException("查询字典类型信息列表失败", e);
+		}
+		return page;
+	}
+
+	/**
+	 * 查询全部字典类型 
+	 * 
+	*/
+	@SuppressWarnings("unchecked")
+	public List<TDictype> searchAllDictypes() throws FinanceServiceException{
+		Criteria criteria = this.createCriteria(TDictype.class);
+		criteria.addOrder(Order.desc("DCreatedate"));
+		List<TDictype> data = null;
+		try {
+			data = criteria.list();
+			
+		} catch (HibernateException e) {
+			throw new FinanceServiceException("读取字典类型列表失败", e);
+		}
+		return data;
+	}
+	
+	/**
+	 * 功能：根据主键查询字典类型
+	 * @return
+	 */
+	public TDictype searchDictypeById(String id) throws FinanceServiceException {
+		return super.get(TDictype.class, id);
+	}
+
+
+	/**
+	 * 更新字典类型
+	 * @param dic
+	 * @throws FinanceServiceException
+	 */
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void updateDictypes(TDictype dic) throws FinanceServiceException {
+		if(dic != null){
+			System.out.println("dic_name: " + dic.getVName());
+			if(isExistTDictype(dic.getVName())){
+				throw new FinanceServiceException("更新字典类型失败，该字典类型已经存在！");
+			}else{
+				try {
+					TDictype old = super.get(TDictype.class, dic.getVId());
+					old.setVName(dic.getVName());
+					super.update(old);
+				}catch (HibernateException e) {
+					throw new FinanceServiceException("更新字典类型对象失败", e);
+				}
+			}
+		}else{
+			throw new FinanceServiceException("更新字典类型失败！");
+		}
+
+	}
+
+	/**
+	 * 功能：删除字典类型（可单一删除，也可批量删除）
+	 * @param ids
+	 * @throws FinanceServiceException
+	 * 说明：String... ids 表示定义一个可变变量，即Ids就是一个字符串数组，等价于String[] ids
+	 */
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void deleteDictypesByIds(String... ids) throws FinanceServiceException {
+			if(ids != null && ids.length >0){
+				try {
+					for (String id : ids) {
+						System.out.println(id);
+						if(super.findBy(TDiction.class, "TDictype.VId", id).size()>0){
+							throw new FinanceServiceException("该字典类型已经被引用，不能删除！");
+						}
+						super.removeById(TDictype.class, id);
+					}
+				}catch (HibernateException e) {
+					e.printStackTrace();
+					throw new FinanceServiceException("删除字典类型信息失败", e);
+				}
+			}
+
+	}
+
+}

@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE struts PUBLIC
+    "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN"
+    "http://struts.apache.org/dtds/struts-2.0.dtd">
+<struts>
+	<package name="ajax_todoing" extends="ErsDefault" namespace="/system">
+
+	</package>
+	<package name="todoing_management" extends="ErsDefault" namespace="/system">
+		<!-- 待办事项列表 -->
+		<action name="open_toDoingListPage"
+		 class="com.cauc.training.ui.core.ToDoingAction" 
+		 method="openToDoingListPage">
+			<result name="success">/WEB-INF/toDoing/toDingListPage.jsp</result>
+		</action>
+		<!-- 保存成绩审核-->
+		<action name="saveLessonScoreAudit"
+		 class="com.cauc.training.ui.core.ToDoingAction" 
+		 method="saveLessonScoreAudit">
+			<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_doWithScoreAuditList</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		
+		<!-- 保存送培资格审查-->
+		<action name="saveSongPeiZiGeAudit"
+		 class="com.cauc.training.ui.core.ToDoingAction" 
+		 method="saveSongPeiZiGeAudit">
+			<result name="success" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_doWithSongPeiZiGeAuditList</param>
+			<param name="statusMsg">${statusMsg}</param>
+			<param name="status">${status}</param>
+			</result>
+		</action>
+
+		<!-- 送培资格审查页面-->
+		<action name="open_doWithSongPeiZiGeAuditList"
+		 class="com.cauc.training.ui.core.ToDoingAction" 
+		 method="openSongPeiZiGeAuditList">
+			<result name="success">/WEB-INF/toDoing/songPeiZiGeAuditList.jsp</result>
+			<result name="input" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_toDoingListPage</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 成绩审核页面-->
+		<action name="open_doWithScoreAuditList"
+		 class="com.cauc.training.ui.core.ToDoingAction" 
+		 method="openDoWithScoreAuditList">
+			<result name="success">/WEB-INF/toDoing/scoreAuditList.jsp</result>
+			<result name="input" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_toDoingListPage</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 确认审核 -->
+		<action name="open_doWithListPage"
+		 class="com.cauc.training.ui.core.ToDoingAction" 
+		 method="openDoWithListPage">
+			<result name="success">/WEB-INF/toDoing/doWithListPage.jsp</result>
+			<result name="input" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_toDoingListPage</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		
+		<!-- 打回修改 -->
+		<action name="open_doWithEditListPage"
+		 class="com.cauc.training.ui.core.ToDoingAction" 
+		 method="openDoWithEditListPage">
+			<result name="success">/WEB-INF/toDoing/doWithEditListPage.jsp</result>
+			<result name="input" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_toDoingListPage</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		
+		<!-- 打开教员审核页面 -->
+		<action name="open_doWithAuditListPage"
+		 class="com.cauc.training.ui.core.ToDoingAction" 
+		 method="openDoWithAuditListPage">
+			<result name="success">/WEB-INF/toDoing/doWithAuditListPage.jsp</result>
+			<result name="input" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_toDoingListPage</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		
+		<!-- 申诉处理页面 -->
+		<action name="open_doWithAppealListPage"
+		 class="com.cauc.training.ui.core.ToDoingAction" 
+		 method="openDoWithAppealListPage">
+			<result name="success">/WEB-INF/toDoing/doWithAppealListPage.jsp</result>
+			<result name="input" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_toDoingListPage</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		
+		<!-- 审核加时加课页面 -->
+		<action name="open_doWithAddHoursAndAddLessonListPage"
+		 class="com.cauc.training.ui.core.ToDoingAction" 
+		 method="openAddHoursAndAddLessonListPage">
+			<result name="success">/WEB-INF/toDoing/doWithAddHoursAndAddLessonPage.jsp</result>
+			<result name="input" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_toDoingListPage</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		
+		<!-- 审核考试申请页面 -->
+		<action name="open_doWithExamAskListPage"
+		 class="com.cauc.training.ui.core.ToDoingAction" 
+		 method="openExamAskToDoingPage">
+			<result name="success">/WEB-INF/toDoing/doWithExamAskPage.jsp</result>
+			<result name="input" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_toDoingListPage</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		
+		<!-- 考试分配考试员页面-->
+		<action name="open_doWithExamAskStudentAssignTeacher"
+		 class="com.cauc.training.ui.core.ToDoingAction" 
+		 method="openExamAskStudentAssignTeacher">
+			<result name="success">/WEB-INF/toDoing/doWithExamAskStudentAssignTeacher.jsp</result>
+			<result name="input" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_toDoingListPage</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		
+		<!-- 审核考试申请打回页面 -->
+		<action name="open_doWithBackExamAskListPage"
+		 class="com.cauc.training.ui.core.ToDoingAction" 
+		 method="openBackExamAskToDoingPage">
+			<result name="success">/WEB-INF/toDoing/doWithBackExamAskPage.jsp</result>
+			<result name="input" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_toDoingListPage</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		
+		<!-- 审核其它飞行记录页面 -->
+		<action name="open_doWithOtherRecordListPage"
+		 class="com.cauc.training.ui.core.ToDoingAction" 
+		 method="openDoWithOtherRecordListPage">
+			<result name="success">/WEB-INF/toDoing/doWithOtherRecordListPage.jsp</result>
+			<result name="input" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_toDoingListPage</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+
+		<!-- 保存教员审核 -->
+		<action name="saveTeacherConfirm"
+		 class="com.cauc.training.ui.core.ToDoingAction" 
+		 method="saveTeacherConfirm">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_toDoingListPage</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 保存代替审核 -->
+		<action name="saveReplaceTeacherConfirm"
+		 class="com.cauc.training.ui.core.ToDoingAction" 
+		 method="saveReplaceTeacherConfirm">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_toDoingListPage</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 打回 -->
+		<action name="saveBackTrainingRecord"
+		 class="com.cauc.training.ui.core.ToDoingAction" 
+		 method="saveBackTrainingRecord">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_toDoingListPage</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		
+		<!-- 修改 -->
+		<action name="updateFlightTrainingRecord"
+		 class="com.cauc.training.ui.core.ToDoingAction" 
+		 method="updateFlightTrainingRecord">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_toDoingListPage</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+			<result name="input" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_doWithEditListPage</param>
+			<param name="statusMsg">${statusMsg}</param>
+			<param name="id">${id}</param>
+			</result>
+		</action>
+		
+		<!-- 确认评语 -->
+		<action name="saveStudentConfirmRecord"
+		 class="com.cauc.training.ui.core.ToDoingAction" 
+		 method="saveStudentConfirmRecord">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_toDoingListPage</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 申诉评语 -->
+		<action name="saveStudentShenSu"
+		 class="com.cauc.training.ui.core.ToDoingAction" 
+		 method="saveStudentShenSu">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_toDoingListPage</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		
+		<!-- 处理申诉 -->
+		<action name="saveDoWithAppeal"
+		 class="com.cauc.training.ui.core.ToDoingAction" 
+		 method="saveDoWithAppeal">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_toDoingListPage</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		
+		<!-- 保存审核其它经历记录 -->
+		<action name="saveOtherRecordConfirm"
+		 class="com.cauc.training.ui.core.ToDoingAction" 
+		 method="saveOtherRecordConfirm">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_otherFlightTrainingRecordList</param>
+				<param name="flyMoment">${flyMoment}</param>
+				<param name="endMoment">${endMoment}</param>
+				<param name="status">${status}</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 保存审核加时加课申请 -->
+		<action name="saveAddHoursAndAddLessonConfirm"
+		 class="com.cauc.training.ui.core.ToDoingAction" 
+		 method="saveAddHoursAndAddLessonConfirm">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_toDoingListPage</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		
+		<!-- 保存审核考试申请通过 -->
+		<action name="savePracticeExamAskConfirm"
+		 class="com.cauc.training.ui.core.ToDoingAction" 
+		 method="savePracticeExamAskConfirm">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_toDoingListPage</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		
+		<!-- 保存审核考试申请不通过 -->
+		<action name="saveBackPracticeExamAsk"
+		 class="com.cauc.training.ui.core.ToDoingAction" 
+		 method="saveBackPracticeExamAsk">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_toDoingListPage</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		
+		<!-- 保存审核考试申请不通过重新申请 -->
+		<action name="savePracticeBackExamAskConfirmToAsk"
+		 class="com.cauc.training.ui.core.ToDoingAction" 
+		 method="savePracticeBackExamAskConfirmToAsk">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_toDoingListPage</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		
+		<!-- 保存审核考试申请通过分配教员 -->
+		<action name="savePracticeExamAskStudentAssignTeacher"
+		 class="com.cauc.training.ui.core.ToDoingAction" 
+		 method="savePracticeExamAskStudentAssignTeacher">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_toDoingListPage</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+	</package>
+</struts> 

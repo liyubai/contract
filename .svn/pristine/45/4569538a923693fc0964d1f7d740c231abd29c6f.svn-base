@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<!-- Generated 2016-7-19 13:57:16 by Hibernate Tools 3.4.0.CR1 -->
+<hibernate-mapping>
+    <class name="com.cauc.contract.pojos.Student" table="Student" schema="dbo" catalog="trainingRecord">
+        <id name="studentId" type="int">
+            <column name="StudentId" />
+            <generator class="native" />
+        </id>
+        <property name="studentName" type="string">
+            <column name="StudentName" length="50" />
+        </property>
+        <property name="idCard" type="string">
+            <column name="IdCard" length="20" />
+        </property>
+        <property name="no" type="string">
+            <column name="No" length="10" />
+        </property>
+        <property name="grade" type="java.lang.Integer">
+            <column name="Grade" />
+        </property>
+        <property name="company" type="string">
+            <column name="Company" length="50" />
+        </property>
+        <property name="contractNo" type="string">
+            <column name="ContractNo" length="50" />
+        </property>
+        <property name="state" type="java.lang.Integer">
+            <column name="State" />
+        </property>
+        <property name="joinTime" type="timestamp">
+            <column name="JoinTime" length="23" />
+        </property>
+        <property name="stopReason" type="string">
+            <column name="StopReason" length="100" />
+        </property>
+        <property name="stopTime" type="timestamp">
+            <column name="StopTime" length="23" />
+        </property>
+        <property name="addTime" type="timestamp">
+            <column name="AddTime" length="23" />
+        </property>
+        <property name="addUser" type="java.lang.Integer">
+            <column name="AddUser" />
+        </property>
+        <property name="lastModifyTime" type="timestamp">
+            <column name="LastModifyTime" length="23" />
+        </property>
+        <property name="lastModifyUser" type="java.lang.Integer">
+            <column name="LastModifyUser" />
+        </property>
+    </class>
+</hibernate-mapping>

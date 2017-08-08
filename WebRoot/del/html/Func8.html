@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>main</title>
+
+<link rel="stylesheet" href="themes/cupertino/jquery.ui.all.css">
+<script src="scripts/jquery.min.js"></script>
+<script src="scripts/jquery-ui.min.js"></script>
+<script src="scripts/ui/jquery.ui.position.min.js"></script>
+<script src="scripts/ui/jquery.ui.core.min.js"></script>
+<script src="scripts/ui/jquery.ui.widget.min.js"></script>
+<script src="scripts/ui/jquery.ui.button.min.js"></script>
+<script src="scripts/ui/jquery.ui.tabs.min.js"></script>
+<script src="scripts/ui/jquery.ui.dialog.min.js"></script>
+<script src="scripts/ui/jquery.ui.menu.min.js"></script>
+<script src="scripts/function.min.js"></script>
+
+<style>
+.testDiv { padding: 5px; }
+
+/*功能8*/
+#setupMenu { width: 320px; position: absolute; left: -295px /*0px*/; } /*absolute属性，会以离自己最近的relative外容器做参考*/
+#setupMenu a { line-height: 3em; }
+#setupMenu .menuSpan, #setupMenu .menuButtonSpan { position: absolute; right: 10px; top: 6px; width: 100%; text-align: right; }
+#setupMenu li { position: relative; }
+#setupMenu .ui-icon { margin: .7em .1em .7em .1em; }
+#setupMenu #setupSubMenu1 { width: 120px; }
+
+#setupMenu .ui-state-active {
+	color:#FFFFFF;
+	background-image: -moz-linear-gradient(top, #6BBA59, #80DC6F); background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0, #6BBA59), color-stop(1, #80DC6F)); background-image: -ms-linear-gradient(top, #6BBA59, #80DC6F); background-image: linear-gradient(to bottom, #6BBA59, #80DC6F); filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#6BBA59', endColorstr='#80DC6F', GradientType='0');
+}
+/*功能8*/
+</style>
+<script>
+$(function() {
+
+	//功能8
+	var $setupMenu = $("#setupMenu"), $setupSubMenu1=$("#setupSubMenu1");
+	$("#setupButton").click(function(e){
+		e.stopPropagation(); //阻止事件冒泡到BODY、HTML级别
+		$(".ui-menu:not([id='setupMenu'])").fadeOut(150);
+		$setupMenu.fadeToggle(150);
+	});
+	
+	$setupMenu.menu({ position: { my: "right top", at: "left-2 top+2" } });
+	$(".menuButtonSpan").buttonset().find("input[type='checkbox']").change(function(){
+		$(this).siblings("label").children().html(this.checked?"已开启":"已关闭");
+	});
+
+	$setupSubMenu1.delegate( "a", "click", function() {
+		$(this).find("span.ui-icon-bullet").remove().end().parent().siblings().find("span.ui-icon-bullet").remove();
+		$(this).prepend($("<span class='ui-icon ui-icon-bullet'></span>"));
+		$setupMenu.fadeToggle(150);
+		//alert($(this).attr("val"));
+		//后续代码，或者利用超链接自身跳转页面，或者是将所选超链接的$(this).attr("val")属性值读取出来，根据其值的不同分别处理
+	});
+	//功能8
+});
+</script>
+<!-- 此js务必放在所有页面自带的js后面加载 -->
+<script src="scripts/base.min.js"></script>
+</head>
+<body class="hide">
+
+<div id="leftPartA"><div>
+
+<ul class="itemList">
+	<li><a class="navLink" href="main1.html" id="navLink0" title="我的首页">我的首页</a><!-- (10) --></li>
+	<li><a class="navLink" href="peopleManage.html" id="navLink1" title="人员管理">人员管理</a></li>
+	<li><a class="navLink" href="trainingManage.html" id="navLink2" title="飞行训练管理">飞行训练管理</a></li>
+	<li><a class="navLink" href="aircraftManage.html" id="navLink3" title="航空器管理">航空器管理</a></li>
+	<li><a class="navLink" href="summaryManage.html" id="navLink4" title="飞行训练大纲管理">飞行训练大纲管理</a></li>
+	<li><a class="navLink" href="systemManage.html" id="navLink5" title="系统管理">系统管理</a></li>
+	<li><a class="navLink" href="marksManage.html" id="navLink6" title="成绩管理">成绩管理</a>
+</ul>
+<span class="panelLine"></span>
+<ul class="itemList">
+	<li><a class="navLink" href="Func1.html" id="navLink101" title="功能展示1">功能展示1</a></li>
+	<li><a class="navLink" href="Func2.html" id="navLink102" title="功能展示2">功能展示2</a></li>
+	<li><a class="navLink" href="Func3.html" id="navLink103" title="功能展示3">功能展示3</a></li>
+	<li><a class="navLink" href="Func4.html" id="navLink104" title="功能展示4">功能展示4</a></li>
+	<li><a class="navLink" href="Func5.html" id="navLink105" title="功能展示5">功能展示5</a></li>
+	<li><a class="navLink" href="Func6.html" id="navLink106" title="功能展示6">功能展示6</a></li>
+	<li><a class="navLink" href="Func7.html" id="navLink107" title="功能展示7">功能展示7</a></li>
+	<li class="active"><a class="navLink" href="Func8.html" id="navLink108" title="功能展示8">功能展示8</a></li>
+	<li><a class="navLink" href="Func9.html" id="navLink109" title="功能展示9">功能展示9</a></li>
+	<li><a class="navLink" href="Func10.html" id="navLink110" title="功能展示10">功能展示10</a></li>
+</ul>
+<ul class="foldList">
+	<li><span class="ui-icon ui-icon-carat-1-e"></span>功能展示11</li>
+	<ul class="itemList hide">
+		<li><a class="navLink" href="Func11.html" id="navLink111" title="功能展示11" tabTitle="功能展示11[HTML]">HTML版本</a></li>
+		<li><a class="navLink" href="Func11_1.html" id="navLink11101" title="功能展示11" tabTitle="功能展示11[JS]">JS版本</a></li>
+	</ul>
+</ul>
+<ul class="itemList">
+	<li><a class="navLink" href="Func12.html" id="navLink112" title="功能展示12">功能展示12</a></li>
+	<li><a class="navLink" href="Func13.html" id="navLink113" title="功能展示13">功能展示13</a></li>
+	<li><a class="navLink" href="Func14.html" id="navLink114" title="功能展示14">功能展示14</a></li>
+</ul>
+
+</div></div>
+
+
+
+<div id="rightPartA"><div>
+
+<div class="testDiv">
+功能8：请点击图标弹出菜单。该图标外面的div可以放置在页面的任何位置，但div的样式必须设置为：position: relative;
+  <table width="100%">
+<tr>
+	<td width="800">&nbsp;</td>
+	<td height="100"></td>
+</tr>
+<tr>
+	<td align="right" valign="top">其它内容：<br>
+	  可以看到，<br>
+	  菜单弹出后，<br>
+	  能够遮盖这里。</td>
+	<td height="100" valign="top">
+	<div style="position: relative;">
+		<button id="setupButton" class="icon" icon="ui-icon-gear"></button>
+		<ul id="setupMenu">
+			<li><a href="#N">正文工具栏</a><span class="menuButtonSpan">
+				<input type="checkbox" id="toolBoxCheck1" name="toolBoxCheck" checked="checked" /><label for="toolBoxCheck1">已开启</label>
+			</span></li>
+			<li class="ui-menu-divider"></li>
+			<li><a href="#N">读信窗口</a><span class="menuButtonSpan">
+				<!-- 注意，这些按钮一定要紧挨着摆放，不要换行，否则会出现空格 -->
+				<input type="radio" id="readWinRadio1" name="readWinRadio" /><label for="readWinRadio1">关闭</label><input type="radio" id="readWinRadio2" name="readWinRadio" /><label for="readWinRadio2">底部</label><input type="radio" id="readWinRadio3" name="readWinRadio" checked="checked" /><label for="readWinRadio3">右侧</label>
+			</span></li>
+			<li class="ui-menu-divider"></li>
+			<li><a href="#N">发/收件人姓名显示</a><span class="menuButtonSpan">
+				<input type="radio" id="nameDispRadio1" name="nameDispRadio" /><label for="nameDispRadio1">发件人姓名</label><input type="radio" id="nameDispRadio2" name="nameDispRadio" checked="checked" /><label for="nameDispRadio2">通讯录昵称</label>
+			</span></li>
+			<li class="ui-menu-divider"></li>
+			<li><a href="#N">附件上传方式</a>
+				<ul id="setupSubMenu1">
+					<li><a href="#N" val="1"><span class="ui-icon ui-icon-bullet"></span>直接上传</a></li>
+					<li class="ui-menu-divider"></li>
+					<li><a href="#N" val="2">上传到百度网盘</a></li>
+				</ul>
+			</li>
+			<li class="ui-menu-divider"></li>
+			<li><a href="#N">回复时添加签名</a><span class="menuButtonSpan">
+				<input type="checkbox" id="reSignCheck1" name="reSignCheck" checked="checked" /><label for="reSignCheck1">已开启</label>
+			</span></li>
+			<li class="ui-menu-divider"></li>
+			<li><a href="#N">转发时添加签名</a><span class="menuButtonSpan">
+				<input type="checkbox" id="fwSignCheck1" name="fwSignCheck" /><label for="fwSignCheck1">已关闭</label>
+			</span></li>
+			<li class="ui-menu-divider"></li>
+			<li><a href="#N">回复转发时签名位置</a><span class="menuButtonSpan">
+				<input type="radio" id="signPosRadio1" name="signPosRadio" checked="checked" /><label for="signPosRadio1">原文上方</label><input type="radio" id="signPosRadio2" name="signPosRadio" /><label for="signPosRadio2">原文下方</label>
+			</span></li>
+			<li class="ui-menu-divider"></li>
+			<li><a href="#N">签名设置</a></li>
+		</ul>
+	</div>
+	菜单下面的内容
+	</td>
+</tr>
+</table>
+
+</div>
+
+</div></div>
+
+
+
+<div id="bottomPartA"><div>
+
+<button class="green" style="position: absolute; left: 10px;">保存</button>
+<button class="normal" style="position: absolute; left: 70px;">取消</button>
+<button class="normal" style="position: absolute; right: 30px;">还原为默认</button>
+
+</div></div>
+
+</body>
+</html>

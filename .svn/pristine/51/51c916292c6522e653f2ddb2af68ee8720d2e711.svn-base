@@ -1,0 +1,345 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE struts PUBLIC
+    "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN"
+    "http://struts.apache.org/dtds/struts-2.0.dtd">
+<struts>
+	<package name="ajax_training" extends="ErsDefault" namespace="/system">
+		
+		<!-- 学生大纲是否符合 -->
+		<action name="checkStudentOutlineIsRight" class="com.cauc.training.ui.core.FlightTrainingRecordAction" 
+		method="checkStudentOutlineIsRight">
+			<result name="success" type="json">
+		       <param name="root">viewOrg</param>
+		    </result>
+		</action>
+		<!-- 显示学生姓名 -->
+		<action name="showStudentNameByCode" class="com.cauc.training.ui.core.FlightTrainingRecordAction" 
+		method="readStudentNameByCode">
+			<result name="success" type="json">
+		       <param name="root">viewOrg</param>
+		    </result>
+		</action>
+	
+		<!-- 显示转场课程的起飞站与到达站 -->
+		<action name="showStartPosAndEndPosByLessonid" class="com.cauc.training.ui.core.FlightTrainingRecordAction"
+		method="readStartPosAndEndPosByLessonid">
+			<result name="success" type="json">
+				<param name="root">line</param>
+			</result>
+		</action>
+		<!-- 显示已选择推荐且未申请考试的学生 -->
+		<action name="showRecommendExamAllNoAskStudentList" class="com.cauc.training.ui.core.FlightTrainingRecordAction"
+		method="readRecommendExamAllNoAskStudentList">
+			<result name="success" type="json">
+				<param name="root">viewCompletionList</param>
+			</result>
+		</action>
+		<!-- 显示已选择推荐的学生 -->
+		<action name="showRecommendExamStudentList" class="com.cauc.training.ui.core.FlightTrainingRecordAction"
+		method="readRecommendExamStudentList">
+			<result name="success" type="json">
+				<param name="root">viewCompletionList</param>
+			</result>
+		</action>
+		<action name="showAddHoursAndAddLessonLessonListByPhaseId" class="com.cauc.training.ui.core.FlightTrainingRecordAction"
+		method="readAddHoursAndAddLessonLessonListByPhaseId">
+			<result name="success" type="json">
+				<param name="root">viewCompletionList</param>
+			</result>
+		</action>
+		
+		<action name="showAddHoursAndAddLessonPhaseListByUnitId" class="com.cauc.training.ui.core.FlightTrainingRecordAction"
+		method="readAddHoursAndAddLessonPhaseListByUnitId">
+			<result name="success" type="json">
+				<param name="root">viewCompletionList</param>
+			</result>
+		</action>
+		
+		<action name="showOutlineCheckListPhaseListByUnitId" class="com.cauc.training.ui.core.FlightTrainingRecordAction"
+		method="readOutlineCheckListPhaseListByUnitId">
+			<result name="success" type="json">
+				<param name="root">viewCompletionList</param>
+			</result>
+		</action>
+		
+		<action name="showAddHoursAndAddLessonUnitListByOutlineId" class="com.cauc.training.ui.core.FlightTrainingRecordAction"
+		method="readAddHoursAndAddLessonUnitListByOutlineId">
+			<result name="success" type="json">
+				<param name="root">viewCompletionList</param>
+			</result>
+		</action>
+		
+		<action name="showOutlineCheckListUnitListByOutlineId" class="com.cauc.training.ui.core.FlightTrainingRecordAction"
+		method="readOutlineCheckListUnitListByOutlineId">
+			<result name="success" type="json">
+				<param name="root">viewCompletionList</param>
+			</result>
+		</action>
+		
+		<!-- 根据学号显示大纲内容 -->
+		<action name="showOutlineInfoByStudentId" class="com.cauc.training.ui.core.FlightTrainingRecordAction"
+		method="readOutlineInfoByStudentId">
+			<result name="success" type="json">
+				<param name="root">viewOutline</param>
+			</result>
+		</action>
+		<!-- 课程训练详细 -->
+		<action name="showTrainingRecordCompletionDetailByLessonId" class="com.cauc.training.ui.core.FlightTrainingRecordAction"
+		method="readTrainingRecordCompletionDetailByLessonId">
+			<result name="success" type="json">
+				<param name="root">viewRecord</param>
+			</result>
+		</action>
+		<!-- 获取阶段的课程 -->
+		<action name="showLessonTrainingRecordCompletionListByPhaseId" class="com.cauc.training.ui.core.FlightTrainingRecordAction"
+		method="readLessonTrainingRecordCompletionListByPhaseId">
+			<result name="success" type="json">
+				<param name="root">viewCompletionList</param>
+			</result>
+		</action>
+		<!-- 获取单元阶段 -->
+		<action name="showPhaseTrainingRecordCompletionListByUnitId" class="com.cauc.training.ui.core.FlightTrainingRecordAction"
+		method="readPhaseTrainingRecordCompletionListByOutlineId">
+			<result name="success" type="json">
+				<param name="root">viewCompletionList</param>
+			</result>
+		</action>
+	
+		<!-- 获取大纲单元 -->
+		<action name="showUnitTrainingRecordCompletionListByOutlineId" class="com.cauc.training.ui.core.FlightTrainingRecordAction"
+		method="readUnitTrainingRecordCompletionListByOutlineId">
+			<result name="success" type="json">
+				<param name="root">viewCompletionList</param>
+			</result>
+		</action>
+		
+		<!-- 得分列表 -->
+		<action name="showStudentSubjectScoreByTrainingId" class="com.cauc.training.ui.core.FlightTrainingRecordAction" 
+		method="readStudentSubjectScoreByTrainingId">
+			<result name="success" type="json">
+		       <param name="root">lessonSubjectList</param>
+		    </result>
+		</action>
+		<!-- 显示教员评语 -->
+		<action name="showStudentCommentByTrainingId" class="com.cauc.training.ui.core.FlightTrainingRecordAction" 
+		method="readStudentCommentByTrainingId">
+			<result name="success" type="json">
+		       <param name="root">viewOrg</param>
+		    </result>
+		</action>
+		<!-- 判断起飞站与到达站是否合法 -->
+		<action name="showStationIfRightByLessonid" class="com.cauc.training.ui.core.FlightTrainingRecordAction" 
+		method="readStationIfRightByLessonid">
+			<result name="success" type="json">
+		       <param name="root">viewOrg</param>
+		    </result>
+		</action>
+	
+		<!-- 显示冲突的记录 -->
+		<action name="showChongTuFlightRecordByPlaneid" class="com.cauc.training.ui.core.FlightTrainingRecordAction" 
+		method="readChongTuFlightRecordByPlaneid">
+			<result name="success" type="json">
+		       <param name="root">viewFlightTrainingrecord</param>
+		    </result>
+		</action>
+		<action name="showBestNewFlightRecordByPlaneid" class="com.cauc.training.ui.core.FlightTrainingRecordAction" 
+		method="readBestNewFlightRecordByPlaneid">
+			<result name="success" type="json">
+		       <param name="root">viewFlightTrainingrecord</param>
+		    </result>
+		</action>
+
+		<action name="showFlightTimeByBeginTimeAndEndTime" class="com.cauc.training.ui.core.FlightTrainingRecordAction" 
+		method="readFlightTimeByBeginTimeAndEndTime">
+			<result name="success" type="json">
+		       <param name="root">viewOrg</param>
+		    </result>
+		</action>
+		
+		<action name="showOtherFlightTimeByBeginTimeAndEndTime" class="com.cauc.training.ui.core.FlightTrainingRecordAction" 
+		method="readOtherFlightTimeByBeginTimeAndEndTime">
+			<result name="success" type="json">
+		       <param name="root">viewOrg</param>
+		    </result>
+		</action>
+		<action name="showPlaneidByTeacherid" class="com.cauc.training.ui.core.FlightTrainingRecordAction" 
+		method="readPlaneidByTeacherid">
+			<result name="success" type="json">
+		       <param name="root">viewOrg</param>
+		    </result>
+		</action>
+	</package>
+	<package name="training_management" extends="ErsDefault" namespace="/system">
+	
+		<!-- 学生训练历史记录录入页面 -->
+		<action name="open_createHistoryFlightTrainingRecordPage"
+		 class="com.cauc.training.ui.core.FlightTrainingRecordAction" 
+		 method="openCreateHistoryFlightTrainingRecordPage">
+			<result name="success">/WEB-INF/training/createHistoryFlightTrainingRecord.jsp</result>
+			<result name="input" type="redirectAction">
+			<param name="namespace">/system</param>
+			<param name="actionName">open_toDoingListPage</param>
+			<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		
+		<!-- 打开学生训练记录录入页面 -->
+		<action name="open_createFlightTrainingRecordPage"
+		 class="com.cauc.training.ui.core.FlightTrainingRecordAction" 
+		 method="openCreateFlightTrainingRecordPage">
+			<result name="success">/WEB-INF/training/createFlightTrainingRecord.jsp</result>
+		</action>
+		<!-- 保存学生训练记录录入 -->
+		<action name="createFlightTrainingRecord"
+		 class="com.cauc.training.ui.core.FlightTrainingRecordAction" 
+		 method="saveCreateFlightTrainingRecord">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_createFlightTrainingRecordPage</param>
+				<param name="statusMsg">${statusMsg}</param>
+				<param name="id">${id}</param>
+				<param name="lessonid">${lessonid}</param>
+			</result>
+		</action>
+		<!-- 保存学生历史训练记录录入 -->
+		<action name="createHistoryFlightTrainingRecord"
+		 class="com.cauc.training.ui.core.FlightTrainingRecordAction" 
+		 method="saveCreateHistoryFlightTrainingRecord">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_createHistoryFlightTrainingRecordPage</param>
+				<param name="statusMsg">${statusMsg}</param>
+				<param name="id">${id}</param>
+				<param name="outlineid">${outlineid}</param>
+				<param name="unitid">${unitid}</param>
+				<param name="phaseid">${phaseid}</param>
+				<param name="lessonid">${lessonid}</param>
+			</result>
+			<result name="input" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_toDoingListPage</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 历史记录查询 -->
+		<action name="open_historyFlightTrainingRecordPage"
+		 class="com.cauc.training.ui.core.FlightTrainingRecordAction" 
+		 method="openHistoryFlightTrainingRecordPage">
+			<result name="success">/WEB-INF/training/historyFlightTrainingRecord.jsp</result>
+		</action>
+		
+		<!-- 历史记录删除列表 -->
+		<action name="open_historyFlightTrainingRecordDeleteList"
+		 class="com.cauc.training.ui.core.FlightTrainingRecordAction" 
+		 method="openHistoryFlightTrainingRecordPage">
+			<result name="success">/WEB-INF/training/historyFlightTrainingRecordDeleteList.jsp</result>
+		</action>
+		<!-- 完成情况查询 -->
+		<action name="open_flightTrainingRecordCompletionPage"
+		 class="com.cauc.training.ui.core.FlightTrainingRecordAction" 
+		 method="openFlightTrainingRecordCompletionPage">
+			<result name="success">/WEB-INF/training/flightTrainingRecordCompletion.jsp</result>
+		</action>
+		
+		<!-- 其它飞行经历记录录入页面 -->
+		<action name="open_otherFlightTrainingRecordPage"
+		 class="com.cauc.training.ui.core.FlightTrainingRecordAction" 
+		 method="openCreateOtherFlightTrainingRecordPage">
+			<result name="success">/WEB-INF/training/otherFlightTrainingRecord.jsp</result>
+		</action>
+		<!-- 保存其它训练记录录入 -->
+		<action name="createOtherFlightTrainingRecord"
+		 class="com.cauc.training.ui.core.FlightTrainingRecordAction" 
+		 method="saveOtherFlightTrainingRecord">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_otherFlightTrainingRecordPage</param>
+				<param name="statusMsg">${statusMsg}</param>
+				<param name="id">${id}</param>
+			</result>
+		</action>
+		<!-- 其它飞行经历记录列表 -->
+		<action name="open_otherFlightTrainingRecordList"
+		 class="com.cauc.training.ui.core.FlightTrainingRecordAction" 
+		 method="readOtherFlightTrainingRecordList">
+			<result name="success">/WEB-INF/training/otherFlightTrainingRecordList.jsp</result>
+		</action>
+		<!-- 删除训练记录 -->
+		<action name="deleteHistoryFlightTrainingRecord"
+		 class="com.cauc.training.ui.core.FlightTrainingRecordAction" 
+		 method="deleteHistoryFlightTrainingRecord">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_historyFlightTrainingRecordDeleteList</param>
+				<param name="statusMsg">${statusMsg}</param>
+				<!-- <param name="name">${name}</param>-->
+				<param name="code">${code}</param>
+				<param name="status">${status}</param>
+				<param name="flyMoment">${flyMoment}</param>
+				<param name="endMoment">${endMoment}</param>
+			</result>
+		</action>
+		
+		<!-- 加时加课页面 -->
+		<action name="addHoursAndAddLesson"
+		 class="com.cauc.training.ui.core.FlightTrainingRecordAction" 
+		 method="addHoursAndAddLesson">
+			<result name="success">/WEB-INF/training/addHoursAndAddLesson.jsp</result>
+		</action>
+		<!-- 保存加时加课 -->
+		<action name="saveAddHoursAndAddLesson"
+		 class="com.cauc.training.ui.core.FlightTrainingRecordAction" 
+		 method="saveAddHoursAndAddLesson">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">addHoursAndAddLesson</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		
+		<!-- 实践考试页面 -->
+		<action name="open_practiceTest"
+		 class="com.cauc.training.ui.core.FlightTrainingRecordAction" 
+		 method="openPracticeTestPage">
+			<result name="success">/WEB-INF/training/practiceTest.jsp</result>
+		</action>
+		
+		<!-- 保存学生推荐 -->
+		<action name="savePracticeTest"
+		 class="com.cauc.training.ui.core.FlightTrainingRecordAction" 
+		 method="savePracticeTest">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_practiceTest</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 保存取消学生推荐 -->
+		<action name="escPracticeTest"
+		 class="com.cauc.training.ui.core.FlightTrainingRecordAction" 
+		 method="escPracticeTest">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_practiceTest</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		
+		<!-- 保存考试申请 -->
+		<action name="savePracticeAsk"
+		 class="com.cauc.training.ui.core.FlightTrainingRecordAction" 
+		 method="savePracticeAsk">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_practiceTest</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 九天数据导入 -->
+		<action name="importNIneSkyData"
+		 class="com.cauc.training.ui.core.FlightTrainingRecordAction" 
+		 method="importNIneSkyData">
+			<result name="success">/WEB-INF/training/importNIneSkyData.jsp</result>
+		</action>
+	</package>
+</struts> 

@@ -1,0 +1,182 @@
+package com.cauc.training.ui.core.del;
+
+import java.util.Date;
+import java.util.List;
+
+import org.apache.commons.lang.StringUtils;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.pojos.StudentAndstautsRelation;
+import com.cauc.training.pojos.TDiction;
+import com.cauc.training.pojos.TUser;
+import com.cauc.training.ui.common.BaseActionSupport;
+
+
+/**
+ * 学籍状态与学生状态关系绑定
+ */
+public class StudentAndStatusRelationMagAction extends BaseActionSupport {
+
+
+	private static final long serialVersionUID = 3358464761356702709L;
+	// 用于存储学生状态与学籍状态关系列表
+	private List<StudentAndstautsRelation> list;
+	// 用于存储学籍状态列表
+	private List<TDiction> statusList;
+	// 用于存储学生状态列表
+	private List<TDiction> studentstaList;
+	// 学生状态与学籍状态关系实体对象
+	private StudentAndstautsRelation sasr;
+	// 查询关键字
+	private String key;
+	private String key1;
+	// 状态关系id，多个用“，”隔开
+	private String ids;
+
+	/**
+	 * @功能描述：查询学生状态与学籍状态管理列表
+	 * @return
+	 */
+	public String searchListStudentStatus() {
+		String result = "searchList";
+		try {
+			statusList = getFactory().getFinanceProviderInstance()
+					.getStudentAndStatusRelationService().searchDictionByName(
+							"学籍状态");
+			studentstaList = getFactory().getFinanceProviderInstance()
+					.getStudentAndStatusRelationService().searchDictionByName(
+							"学生状态");
+			list = getFactory().getFinanceProviderInstance()
+					.getStudentAndStatusRelationService().searchlist(key, key1);
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+			setStatusMsg("查询学生状态与学籍状态关系列表出错！");
+			setStatusMsg("1");
+		}
+		return result;
+	}
+
+	/**
+	 * @功能描述：删除状态关系
+	 * @return
+	 */
+	public String deleteSSStudentStatus() {
+		String result = "deleteSS";
+		try {
+			boolean flag = getFactory().getFinanceProviderInstance()
+					.getStudentAndStatusRelationService().deleteStatus(ids);
+			setKey(key);
+			setKey1(key1);
+			if (flag) {
+				setStatusMsg("删除成功！");
+				setStatusMsg("0");
+			} else {
+				setStatusMsg("删除失败！");
+				setStatusMsg("1");
+			}
+		} catch (FinanceServiceException e) {
+			setStatusMsg("删除学生状态与学籍状态关系出错！");
+			setStatusMsg("1");
+		}
+		return result;
+	}
+
+	/**
+	 * @功能描述：批量添加状态关系
+	 * @return
+	 */
+	public String addSSStudentStatus() {
+		String result = "addSS";
+		TUser tuser = null;
+		try {
+			tuser = getFactory().getFinanceProviderInstance()
+					.getSysUserService().readSysUserByLoginID(
+							this.getLoginContext().getLoginId());
+		} catch (FinanceServiceException e2) {
+			e2.printStackTrace();
+		}
+		Date date = new Date();
+		if (StringUtils
+				.isNotBlank(this.sasr.getTDictionByVStudentid().getVId())
+				&& StringUtils.isNotBlank(this.sasr.getTDictionByVStuStatusid()
+						.getVId())) {
+			this.sasr.setDCreatetime(date);
+			this.sasr.setTUser(tuser);
+			try {
+				boolean flag = getFactory().getFinanceProviderInstance()
+						.getStudentAndStatusRelationService().save(this.sasr);
+				setKey(key);
+				setKey1(key1);
+				if (!flag) {
+					setStatusMsg("学生状态与学籍状态关系保存失败，该关系已存在！");
+					setStatusMsg("1");
+				} else {
+					setStatusMsg("学生状态与学籍状态关系保存成功！");
+					setStatusMsg("0");
+				}
+			} catch (FinanceServiceException e) {
+				e.printStackTrace();
+			}
+		} else {
+			setStatusMsg("学生状态与学籍状态关系保存失败，请仔细填写所有信息！");
+			setStatusMsg("1");
+		}
+		return result;
+	}
+
+	public List<StudentAndstautsRelation> getList() {
+		return list;
+	}
+
+	public void setList(List<StudentAndstautsRelation> list) {
+		this.list = list;
+	}
+
+	public StudentAndstautsRelation getSasr() {
+		return sasr;
+	}
+
+	public void setSasr(StudentAndstautsRelation sasr) {
+		this.sasr = sasr;
+	}
+
+	public String getKey() {
+		return key;
+	}
+
+	public void setKey(String key) {
+		this.key = key;
+	}
+
+	public List<TDiction> getStatusList() {
+		return statusList;
+	}
+
+	public void setStatusList(List<TDiction> statusList) {
+		this.statusList = statusList;
+	}
+
+	public List<TDiction> getStudentstaList() {
+		return studentstaList;
+	}
+
+	public void setStudentstaList(List<TDiction> studentstaList) {
+		this.studentstaList = studentstaList;
+	}
+
+	public String getIds() {
+		return ids;
+	}
+
+	public void setIds(String ids) {
+		this.ids = ids;
+	}
+
+	public String getKey1() {
+		return key1;
+	}
+
+	public void setKey1(String key1) {
+		this.key1 = key1;
+	}
+}

@@ -1,0 +1,20 @@
+#common settings
+server.host=127.0.0.1
+
+#jdbc settings
+#jdbc.url=jdbc:jtds:sqlserver://127.0.0.1:1435/trainingRecord
+jdbc.url=jdbc:jtds:sqlserver://10.10.12.36:1433/trainingRecord
+jdbc.username=sa
+jdbc.password=sa
+#c3p0 setttings
+c3p0.initialPoolSize=5
+c3p0.maxPoolSize=40
+c3p0.minPoolSize=5
+c3p0.maxIdleTime=60
+#hibernate settings
+hibernate.show_sql=false
+hibernate.format_sql=true
+hibernate.generate_statistics=true
+hibernate.cache.use_second_level_cache=true
+hibernate.cache.use_query_cache=true
+hibernate.jdbc.batch_size=50

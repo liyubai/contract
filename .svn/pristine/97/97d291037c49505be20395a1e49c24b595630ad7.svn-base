@@ -1,0 +1,257 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>新增合同</title>
+    <link href="themes/cupertino/jquery.ui.all.css" rel="stylesheet" type="text/css" />
+    <link href="themes/cupertino/selfStyle.css" rel="stylesheet" type="text/css" />
+    <link href="themes/cupertino/date.css" rel="stylesheet" type="text/css" />
+    <script src="scripts/jquery.min.js"></script>
+    <script src="scripts/jquery-ui.min.js"></script>
+    <script src="scripts/ui/jquery.ui.position.min.js"></script>
+    <script src="scripts/ui/jquery.ui.core.min.js"></script>
+    <script src="scripts/ui/jquery.ui.widget.min.js"></script>
+    <script src="scripts/ui/jquery.ui.button.min.js"></script>
+    <script src="scripts/ui/jquery.ui.tabs.min.js"></script>
+    <script src="scripts/ui/jquery.ui.dialog.min.js"></script>
+    <script src="scripts/ui/jquery.ui.menu.min.js"></script>
+    <script src="scripts/function.min.js"></script>
+    <script src="scripts/datepicker4.8/WdatePicker.js" type="text/javascript"></script>
+    <script>
+    $(function() {
+        new $.dropDownList(0, true, 243);
+        new $.dropDownList(1, true, 243);
+        new $.dropDownList(2, true, 243);
+        new $.dropDownList(3, true, 243);
+        new $.dropDownList(4, true, 243);
+        new $.dropDownList(5, true, 160);
+    });
+</script>
+    <!-- 此js务必放在所有页面自带的js后面加载 -->
+    <script src="scripts/base.min.js"></script>
+</head>
+<body>
+<div id="indexHead">
+  <div class="headercontent">
+      <img src="themes/cupertino/images/logo.png" />
+      <span class="sysNameC">中国民航大学飞行培训合同管理系统</span>
+      <div class="sysNameE">Civil aviation university of china Contract management system </div>
+      <div class="logout">
+          <span class="today">2016-6-6</span>
+          <span class="wel">欢迎</span>
+          <a href="">张雪</a>
+          <span class="sep"></span>
+          <a href="">退出</a>
+      </div>
+  </div>
+</div>
+<div id="leftPartA">
+    <ul class="itemList">
+	    <li class="active"><a style="display:block;" href="cMain.htm" title="主页">主页</a></li>
+	    <li><a href="cContractList.htm" title="合同管理">合同管理</a></li>
+	    <li><a href="cStudentList.htm" title="学生管理">学生管理</a></li>
+	    <li><a href="cPaylist.htm" title="付款管理">付款管理</a></li>
+	    <li><a href="cClearingList.htm" title="结算管理">结算管理</a></li>
+    </ul>
+    <ul class="foldList">
+	    <li title="统计">统计</li>
+	    <ul class="itemList">
+	        <li><a href="cPayStatistics.htm">付款统计</a></li>
+	        <li><a href="cCollectStatistics.htm">汇总统计</a></li>
+	        <li><a href="cAverageStatistics.htm">平均统计</a></li>
+	    </ul>
+	</ul>
+	<ul class="foldList">
+        <li title="用户管理">用户管理</li>
+        <ul class="itemList">
+	        <li><a href="cUserList.htm">用户列表</a></li>
+	        <li><a href="cRoleList.htm">角色列表</a></li>
+	    </ul>
+    </ul>
+	<ul class="itemList">
+	    <li><a href="cDataDictionary.htm" title="数据字典">数据字典</a></li>
+	</ul>
+</div>
+<div id="rightPartA" style="overflow-x:hidden;">
+    <div>
+    <div class="Panel">
+        <div class="panelHead">
+            <span>新增合同</span>
+        </div>
+        <div class="panelContent">
+            <table class="modifyTable">
+                <tr>
+                    <td class="col20_ textR">合同名称</td>
+                    <td class="col15_"><input id="Text1" type="text" class="tableinput" value="中国民航大学自费学生飞行培训合同" /></td>
+                    <td class="col20_ textR">合同编号</td>
+                    <td><input id="Text2" type="text" class="tableinput" /></td>
+                </tr>
+                <tr>
+                    <td class="col20_ textR">合同类型</td>
+                    <td class="col15_">
+                        <div class="dropDownList" id="Div1">
+	<button class="tableselect">合同类型</button>
+	<ul>
+	    <li><a href="#N" val="1"><span class="ui-icon ui-icon-bullet"></span>合同类型</a></li>
+		<li><a href="#N" val="2">自费通航</a></li>
+		<li><a href="#N" val="3">自费整体</a></li>
+		<li><a href="#N" val="4">整体大包</a></li>
+		<li><a href="#N" val="5">整体课程</a></li>
+		<li><a href="#N" val="6">通航</a></li>
+		<li><a href="#N" val="7">军转民</a></li>
+		<li><a href="#N" val="8">自费高性能</a></li>
+		<li><a href="#N" val="9">基础理论+招飞</a></li>
+		<li><a href="#N" val="10">基础理论+执照理论</a></li>
+		<li><a href="#N" val="11">执照理论</a></li>
+		<li><a href="#N" val="8">基础理论</a></li>
+		<li><a href="#N" val="9">合作共建</a></li>
+	</ul>
+	<input type="hidden" name="合同类型" value="1" />
+</div>
+                    </td>
+                    <td class="col20_ textR">学员类型</td>
+                    <td>
+                        <div class="dropDownList" id="Div4">
+	<button class="tableselect">学员类型</button>
+	<ul>
+	    <li><a href="#N" val="1"><span class="ui-icon ui-icon-bullet"></span>学员类型</a></li>
+		<li><a href="#N" val="2">4+1</a></li>
+		<li><a href="#N" val="3">高招生</a></li>
+		<li><a href="#N" val="4">高中生</a></li>
+		<li><a href="#N" val="5">军转民</a></li>
+		<li><a href="#N" val="6">通航</a></li>
+		<li><a href="#N" val="7">通航转整体</a></li>
+		<li><a href="#N" val="8">整体大包</a></li>
+		<li><a href="#N" val="9">整体课程</a></li>
+		<li><a href="#N" val="10">整体自费</a></li>
+	</ul>
+	<input type="hidden" name="合同类型" value="1" />
+</div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="col20_ textR">合同状态</td>
+                    <td class="col15_">
+                        <div class="dropDownList" id="Div3">
+	<button class="tableselect">合同状态</button>
+	<ul>
+	    <li><a href="#N" val="1"><span class="ui-icon ui-icon-bullet"></span>意向</a></li>
+		<li><a href="#N" val="2">初稿</a></li>
+		<li><a href="#N" val="3">定稿</a></li>
+		<li><a href="#N" val="4">生效</a></li>
+		<li><a href="#N" val="5">完成</a></li>
+	</ul>
+	<input type="hidden" name="合同类型" value="1" />
+</div>
+                    </td>
+                    <td class="col20_ textR">合同性质</td>
+                    <td>
+                    <div class="dropDownList" id="Div6">
+	<button class="tableselect">合同性质</button>
+	<ul>
+	    <li><a href="#N" val="1"><span class="ui-icon ui-icon-bullet"></span>飞行培训</a></li>
+		<li><a href="#N" val="2">整体大包</a></li>
+		<li><a href="#N" val="3">通航</a></li>
+		<li><a href="#N" val="4">合作共建</a></li>
+		<li><a href="#N" val="5">基础理论</a></li>
+		<li><a href="#N" val="6">生源基地</a></li>
+		<li><a href="#N" val="7">招飞+基础理论</a></li>
+		<li><a href="#N" val="8">招飞/基础理论</a></li>
+		<li><a href="#N" val="9">基础理论/执照理论</a></li>
+		<li><a href="#N" val="10">理论+飞行</a></li>
+		<li><a href="#N" val="11">执照理论</a></li>
+		<li><a href="#N" val="12">高性能训练</a></li>
+		<li><a href="#N" val="13">实践考试</a></li>
+		<li><a href="#N" val="14">私照外包</a></li>
+		<li><a href="#N" val="15">招飞</a></li>
+		<li><a href="#N" val="16">6+1</a></li>
+	</ul>
+	<input type="hidden" name="合同类型" value="1" />
+</div>
+                        
+                    </td>
+                </tr>
+                <tr>
+                    <td class="col20_ textR">客户单位</td>
+                    <td class="col15_">
+                        <div class="dropDownList" id="Div5">
+	<button class="tableselect">客户单位</button>
+	<ul>
+	    <li><a href="#N" val="1"><span class="ui-icon ui-icon-bullet"></span>客户单位</a></li>
+		<li><a href="#N" val="2">客户单位</a></li>
+	</ul>
+	<input type="hidden" name="合同类型" value="1" />
+</div>
+                    </td>
+                    <td class="col20_ textR">签订时间</td>
+                    <td>
+                        <input id="Text5" type="text" class="tableinput date" onmouseup="WdatePicker()" />
+                    </td>
+                </tr>
+                <tr>
+                    <td class="col20_ textR">自费生姓名</td>
+                    <td class="col15_"><input id="Text6" type="text" class="tableinput" value="" /></td>
+                </tr>
+                <tr>
+                    <td class="col20_ textR">所在年级</td>
+                    <td colspan="3">
+                        <div class="dropDownList" id="Div2">
+	<button class="tableselect1">学生年级</button>
+	<ul>
+	    <li><a href="#N" val="1" class="inline">学生年级</a></li>
+	    <li><a href="#N" val="2" class="inline"><span class="ui-icon ui-icon-bullet"></span>2006</a><a href="#N" val="12" class="inline">2016</a></li>
+		<li><a href="#N" val="3" class="inline">2007</a><a href="#N" val="13" class="inline">2017</a></li>
+		<li><a href="#N" val="4" class="inline">2008</a><a href="#N" val="14" class="inline">2018</a></li>
+		<li><a href="#N" val="5" class="inline">2009</a><a href="#N" val="15" class="inline">2019</a></li>
+		<li><a href="#N" val="6" class="inline">2010</a><a href="#N" val="16" class="inline">2020</a></li>
+		<li><a href="#N" val="7" class="inline">2011</a><a href="#N" val="17" class="inline">2021</a></li>
+		<li><a href="#N" val="8" class="inline">2012</a><a href="#N" val="18" class="inline">2022</a></li>
+		<li><a href="#N" val="9" class="inline">2013</a><a href="#N" val="19" class="inline">2023</a></li>
+		<li><a href="#N" val="10" class="inline">2014</a><a href="#N" val="20" class="inline">2024</a></li>
+		<li><a href="#N" val="11" class="inline">2015</a><a href="#N" val="21" class="inline">2025</a></li>
+	</ul>
+	<input type="hidden" name="合同类型" value="1" />
+</div>
+<button id="addStudentInfoBtn" class="greenBtn" style="margin-left:10px;">+</button>
+<span class="ml20">学员人数</span>
+<input id="Text3" type="text" class="tableinput1 ml10" />
+<span class="ml20">入校时间</span>
+<input id="Text4" type="text" class="tableinput1 ml10 date" onmouseup="WdatePicker()" />
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="4" class="tCenter">
+                        <input id="Button1" type="button" class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-icon-primary ml10" value="经费初始化" />
+                        <input id="Button2" type="button" class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-icon-primary ml10" value="保存" />
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    </div>
+</div>
+<script>
+    $(function() {
+        $('#Button2').click(function() {
+            window.location.href = 'cContractList.htm';
+        });
+        $('#Button1').click(function() {
+            window.location.href = 'cTrainingProgram.htm';
+        });
+
+
+        var pageddlNum = 5;
+        $('#addStudentInfoBtn').click(function() {
+            var str = $(this).parent().html();
+            var trNode = $('<tr><td class="col20_ textR">所在年级</td><td colspan="3">' + str + '</td></tr>');
+
+            $('.modifyTable tr').eq(-2).after(trNode);
+
+            trNode.find('.greenBtn').css('visibility','hidden');
+
+            new $.dropDownList(++pageddlNum, true, 160);
+        });
+    });
+</script>
+</body>
+</html>

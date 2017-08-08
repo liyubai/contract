@@ -1,0 +1,75 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<!-- Generated 2016-11-11 10:01:26 by Hibernate Tools 3.5.0.Final -->
+<hibernate-mapping>
+    <class name="com.cauc.contract.pojos.Contract" table="Contract" schema="dbo" catalog="trainingRecord">
+        <id name="CId" type="int">
+            <column name="C_ID" />
+            <generator class="native" />
+        </id>
+        <property name="CName" type="string">
+            <column name="C_NAME" length="100" not-null="true" />
+        </property>
+        <property name="CContractId" type="string">
+            <column name="C_CONTRACT_ID" length="20" not-null="true" />
+        </property>
+        <property name="CType" type="java.lang.Integer">
+            <column name="C_TYPE" />
+        </property>
+        <property name="CStuType" type="java.lang.Integer">
+            <column name="C_STU_TYPE" />
+        </property>
+        <property name="CStatus" type="java.lang.Integer">
+            <column name="C_STATUS" />
+        </property>
+        <property name="CNature" type="java.lang.Integer">
+            <column name="C_NATURE" />
+        </property>
+        <property name="CCompy" type="java.lang.Integer">
+            <column name="C_COMPY" />
+        </property>
+        <property name="CSignTime" type="string">
+            <column name="C_SIGN_TIME" length="20" />
+        </property>
+        <property name="CPrivateName" type="string">
+            <column name="C_PRIVATE_NAME" length="50" />
+        </property>
+        <property name="CGradeInfo" type="string">
+            <column name="C_GRADE_INFO" length="2000" />
+        </property>
+        <property name="CPaymentInfo" type="string">
+            <column name="C_PAYMENT_INFO" length="2000" />
+        </property>
+        <property name="CDealPrice" type="java.lang.Integer">
+            <column name="C_DEAL_PRICE" />
+        </property>
+        <property name="CTrainCycle" type="string">
+            <column name="C_TRAIN_CYCLE" length="50" />
+        </property>
+        <property name="CDelFlg" type="java.lang.Integer">
+            <column name="C_DEL_FLG" />
+        </property>
+        <property name="CInitFlg" type="java.lang.Integer">
+            <column name="C_INIT_FLG" />
+        </property>
+        <property name="CAddTime" type="timestamp">
+            <column name="C_ADD_TIME" length="23" />
+        </property>
+        <property name="CAddUser" type="string">
+            <column name="C_ADD_USER" length="20" />
+        </property>
+        <property name="CLastModifyTime" type="timestamp">
+            <column name="C_LAST_MODIFY_TIME" length="23" />
+        </property>
+        <property name="CLastModifyUser" type="string">
+            <column name="C_LAST_MODIFY_USER" length="20" />
+        </property>
+        <property name="CPnameInfo" type="string">
+            <column name="C_PNAME_INFO" length="2000" />
+        </property>
+        <property name="COntractText" type="string">
+            <column name="C_ONTRACT_TEXT" length="2000" />
+        </property>
+    </class>
+</hibernate-mapping>

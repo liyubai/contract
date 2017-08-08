@@ -1,0 +1,33 @@
+/* CSS Document */
+.font1{ font-size:13px;color:#6a6a6a; font-weight:bold;}
+
+.font2{ font-size:13px;	color:#999999;}
+
+.font3{ font-size:13px;color:#7b0006; font-weight:bold;}
+
+select{ font-size:13px;color:#6a6a6a; font-weight:bold;}
+input{font-size:13px;color:#6a6a6a; font-weight:bold;}
+
+.tableboder{ border:1px solid #CCCCCC }
+
+.table1{ background:#cccccc; line-height:25px;text-align:center;}
+.table1 tr{ background:#FFFFFF;}
+
+.boder{ border:
+	border: 2px solid #c6c6c6;
+	border: 2px solid #c6c6c6;
+	background-color: #FFFFFF;
+}
+
+.button{
+    font-family:Arial, Helvetica, sans-serif;
+	font-size:13px;
+	font-weight:bold;
+	color: #FFFFFF;
+	text-align:center;
+	border: 0px solid #c02947;
+	background-image: url(images/buttonn.gif);
+	height:24px;
+	
+
+}

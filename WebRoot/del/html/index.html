@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>JQUERY测试</title>
+
+<link rel="stylesheet" href="themes/cupertino/jquery.ui.all.css">
+<script src="scripts/jquery.min.js"></script>
+<script src="scripts/jquery.cookie.min.js"></script>
+<script src="scripts/jquery-ui.min.js"></script>
+<script src="scripts/ui/jquery.ui.position.min.js"></script>
+<script src="scripts/ui/jquery.ui.core.min.js"></script>
+<script src="scripts/ui/jquery.ui.widget.min.js"></script>
+<script src="scripts/ui/jquery.ui.button.min.js"></script>
+<script src="scripts/ui/jquery.ui.tabs.min.js"></script>
+<script src="scripts/ui/jquery.ui.dialog.min.js"></script>
+<script src="scripts/ui/jquery.ui.menu.min.js"></script>
+<script src="scripts/function.min.js"></script>
+<style>
+#indexHead div,li,span,a { font-size:14px; line-height: 18px; }
+#indexHead { height:90px; background-image:url(themes/cupertino/images/ui-bg_new_head.png); min-width: 1275px; }
+#indexFrame { border: 0; position: fixed; bottom: 0; z-index: 2; }
+
+.ui-widget-header { filter: progid: DXImageTransform.Microsoft.Gradient(false); }
+.ui-tabs, .ui-tabs .ui-tabs-panel, .ui-tabs .ui-tabs-nav { border: 0; padding: 0; background-color: transparent; background-image: none;  }
+
+.ui-tabs .ui-tabs-nav li { margin: 0; padding: 0; border-top: solid 1px #F8FAFC; border-right: solid 1px #CDDBE3; border-bottom: solid 1px transparent; border-left: solid 1px #F8FAFC; /*background: #D1E3F0 url(themes/cupertino/images/ui-bg_new_nav.png);*/ background-image: -moz-linear-gradient(top, #D2E4F1, #E4EFF7); background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0, #D2E4F1), color-stop(1, #E4EFF7)); background-image: -ms-linear-gradient(top, #D2E4F1, #E4EFF7); background-image: linear-gradient(to bottom, #D2E4F1, #E4EFF7); filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#D2E4F1', endColorstr='#E4EFF7', GradientType='0'); }
+.ui-tabs .ui-tabs-nav li:hover { /*background-image:none;*/ background-image: -moz-linear-gradient(top, #E8F1F8, #E7F1F9); background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0, #E8F1F8), color-stop(1, #E7F1F9)); background-image: -ms-linear-gradient(top, #E8F1F8, #E7F1F9); background-image: linear-gradient(to bottom, #E8F1F8, #E7F1F9); filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#E8F1F8', endColorstr='#E7F1F9', GradientType='0'); }
+.ui-tabs .ui-tabs-nav li:active { /*background: #D1E3F0 url(themes/cupertino/images/ui-bg_new_nav.png);*/ background-image: -moz-linear-gradient(top, #D2E4F1, #E4EFF7); background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0, #D2E4F1), color-stop(1, #E4EFF7)); background-image: -ms-linear-gradient(top, #D2E4F1, #E4EFF7); background-image: linear-gradient(to bottom, #D2E4F1, #E4EFF7); filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#D2E4F1', endColorstr='#E4EFF7', GradientType='0'); }
+.ui-tabs .ui-tabs-nav li.ui-tabs-active { /*background: #1D6BA3 url(themes/cupertino/images/ui-bg_new_nav_active.png)*/;  background-image: -moz-linear-gradient(top, #216EA6, #17659C); background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0, #216EA6), color-stop(1, #17659C)); background-image: -ms-linear-gradient(top, #216EA6, #17659C); background-image: linear-gradient(to bottom, #216EA6, #17659C); filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#216EA6', endColorstr='#17659C', GradientType='0'); }
+
+#tabs span.ui-icon-close,span.ui-icon-circle-close { float: left; cursor: pointer; margin: 0.5em 0.2em 0 0; }
+#tabs span.ui-icon-carat-1-s { float: left; margin: 0; padding: 0; }
+#add_tab { cursor: pointer; }
+#tabs > ul > li > a { outline: none; font-weight: normal; color: #333333; padding: 6px 10px 6px 10px; }
+#tabs > ul > li.ui-tabs-active > a { font-weight: bold; color: #FFFFFF; padding: 6px 10px 6px 10px; }
+
+#navMenu { position:relative; z-index:100; top: 2px; width: 180px; display: none; }
+#navMenu a { line-height: 1.8em; }
+#navMenu span.ui-icon-circle-close, #navMenu span.ui-icon-bullet { float: left; cursor: pointer; margin: .25em 0 0 .25em; }
+
+</style>
+<script src="scripts/index.min.js"></script>
+<!-- 此js务必放在所有页面自带的js后面加载 -->
+<script src="scripts/base.min.js"></script>
+</head>
+<body class="hide">
+<div id="indexHead">
+  <div style="height:52px;"></div>
+  <div id="tabs">
+    <ul>
+      <li style="border-top-left-radius: 3px; margin-left: 10px;"><a class="tabLink" href="#tabDiv0" url="main1.html" target="indexFrame">&nbsp;&nbsp;我的首页&nbsp;&nbsp;</a></li>
+      <li><a class="tabLink" href="#tabDiv1" url="peopleManage.html" target="indexFrame">&nbsp;&nbsp;人员管理&nbsp;&nbsp;</a></li>
+      <li><a class="tabLink" href="#tabDiv2" url="trainingManage.html" target="indexFrame">飞行训练管理</a></li>
+      <li><a class="tabLink" href="#tabDiv3" url="aircraftManage.html" target="indexFrame">&nbsp;航空器管理&nbsp;</a></li>
+      <li><a class="tabLink" href="#tabDiv4" url="summaryManage.html" target="indexFrame">飞行训练大纲管理</a></li>
+      <li><a class="tabLink" href="#tabDiv5" url="systemManage.html" target="indexFrame">&nbsp;&nbsp;系统管理&nbsp;&nbsp;</a></li>
+      <li><a class="tabLink" href="#tabDiv6" url="marksManage.html" target="indexFrame">&nbsp;&nbsp;成绩管理&nbsp;&nbsp;</a></li>
+      <li id="dropDownLi" style="border-top-right-radius: 3px;"><a href="#N"><span class="ui-icon ui-icon-carat-1-s" role="presentation">More</span></a></li>
+    </ul>
+    <div class="tabDiv" id="tabDiv0"></div>
+    <div class="tabDiv" id="tabDiv1"></div>
+    <div class="tabDiv" id="tabDiv2"></div>
+    <div class="tabDiv" id="tabDiv3"></div>
+    <div class="tabDiv" id="tabDiv4"></div>
+    <div class="tabDiv" id="tabDiv5"></div>
+    <div class="tabDiv" id="tabDiv6"></div>
+  </div>
+  
+  <ul id="navMenu">
+    <li><a class="closeAllLink" href="#"><span class="ui-icon ui-icon-circle-close"></span>关闭全部</a></li>
+    <li class="ui-menu-divider"></li>
+    <li><a class="menuNavLink" href="#N" id="menuNavLink0"><span class="ui-icon ui-icon-bullet"></span>我的首页</a></li>
+    <li><a class="menuNavLink" href="#N" id="menuNavLink1">人员管理</a></li>
+    <li><a class="menuNavLink" href="#N" id="menuNavLink2">飞行训练管理</a></li>
+    <li><a class="menuNavLink" href="#N" id="menuNavLink3">航空器管理</a></li>
+    <li><a class="menuNavLink" href="#N" id="menuNavLink4">飞行训练大纲管理</a></li>
+    <li><a class="menuNavLink" href="#N" id="menuNavLink5">系统管理</a></li>
+    <li><a class="menuNavLink" href="#N" id="menuNavLink6">成绩管理</a></li>
+    <li id="menuDevider2" class="ui-menu-divider"></li>
+  </ul>
+</div>
+
+<iframe id="indexFrame" name="indexFrame" width="100%" height="100%" frameborder="0" src="main1.html"></iframe>
+
+<!--遮羞蒙版-->
+<div id="overlayMask" style="display:none;"></div>
+</body>
+</html>

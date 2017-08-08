@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE struts PUBLIC
+    "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN"
+    "http://struts.apache.org/dtds/struts-2.0.dtd">
+<struts>
+	
+	<package name="student_management" extends="ErsDefault" namespace="/system">
+	
+		<!-- 显示学生管理信息 -->
+		<action name="studentManagent_showManagent" class="com.cauc.contract.ui.core.StudentManagentAction" 
+			method="showStudent">
+			<result name="success">/pages/Student/Student.jsp</result>
+		</action>
+		<!-- 插入 -->
+		<action name="studentManagent_addStudent" class="com.cauc.contract.ui.core.StudentManagentAction" 
+			method="addStudent">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">studentManagent_showManagent</param>
+			</result>
+			<result name="false">/pages/Student/cFillStudent.jsp</result>
+		</action>
+		<!-- 添加的新代码 -->
+		<!-- excel学生信息 插入 -->
+        <action name="studentManagent_inputStudent" class="com.cauc.contract.ui.core.UploadExcelAction" 
+			method="readExcel">
+			<result name="success" type="chain">
+			    <param name="namespace">/system</param>
+		        <param name="actionName">studentManagent_getExcelErrorInfo</param>
+			</result>
+            <result name="error">/pages/Student/importExcelError.jsp</result>
+		</action>
+		<action name="studentManagent_getExcelErrorInfo" class="com.cauc.contract.ui.core.UploadExcelAction" 
+			method="readAllExcel">
+			<result name="success" type="redirectAction">
+			    <param name="namespace">/system</param>
+		        <param name="actionName">studentManagent_showManagent</param>
+			</result>
+            <result name="error">/pages/Student/importExcelError.jsp</result>
+		</action>
+		<!-- 更新 -->
+		<action name="studentManagent_updateStudent" class="com.cauc.contract.ui.core.StudentManagentAction"
+			 method="updateStudent">
+			 <result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">studentManagent_showManagent</param>
+			</result>
+			
+		</action>
+         <!-- 查询学生信息 -->
+		<action name="studentManagent_getStudentInfo" class="com.cauc.contract.ui.core.StudentManagentAction" 
+			method="getStudentInfo">
+			<result type="json">
+            </result>
+		</action>
+        <!-- 查询学生信息 -->
+		<action name="studentManagent_getDictionary" class="com.cauc.contract.ui.core.StudentManagentAction" 
+			method="getDictionary">
+			<result type="json">
+            </result>
+		</action>
+		<!-- 明细 -->
+		<action name="contractListByNo" class="com.cauc.contract.ui.core.StudentManagentAction" 
+			method="ContractListByNo">
+			<result name="success">/pages/Student/detaile.jsp</result>
+		</action>
+		<!-- 明细经费保存 -->
+		<action name="saveDetaile" class="com.cauc.contract.ui.core.StudentManagentAction" 
+			method="saveDetaile">
+			 <result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">studentManagent_showManagent</param>
+			</result>
+		</action>
+</package>
+</struts> 

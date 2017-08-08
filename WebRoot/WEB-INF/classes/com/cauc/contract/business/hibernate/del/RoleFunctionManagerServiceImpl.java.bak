@@ -1,0 +1,122 @@
+package com.cauc.training.business.hibernate;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.collections.map.HashedMap;
+import org.hibernate.HibernateException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.business.IRoleFunctionsService;
+import com.cauc.training.business.dao.GenericHibernateDAO;
+import com.cauc.training.pojos.TFunction;
+import com.cauc.training.pojos.TRoleFunction;
+import com.cauc.training.vo.VRoleFunction;
+
+
+@Service("roleFunctionManagerServiceImpl")
+public class RoleFunctionManagerServiceImpl extends GenericHibernateDAO implements IRoleFunctionsService {
+
+	/**
+	 * 功能：保存角色-权限
+	 * @param role
+	 * @throws FinanceServiceException
+	 */
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void saveTRoleFunction(List<TRoleFunction> tRoleFunctions) throws FinanceServiceException{
+		if(tRoleFunctions != null && tRoleFunctions.size() > 0){			
+			try{
+				/*
+				for(TRoleFunction tf : tRoleFunctions){
+					super.save(tf);
+				}
+				*/
+				super.saveOrUpdateALL(tRoleFunctions);
+			}catch(HibernateException e){
+				throw new FinanceServiceException("角色-功能绑定失败！", e);
+			}
+
+		}else{
+			throw new FinanceServiceException("角色-权限绑定失败！");
+		}
+
+	}
+
+	/**
+	 * 功能：删除某一个角色所对应的所有权限
+	 * @param ids
+	 * @throws FinanceServiceException
+	 */
+	@SuppressWarnings("unchecked")
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void deleteAllTRoleFunction(String roleId) throws FinanceServiceException {
+		if(roleId != null && !roleId.trim().equals("")){
+			try {
+				//查询当前角色绑定的所有权限
+				String hql = "from TRoleFunction where TRole.VId=?";
+				List<TRoleFunction> trs = super.find(hql, roleId);
+				//if(trs != null && trs.size() > 0){
+				//	for(int i=0; i<trs.size(); i++){
+						//TRoleFunction tf = trs.get(i);
+				//		super.removeById(TRoleFunction.class, tf.getVId());
+				//	}
+				//}
+				super.removeALL(trs);	
+			}catch (HibernateException e) {
+				e.printStackTrace();
+				throw new FinanceServiceException("删除角色-权限绑定信息失败", e);
+			}
+		}
+
+	}
+
+	/**
+	 * 根据角色ID，获取该角色所对应的功能列表
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+
+	@SuppressWarnings("unchecked")
+	public List<VRoleFunction> readAllRoleFunctionList(String id) throws FinanceServiceException{
+		List<VRoleFunction> backList = new ArrayList<VRoleFunction>(); //返回的功能模块对象列表
+		try {
+			String hql = "from TFunction order by IOrder asc,DCreateDate asc";
+			String hqlq = "from TRoleFunction where TRole.VId=?";
+			List<TRoleFunction> rolelist = super.find(hqlq,id);
+			Map map = new HashedMap();
+			for(TRoleFunction t : rolelist){
+				//用于判断该权限是否赋予该角色
+				map.put(t.getTFunction().getVId(), "1,"+ t.getIIsWrite());
+				
+			}
+			//返回所有功能模块（节点）
+			List<TFunction> list = super.find(hql);
+			
+			for(TFunction p :list){
+				VRoleFunction vn = new VRoleFunction();
+				vn.setVId(p.getVId());
+				vn.setVParentid(p.getVParentid());
+				vn.setVName(p.getVName());
+				vn.setIOrder(1);
+				if(map.get(p.getVId()) != null && map.get(p.getVId()).toString().split(",")[0].equals("1")){
+					vn.setRolec("1");
+					vn.setIsWrite(Integer.parseInt(map.get(p.getVId()).toString().split(",")[1]));
+				}else{
+					vn.setRolec("0");
+					vn.setIsWrite(2);
+				}
+				
+				backList.add(vn);	
+			}
+			
+			
+		} catch (HibernateException e) {
+			throw new FinanceServiceException("读取功能模块信息列表失败", e);
+		}
+		return backList;
+	}
+}

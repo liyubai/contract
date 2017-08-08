@@ -1,0 +1,1177 @@
+package com.cauc.training.ui.core.del;
+
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.commons.net.telnet.TelnetClient;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.business.ISystemUserManagerService;
+import com.cauc.training.config.FinanceConfig;
+import com.cauc.training.pojos.StudentBaseInfo;
+import com.cauc.training.pojos.TOtheruser;
+import com.cauc.training.pojos.TUser;
+import com.cauc.training.pojos.TeacherBaseInfo;
+import com.cauc.training.ui.common.BaseActionSupport;
+import com.cauc.training.util.Utilities;
+import com.cauc.training.vo.VOTUser;
+import com.cauc.training.vo.VOrg;
+import com.cauc.training.vo.VStatisticsByDay;
+import cn.org.bjca.client.security.SecurityEngineDeal;
+
+public class SystemUserManagerAction extends BaseActionSupport {
+	
+	private static final long serialVersionUID = 763299328404944579L;
+	//获取日志生成器
+	private static Log log = LogFactory.getLog(SystemUserManagerAction.class);
+	
+	//系统用户
+	private TUser tuser;
+	
+	//教员
+	private TeacherBaseInfo teacher;
+	
+    //学员
+	private StudentBaseInfo student;
+    
+    //其他人员
+	private TOtheruser otherUser;
+
+	//系统用户列表
+	private List<TUser> tuserList;
+	
+	//教员信息列表
+	private List<TeacherBaseInfo> teacherList;
+	
+	//学员信息列表
+	private List<StudentBaseInfo> studentList;
+	
+	//其他人员信息列表
+	private List<TOtheruser> otherUserList;
+	
+	
+	//用于存储TUser对象的VO对象
+	private VOTUser voUser;
+	
+	//主键，可以存储TUser、TeacherBaseInfo、StudentBaseInfo和TOtheruser等实体对象
+	private String id;
+
+	//查询关键字，用于存储系统用户账号
+	private String key;
+
+	//存储要删除的角色id，各个角色的id使用逗号（,）分隔
+	private String userids;
+	
+	//操作成功标志位，0：成功；1：失败
+	private int flag = 1;
+
+	//用户账号状态：0：正常（开通）；1：停用；-1：删除；10：全部状态
+	private int searchStatus = 10;
+	
+	//用于存储教员、学号、其他人员的编号 ，用于前台页面查询使用
+	private String vcode;
+	
+	//用于存储教员、学号、其他人员的姓名 ，用于前台页面查询使用
+	private String vname;
+	
+	private String userType; 
+	
+	//-----------------------------------------------------------------
+	private List<VStatisticsByDay> statisticsByDayList;//日统计
+	private VStatisticsByDay statistics; 
+	private String beginDate;
+	private String endDate;
+	private List<Integer> yearList;
+	private List<Integer> monthList;
+	private String year;//年
+	private String month;//月
+	
+	private String UserCert;
+	private String UserSignedData;
+	private String ContainerName;
+	private String UserList;
+	private String pwd1;
+	private VOrg viewOrg;
+	private static String signPath = FinanceConfig.getProperty("default.crt.path");
+	private static String vpnPath = FinanceConfig.getProperty("default.vpn.ip");
+	//-----------------------------------------------------------------
+	
+	public String openUsbkPage(){
+		this.getRequest().setAttribute("usbkPath", signPath);
+		return SUCCESS;
+	}
+	
+	public String usbKeyToUser(){
+		
+		if(StringUtils.isBlank(id)){
+			this.setStatusMsg("请选择用户账号。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		//验证客户端证书
+		SecurityEngineDeal.setProfilePath(signPath);
+		SecurityEngineDeal sed = null;
+		String clientCert = "";
+		String UserSignedData = "";
+		String ContainerName = "";
+		//String certPub = "";
+		String ranStr =	"";
+		String uniqueId = "";
+		try {
+			sed = SecurityEngineDeal.getInstance("SVSDefault");
+			clientCert = this.getUserCert();
+			UserSignedData = this.getUserSignedData();
+			ContainerName = this.getContainerName();
+			//certPub = sed.getCertInfo(clientCert, 8);
+			ranStr = getSession().getAttribute("Random").toString();
+			int retValue = sed.validateCert(clientCert);
+			
+			//Properties properties = new Properties();
+			//properties.load(new FileInputStream(application.getRealPath("/WEB-INF/classes/webappName.properties")));
+			//String function = properties.getProperty("function");
+			
+			if (retValue == 1) {
+
+				getSession().setAttribute("ContainerName", ContainerName);
+
+				String uniqueIdStr = "";
+				try {
+					uniqueIdStr = sed.getCertInfo(clientCert, 17);
+				} catch (Exception e) {
+					this.setStatusMsg("客户端证书验证失败:" + e.getMessage());
+					setStatusMsg("1");
+					return SUCCESS;
+				}
+				getSession().setAttribute("UniqueID", uniqueIdStr);
+				
+				try {
+					//获得登陆用户ID
+					uniqueId = sed.getCertInfoByOid(clientCert,
+							"1.2.156.112562.2.1.1.1");
+				} catch (Exception e) {
+				}
+				if(uniqueId==null||(uniqueId!=null&&uniqueId.equals(""))){
+					try {
+						//获得登陆用户ID
+						uniqueId = sed.getCertInfoByOid(clientCert,
+								"2.16.840.1.113732.2");
+					} catch (Exception e) {
+						this.setStatusMsg("客户端证书验证失败:" + e.getMessage());
+						setStatusMsg("1");
+						return SUCCESS;
+					}
+				}
+
+				//out.println("<h3>欢迎您使用本系统!</h3>");
+				//out.println("<h3>主题通用名：");
+				//out.println(uniqueIdStr);
+				//out.println("<br/>证书颁发者(颁发者通用名): ");
+				//out.println(certPub);
+				//if(uniqueId!=null&&!uniqueId.equals("")){
+					//out.println("<br/>证书唯一标识(备用主题通用名)：");
+					//out.println(uniqueId);
+					//out.println("<font color='red'>(实际集成时,会将唯一标识与数据库比对,判断是否为合法用户)</font>");
+					
+				//}
+				
+			} else {
+				String error="客户端证书验证失败：";
+			
+				if (retValue == -1) {
+					error+="登录证书的根不被信任。";
+				} else if (retValue == -2) {
+					error+="登录证书超过有效期。";
+				} else if (retValue == -3) {
+					error+="登录证书为作废证书。";
+				} else if (retValue == -4) {
+					error+="登录证书被临时冻结。";
+				} else if (retValue == -5) {
+					error+="登录证书未生效。";
+				}
+				this.setStatusMsg(error);
+				setStatusMsg("1");
+				return SUCCESS;
+			}
+		} catch (Exception ex) {
+			this.setStatusMsg("客户端证书验证失败:" + ex.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		//验证客户端签名
+		try {
+			if (sed.verifySignedData(clientCert, ranStr, UserSignedData)) {
+				//System.out.println("ok");
+			} else {
+				this.setStatusMsg("验证客户端签名错误。");
+				setStatusMsg("1");
+				return SUCCESS;
+			}
+		} catch (Exception e) {
+			this.setStatusMsg("验证客户端签名错误:" + e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		try {
+			tuser = getFactory().getFinanceProviderInstance().getSystemUserManagerService().usbKeyToUser(id, uniqueId);
+		} catch (FinanceServiceException e) {
+			this.setStatusMsg(e.getMessage());
+			return SUCCESS;
+		}
+		this.setStatusMsg("数字证书绑定成功。");
+		setStatusMsg("1");
+		return SUCCESS;
+	}
+	
+	public String openUsbKey(){
+		
+		
+		TelnetClient telnetClient = new TelnetClient();
+		boolean isConnect = false;
+		try {
+			   //System.out.println(vpnPath);
+	           telnetClient.connect(vpnPath, 8000);
+	           isConnect =  telnetClient.isConnected();
+	       } catch (Exception e) {
+	    	   isConnect = false;
+	           System.out.println("[telnet] connect error: connect fail!");
+	       }
+	    viewOrg = new VOrg();
+	    viewOrg.setFlag(isConnect) ;
+	    
+		return SUCCESS;
+	}
+	
+	
+	/**
+	 * 直接创建系统用户账号信息 
+	*/
+	public String createSystemUserAccount(){
+		if(StringUtils.isBlank(this.tuser.getVUsername())) {
+			setStatusMsg("用户账号不能为空！");
+			setStatusMsg("1");
+		}else if(StringUtils.isBlank(tuser.getVPassword())){
+			setStatusMsg("登录密码不能为空！");
+			setStatusMsg("1");
+		}else{
+			
+			try {
+				// 获取用户对象,取得登录者，即创建该角色的人
+				TUser loginTuser = getFactory()
+						.getFinanceProviderInstance()
+						.getSysUserService()
+						.readSysUserByLoginID(
+								this.getLoginContext().getLoginId());
+
+				// 加密用户登录密码
+				if (FinanceConfig
+						.getBooleanProperty("passwds.encryption.enabled")) {
+					String encodePsw = Utilities.encodePassword(this.tuser
+							.getVPassword(), FinanceConfig
+							.getProperty("passwds.encryption.algorithm"));
+					this.tuser.setVPassword(encodePsw);
+				}
+
+				this.tuser.setVCreateUserId(loginTuser.getVId());
+				// 设置创建时间
+				this.tuser.setDCreateDate(new Date());
+
+				//if (this.tuser.getIAdminStatus() == 1) { // 管理员
+					// 用户类型
+				tuser.setIUserType(ISystemUserManagerService.USERTYPE_ADMIN);
+				//} else {
+					// 用户类型
+				//	this.tuser
+				//			.setIUserType(ISystemUserManagerService.USERTYPE_OTHER);
+				//}
+				// 用户类型
+				//this.tuser.setIUserType(4);
+				// 设置用户状态，即开通状态
+				this.tuser.setIStatus(0);
+
+				getFactory().getFinanceProviderInstance()
+						.getSystemUserManagerService()
+						.saveUserAccount(this.tuser);
+				setStatusMsg("用户账号保存成功！");
+				setStatusMsg("0");
+			} catch (FinanceServiceException e) {
+				setStatusMsg(e.getMessage());
+				setStatusMsg("1");
+				// e.printStackTrace();
+
+			}
+		}
+
+
+		return SUCCESS;
+	}
+
+	/**
+	 * 根据主键查询系统用户账号信息
+	 * 
+	 * @return
+	 */	
+	public String searchUserAccountById(){
+		//System.out.println(this.id);
+		if (StringUtils.isBlank(this.getId())) {
+			setStatusMsg("用户账号id不能为空");
+			setStatusMsg("1");
+		}else{
+			try {
+				
+				this.voUser = getFactory().getFinanceProviderInstance().getSystemUserManagerService().searchSystemUserAccountById(this.id);
+				//System.out.println(this.voUser.getVUsername());
+			} catch (FinanceServiceException e) {
+				setStatusMsg("根据主键获取系统用户账号信息失败。");
+				setStatusMsg("1");
+				e.printStackTrace();
+			}
+		}
+		
+		return SUCCESS;
+	}
+	/**
+	 * 更新系统用户账号信息
+	 * 
+	 * @return
+	 */
+	public String updateSystemUserAccount() {
+
+		if (StringUtils.isBlank(this.tuser.getVId())) {
+			setStatusMsg("用户账号的id不能为空");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		/*
+		if (StringUtils.isBlank(this.tuser.getVId())) {
+			setStatusMsg("用户账号的id不能为空");
+		}else if (StringUtils.isBlank(this.tuser.getVUsername())) {
+			setStatusMsg("用户账号不能为空");
+		}else if (StringUtils.isBlank(this.tuser.getVPassword())) {
+			setStatusMsg("用户登录密码不能为空");
+		}else{
+			
+ 
+		}
+		*/
+		try {
+				getFactory().getFinanceProviderInstance().getSystemUserManagerService().updateUserAccount(this.tuser);
+				setStatusMsg("更新用户账号信息成功！");
+				setStatusMsg("0");
+
+	        } catch (FinanceServiceException e) {
+	        	setStatusMsg("更新用户账号信息失败！" );
+	        	setStatusMsg("1");
+	        	e.printStackTrace();
+	        }	
+		return SUCCESS;
+	}
+	
+	/**
+	 * 查询所有状态系统用户账号信息 
+	*/
+	public String searchAllStatusUserAccount(){
+		
+		ISystemUserManagerService service = getFactory().getFinanceProviderInstance().getSystemUserManagerService();
+		//构造查询参数
+		Map<String,Object> queryMap=new HashMap<String,Object>();
+		queryMap.put(ISystemUserManagerService.QUERY_KEY_USERACCOUNT,this.key);
+	    if(this.searchStatus !=0 && this.searchStatus != 1 && this.searchStatus != -1 && this.searchStatus != 10){
+	    	this.searchStatus = 10;
+	    }
+	    queryMap.put(ISystemUserManagerService.QUERY_KEY_USER_TYPE, getUserType());
+		try {
+			
+			setPage(service.searchStatuUserAccountByStatus(queryMap, this.searchStatus, getPageIndex()));
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+			setStatusMsg("查询所有状态系统用户列表失败");
+			setStatusMsg("1");
+		}
+		
+		return SUCCESS;
+	}
+
+	/**
+	 * 恢复系统用户账号信息
+	 * 
+	 * @return
+	 */
+	public String recoverUserAccount(){
+
+		if(StringUtils.isBlank(this.userids)){
+			setStatusMsg("请选择要恢复的用户账号信息！");
+			setStatusMsg("1");
+		}else{
+			String[] ids = this.userids.split(",");
+			if(ids != null && ids.length > 0){
+				try {
+					//恢复用户账号
+					getFactory().getFinanceProviderInstance().getSystemUserManagerService().updateUserStatus(0, ids);							
+					setStatusMsg("恢复用户账号成功！");
+					setStatusMsg("0");
+				} catch (FinanceServiceException e) {
+					//输出日志信息
+					log.error("恢复用户账号出错：" + e.getMessage());
+					setStatusMsg("恢复用户账号出错！");
+					setStatusMsg("1");
+				}
+			}
+	
+		}
+
+		return SUCCESS;
+	}
+	
+	/**
+	 * 停用系统用户账号信息
+	 * 
+	 * @return
+	 */
+	public String stopUserAccount(){
+
+		if(StringUtils.isBlank(this.userids)){
+			setStatusMsg("请选择要停用的用户账号信息！");
+			setStatusMsg("1");
+		}else{
+			String[] ids = this.userids.split(",");
+			if(ids != null && ids.length > 0){
+				try {
+					//停用用户账号
+					getFactory().getFinanceProviderInstance().getSystemUserManagerService().updateUserStatus(1, ids);							
+					setStatusMsg("停用用户账号成功！");
+					setStatusMsg("0");
+				} catch (FinanceServiceException e) {
+					//输出日志信息
+					log.error("停用用户账号出错：" + e.getMessage());
+					setStatusMsg("停用用户账号出错！");
+					setStatusMsg("1");
+				}
+			}
+	
+		}
+
+		return SUCCESS;
+	}
+	
+	/**
+	 * 删除系统用户账号信息
+	 * 
+	 * @return
+	 */
+	public String deleteUserAccount(){
+
+		if(StringUtils.isBlank(this.userids)){
+			setStatusMsg("请选择要删除的用户账号信息！");
+			setStatusMsg("1");
+		}else{
+			String[] ids = this.userids.split(",");
+			if(ids != null && ids.length > 0){
+				try {
+					//删除用户账号
+					getFactory().getFinanceProviderInstance().getSystemUserManagerService().deleteUserAccountByIds(ids);							
+					setStatusMsg("删除用户账号成功！");
+					setStatusMsg("0");
+				} catch (FinanceServiceException e) {
+					//输出日志信息
+					log.error("删除用户账号出错：" + e.getMessage());
+					setStatusMsg("删除用户账号出错！");
+					setStatusMsg("1");
+				}
+			}
+	
+		}
+
+		return SUCCESS;
+	}
+	
+	/**
+	 * 根据主键恢复默认密码，默认密码与用户账号相同
+	 * 
+	 * @return
+	 */	
+	public String recoverDefaultPassword(){
+
+		if (StringUtils.isBlank(this.getId())) {
+			setStatusMsg("用户账号id不能为空");
+			setStatusMsg("1");
+		}else{
+			try {
+				//System.out.println("id: " + this.id);
+				getFactory().getFinanceProviderInstance().getSystemUserManagerService().recoverDefaultPassword(this.id);
+				this.flag = 0; //成功
+			} catch (FinanceServiceException e) {
+				setStatusMsg("根据主键恢复默认密码失败。");
+				setStatusMsg("1");
+				e.printStackTrace();
+			}
+		}
+		
+		return SUCCESS;
+	}
+	
+	/**
+	 * 查询正常（已开通）状态系统用户账号信息 
+	*/
+	public String searchOpenedStatusUserAccount(){
+		//System.out.println(this.key);
+		ISystemUserManagerService service = getFactory().getFinanceProviderInstance().getSystemUserManagerService();
+		//构造查询参数
+		Map<String,Object> queryMap=new HashMap<String,Object>();
+		queryMap.put(ISystemUserManagerService.QUERY_KEY_USERACCOUNT, this.key);
+		if(StringUtils.isNotBlank(userType)){
+			queryMap.put(ISystemUserManagerService.QUERY_KEY_USER_TYPE, userType);
+		}
+		
+	    this.searchStatus = 0;
+
+		try {
+			
+			setPage(service.searchStatuUserAccountByStatus(queryMap, this.searchStatus, getPageIndex()));
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+			setStatusMsg("查询正常（已开通）状态系统用户列表失败");
+			setStatusMsg("1");
+		}
+		
+		return SUCCESS;
+	}
+	
+	/**
+	 * 查询停用状态系统用户账号信息 
+	*/
+	public String searchStopStatusUserAccount(){
+
+		ISystemUserManagerService service = getFactory().getFinanceProviderInstance().getSystemUserManagerService();
+		//构造查询参数
+		Map<String,Object> queryMap=new HashMap<String,Object>();
+		queryMap.put(ISystemUserManagerService.QUERY_KEY_USERACCOUNT, this.key);
+	    this.searchStatus = 1;
+
+		try {
+			
+			setPage(service.searchStatuUserAccountByStatus(queryMap, this.searchStatus, getPageIndex()));
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+			setStatusMsg("查询停用状态系统用户列表失败");
+			setStatusMsg("1");
+		}
+		
+		return SUCCESS;
+	}	
+
+	/**
+	 * 查询删除状态系统用户账号信息 
+	*/
+	public String searchDeleteStatusUserAccount(){
+		
+		ISystemUserManagerService service = getFactory().getFinanceProviderInstance().getSystemUserManagerService();
+		//构造查询参数
+		Map<String,Object> queryMap=new HashMap<String,Object>();
+		queryMap.put(ISystemUserManagerService.QUERY_KEY_USERACCOUNT, this.key);
+	    this.searchStatus = -1;
+
+		try {
+			setPage(service.searchStatuUserAccountByStatus(queryMap, this.searchStatus, getPageIndex()));
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+			setStatusMsg("查询删除状态系统用户列表失败");
+			setStatusMsg("1");
+		}
+		
+		return SUCCESS;
+	}
+	
+	
+	/**
+	 * 查询教员信息 
+	*/
+	public String searchTeachersInfo(){
+		
+
+		ISystemUserManagerService service = getFactory().getFinanceProviderInstance().getSystemUserManagerService();
+		//构造查询参数
+		Map<String,Object> queryMap=new HashMap<String,Object>();
+		queryMap.put(ISystemUserManagerService.QUERY_KEY_VCODE, this.vcode);
+		queryMap.put(ISystemUserManagerService.QUERY_KEY_VNAME, this.vname);
+
+		try {
+			
+			setPage(service.searchTeachersInfo(queryMap, getPageIndex()));
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+			setStatusMsg("查询教员信息列表失败");
+			setStatusMsg("1");
+		}
+		
+		return SUCCESS;
+	}	
+
+	/**
+	 * 查询学员信息 
+	*/
+	public String searchStudentsInfo(){
+		
+		ISystemUserManagerService service = getFactory().getFinanceProviderInstance().getSystemUserManagerService();
+		//构造查询参数
+		Map<String,Object> queryMap=new HashMap<String,Object>();
+		queryMap.put(ISystemUserManagerService.QUERY_KEY_VCODE, this.vcode);
+		queryMap.put(ISystemUserManagerService.QUERY_KEY_VNAME, this.vname);
+
+		try {
+			
+			setPage(service.searchStudentsInfo(queryMap, getPageIndex()));
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+			setStatusMsg("查询学员信息列表失败");
+			setStatusMsg("1");
+		}
+		
+		return SUCCESS;
+	}		
+
+	/**
+	 * 查询其他人员信息 
+	*/
+	public String searchOtherUsersInfo(){
+		
+		ISystemUserManagerService service = getFactory().getFinanceProviderInstance().getSystemUserManagerService();
+		//构造查询参数
+		Map<String,Object> queryMap=new HashMap<String,Object>();
+		queryMap.put(ISystemUserManagerService.QUERY_KEY_VCODE, this.vcode);
+		queryMap.put(ISystemUserManagerService.QUERY_KEY_VNAME, this.vname);
+
+		try {
+			
+			setPage(service.searchOtherUsersInfo(queryMap, getPageIndex()));
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+			setStatusMsg("查询其他人员信息列表失败");
+			setStatusMsg("1");
+		}
+		
+		return SUCCESS;
+	}
+	
+	/**
+	 * 为教员开通系统用户账号
+	 * 用户类型1：学员；2：教员；3：管理员；4：其他
+	 * @return
+	 */
+	public String openTeachersUserAccount(){
+
+		
+		if (StringUtils.isBlank(this.userids)) {
+			setStatusMsg("请选择要开通的教员信息！");
+			setStatusMsg("1");
+		} else {
+			String[] ids = this.userids.split(",");
+			if (ids != null && ids.length > 0) {
+				try {
+					// 获取用户对象,取得登录者，即创建该角色的人
+					TUser loginTuser = getFactory()
+							.getFinanceProviderInstance()
+							.getSysUserService()
+							.readSysUserByLoginID(
+									this.getLoginContext().getLoginId());
+					// 开通户账号
+					getFactory()
+							.getFinanceProviderInstance()
+							.getSystemUserManagerService()
+							.openTSOUserAccount(
+									ISystemUserManagerService.USERTYPE_TEACHER,
+									loginTuser.getVId(), ids);
+					setStatusMsg("开通教员用户账号成功！");
+					setStatusMsg("0");
+				} catch (FinanceServiceException e) {
+					// 输出日志信息
+					log.error("开通教员用户账号出错：" + e.getMessage());
+					setStatusMsg(e.getMessage());
+					setStatusMsg("1");
+				}
+			}
+
+		}
+
+		return SUCCESS;
+	}
+
+	/**
+	 * 为学员开通系统用户账号
+	 * 用户类型1：学员；2：教员；3：管理员；4：其他
+	 * @return
+	 */
+	public String openStudentsUserAccount(){
+
+		
+		if(StringUtils.isBlank(this.userids)){
+			setStatusMsg("请选择要开通的学员信息！");
+			setStatusMsg("1");
+		}else{
+			String[] ids = this.userids.split(",");
+			if(ids != null && ids.length > 0){
+				try {
+					// 获取用户对象,取得登录者，即创建该角色的人
+					TUser loginTuser = getFactory()
+							.getFinanceProviderInstance()
+							.getSysUserService()
+							.readSysUserByLoginID(
+									this.getLoginContext().getLoginId());
+					// 开通户账号
+					getFactory()
+							.getFinanceProviderInstance()
+							.getSystemUserManagerService()
+							.openTSOUserAccount(
+									ISystemUserManagerService.USERTYPE_STUDENT,
+									loginTuser.getVId(), ids);
+					setStatusMsg("开通学员用户账号成功！");
+					setStatusMsg("0");
+				} catch (FinanceServiceException e) {
+					//输出日志信息
+					log.error("开通学员用户账号出错：" + e.getMessage());
+					setStatusMsg(e.getMessage());
+					setStatusMsg("1");
+				}
+			}
+	
+		}
+
+		return SUCCESS;
+	}
+
+	/**
+	 * 为其他人员开通系统用户账号
+	 * 用户类型1：学员；2：教员；3：管理员；4：其他
+	 * @return
+	 */
+	public String openOtherUsersUserAccount(){
+
+		
+		if (StringUtils.isBlank(this.userids)) {
+			setStatusMsg("请选择要开通的其他人员信息！");
+			setStatusMsg("1");
+		} else {
+			String[] ids = this.userids.split(",");
+			if (ids != null && ids.length > 0) {
+				try {
+					// 获取用户对象,取得登录者，即创建该角色的人
+					TUser loginTuser = getFactory()
+							.getFinanceProviderInstance()
+							.getSysUserService()
+							.readSysUserByLoginID(
+									this.getLoginContext().getLoginId());
+					// 开通户账号
+					getFactory()
+							.getFinanceProviderInstance()
+							.getSystemUserManagerService()
+							.openTSOUserAccount(
+									ISystemUserManagerService.USERTYPE_OTHER,
+									loginTuser.getVId(), ids);
+					setStatusMsg("开通其他人员用户账号成功！");
+					setStatusMsg("0");
+				} catch (FinanceServiceException e) {
+					// 输出日志信息
+					log.error("开通其他人员用户账号出错：" + e.getMessage());
+					setStatusMsg(e.getMessage());
+					setStatusMsg("1");
+				}
+			}
+
+		}
+
+		return SUCCESS;
+	}
+	//--日统计------------------------------------------------------------------------------------
+	public String statisticsByDayListData(){
+		if(StringUtils.isBlank(this.getBeginDate()) || StringUtils.isBlank(this.getEndDate())){
+			
+			Calendar cal = Calendar.getInstance();
+			int year = cal.get(Calendar.YEAR);
+			int month = cal.get(Calendar.MONTH)+1;
+			String vmonth = String.valueOf(month);
+			if(month<10){
+				vmonth="0" + month;
+			}
+			this.setBeginDate(year+"-" + vmonth+"-" + "01");
+			this.setEndDate(Utilities.format(cal.getTime(),"yyyy-MM-dd"));
+		}
+		Map<String, Object> queryMap = new HashMap<String, Object>();
+		try {
+			queryMap.put(ISystemUserManagerService.QUERY_KEY_BEGIN_DATE, this.getBeginDate());
+			queryMap.put(ISystemUserManagerService.QUERY_KEY_EDN_DATE, this.getEndDate());
+			statisticsByDayList = getFactory().getFinanceProviderInstance()
+					.getSystemUserManagerService().readStatisticsByDayList(
+							queryMap);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		return SUCCESS;
+	}
+	
+	//月统计
+	public String statisticsByMonthListData(){
+		Map<String, Object> queryMap = new HashMap<String, Object>();
+		try {
+			//获取默认年
+			if(StringUtils.isBlank(this.year)){
+				Date d = new Date();
+				year = Utilities.format(d,"yyyy");
+			}
+			if(StringUtils.isBlank(this.month)){
+				Date dd = new Date();
+				month = Utilities.format(dd,"M");
+			}
+
+			yearList = new ArrayList<Integer>();
+			for(int i=2008;i<=2020;i++){
+				
+				yearList.add(i);
+			}
+			monthList = new ArrayList<Integer>();
+			for(int j=1;j<=12;j++){
+				
+				monthList.add(j);
+			}
+			
+			queryMap.put("year", year);
+			queryMap.put("month", month);
+			statisticsByDayList = getFactory().getFinanceProviderInstance()
+					.getSystemUserManagerService().statisticsByMonthListData(
+							queryMap);
+
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		return SUCCESS;
+	}
+	
+	//年统计
+	public String statisticsByYearListData(){
+		Map<String, Object> queryMap = new HashMap<String, Object>();
+		try {
+			//获取默认年
+			if(StringUtils.isBlank(this.year)){
+				Date d = new Date();
+				year = Utilities.format(d,"yyyy");
+			}
+
+			yearList = new ArrayList<Integer>();
+			for(int i=2008;i<=2020;i++){	
+				yearList.add(i);
+			}
+			queryMap.put("year", year);
+			statisticsByDayList = getFactory().getFinanceProviderInstance()
+					.getSystemUserManagerService().statisticsByYearListData(
+							queryMap);
+
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		return SUCCESS;
+	}
+	
+	//整体进度统计
+	public String statisticalAllDataReport(){
+		Map<String, Object> queryMap = new HashMap<String, Object>();
+		try {
+			statistics = getFactory().getFinanceProviderInstance().getSystemUserManagerService().statisticalAllDataReport(queryMap);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		return SUCCESS;
+	}
+	
+	//航空公司统计表
+	public String statisticalCompanyReport(){
+		Map<String, Object> queryMap = new HashMap<String, Object>();
+		try {
+			queryMap.put(ISystemUserManagerService.QUERY_KEY_USERACCOUNT, getLoginContext().getUserName());
+			statisticsByDayList = getFactory().getFinanceProviderInstance()
+			.getSystemUserManagerService().statisticalCompanyReport(
+					queryMap);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		return SUCCESS;
+	}
+	
+	//周统计
+	public String statisticsByWeekListData(){
+		ISystemUserManagerService service = getFactory().getFinanceProviderInstance().getSystemUserManagerService();
+		
+		Map<String,Object> queryMap=new HashMap<String,Object>();
+		try {		
+			queryMap.put(ISystemUserManagerService.QUERY_KEY_USERACCOUNT, getLoginContext().getUserName());
+			setPage(service.statisticsByWeekListData(queryMap, getPageIndex()));
+		} catch (FinanceServiceException e) {
+			setStatusMsg("查询信息列表失败。");
+			setStatusMsg("1");
+		}
+		return SUCCESS;
+	}
+	//setter-getter方法-----------------------------------------------------------------
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
+	public String getKey() {
+		return key;
+	}
+
+	public void setKey(String key) {
+		this.key = key;
+	}
+
+	public String getUserids() {
+		return userids;
+	}
+
+	public void setUserids(String userids) {
+		this.userids = userids;
+	}
+
+	public TUser getTuser() {
+		return tuser;
+	}
+
+	public void setTuser(TUser tuser) {
+		this.tuser = tuser;
+	}
+
+	public TeacherBaseInfo getTeacher() {
+		return teacher;
+	}
+
+	public void setTeacher(TeacherBaseInfo teacher) {
+		this.teacher = teacher;
+	}
+
+	public StudentBaseInfo getStudent() {
+		return student;
+	}
+
+	public void setStudent(StudentBaseInfo student) {
+		this.student = student;
+	}
+
+	public TOtheruser getOtherUser() {
+		return otherUser;
+	}
+
+	public void setOtherUser(TOtheruser otherUser) {
+		this.otherUser = otherUser;
+	}
+
+	public List<TUser> getTuserList() {
+		return tuserList;
+	}
+
+	public void setTuserList(List<TUser> tuserList) {
+		this.tuserList = tuserList;
+	}
+
+	public List<TeacherBaseInfo> getTeacherList() {
+		return teacherList;
+	}
+
+	public void setTeacherList(List<TeacherBaseInfo> teacherList) {
+		this.teacherList = teacherList;
+	}
+
+	public List<StudentBaseInfo> getStudentList() {
+		return studentList;
+	}
+
+	public void setStudentList(List<StudentBaseInfo> studentList) {
+		this.studentList = studentList;
+	}
+
+	public List<TOtheruser> getOtherUserList() {
+		return otherUserList;
+	}
+
+	public void setOtherUserList(List<TOtheruser> otherUserList) {
+		this.otherUserList = otherUserList;
+	}
+
+	public int getFlag() {
+		return flag;
+	}
+
+	public void setFlag(int flag) {
+		this.flag = flag;
+	}
+
+	public VOTUser getVoUser() {
+		return voUser;
+	}
+
+	public void setVoUser(VOTUser voUser) {
+		this.voUser = voUser;
+	}
+
+	public int getSearchStatus() {
+		return searchStatus;
+	}
+
+	public void setSearchStatus(int searchStatus) {
+		this.searchStatus = searchStatus;
+	}
+
+	public String getVcode() {
+		return vcode;
+	}
+
+	public void setVcode(String vcode) {
+		this.vcode = vcode;
+	}
+
+	public String getVname() {
+		return vname;
+	}
+
+	public void setVname(String vname) {
+		this.vname = vname;
+	}
+
+	public String getUserType() {
+		return userType;
+	}
+
+	public void setUserType(String userType) {
+		this.userType = userType;
+	}
+
+	public List<VStatisticsByDay> getStatisticsByDayList() {
+		return statisticsByDayList;
+	}
+
+	public void setStatisticsByDayList(List<VStatisticsByDay> statisticsByDayList) {
+		this.statisticsByDayList = statisticsByDayList;
+	}
+
+	public String getBeginDate() {
+		return beginDate;
+	}
+
+	public void setBeginDate(String beginDate) {
+		this.beginDate = beginDate;
+	}
+
+	public String getEndDate() {
+		return endDate;
+	}
+
+	public void setEndDate(String endDate) {
+		this.endDate = endDate;
+	}
+
+	public List<Integer> getYearList() {
+		return yearList;
+	}
+
+	public void setYearList(List<Integer> yearList) {
+		this.yearList = yearList;
+	}
+
+	public String getYear() {
+		return year;
+	}
+
+	public void setYear(String year) {
+		this.year = year;
+	}
+
+	public String getMonth() {
+		return month;
+	}
+
+	public void setMonth(String month) {
+		this.month = month;
+	}
+
+	public List<Integer> getMonthList() {
+		return monthList;
+	}
+
+	public void setMonthList(List<Integer> monthList) {
+		this.monthList = monthList;
+	}
+
+	public VStatisticsByDay getStatistics() {
+		return statistics;
+	}
+
+	public void setStatistics(VStatisticsByDay statistics) {
+		this.statistics = statistics;
+	}
+
+	public String getUserCert() {
+		return UserCert;
+	}
+
+	public void setUserCert(String userCert) {
+		UserCert = userCert;
+	}
+
+	public String getUserSignedData() {
+		return UserSignedData;
+	}
+
+	public void setUserSignedData(String userSignedData) {
+		UserSignedData = userSignedData;
+	}
+
+	public String getContainerName() {
+		return ContainerName;
+	}
+
+	public void setContainerName(String containerName) {
+		ContainerName = containerName;
+	}
+
+	public VOrg getViewOrg() {
+		return viewOrg;
+	}
+
+	public void setViewOrg(VOrg viewOrg) {
+		this.viewOrg = viewOrg;
+	}
+
+	public String getUserList() {
+		return UserList;
+	}
+
+	public void setUserList(String userList) {
+		UserList = userList;
+	}
+
+	public String getPwd1() {
+		return pwd1;
+	}
+
+	public void setPwd1(String pwd1) {
+		this.pwd1 = pwd1;
+	}
+	
+	
+}

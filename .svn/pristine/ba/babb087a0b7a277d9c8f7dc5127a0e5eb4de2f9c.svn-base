@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE struts PUBLIC
+    "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN"
+    "http://struts.apache.org/dtds/struts-2.0.dtd">
+<struts>
+	<package name="userLogin" extends="ErsDefault" namespace="/contract">
+	
+		<!-- 用户登录 -->
+		<action name="userLogin" class="com.cauc.contract.ui.core.UserLoginAction"
+			 method="queryLoginUser">
+			<result name="success" >/pages/main/cMain.jsp</result>
+			<result name="input">error.jsp</result>
+		</action>
+		
+		<!-- 用户登登录成功，进入主界面-->
+		<action name="toMain" class="com.cauc.contract.ui.core.UserLoginAction"
+			 method="toMain">
+			<result name="success" type="redirectAction">
+			   <param name="namespace">/</param>
+               <param name="actionName">cContractWaitDeal</param>
+			</result>
+		</action>
+		<!-- 退出登录 -->
+		<action name="back" class="com.cauc.contract.ui.core.UserLoginAction"
+			 method="back">
+			 <result name="success" >/pages/login/userLogin.jsp</result>
+		</action>
+
+	</package>
+</struts> 

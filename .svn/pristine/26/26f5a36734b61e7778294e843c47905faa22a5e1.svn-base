@@ -1,0 +1,16 @@
+package com.cauc.training.business;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.pojos.TDiction;
+
+public interface IDataDictionary {
+	
+	
+	/**
+	 * 创建
+	 * @param dic
+	 * @throws FinanceServiceException
+	 */
+	public void saveDataDic(TDiction dic) throws FinanceServiceException;
+
+}

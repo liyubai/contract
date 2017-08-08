@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE struts PUBLIC
+    "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN"
+    "http://struts.apache.org/dtds/struts-2.0.dtd">
+<struts>
+	<package name="addContract" extends="ErsDefault" namespace="/contract">	
+
+		<action name="addContract" class="com.cauc.contract.ui.core.contractModifyAction"	method="addContract">
+			<!-- <result name="success">/contract/cContractList.htm</result> -->
+			<result name="success" type="redirectAction">cAllContractQueryList.do</result>
+			<result name="false">/pages/contract/cAddContract.jsp</result>
+		</action>
+		<!-- 自动生成合同编号 -->
+		<action name="showContractID" class="com.cauc.contract.ui.core.contractModifyAction"
+			method="showContractID">
+			<result name="success" type="json">
+		        <param name="root">VContractID</param>
+		    </result>
+		</action>
+		<!-- 验证合同ID是否存在 -->
+		<action name="ajaxCheckCID" class="com.cauc.contract.ui.core.contractModifyAction"
+			method="ajaxCheckCID">
+			<result name="success" type="json">
+		        <param name="root">returnFlg</param>
+		    </result>
+		</action>
+		<!-- ajax 获取合同经费树信息 -->
+		<action name="initContractZtree" class="com.cauc.contract.ui.core.contractModifyAction"
+			method="initContractZtree">
+			<result name="success" type="json">
+		        <param name="root">payMentList</param>
+		    </result>
+		</action>	
+		<!-- 获取要修改的合同信息内容 -->
+		<action name="selContract" class="com.cauc.contract.ui.core.contractModifyAction"
+			method="selContractToUpdate">
+			<result name="success">/pages/contract/cUpdateContract.jsp</result>
+		</action>	
+		<!-- 修改合同页面跳转至经费初始化页面并传递数据-->
+		<action name="contractRecPayment" class="com.cauc.contract.ui.core.contractModifyAction"
+			method="contractRecPayment">
+			<result name="success">/pages/contract/cTrainingProgram.jsp</result>
+		</action>	
+		<!-- 插入经费初始化页面数据-->
+		<action name="paymentContract" class="com.cauc.contract.ui.core.contractModifyAction"
+			method="savePaymentContract">
+			<result name="success" ></result>
+		</action>	
+		<!-- 跳转至节点描述页面-->
+		<action name="NodeShow" class="com.cauc.contract.ui.core.contractModifyAction"
+			method="NodeShow">
+			<result name="success">/pages/contract/cNodeShow.jsp</result>
+		</action>	
+		<!-- 节点描述页面修改日期-->
+		<action name="ModifyDate" class="com.cauc.contract.ui.core.contractModifyAction"
+			method="ModifyDate">
+			<result name="success" type="redirectAction">cAllContractQueryList.do</result>
+		</action>
+		<!-- 修改经费初始化页面-->
+		<action name="updateContract" class="com.cauc.contract.ui.core.contractModifyAction"
+			method="updateContract">
+			<result name="success" type="redirectAction">cAllContractQueryList.do</result>
+		</action>	
+		<!-- 复制合同-->
+		<action name="copyContract" class="com.cauc.contract.ui.core.contractModifyAction"
+			method="copyContract">
+			<result name="success" >/pages/contract/cCopyContract.jsp</result>
+		</action>
+	</package>
+</struts> 

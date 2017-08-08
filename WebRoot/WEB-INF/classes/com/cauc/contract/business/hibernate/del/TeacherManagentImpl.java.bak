@@ -1,0 +1,3602 @@
+package com.cauc.training.business.hibernate;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.lang.StringUtils;
+import org.hibernate.Criteria;
+import org.hibernate.HibernateException;
+import org.hibernate.criterion.Order;
+import org.hibernate.criterion.Restrictions;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.business.IOutLineService;
+import com.cauc.training.business.ITeacherManagentService;
+import com.cauc.training.business.dao.GenericHibernateDAO;
+import com.cauc.training.business.dao.support.Page;
+import com.cauc.training.pojos.StudentBaseInfo;
+import com.cauc.training.pojos.TDgdistribution;
+import com.cauc.training.pojos.TDiction;
+import com.cauc.training.pojos.TDictype;
+import com.cauc.training.pojos.TOrg;
+import com.cauc.training.pojos.TOutline;
+import com.cauc.training.pojos.TStuassignteacher;
+import com.cauc.training.pojos.TTeaLicense;
+import com.cauc.training.pojos.TTeaLicenseskilledcheck;
+import com.cauc.training.pojos.TTeaMedical;
+import com.cauc.training.pojos.TTeaMedicalhistory;
+import com.cauc.training.pojos.TUser;
+import com.cauc.training.pojos.TeacherBaseInfo;
+import com.cauc.training.pojos.TeacherLicenseupdate;
+import com.cauc.training.util.Utilities;
+import com.cauc.training.vo.VHistorySearch;
+import com.cauc.training.vo.VOTTeaLicenseskilledcheck;
+import com.cauc.training.vo.VOutline;
+import com.cauc.training.vo.VSearchTeacherZz;
+import com.cauc.training.vo.VTTeaLicense;
+import com.cauc.training.vo.VTTeaLicenseskilledcheck;
+import com.cauc.training.vo.VTTeaMedical;
+import com.cauc.training.vo.VTTeaMedicalhistory;
+import com.cauc.training.vo.VTeacherBaseInfo;
+import com.cauc.training.vo.VTeacherLicenseupdate;
+import com.cauc.training.vo.WarningInfo;
+
+@Service()
+public class TeacherManagentImpl extends GenericHibernateDAO implements ITeacherManagentService {
+
+	
+	@SuppressWarnings("unchecked")
+	public List<VTeacherBaseInfo> canAssignTeacherList(Map<String, Object> params, String pageNo)
+			throws FinanceServiceException {
+		List<VTeacherBaseInfo> blist = new ArrayList<VTeacherBaseInfo>();
+	
+		try {
+			String key=""; 
+			if(params.get("key")!=null){
+				key=(String)params.get("key");
+			}
+			//String studentid = "";
+			/*
+			if(params.get("studentid")!=null){
+				studentid = params.get("studentid").toString();
+			}
+			*/
+			//String thql = " from TTeacherassignteacher where teacherBaseInfoByVTeacherid.VId=? and teacherBaseInfoByVTeacherasstudentid.VId=?";
+			//String thql =" from TStuassignteacher where studentBaseInfo.VCode and teacherBaseInfo.VId=?";
+			
+			String hql = " from TeacherBaseInfo where VName like ? order by VId asc";
+			
+			Page page = this.pagedQuery(hql, 1,1000,"%"+ key + "%");
+			
+			List<TeacherBaseInfo> list = page.getResult();
+			VTeacherBaseInfo vt;
+			for(TeacherBaseInfo t:list){
+				vt= new VTeacherBaseInfo();
+			//	vt.setIExam(super.find(thql, t.getVId(),studentid).size());
+				vt.setVId(t.getVId());
+				vt.setVName(t.getVName());
+				blist.add(vt);
+			}
+			return blist;
+		} catch (HibernateException e) {
+			throw new FinanceServiceException("查询教员基本信息列表失败！", e);
+		}
+	}
+	
+	/**
+	 * @功能描述：分页查询教员基本信息，在用
+	 */
+	@SuppressWarnings("unchecked")
+	public Page searchTeacherPageList(Map<String, Object> params, String pageNo)
+			throws FinanceServiceException {
+	
+		String id = (String)params.get("id");
+		String key = (String)params.get("key");
+		String[] ids=null;
+		if(id != null && !id.equals("")){
+			ids = id.split(",");
+		}
+		String idsa="";
+		if(ids != null && ids.length>0){
+			for(int i=0; i<ids.length;i++){
+				if(i==0 && ids.length-1>0){
+					idsa+=" and (TOrg.VId like '"+ids[i]+"'";
+				}else if(i==ids.length-1 && ids.length-1>0){
+					idsa+=" or TOrg.VId like '"+ids[i]+"')";
+				}else if(i==0 && ids.length-1==0){
+					idsa+=" and TOrg.VId like '"+ids[i]+"'";
+				}else{
+					idsa+=" or TOrg.VId like '"+ids[i]+"'";
+				}
+			}
+		}
+		if(key==null || key.equals("null")){
+			key="";
+		}
+		String hql = " from TeacherBaseInfo where VName like '%"+key+"%' "+idsa;
+		
+		//String outlineHql =" from TTeacherdgdistribution where teacherBaseInfo.VId=? order by DCreatedate desc";
+		String outlineHql =" from TDgdistribution where studentBaseInfo.VCode=? order by DCreatedate desc";
+		
+		//String thql =" from TTeacherassignteacher where teacherBaseInfoByVTeacherasstudentid.VId=?";
+		String thql =" from TStuassignteacher where studentBaseInfo.VCode=?";
+		List<TStuassignteacher> tlist;
+		
+		List<TDgdistribution> olist;
+		
+		Page page = null;
+		Integer pageIndex = Integer.parseInt(pageNo);
+		try {
+			page = this.pagedQuery(hql, pageIndex,Page.DEFAULT_PAGE_SIZE);
+			List<TeacherBaseInfo> list = page.getResult();
+			List<VTeacherBaseInfo> vlist = new ArrayList<VTeacherBaseInfo>();
+			TOrg org;
+			VTeacherBaseInfo vt;
+			for(TeacherBaseInfo t:list){
+				vt = new VTeacherBaseInfo();
+				vt.setDCjgzsj(t.getDCjgzsj());
+				vt.setDCjgzsj(t.getDCjgzsj());
+				vt.setDCreatedate(t.getDCreatedate());
+				vt.setDCsrq(t.getDCsrq());
+				vt.setDMhyytgsj(t.getDMhyytgsj());
+				vt.setDRxrq(t.getDRxrq());
+				vt.setIExam(t.getIExam());
+				if(t.getTDictionByVFlyform()!=null){
+					vt.setTDictionByVFlyform(t.getTDictionByVFlyform().getVId());
+				}
+				if(t.getTDictionByVFlytype()!=null){
+					vt.setTDictionByVFlytype(t.getTDictionByVFlytype().getVId());
+				}
+				if(t.getTDictionByVGeneraltype()!=null){
+					vt.setTDictionByVGeneraltype(t.getTDictionByVGeneraltype().getVId());
+				}else{
+					vt.setTDictionByVGeneraltype("");
+				}
+				if(t.getTDictionByVMz()!=null){
+					vt.setTDictionByVMz(t.getTDictionByVMz().getVId());
+				}else{
+					vt.setTDictionByVMz("");
+				}
+				
+				if(t.getTDictionByVTecdengji()!=null){
+					vt.setTDictionByVTecdengji(t.getTDictionByVTecdengji().getVId());
+				}
+				if(t.getTDictionByVWhcd()!=null){
+					vt.setTDictionByVWhcd(t.getTDictionByVWhcd().getVId());
+				}else{
+					vt.setTDictionByVWhcd("");
+				}
+				if(t.getTOrg()!=null){
+					vt.setTOrg(t.getTOrg().getVId());
+				}else{
+					vt.setTOrg("");
+				}
+				if(t.getTUser()!=null){
+					vt.setTUser(t.getTUser().getVId());
+				}else{
+					vt.setTUser("");
+				}
+				
+				vt.setVByyx(t.getVByyx());
+				vt.setVCode(t.getVCode());
+				vt.setVId(t.getVId());
+				vt.setVJg(t.getVJg());
+				vt.setVJtzz(t.getVJtzz());
+				//vt.setVLxfs(t.getVLxfs());
+				vt.setVName(t.getVName());
+				vt.setVSafedengji(t.getVSafedengji());
+				vt.setVSfz(t.getVSfz());
+				//vt.setVSzdw(t.getVSzdw());
+				vt.setVSzdwzw(t.getVSzdwzw());
+				vt.setVXb(t.getVXb());
+				vt.setVYysp(t.getVYysp());
+				vt.setVZw(t.getVZw());
+				vt.setVZzmm(t.getVZzmm());
+				
+				olist = super.find(outlineHql, t.getVCode());
+				
+				if(olist.size()>0){
+					
+					vt.setVLxfs(olist.get(0).getTOutline().getVName());
+				}else{
+					vt.setVLxfs("");
+				}
+				tlist = super.find(thql, t.getVCode());
+				if(tlist.size()>0){
+					vt.setVSzdw(tlist.get(0).getTeacherBaseInfo().getVName());
+				}else{
+					vt.setVSzdw("");
+				}
+				vt.setDeptName(t.getTOrg().getVName());
+				org = super.get(TOrg.class, t.getTOrg().getVParentid());
+				if(org!=null){
+					vt.setBaseName(org.getVName());
+				}
+				else{
+					vt.setBaseName("");
+				}
+				vlist.add(vt);
+			}
+			page.setData(vlist);
+		} catch (HibernateException e) {
+			e.printStackTrace();
+			throw new FinanceServiceException("查询教员基本信息列表失败！", e);
+		}catch (Exception e) {
+			e.printStackTrace();
+			throw new FinanceServiceException("查询教员基本信息列表失败！", e);
+		}
+		return page;
+	}
+	/**
+	 * @功能描述：分页查询教员执照信息
+	 */
+	@SuppressWarnings("unchecked")
+	public Page searchTeacherZzPageList(Map<String, Object> params, String pageNo)
+			throws FinanceServiceException {
+		String id = (String)params.get("id");
+		String key = (String)params.get("key");
+		String[] ids=null;
+		if(id != null && !id.equals("")){
+			ids = id.split(",");
+		}
+		String idsa="";
+		if(ids != null && ids.length>0){
+			for(int i=0; i<ids.length;i++){
+				if(i==0 && ids.length-1>0){
+					idsa+=" and (teacherBaseInfo.TOrg.VId like '"+ids[i]+"'";
+				}else if(i==ids.length-1 && ids.length-1>0){
+					idsa+=" or teacherBaseInfo.TOrg.VId like '"+ids[i]+"')";
+				}else if(i==0 && ids.length-1==0){
+					idsa+=" and teacherBaseInfo.TOrg.VId like '"+ids[i]+"'";
+				}else{
+					idsa+=" or teacherBaseInfo.TOrg.VId like '"+ids[i]+"'";
+				}
+			}
+		}
+		if(key==null || key.equals("null")){
+			key="";
+		}
+		String hql = " from TTeaLicense where teacherBaseInfo.VName like '%"+key+"%' "+idsa+" order by DNextchecktime,DChecktime,DExamtime";
+		String check = " from TTeaLicenseskilledcheck where TTeaLicense.VId=? and teacherLicenseupdate is null";
+		Page page = null;
+		Integer pageIndex = Integer.parseInt(pageNo);
+		try {
+			page = this.pagedQuery(hql, pageIndex,Page.DEFAULT_PAGE_SIZE);
+			List<TTeaLicense> list = page.getResult();
+			List<VTeacherBaseInfo> vlist = new ArrayList<VTeacherBaseInfo>();
+			for(TTeaLicense old:list){
+				VTeacherBaseInfo te = new VTeacherBaseInfo();
+				/*
+				te.setDCjgzsj(old.getTeacherBaseInfo().getDCjgzsj());
+				te.setDCreatedate(old.getTeacherBaseInfo().getDCreatedate());
+				te.setDCsrq(old.getTeacherBaseInfo().getDCsrq());
+				te.setDMhyytgsj(old.getTeacherBaseInfo().getDMhyytgsj());
+				te.setDRxrq(old.getTeacherBaseInfo().getDRxrq());
+				te.setIExam(old.getTeacherBaseInfo().getIExam());
+				te.setTDictionByVFlyform(old.getTeacherBaseInfo().getTDictionByVFlyform().getVId());
+				te.setTDictionByVFlytype(old.getTeacherBaseInfo().getTDictionByVFlytype().getVId());
+				te.setTDictionByVGeneraltype(old.getTeacherBaseInfo().getTDictionByVGeneraltype().getVId());
+				te.setTDictionByVMz(old.getTeacherBaseInfo().getTDictionByVMz().getVId());
+				te.setTDictionByVTecdengji(old.getTeacherBaseInfo().getTDictionByVTecdengji().getVId());
+				te.setTDictionByVWhcd(old.getTeacherBaseInfo().getTDictionByVWhcd().getVId());
+				te.setTOrg(old.getTeacherBaseInfo().getTOrg().getVId());
+				te.setTUser(old.getTeacherBaseInfo().getTUser().getVId());
+				te.setVByyx(old.getTeacherBaseInfo().getVByyx());
+				*/
+				te.setVCode(old.getTeacherBaseInfo().getVCode());
+				te.setVId(old.getTeacherBaseInfo().getVId());
+				//te.setVJg(old.getTeacherBaseInfo().getVJg());
+				//te.setVJtzz(old.getTeacherBaseInfo().getVJtzz());
+				//te.setVLxfs(old.getTeacherBaseInfo().getVLxfs());
+				te.setVName(old.getTeacherBaseInfo().getVName());
+				/*
+				te.setVSafedengji(old.getTeacherBaseInfo().getVSafedengji());
+				te.setVSfz(old.getTeacherBaseInfo().getVSfz());
+				te.setVSzdw(old.getTeacherBaseInfo().getVSzdw());
+				te.setVSzdwzw(old.getTeacherBaseInfo().getVSzdwzw());
+				te.setVXb(old.getTeacherBaseInfo().getVXb());
+				te.setVYysp(old.getTeacherBaseInfo().getVYysp());
+				te.setVZw(old.getTeacherBaseInfo().getVZw());
+				te.setVZzmm(old.getTeacherBaseInfo().getVZzmm());
+				long ts=0;
+				try {
+					if(old.getDNextchecktime() != null){
+						ts = getDateDiff(new Date(),old.getDNextchecktime());
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				long jdt = 0;
+				if(ts>=60){
+					jdt=100;
+				}else if(ts>0 && ts<60){
+					jdt = 100*ts/60;
+				}
+				
+				long ts1=0;
+				try {
+					if(old.getDChecktime() != null){
+						ts1 = getDateDiff(new Date(),old.getDChecktime());
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				long jdt1 = 0;
+				if(ts1>=60){
+					jdt1=100;
+				}else if(ts1>0 && ts1<60){
+					jdt1 = 100*ts1/60;
+				}
+				
+				long ts2=0;
+				try {
+					if(old.getDExamtime() != null){
+						ts2 = getDateDiff(new Date(),old.getDExamtime());
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				long jdt2 = 0;
+				if(ts2>=60){
+					jdt2=100;
+				}else if(ts2>0 && ts2<60){
+					jdt2 = 100*ts2/60;
+				}
+				
+				te.setJdt(jdt+"");
+				te.setJdt1(jdt1+"");
+				te.setJdt2(jdt2+"");
+				TOrg org = super.get(TOrg.class, old.getTeacherBaseInfo().getTOrg().getVId());
+				*/
+				
+				te.setDeptName(old.getTeacherBaseInfo().getTOrg().getVName());
+				if(old.getVCardid().equals("0") || old.getDIssuetime()==null || old.getDEffectdate()==null){
+					te.setVSfz("");
+					te.setDResultdate("");
+					te.setDIssueTime("");
+					te.setDUsedTime("");
+					te.setVDoctor("");
+					te.setIday(0);
+				}else{
+					te.setVSfz(old.getVCardid());
+					te.setDResultdate(Utilities.format(old.getDLastchecktime()));//上一次熟练检查日期
+					te.setDIssueTime(Utilities.format(old.getDIssuetime()));//签发日期
+					te.setDUsedTime(Utilities.format(old.getDEffectdate()));//有效期
+					te.setVDoctor(Utilities.format(old.getDNextchecktime()));//下一熟练检查日期
+
+					te.setIExam(super.find(check, old.getVId()).size());//是否有检查信息
+					long l1 = old.getDEffectdate().getTime();
+					long l2 = new Date().getTime();
+					long dd = (l1-l2)/1000/3600/24 + 1;
+					int d = (int)dd;
+					te.setIday(d);//剩余天数
+				}
+				vlist.add(te);
+			}
+			page.setData(vlist);
+		} catch (HibernateException e) {
+			e.printStackTrace();
+			throw new FinanceServiceException("查询教员基本信息列表失败！", e);
+		}
+		return page;
+	}
+	/**
+	 * @功能描述：分页查询教员体检信息
+	 */
+	@SuppressWarnings("unchecked")
+	public Page searchTeacherTjPageList(Map<String, Object> params, String pageNo)
+			throws FinanceServiceException {
+
+		String id = (String)params.get("id");
+		String key = (String)params.get("key");
+		String[] ids=null;
+		if(id != null && !id.equals("")){
+			ids = id.split(",");
+		}
+		String idsa="";
+		if(ids != null && ids.length>0){
+			for(int i=0; i<ids.length;i++){
+				if(i==0 && ids.length-1>0){
+					idsa+=" and (teacherBaseInfo.TOrg.VId like '"+ids[i]+"'";
+				}else if(i==ids.length-1 && ids.length-1>0){
+					idsa+=" or teacherBaseInfo.TOrg.VId like '"+ids[i]+"')";
+				}else if(i==0 && ids.length-1==0){
+					idsa+=" and teacherBaseInfo.TOrg.VId like '"+ids[i]+"'";
+				}else{
+					idsa+=" or teacherBaseInfo.TOrg.VId like '"+ids[i]+"'";
+				}
+			}
+		}
+		if(key==null || key.equals("null")){
+			key="";
+		}
+		String hql = " from TTeaMedical where teacherBaseInfo.VName like '%"+key+"%' "+idsa+" order by DUsedTime";
+		Page page = null;
+		Integer pageIndex = Integer.parseInt(pageNo);
+		
+		try {
+			page = this.pagedQuery(hql, pageIndex,Page.DEFAULT_PAGE_SIZE);
+			List<TTeaMedical> list = page.getResult();
+			List<VTeacherBaseInfo> vlist = new ArrayList<VTeacherBaseInfo>();
+			for(TTeaMedical old:list){
+				VTeacherBaseInfo te = new VTeacherBaseInfo();
+			//	te.setDCjgzsj(old.getTeacherBaseInfo().getDCjgzsj());
+				//te.setDCreatedate(old.getTeacherBaseInfo().getDCreatedate());
+				//te.setDCsrq(old.getTeacherBaseInfo().getDCsrq());
+				//te.setDMhyytgsj(old.getTeacherBaseInfo().getDMhyytgsj());
+				//te.setDRxrq(old.getTeacherBaseInfo().getDRxrq());
+				//te.setIExam(old.getTeacherBaseInfo().getIExam());
+				//te.setTDictionByVFlyform(old.getTeacherBaseInfo().getTDictionByVFlyform().getVId());
+				//te.setTDictionByVFlytype(old.getTeacherBaseInfo().getTDictionByVFlytype().getVId());
+				//te.setTDictionByVGeneraltype(old.getTeacherBaseInfo().getTDictionByVGeneraltype().getVId());
+				//te.setTDictionByVMz(old.getTeacherBaseInfo().getTDictionByVMz().getVId());
+				//te.setTDictionByVTecdengji(old.getTeacherBaseInfo().getTDictionByVTecdengji().getVId());
+				//te.setTDictionByVWhcd(old.getTeacherBaseInfo().getTDictionByVWhcd().getVId());
+				//te.setTOrg(old.getTeacherBaseInfo().getTOrg().getVId());
+				//te.setTUser(old.getTeacherBaseInfo().getTUser().getVId());
+				//te.setVByyx(old.getTeacherBaseInfo().getVByyx());
+				
+				te.setVCode(old.getTeacherBaseInfo().getVCode());
+				te.setVId(old.getTeacherBaseInfo().getVId());
+				//te.setVJg(old.getTeacherBaseInfo().getVJg());
+				//te.setVJtzz(old.getTeacherBaseInfo().getVJtzz());
+				//te.setVLxfs(old.getTeacherBaseInfo().getVLxfs());
+				te.setVName(old.getTeacherBaseInfo().getVName());
+				//te.setVSafedengji(old.getTeacherBaseInfo().getVSafedengji());
+				//te.setVSfz(old.getTeacherBaseInfo().getVSfz());
+				//te.setVSzdw(old.getTeacherBaseInfo().getVSzdw());
+				//te.setVSzdwzw(old.getTeacherBaseInfo().getVSzdwzw());
+				//te.setVXb(old.getTeacherBaseInfo().getVXb());
+				//te.setVYysp(old.getTeacherBaseInfo().getVYysp());
+				//te.setVZw(old.getTeacherBaseInfo().getVZw());
+				//te.setVZzmm(old.getTeacherBaseInfo().getVZzmm());
+				/*
+				long ts=0;
+				try {
+					if(old.getDUsedTime() != null){
+						ts = getDateDiff(new Date(),old.getDUsedTime());
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+				};
+				long jdt = 0;
+				if(ts>=180){
+					jdt=100;
+				}else if(ts>0 && ts<180){
+					jdt = 100*ts/180;
+				}
+				te.setTjfzrq(old.getDIssueTime());
+				te.setTjyxrq(old.getDUsedTime());
+				te.setJdt(jdt+"");
+				*/
+				//TOrg org = super.get(TOrg.class, old.getTeacherBaseInfo().getTOrg().getVId());
+				//te.setDeptName(org.getVName());
+				//te.setDqsj(new Date());
+				if(old.getILevel()==null || old.getDIssueTime()==null || old.getDUsedTime()==null){
+					te.setILevel("");
+					te.setDResultdate("");
+					te.setDIssueTime("");
+					te.setDUsedTime("");
+					te.setVDoctor("");
+					te.setVIssuer("");
+					te.setIday(0);
+				}else{
+					if(old.getILevel()==0){
+						te.setILevel("Ⅰ级体检合格证");
+					}else if(old.getILevel()==1){
+						te.setILevel("Ⅰ级体检合格证(限91部运行)");
+					}else{
+						te.setILevel("Ⅱ级体检合格证");
+					}
+					te.setDResultdate(Utilities.format(old.getDResultdate()));
+					te.setDIssueTime(Utilities.format(old.getDIssueTime()));
+					te.setDUsedTime(Utilities.format(old.getDUsedTime()));
+					te.setVDoctor(old.getVDoctor());
+					te.setVIssuer(old.getVIssuer());
+					long l1 = old.getDUsedTime().getTime();
+					long l2 = new Date().getTime();
+					long dd = (l1-l2)/1000/3600/24 + 1;
+					int d = (int)dd;
+					te.setIday(d);
+				}
+				vlist.add(te);
+			}
+			page.setData(vlist);
+		} catch (HibernateException e) {
+			e.printStackTrace();
+			throw new FinanceServiceException("查询教员基本信息列表失败！", e);
+		}
+		
+		return page;
+	}
+	/**
+	 * @功能描述：分页查询教员体检历史信息
+	 */
+	public Page searchTjHistory(VHistorySearch hist, String pageNo)
+		throws FinanceServiceException {
+		String hql = "from TTeaMedicalhistory where 1=1 ";
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+		if(hist != null){
+			if(hist.getDIssueTime() != null){
+				hql += " and DIssueTime>='"+java.sql.Date.valueOf(sdf.format(hist.getDIssueTime()))+"'";
+			}
+			if(hist.getDIssueTime1() != null){
+				hql += " and DIssueTime<='"+java.sql.Date.valueOf(sdf.format(hist.getDIssueTime1()))+"'";
+			}
+			if(hist.getDResultdate() != null){
+				hql += " and DResultdate>='"+java.sql.Date.valueOf(sdf.format(hist.getDResultdate()))+"'";
+			}
+			if(hist.getDResultdate1() != null){
+				hql += " and DResultdate<='"+java.sql.Date.valueOf(sdf.format(hist.getDResultdate1()))+"'";
+			}
+			if(hist.getDUsedTime() != null){
+				hql += " and DUsedTime>='"+java.sql.Date.valueOf(sdf.format(hist.getDUsedTime()))+"'";
+			}
+			if(hist.getDUsedTime1() != null){
+				hql += " and DUsedTime<='"+java.sql.Date.valueOf(sdf.format(hist.getDUsedTime1()))+"'";
+			}
+			if(hist.getILevel() != 0){
+				hql += " and ILevel="+hist.getILevel();
+			}
+			if(hist.getVCompany() != null){
+				hql += " and VCompany like '%"+hist.getVCompany()+"%'";
+			}
+			if(hist.getVDoctor() != null){
+				hql += " and VDoctor like '%"+hist.getVDoctor()+"%'";
+			}
+			if(hist.getVId() != null){
+				hql += " and teacherBaseInfo.VCode like '%"+hist.getVId()+"%'";
+			}
+			if(hist.getVIssuer() != null){
+				hql += " and VIssuer like '%"+hist.getVIssuer()+"%'";
+			}
+			if(hist.getVName() != null){
+				hql += " and teacherBaseInfo.VName like '%"+hist.getVName()+"%'";
+			}
+			if(hist.getVNation() != null){
+				hql += " and VNation like '%"+hist.getVNation()+"%'";
+			}
+			if(hist.getDeptName() != null){
+				hql += " and teacherBaseInfo.TOrg.VName like '%"+hist.getDeptName()+"%'";
+			}
+		}
+		Integer pageIndex = Integer.parseInt(pageNo);
+		Page page = null;
+		try {
+			page = this.pagedQuery(hql, pageIndex,Page.DEFAULT_PAGE_SIZE);
+		} catch (HibernateException e) {
+			e.printStackTrace();
+			throw new FinanceServiceException("查询教员体检历史信息列表失败！", e);
+		}
+		return page;
+	}
+	/**
+	 * @功能描述：分页查询教员执照升级历史信息
+	 */
+	public Page searchZzHistory(VSearchTeacherZz hist, String pageNo)
+	throws FinanceServiceException {
+	String hql = "from TeacherLicenseupdate where 1=1 ";
+	SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+	if(hist != null){
+		
+		if(hist.getDChecktime() != null){
+			hql += " and DChecktime>='"+java.sql.Date.valueOf(sdf.format(hist.getDChecktime()))+"'";
+		}
+		if(hist.getDChecktime1() != null){
+			hql += " and DChecktime<='"+java.sql.Date.valueOf(sdf.format(hist.getDChecktime1()))+"'";
+		}
+		if(hist.getDEffectdate() != null){
+			hql += " and DEffectdate>='"+java.sql.Date.valueOf(sdf.format(hist.getDEffectdate()))+"'";
+		}
+		if(hist.getDEffectdate1() != null){
+			hql += " and DEffectdate<='"+java.sql.Date.valueOf(sdf.format(hist.getDEffectdate1()))+"'";
+		}
+		if(hist.getDeptName() != null){
+			hql += " and teacherBaseInfo.TOrg.VName like '%"+hist.getDeptName()+"%'";
+		}
+		if(hist.getDIssuetime() != null){
+			hql += " and DQfsj>='"+java.sql.Date.valueOf(sdf.format(hist.getDIssuetime()))+"'";
+		}
+		if(hist.getDIssuetime1() != null){
+			hql += " and DQfsj<='"+java.sql.Date.valueOf(sdf.format(hist.getDIssuetime1()))+"'";
+		}
+		if(hist.getDUpdatedate() != null){
+			hql += " and DUpdatedate>='"+java.sql.Date.valueOf(sdf.format(hist.getDUpdatedate()))+"'";
+		}
+		if(hist.getDUpdatedate1() != null){
+			hql += " and DUpdatedate<='"+java.sql.Date.valueOf(sdf.format(hist.getDUpdatedate1()))+"'";
+		}
+		if(hist.getIHgz() != null){
+			hql += " and IHgz like '%"+hist.getIHgz()+"%'";
+		}
+		if(hist.getIJiankong() != null){
+			hql += " and IJiankong like '%"+hist.getIJiankong()+"%'";
+		}
+		if(hist.getVCardid() != null){
+			hql += " and VCardid like '%"+hist.getVCardid()+"%'";
+		}
+		if(hist.getVCompany() != null){
+			hql += " and VQfdw like '%"+hist.getVCompany()+"%'";
+		}
+		int count = 0;
+		if(hist.getVDengji() != null){
+			String[] vns = hist.getVDengji().split(",");
+			hql += " and ( ";
+			for(int i=0; i<vns.length; i++){
+				if(vns[i]!=null && !vns[i].equals("")){
+					if(count == 0){
+						hql += " VDengji like '%,"+vns[i]+",%' ";
+					}else{
+						hql += " or VDengji like '%,"+vns[i]+",%' ";
+					}
+					count++;
+				}
+			}
+			if(count == 0){
+				hql += " 1=1 ";
+			}
+			count = 0;
+			hql += ")";
+		}
+		if(hist.getVFjjbdj() != null){
+			String[] vns = hist.getVFjjbdj().split(",");
+			hql += " and ( ";
+			for(int i=0; i<vns.length; i++){
+				if(vns[i]!=null && !vns[i].equals("")){
+					if(count == 0){
+						hql += " VFjjbdj like '%,"+vns[i]+",%' ";
+					}else{
+						hql += " or VFjjbdj like '%,"+vns[i]+",%' ";
+					}
+					count++;
+				}
+			}
+			if(count == 0){
+				hql += " 1=1 ";
+			}
+			count = 0;
+			hql += ")";
+		}
+		if(hist.getVHkqdj() != null){
+			String[] vns = hist.getVHkqdj().split(",");
+			hql += " and ( ";
+			for(int i=0; i<vns.length; i++){
+				if(vns[i]!=null && !vns[i].equals("")){
+					if(count == 0){
+						hql += " VHkqdj like '%,"+vns[i]+",%' ";
+					}else{
+						hql += " or VHkqdj like '%,"+vns[i]+",%' ";
+					}
+					count++;
+				}
+			}
+			if(count == 0){
+				hql += " 1=1 ";
+			}
+			count = 0;
+			hql += ")";
+		}
+		if(hist.getVHkqlb() != null){
+			String[] vns = hist.getVHkqlb().split(",");
+			hql += " and ( ";
+			for(int i=0; i<vns.length; i++){
+				if(vns[i]!=null && !vns[i].equals("")){
+					if(count == 0){
+						hql += " VHkqlb like '%,"+vns[i]+",%' ";
+					}else{
+						hql += " or VHkqlb like '%,"+vns[i]+",%' ";
+					}
+					count++;
+				}
+			}
+			if(count == 0){
+				hql += " 1=1 ";
+			}
+			count = 0;
+			hql += ")";
+		}
+		if(hist.getVId() != null){
+			hql += " and teacherBaseInfo.VCode like '%"+hist.getVId()+"%'";
+		}
+		if(hist.getVIssuer() != null){
+			hql += " and VIssuer like '%"+hist.getVIssuer()+"%'";
+		}
+		if(hist.getVJyzzlx() != null){
+			String[] vns = hist.getVJyzzlx().split(",");
+			hql += " and ( ";
+			for(int i=0; i<vns.length; i++){
+				if(vns[i]!=null && !vns[i].equals("")){
+					if(count == 0){
+						hql += " VJyzzlx like '%,"+vns[i]+",%' ";
+					}else{
+						hql += " or VJyzzlx like '%,"+vns[i]+",%' ";
+					}
+					count++;
+				}
+			}
+			if(count == 0){
+				hql += " 1=1 ";
+			}
+			count = 0;
+			hql += ")";
+		}
+		if(hist.getVName() != null){
+			hql += " and teacherBaseInfo.VName like '%"+hist.getVName()+"%'";
+		}
+		if(hist.getVXingzhi() != null){
+			hql += " and VXingzhi like '%"+hist.getVXingzhi()+"%'";
+		}
+		if(hist.getVXyjdj() != null){
+			String[] vns = hist.getVXyjdj().split(",");
+			hql += " and ( ";
+			for(int i=0; i<vns.length; i++){
+				if(vns[i]!=null && !vns[i].equals("")){
+					if(count == 0){
+						hql += " VXyjdj like '%,"+vns[i]+",%' ";
+					}else{
+						hql += " or VXyjdj like '%,"+vns[i]+",%' ";
+					}
+					count++;
+				}
+			}
+			if(count == 0){
+				hql += " 1=1 ";
+			}
+			count = 0;
+			hql += ")";
+		}
+		if(hist.getVYbdj() != null){
+			String[] vns = hist.getVYbdj().split(",");
+			hql += " and ( ";
+			for(int i=0; i<vns.length; i++){
+				if(vns[i]!=null && !vns[i].equals("")){
+					if(count == 0){
+						hql += " VYbdj like '%,"+vns[i]+",%' ";
+					}else{
+						hql += " or VYbdj like '%,"+vns[i]+",%' ";
+					}
+					count++;
+				}
+			}
+			if(count == 0){
+				hql += " 1=1 ";
+			}
+			count = 0;
+			hql += ")";
+		}
+		if(hist.getVYszzdj() != null){
+			String[] vns = hist.getVYszzdj().split(",");
+			hql += " and ( ";
+			for(int i=0; i<vns.length; i++){
+				if(vns[i]!=null && !vns[i].equals("")){
+					if(count == 0){
+						hql += " VYszzdj like '%,"+vns[i]+",%' ";
+					}else{
+						hql += " or VYszzdj like '%,"+vns[i]+",%' ";
+					}
+					count++;
+				}
+			}
+			if(count == 0){
+				hql += " 1=1 ";
+			}
+			count = 0;
+			hql += ")";
+		}
+		if(hist.getVZzlx() != null){
+			String[] vns = hist.getVZzlx().split(",");
+			hql += " and ( ";
+			for(int i=0; i<vns.length; i++){
+				if(vns[i]!=null && !vns[i].equals("")){
+					if(count == 0){
+						hql += " VZzlx like '%,"+vns[i]+",%' ";
+					}else{
+						hql += " or VZzlx like '%,"+vns[i]+",%' ";
+					}
+					count++;
+				}
+			}
+			if(count == 0){
+				hql += " 1=1 ";
+			}
+			count = 0;
+			hql += ")";
+		}
+	}
+	Integer pageIndex = Integer.parseInt(pageNo);
+	Page page = null;
+	try {
+		page = this.pagedQuery(hql, pageIndex,Page.DEFAULT_PAGE_SIZE);
+	} catch (HibernateException e) {
+		e.printStackTrace();
+		throw new FinanceServiceException("查询教员执照升级历史信息列表失败！", e);
+	}
+	return page;
+}
+	/**
+	 * @功能描述：分页查询教员执照检查历史信息
+	 */
+	public Page searchZzJcHistory(VHistorySearch hist, String pageNo)
+	throws FinanceServiceException {
+	String hql = "from TTeaLicenseskilledcheck where 1=1 ";
+	SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+	if(hist != null){
+		if(hist.getDIssueTime() != null){
+			hql += " and DEffectdate>='"+java.sql.Date.valueOf(sdf.format(hist.getDIssueTime()))+"'";
+		}
+		if(hist.getDIssueTime1() != null){
+			hql += " and DEffectdate<='"+java.sql.Date.valueOf(sdf.format(hist.getDIssueTime1()))+"'";
+		}
+		if(hist.getDResultdate() != null){
+			hql += " and DCheckdate>='"+java.sql.Date.valueOf(sdf.format(hist.getDResultdate()))+"'";
+		}
+		if(hist.getDResultdate1() != null){
+			hql += " and DCheckdate<='"+java.sql.Date.valueOf(sdf.format(hist.getDResultdate1()))+"'";
+		}
+		if(hist.getVNation() != null){
+			String[] vns = hist.getVNation().split(",");
+			hql += " and ( ";
+			int count = 0;
+			for(int i=0; i<vns.length; i++){
+				if(vns[i]!=null && !vns[i].equals("")){
+					if(count == 0){
+						hql += " IChecktype="+vns[i];
+					}else{
+						hql += " or IChecktype="+vns[i];
+					}
+					count++;
+				}
+			}
+			if(count == 0){
+				hql += " 1=1 ";
+			}
+			hql += ")";
+		}
+		if(hist.getVCompany() != null){
+			hql += " and VFlyform like '%"+hist.getVCompany()+"%'";
+		}
+		if(hist.getVDoctor() != null){
+			hql += " and VCheckcontent like '%"+hist.getVDoctor()+"%'";
+		}
+		if(hist.getVId() != null){
+			hql += " and TTeaLicense.teacherBaseInfo.VCode like '%"+hist.getVId()+"%'";
+		}
+		if(hist.getVIssuer() != null){
+			hql += " and VCheckteacher like '%"+hist.getVIssuer()+"%'";
+		}
+		if(hist.getVName() != null){
+			hql += " and TTeaLicense.teacherBaseInfo.VName like '%"+hist.getVName()+"%'";
+		}
+		if(hist.getDeptName() != null){
+			hql += " and TTeaLicense.teacherBaseInfo.TOrg.VName like '%"+hist.getDeptName()+"%'";
+		}
+	}
+	Integer pageIndex = Integer.parseInt(pageNo);
+	Page page = null;
+	try {
+		page = this.pagedQuery(hql, pageIndex,Page.DEFAULT_PAGE_SIZE);
+	} catch (HibernateException e) {
+		e.printStackTrace();
+		throw new FinanceServiceException("查询教员执照检查信息列表失败！", e);
+	}
+	return page;
+}
+	
+	/**
+	 * @功能描述：保存教员基本信息
+	 */
+	@SuppressWarnings("unchecked")
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void saveTeacherBaseInfo(TeacherBaseInfo teacher)
+			throws FinanceServiceException {
+		try{
+
+			if(StringUtils.isBlank(teacher.getTDictionByVTecdengji().getVId())){
+				teacher.setTDictionByVTecdengji(null);
+			}
+			if(StringUtils.isBlank(teacher.getTDictionByVFlyform().getVId())){
+				teacher.setTDictionByVFlyform(null);
+			}
+			if(StringUtils.isBlank(teacher.getTDictionByVFlytype().getVId())){
+				teacher.setTDictionByVFlytype(null);
+			}
+			if(StringUtils.isBlank(teacher.getTDictionByVGeneraltype().getVId())){
+				teacher.setTDictionByVGeneraltype(null);
+			}
+			if(StringUtils.isBlank(teacher.getTDictionByVWhcd().getVId())){
+				teacher.setTDictionByVWhcd(null);
+			}
+			if(StringUtils.isBlank(teacher.getTDictionByVMz().getVId())){
+				teacher.setTDictionByVMz(null);
+			}
+
+			System.out.println("|"+hqBh()+"|");
+			teacher.setVCode(hqBh());
+			super.save(teacher);
+			String hql = "from TeacherBaseInfo where VCode=?";
+			List<TeacherBaseInfo> list = super.find(hql, teacher.getVCode());
+			TeacherBaseInfo t = list.get(0);
+			TTeaMedical tt = new TTeaMedical();
+			tt.setTeacherBaseInfo(t);
+			tt.setTUser(t.getTUser());
+			tt.setDCreatedate(t.getDCreatedate());
+			super.save(tt);
+			TTeaLicense tl = new TTeaLicense();
+			tl.setTeacherBaseInfo(t);
+			tl.setTUser(t.getTUser());
+			tl.setDCreatedate(t.getDCreatedate());
+			tl.setVCardid("0");
+			super.save(tl);
+		}catch (HibernateException e) {
+			throw new FinanceServiceException("保存教员信息失败！"+e);
+		}catch (Exception e) {
+			e.printStackTrace();
+			throw new FinanceServiceException("保存教员信息失败！"+e);
+		}
+	}
+	/**
+	 * 功能：添加教员时，获取教员编号
+	*/
+	@SuppressWarnings("unchecked")
+	private String hqBh() throws FinanceServiceException {
+		//该标志位用于表示人员编号是否已存在，false:表示不存在
+		String result = "";
+		String hql = " from TeacherBaseInfo order by DCreatedate desc,VId desc";
+		List<TeacherBaseInfo> list = super.find(hql);
+		if (list != null && list.size() > 0){
+			TeacherBaseInfo teacher = list.get(0);
+			String code = teacher.getVCode();
+			String bgcode = code.substring(1,6);
+			int i = Integer.parseInt(bgcode)+1;
+			if(i<10){
+				result = "T0000"+i;
+			}else if(i>=10 && i<100){
+				result = "T000"+i;
+			}else if(i>=100 && i<1000){
+				result = "T00"+i;
+			}else if(i>=1000 && i<10000){
+				result = "T0"+i;
+			}else{
+				result = "T"+i;
+			}
+		}else{
+			result = "T00001";
+		}
+		return result;
+	}
+	/**
+	 * @功能描述：通过教员ID查询教员基本信息
+	 */
+	public TeacherBaseInfo searchTeacherById(String id)
+			throws FinanceServiceException {
+		return super.get(TeacherBaseInfo.class, id);
+	}
+	
+	@SuppressWarnings("unchecked")
+	public VTeacherBaseInfo readTeacherBaseInfoByName(String userName)
+			throws FinanceServiceException {
+		String hql = " from TeacherBaseInfo where VCode=?";
+		List<TeacherBaseInfo> list  =super.find(hql, userName);
+		if(list.size()==0){
+			return null;			
+		}
+		VTeacherBaseInfo te = new VTeacherBaseInfo();
+		TeacherBaseInfo old = list.get(0);
+		
+		te.setDCjgzsj(old.getDCjgzsj());
+		if(old.getDCjgzsj()==null){
+			te.setVcjgzsj("");
+		}else{
+			te.setVcjgzsj(Utilities.format(old.getDCjgzsj()));
+		}
+		te.setDCreatedate(old.getDCreatedate());
+		if(old.getDCsrq()==null){
+			te.setVcsrq("");
+		}else{
+			te.setVcsrq(Utilities.format(old.getDCsrq()));
+		}
+		if(old.getDMhyytgsj()==null){
+			te.setVmhyytgsj("");
+		}else{
+			te.setVmhyytgsj(Utilities.format(old.getDMhyytgsj()));
+		}
+		if(old.getDRxrq()==null){
+			te.setVrxrq("");
+		}else{
+			te.setVrxrq(Utilities.format(old.getDRxrq()));
+		}
+		
+		te.setIExam(old.getIExam());
+		if(old.getTDictionByVFlyform()!=null){
+			te.setTDictionByVFlyform(old.getTDictionByVFlyform().getVName());
+		}else{
+			te.setTDictionByVFlyform("");
+		}
+		if(old.getTDictionByVFlytype()!=null){
+			te.setTDictionByVFlytype(old.getTDictionByVFlytype().getVName());
+		}else{
+			te.setTDictionByVFlytype("");
+		}
+		if(old.getTDictionByVGeneraltype()!=null){
+			te.setTDictionByVGeneraltype(old.getTDictionByVGeneraltype().getVName());
+		}
+		else{
+			te.setTDictionByVGeneraltype("");
+		}
+		if(old.getTDictionByVMz()!=null){
+			te.setTDictionByVMz(old.getTDictionByVMz().getVName());
+		}else{
+			te.setTDictionByVMz("");
+		}
+		if(old.getTDictionByVTecdengji()!=null){
+			te.setTDictionByVTecdengji(old.getTDictionByVTecdengji().getVName());
+		}else{
+			te.setTDictionByVTecdengji("");
+		}
+		if(old.getTDictionByVWhcd()!=null){
+			te.setTDictionByVWhcd(old.getTDictionByVWhcd().getVName());
+		}else{
+			te.setTDictionByVWhcd("");
+		}
+		
+		if(old.getTOrg()!=null){
+			te.setTOrg(old.getTOrg().getVName());
+		}else{
+			te.setTOrg("");
+		}
+		if(old.getTUser()!=null){
+			te.setTUser(old.getTUser().getVId());
+		}else{
+			te.setTUser("");
+		}
+		
+		te.setVByyx(old.getVByyx());
+		te.setVCode(old.getVCode());
+		te.setVId(old.getVId());
+		te.setVJg(old.getVJg());
+		te.setVJtzz(old.getVJtzz());
+		te.setVLxfs(old.getVLxfs());
+		te.setVName(old.getVName());
+		te.setVSafedengji(old.getVSafedengji());
+		te.setVSfz(old.getVSfz());
+		te.setVSzdw(old.getVSzdw());
+		te.setVSzdwzw(old.getVSzdwzw());
+		te.setVXb(old.getVXb());
+		te.setVYysp(old.getVYysp());
+		te.setVZw(old.getVZw());
+		te.setVZzmm(old.getVZzmm());
+		if(old.getTOrg()!=null){
+			te.setDeptName(old.getTOrg().getVName());
+		}else{
+			te.setDeptName("");
+		}
+		
+		return te;
+	}
+	public VTeacherBaseInfo searchVTeacherById(String id)
+			throws FinanceServiceException {
+		VTeacherBaseInfo te = new VTeacherBaseInfo();
+		TeacherBaseInfo old = super.get(TeacherBaseInfo.class, id);
+		
+		te.setDCjgzsj(old.getDCjgzsj());
+		te.setDCreatedate(old.getDCreatedate());
+		te.setDCsrq(old.getDCsrq());
+		te.setDMhyytgsj(old.getDMhyytgsj());
+		te.setDRxrq(old.getDRxrq());
+		te.setIExam(old.getIExam());
+		if(old.getTDictionByVFlyform()!=null){
+			te.setTDictionByVFlyform(old.getTDictionByVFlyform().getVName());
+		}else{
+			te.setTDictionByVFlyform("");
+		}
+		if(old.getTDictionByVFlytype()!=null){
+			te.setTDictionByVFlytype(old.getTDictionByVFlytype().getVName());
+		}else{
+			te.setTDictionByVFlytype("");
+		}
+		if(old.getTDictionByVGeneraltype()!=null){
+			te.setTDictionByVGeneraltype(old.getTDictionByVGeneraltype().getVName());
+		}
+		else{
+			te.setTDictionByVGeneraltype("");
+		}
+		if(old.getTDictionByVMz()!=null){
+			te.setTDictionByVMz(old.getTDictionByVMz().getVName());
+		}else{
+			te.setTDictionByVMz("");
+		}
+		if(old.getTDictionByVTecdengji()!=null){
+			te.setTDictionByVTecdengji(old.getTDictionByVTecdengji().getVName());
+		}else{
+			te.setTDictionByVTecdengji("");
+		}
+		if(old.getTDictionByVWhcd()!=null){
+			te.setTDictionByVWhcd(old.getTDictionByVWhcd().getVName());
+		}else{
+			te.setTDictionByVWhcd("");
+		}
+		
+		if(old.getTOrg()!=null){
+			te.setTOrg(old.getTOrg().getVName());
+		}else{
+			te.setTOrg("");
+		}
+		if(old.getTUser()!=null){
+			te.setTUser(old.getTUser().getVId());
+		}else{
+			te.setTUser("");
+		}
+		
+		te.setVByyx(old.getVByyx());
+		te.setVCode(old.getVCode());
+		te.setVId(old.getVId());
+		te.setVJg(old.getVJg());
+		te.setVJtzz(old.getVJtzz());
+		te.setVLxfs(old.getVLxfs());
+		te.setVName(old.getVName());
+		te.setVSafedengji(old.getVSafedengji());
+		te.setVSfz(old.getVSfz());
+		te.setVSzdw(old.getVSzdw());
+		te.setVSzdwzw(old.getVSzdwzw());
+		te.setVXb(old.getVXb());
+		te.setVYysp(old.getVYysp());
+		te.setVZw(old.getVZw());
+		te.setVZzmm(old.getVZzmm());
+		if(old.getTOrg()!=null){
+			te.setDeptName(old.getTOrg().getVName());
+		}else{
+			te.setDeptName("");
+		}
+		
+		
+		return te;
+	}
+	/**
+	 * @功能描述：通过字典类型查询字典数据集
+	 */
+	@SuppressWarnings("unchecked")
+	public List<TDiction> searchTDictionByType(String typeName)
+			throws FinanceServiceException {
+		String dicTypeId = searchDicTypeIdByName(typeName);
+		String hql = "from TDiction where TDictype.VId=?";
+		return super.find(hql, dicTypeId);
+	}
+	/**
+	 * @功能描述：通过字典类型名称查询字典类型ID
+	 */
+	@SuppressWarnings("unchecked")
+	public String searchDicTypeIdByName(String typeName){
+		String dicId = "";
+		String hql = "from TDictype where VName=?";
+		List<TDictype> dictype = super.find(hql, typeName);
+		if(dictype!=null && dictype.size()>0){
+			dicId = dictype.get(0).getVId();
+		}
+		return dicId;
+	}
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void updateTeacher(TeacherBaseInfo teacher)
+			throws FinanceServiceException {
+		if(teacher!=null){
+			try{
+				TeacherBaseInfo old = super.get(TeacherBaseInfo.class, teacher.getVId());
+				old.setVName(teacher.getVName());
+				old.setVXb(teacher.getVXb());
+				old.setDCsrq(teacher.getDCsrq());
+				if(StringUtils.isBlank(teacher.getTDictionByVMz().getVId())){
+					old.setTDictionByVMz(null);
+				}else{
+					old.setTDictionByVMz(teacher.getTDictionByVMz());
+				}
+				old.setVLxfs(teacher.getVLxfs());
+				old.setVSfz(teacher.getVSfz());
+				old.setVZzmm(teacher.getVZzmm());
+				old.setVJg(teacher.getVJg());
+				old.setVJtzz(teacher.getVJtzz());
+				if(StringUtils.isBlank(teacher.getTDictionByVWhcd().getVId())){
+					old.setTDictionByVWhcd(null);
+				}else{
+					old.setTDictionByVWhcd(teacher.getTDictionByVWhcd());
+				}
+				
+				old.setVByyx(teacher.getVByyx());
+				old.setVZw(teacher.getVZw());
+				
+				if(StringUtils.isBlank(teacher.getTDictionByVFlytype().getVId())){
+					old.setTDictionByVFlytype(null);
+				}else{
+					old.setTDictionByVFlytype(teacher.getTDictionByVFlytype());
+				}
+				if(StringUtils.isBlank(teacher.getTDictionByVGeneraltype().getVId())){
+					old.setTDictionByVGeneraltype(null);
+				}else{
+					old.setTDictionByVGeneraltype(teacher.getTDictionByVGeneraltype());
+				}
+				
+				old.setIExam(teacher.getIExam());
+				
+				if(StringUtils.isBlank(teacher.getTDictionByVFlyform().getVId())){
+					old.setTDictionByVFlyform(null);
+				}else{
+					old.setTDictionByVFlyform(teacher.getTDictionByVFlyform());
+				}
+				if(StringUtils.isBlank(teacher.getTDictionByVTecdengji().getVId())){
+					old.setTDictionByVTecdengji(null);
+				}else{
+					old.setTDictionByVTecdengji(teacher.getTDictionByVTecdengji());
+				}
+				
+				old.setVSafedengji(teacher.getVSafedengji());
+				old.setDCjgzsj(teacher.getDCjgzsj());
+				old.setVSzdw(teacher.getVSzdw());
+				old.setVSzdwzw(teacher.getVSzdwzw());
+				old.setDRxrq(teacher.getDRxrq());
+				old.setVYysp(teacher.getVYysp());
+				old.setDMhyytgsj(teacher.getDMhyytgsj());
+				old.setTOrg(teacher.getTOrg());
+				super.update(old);
+			}catch(HibernateException e){
+				throw new FinanceServiceException("更新教员失败！", e);
+			}
+		}else{
+			throw new FinanceServiceException("更新教员失败，信息为空！");
+		}
+	}
+	/**
+	 * @功能描述：通过部门ID、教员姓名查询教员列表
+	 */
+	@SuppressWarnings("unchecked")
+	public List<VTeacherBaseInfo> searchTeacherList(String id, String key)
+			throws FinanceServiceException {
+		String[] ids=null;
+		if(id != null && !id.equals("")){
+			ids = id.split(",");
+		}
+		String idsa="";
+		if(ids != null && ids.length>0){
+			for(int i=0; i<ids.length;i++){
+				if(i==0 && ids.length-1>0){
+					idsa+=" and (TOrg.VId like '"+ids[i]+"'";
+				}else if(i==ids.length-1 && ids.length-1>0){
+					idsa+=" or TOrg.VId like '"+ids[i]+"')";
+				}else if(i==0 && ids.length-1==0){
+					idsa+=" and TOrg.VId like '"+ids[i]+"'";
+				}else{
+					idsa+=" or TOrg.VId like '"+ids[i]+"'";
+				}
+			}
+		}
+		if(key==null || key.equals("null")){
+			key="";
+		}
+		String hql = " from TeacherBaseInfo where VName like '%"+key+"%' "+idsa;
+		List<TeacherBaseInfo> teacher = super.find(hql);
+		List<VTeacherBaseInfo> tlist = new ArrayList<VTeacherBaseInfo>();
+		if(teacher != null && teacher.size()>0){
+			for(int i=0; i<teacher.size();i++){
+				TeacherBaseInfo old = teacher.get(i);
+				VTeacherBaseInfo te = new VTeacherBaseInfo();
+				te.setDCjgzsj(old.getDCjgzsj());
+				te.setDCreatedate(old.getDCreatedate());
+				te.setDCsrq(old.getDCsrq());
+				te.setDMhyytgsj(old.getDMhyytgsj());
+				te.setDRxrq(old.getDRxrq());
+				te.setIExam(old.getIExam());
+				te.setTDictionByVFlyform(old.getTDictionByVFlyform().getVId());
+				te.setTDictionByVFlytype(old.getTDictionByVFlytype().getVId());
+				te.setTDictionByVGeneraltype(old.getTDictionByVGeneraltype().getVId());
+				te.setTDictionByVMz(old.getTDictionByVMz().getVId());
+				te.setTDictionByVTecdengji(old.getTDictionByVTecdengji().getVId());
+				te.setTDictionByVWhcd(old.getTDictionByVWhcd().getVId());
+				te.setTOrg(old.getTOrg().getVId());
+				te.setTUser(old.getTUser().getVId());
+				te.setVByyx(old.getVByyx());
+				te.setVCode(old.getVCode());
+				te.setVId(old.getVId());
+				te.setVJg(old.getVJg());
+				te.setVJtzz(old.getVJtzz());
+				te.setVLxfs(old.getVLxfs());
+				te.setVName(old.getVName());
+				te.setVSafedengji(old.getVSafedengji());
+				te.setVSfz(old.getVSfz());
+				te.setVSzdw(old.getVSzdw());
+				te.setVSzdwzw(old.getVSzdwzw());
+				te.setVXb(old.getVXb());
+				te.setVYysp(old.getVYysp());
+				te.setVZw(old.getVZw());
+				te.setVZzmm(old.getVZzmm());
+				TOrg org = super.get(TOrg.class, old.getTOrg().getVId());
+				te.setDeptName(org.getVName());
+				
+				tlist.add(te);
+			}
+		}
+		return tlist;
+	}
+	@SuppressWarnings("unchecked")
+	public List<VTeacherBaseInfo> searchTeacherTjList(String id, String key)
+			throws FinanceServiceException {
+		String[] ids=null;
+		if(id != null && !id.equals("")){
+			ids = id.split(",");
+		}
+		String idsa="";
+		if(ids != null && ids.length>0){
+			for(int i=0; i<ids.length;i++){
+				if(i==0 && ids.length-1>0){
+					idsa+=" and (teacherBaseInfo.TOrg.VId like '"+ids[i]+"'";
+				}else if(i==ids.length-1 && ids.length-1>0){
+					idsa+=" or teacherBaseInfo.TOrg.VId like '"+ids[i]+"')";
+				}else if(i==0 && ids.length-1==0){
+					idsa+=" and teacherBaseInfo.TOrg.VId like '"+ids[i]+"'";
+				}else{
+					idsa+=" or teacherBaseInfo.TOrg.VId like '"+ids[i]+"'";
+				}
+			}
+		}
+		if(key==null || key.equals("null")){
+			key="";
+		}
+		String hql = " from TTeaMedical where teacherBaseInfo.VName like '%"+key+"%' "+idsa+" order by DUsedTime";
+		List<TTeaMedical> teacher = super.find(hql);
+		List<VTeacherBaseInfo> tlist = new ArrayList<VTeacherBaseInfo>();
+		if(teacher != null && teacher.size()>0){
+			for(int i=0; i<teacher.size();i++){
+				TTeaMedical old = teacher.get(i);
+				VTeacherBaseInfo te = new VTeacherBaseInfo();
+				te.setDCjgzsj(old.getTeacherBaseInfo().getDCjgzsj());
+				te.setDCreatedate(old.getTeacherBaseInfo().getDCreatedate());
+				te.setDCsrq(old.getTeacherBaseInfo().getDCsrq());
+				te.setDMhyytgsj(old.getTeacherBaseInfo().getDMhyytgsj());
+				te.setDRxrq(old.getTeacherBaseInfo().getDRxrq());
+				te.setIExam(old.getTeacherBaseInfo().getIExam());
+				te.setTDictionByVFlyform(old.getTeacherBaseInfo().getTDictionByVFlyform().getVId());
+				te.setTDictionByVFlytype(old.getTeacherBaseInfo().getTDictionByVFlytype().getVId());
+				te.setTDictionByVGeneraltype(old.getTeacherBaseInfo().getTDictionByVGeneraltype().getVId());
+				te.setTDictionByVMz(old.getTeacherBaseInfo().getTDictionByVMz().getVId());
+				te.setTDictionByVTecdengji(old.getTeacherBaseInfo().getTDictionByVTecdengji().getVId());
+				te.setTDictionByVWhcd(old.getTeacherBaseInfo().getTDictionByVWhcd().getVId());
+				te.setTOrg(old.getTeacherBaseInfo().getTOrg().getVId());
+				te.setTUser(old.getTeacherBaseInfo().getTUser().getVId());
+				te.setVByyx(old.getTeacherBaseInfo().getVByyx());
+				te.setVCode(old.getTeacherBaseInfo().getVCode());
+				te.setVId(old.getTeacherBaseInfo().getVId());
+				te.setVJg(old.getTeacherBaseInfo().getVJg());
+				te.setVJtzz(old.getTeacherBaseInfo().getVJtzz());
+				te.setVLxfs(old.getTeacherBaseInfo().getVLxfs());
+				te.setVName(old.getTeacherBaseInfo().getVName());
+				te.setVSafedengji(old.getTeacherBaseInfo().getVSafedengji());
+				te.setVSfz(old.getTeacherBaseInfo().getVSfz());
+				te.setVSzdw(old.getTeacherBaseInfo().getVSzdw());
+				te.setVSzdwzw(old.getTeacherBaseInfo().getVSzdwzw());
+				te.setVXb(old.getTeacherBaseInfo().getVXb());
+				te.setVYysp(old.getTeacherBaseInfo().getVYysp());
+				te.setVZw(old.getTeacherBaseInfo().getVZw());
+				te.setVZzmm(old.getTeacherBaseInfo().getVZzmm());
+				long ts=0;
+				try {
+					if(old.getDUsedTime() != null){
+						ts = getDateDiff(new Date(),old.getDUsedTime());
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+				};
+				long jdt = 0;
+				if(ts>=180){
+					jdt=100;
+				}else if(ts>0 && ts<180){
+					jdt = 100*ts/180;
+				}
+				te.setTjfzrq(old.getDIssueTime());
+				te.setTjyxrq(old.getDUsedTime());
+				te.setJdt(jdt+"");
+				TOrg org = super.get(TOrg.class, old.getTeacherBaseInfo().getTOrg().getVId());
+				te.setDeptName(org.getVName());
+				te.setDqsj(new Date());
+				tlist.add(te);
+			}
+		}
+		return tlist;
+	}
+	@SuppressWarnings("unchecked")
+	public List<VTeacherBaseInfo> searchTeacherZzList(String id, String key)
+			throws FinanceServiceException {
+		String[] ids=null;
+		if(id != null && !id.equals("")){
+			ids = id.split(",");
+		}
+		String idsa="";
+		if(ids != null && ids.length>0){
+			for(int i=0; i<ids.length;i++){
+				if(i==0 && ids.length-1>0){
+					idsa+=" and (teacherBaseInfo.TOrg.VId like '"+ids[i]+"'";
+				}else if(i==ids.length-1 && ids.length-1>0){
+					idsa+=" or teacherBaseInfo.TOrg.VId like '"+ids[i]+"')";
+				}else if(i==0 && ids.length-1==0){
+					idsa+=" and teacherBaseInfo.TOrg.VId like '"+ids[i]+"'";
+				}else{
+					idsa+=" or teacherBaseInfo.TOrg.VId like '"+ids[i]+"'";
+				}
+			}
+		}
+		if(key==null || key.equals("null")){
+			key="";
+		}
+		String hql = " from TTeaLicense where teacherBaseInfo.VName like '%"+key+"%' "+idsa+" order by DNextchecktime,DChecktime,DExamtime";
+		List<TTeaLicense> teacher = super.find(hql);
+		List<VTeacherBaseInfo> tlist = new ArrayList<VTeacherBaseInfo>();
+		if(teacher != null && teacher.size()>0){
+			for(int i=0; i<teacher.size();i++){
+				TTeaLicense old = teacher.get(i);
+				VTeacherBaseInfo te = new VTeacherBaseInfo();
+				te.setDCjgzsj(old.getTeacherBaseInfo().getDCjgzsj());
+				te.setDCreatedate(old.getTeacherBaseInfo().getDCreatedate());
+				te.setDCsrq(old.getTeacherBaseInfo().getDCsrq());
+				te.setDMhyytgsj(old.getTeacherBaseInfo().getDMhyytgsj());
+				te.setDRxrq(old.getTeacherBaseInfo().getDRxrq());
+				te.setIExam(old.getTeacherBaseInfo().getIExam());
+				te.setTDictionByVFlyform(old.getTeacherBaseInfo().getTDictionByVFlyform().getVId());
+				te.setTDictionByVFlytype(old.getTeacherBaseInfo().getTDictionByVFlytype().getVId());
+				te.setTDictionByVGeneraltype(old.getTeacherBaseInfo().getTDictionByVGeneraltype().getVId());
+				te.setTDictionByVMz(old.getTeacherBaseInfo().getTDictionByVMz().getVId());
+				te.setTDictionByVTecdengji(old.getTeacherBaseInfo().getTDictionByVTecdengji().getVId());
+				te.setTDictionByVWhcd(old.getTeacherBaseInfo().getTDictionByVWhcd().getVId());
+				te.setTOrg(old.getTeacherBaseInfo().getTOrg().getVId());
+				te.setTUser(old.getTeacherBaseInfo().getTUser().getVId());
+				te.setVByyx(old.getTeacherBaseInfo().getVByyx());
+				te.setVCode(old.getTeacherBaseInfo().getVCode());
+				te.setVId(old.getTeacherBaseInfo().getVId());
+				te.setVJg(old.getTeacherBaseInfo().getVJg());
+				te.setVJtzz(old.getTeacherBaseInfo().getVJtzz());
+				te.setVLxfs(old.getTeacherBaseInfo().getVLxfs());
+				te.setVName(old.getTeacherBaseInfo().getVName());
+				te.setVSafedengji(old.getTeacherBaseInfo().getVSafedengji());
+				te.setVSfz(old.getTeacherBaseInfo().getVSfz());
+				te.setVSzdw(old.getTeacherBaseInfo().getVSzdw());
+				te.setVSzdwzw(old.getTeacherBaseInfo().getVSzdwzw());
+				te.setVXb(old.getTeacherBaseInfo().getVXb());
+				te.setVYysp(old.getTeacherBaseInfo().getVYysp());
+				te.setVZw(old.getTeacherBaseInfo().getVZw());
+				te.setVZzmm(old.getTeacherBaseInfo().getVZzmm());
+				long ts=0;
+				try {
+					if(old.getDNextchecktime() != null){
+						ts = getDateDiff(new Date(),old.getDNextchecktime());
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				long jdt = 0;
+				if(ts>=60){
+					jdt=100;
+				}else if(ts>0 && ts<60){
+					jdt = 100*ts/60;
+				}
+				
+				long ts1=0;
+				try {
+					if(old.getDChecktime() != null){
+						ts1 = getDateDiff(new Date(),old.getDChecktime());
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				long jdt1 = 0;
+				if(ts1>=60){
+					jdt1=100;
+				}else if(ts1>0 && ts1<60){
+					jdt1 = 100*ts1/60;
+				}
+				
+				long ts2=0;
+				try {
+					if(old.getDExamtime() != null){
+						ts2 = getDateDiff(new Date(),old.getDExamtime());
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				long jdt2 = 0;
+				if(ts2>=60){
+					jdt2=100;
+				}else if(ts2>0 && ts2<60){
+					jdt2 = 100*ts2/60;
+				}
+				
+				te.setJdt(jdt+"");
+				te.setJdt1(jdt1+"");
+				te.setJdt2(jdt2+"");
+				TOrg org = super.get(TOrg.class, old.getTeacherBaseInfo().getTOrg().getVId());
+				te.setDeptName(org.getVName());
+				
+				tlist.add(te);
+			}
+		}
+		return tlist;
+	}
+	/**<p>获得两个日期之间相差天数</p>
+	 * @param p_dateForm Date 起始日期
+	 * @param p_dateEnd Date 结束日期
+	 * @return long 两个日期之间相差的天数
+	 */
+	public long getDateDiff(Date p_dateForm, Date p_dateEnd) throws Exception{
+		if (p_dateForm==null) throw new Exception("Error:");
+		if (p_dateEnd==null)  throw new Exception("Error:");		
+		long _ldate1 = p_dateForm.getTime();
+		long _ldate2 = p_dateEnd.getTime();
+		long _iDatenum = 0;
+		_iDatenum = (long)((_ldate2 - _ldate1)/86400000);
+		return _iDatenum;
+	}
+	
+	public String searchOrgName(String deptId) throws FinanceServiceException {
+		TOrg org = super.get(TOrg.class, deptId);
+		return org.getVName();
+	}
+	/**
+	 * @功能描述：删除教员信息
+	 */
+	@SuppressWarnings("unchecked")
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public boolean deleteTeacher(String... ids) throws FinanceServiceException {
+		boolean flag = false;
+		
+		List<TTeaMedical> mlist;
+		List<TTeaLicense> llist;
+		List<TTeaMedicalhistory> hlist;
+		if(ids != null && ids.length >0){
+			try{
+				for (String id : ids) {
+					
+
+					
+					hlist = super.find(" from TTeaMedicalhistory where teacherBaseInfo.VId=?", id);
+					super.removeALL(hlist);
+					
+					mlist = super.find(" from TTeaMedical where teacherBaseInfo.VId=?", id);
+					super.removeALL(mlist);
+					
+					llist = super.find(" from TTeaLicense where teacherBaseInfo.VId=?", id);
+					super.removeALL(llist);
+					
+					
+					/*
+					if(super.findBy(TTeaMedical.class,"teacherBaseInfo.VId",id).size()>0 ||
+							super.findBy(TTeaLicense.class,"teacherBaseInfo.VId",id).size()>0){
+						throw new FinanceServiceException("该教员已经被引用，不能删除！");
+					}
+					*/
+					super.removeById(TeacherBaseInfo.class, id);
+					flag = true;
+				}
+			}catch(HibernateException e){
+				throw new FinanceServiceException("删除教员信息失败！", e);
+			}
+		}
+		return flag;
+	}
+	/**
+	 * @功能描述：添加或修改教员体检信息
+	 */
+	@SuppressWarnings("unchecked")
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public boolean addOrUpTj(TTeaMedical teachertj,TUser tuser)
+			throws FinanceServiceException {
+		boolean flag = false;
+		String hql = "from TTeaMedical where teacherBaseInfo.VId=?";
+		List<TTeaMedical> list = super.find(hql,teachertj.getTeacherBaseInfo().getVId());
+		if(list != null && list.size()>0){
+			TTeaMedicalhistory oldtj = new TTeaMedicalhistory();
+			TTeaMedical tt = list.get(0);
+			oldtj.setDCreatedate(tt.getDCreatedate());
+			oldtj.setDIssueTime(tt.getDIssueTime());
+			oldtj.setDResultdate(tt.getDResultdate());
+			oldtj.setDUsedTime(tt.getDUsedTime());
+			oldtj.setILevel(tt.getILevel());
+			oldtj.setTeacherBaseInfo(tt.getTeacherBaseInfo());
+			oldtj.setTTeaMedical(tt);
+			oldtj.setTUser(tt.getTUser());
+			oldtj.setVCompany(tt.getVCompany());
+			oldtj.setVDoctor(tt.getVDoctor());
+			oldtj.setVIssuer(tt.getVIssuer());
+			oldtj.setVLimit(tt.getVLimit());
+			oldtj.setVNation(tt.getVNation());
+			
+			super.save(oldtj);
+			tt.setDCreatedate(teachertj.getDCreatedate());
+			tt.setDIssueTime(teachertj.getDIssueTime());
+			tt.setDResultdate(teachertj.getDResultdate());
+			tt.setDUsedTime(teachertj.getDUsedTime());
+			tt.setILevel(teachertj.getILevel());
+			tt.setTUser(teachertj.getTUser());
+			tt.setVCompany(teachertj.getVCompany());
+			tt.setVDoctor(teachertj.getVDoctor());
+			tt.setVIssuer(teachertj.getVIssuer());
+			tt.setVLimit(teachertj.getVLimit());
+			tt.setVNation(teachertj.getVNation());
+			super.update(tt);
+		}else{
+			super.save(teachertj);
+		}
+		return flag;
+	}
+	/**
+	 * @功能描述：添加或修改教员执照信息
+	 */
+	@SuppressWarnings("unchecked")
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public boolean addOrUpZz(TTeaLicense teacherzz,TUser tuser)
+			throws FinanceServiceException {
+		boolean flag = false;
+		String hql = "from TTeaLicense where teacherBaseInfo.VId=?";
+		List<TTeaLicense> list = super.find(hql,teacherzz.getTeacherBaseInfo().getVId());
+		if(list != null && list.size()>0){
+			TTeaLicense old = list.get(0);
+			old.setDCreatedate(teacherzz.getDCreatedate());
+			old.setDEffectdate(teacherzz.getDEffectdate());
+			old.setDIssuetime(teacherzz.getDIssuetime());
+			old.setDUpdatedate(teacherzz.getDUpdatedate());
+			old.setVCardid(teacherzz.getVCardid());
+			old.setVIssuer(teacherzz.getVIssuer());
+			old.setVCompany(teacherzz.getVCompany());
+			old.setVDengji(teacherzz.getVDengji());
+			old.setVJyzzlx(teacherzz.getVJyzzlx());
+			old.setVZzlx(teacherzz.getVZzlx());
+			old.setVXingzhi(teacherzz.getVXingzhi());
+			old.setVYbdj(teacherzz.getVYbdj());
+			old.setVFjjbdj(teacherzz.getVFjjbdj());
+			old.setVHkqlb(teacherzz.getVHkqlb());
+			old.setVHkqdj(teacherzz.getVHkqdj());
+			old.setVXyjdj(teacherzz.getVXyjdj());
+			old.setVYszzdj(teacherzz.getVYszzdj());
+			old.setIHgz(teacherzz.getIHgz());
+			old.setTUser(teacherzz.getTUser());
+			old.setIJiankong(teacherzz.getIJiankong());
+			super.update(old);
+			flag = true;
+		}
+		
+		return flag;
+	}
+	/**
+	 * @功能描述：升级教员执照信息
+	 */
+	@SuppressWarnings("unchecked")
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public boolean upZz(TTeaLicense teacherzz,TUser tuser)
+			throws FinanceServiceException {
+		
+		String hql = "from TTeaLicense where teacherBaseInfo.VId=?";
+		List<TTeaLicense> list = super.find(hql,teacherzz.getTeacherBaseInfo().getVId());
+		if(list ==null){
+			return false;
+		}
+		TTeaLicense old = list.get(0);
+		TeacherLicenseupdate tl = new TeacherLicenseupdate();
+		tl.setDChecktime(old.getDChecktime());
+		tl.setDCreatedate(old.getDCreatedate());
+		tl.setDEffectdate(old.getDEffectdate());
+		tl.setDExamtime(old.getDExamtime());
+		tl.setDLastchecktime(old.getDLastchecktime());
+		tl.setDNextchecktime(old.getDNextchecktime());
+		tl.setDQfsj(old.getDIssuetime());
+		tl.setDUpdatedate(old.getDUpdatedate());
+		tl.setIHgz(old.getIHgz());
+		tl.setIJiankong(old.getIJiankong());
+		tl.setTeacherBaseInfo(old.getTeacherBaseInfo());
+		tl.setTTeaLicense(old);
+		tl.setTUser(old.getTUser());
+		tl.setVCardid(old.getVCardid());
+		tl.setVDengji(old.getVDengji());
+		tl.setVFjjbdj(old.getVFjjbdj());
+		tl.setVHkqdj(old.getVHkqdj());
+		tl.setVHkqlb(old.getVHkqlb());
+		tl.setVIssuer(old.getVIssuer());
+		tl.setVJyzzlx(old.getVJyzzlx());
+		tl.setVQfdw(old.getVCompany());
+		tl.setVXingzhi(old.getVXingzhi());
+		tl.setVXyjdj(old.getVXyjdj());
+		tl.setVYbdj(old.getVYbdj());
+		tl.setVYszzdj(old.getVYszzdj());
+		tl.setVZzlx(old.getVZzlx());
+					
+		old.setDCreatedate(teacherzz.getDCreatedate());
+		old.setDEffectdate(teacherzz.getDEffectdate());
+		old.setDIssuetime(teacherzz.getDIssuetime());
+		old.setDUpdatedate(teacherzz.getDUpdatedate());
+		old.setVCardid(teacherzz.getVCardid());
+		old.setVIssuer(teacherzz.getVIssuer());
+		old.setVCompany(teacherzz.getVCompany());
+		old.setVDengji(teacherzz.getVDengji());
+		old.setVJyzzlx(teacherzz.getVJyzzlx());
+		old.setVZzlx(teacherzz.getVZzlx());
+		old.setVXingzhi(teacherzz.getVXingzhi());
+		old.setVYbdj(teacherzz.getVYbdj());
+		old.setVFjjbdj(teacherzz.getVFjjbdj());
+		old.setVHkqlb(teacherzz.getVHkqlb());
+		old.setVHkqdj(teacherzz.getVHkqdj());
+		old.setVXyjdj(teacherzz.getVXyjdj());
+		old.setVYszzdj(teacherzz.getVYszzdj());
+		old.setIHgz(teacherzz.getIHgz());
+		old.setTUser(teacherzz.getTUser());
+		old.setIJiankong(teacherzz.getIJiankong());
+		
+		super.save(tl);
+		super.update(old);
+		
+		String hql1 = "from TTeaLicenseskilledcheck where TTeaLicense.VId=? and teacherLicenseupdate is null";
+		List<TTeaLicenseskilledcheck> ttlist = super.find(hql1,old.getVId());
+		
+		for(TTeaLicenseskilledcheck tt:ttlist){
+			tt.setTeacherLicenseupdate(tl);
+			
+		}
+		if(ttlist.size()>0)
+			super.saveOrUpdateALL(ttlist);
+		
+		/*
+		List<TTeaLicenseskilledcheck> tllist = new ArrayList<TTeaLicenseskilledcheck>();
+		if(ttlist != null && ttlist.size()>0){
+			for(int i=0; i<ttlist.size(); i++){
+				TTeaLicenseskilledcheck tt = ttlist.get(i);
+				tt.setTeacherLicenseupdate(tl);
+				tllist.add(tt);
+			}
+			super.saveOrUpdateALL(tllist);
+		}*/
+
+		return true;
+	}
+	/**
+	 * @功能描述：通过教员ID查询该教员体检信息
+	 */
+	@SuppressWarnings("unchecked")
+	public TTeaMedical searchTj(String teacherid)
+			throws FinanceServiceException {
+		TTeaMedical jytj = new TTeaMedical();
+		String hql = "from TTeaMedical where teacherBaseInfo.VId=?";
+		List<TTeaMedical> list = super.find(hql,teacherid);
+		if(list != null && list.size()>0){
+			jytj = list.get(0);
+		}else{
+			jytj = null;
+		}
+		return jytj;
+	}
+	/**
+	 * @功能描述：用于查看教员体检信息Ajax返回值
+	 */
+	@SuppressWarnings("unchecked")
+	public VTTeaMedical searchShowTj(String teacherid)
+			throws FinanceServiceException {
+		VTTeaMedical te = new VTTeaMedical();
+		String hql = "from TTeaMedical where teacherBaseInfo.VId=?";
+		List<TTeaMedical> list = super.find(hql,teacherid);
+		if(list != null && list.size()>0){
+			TTeaMedical old = list.get(0);
+		//	jytj.setDCreatedate(old.getDCreatedate());
+		//	jytj.setDIssueTime(old.getDIssueTime());
+		//	jytj.setDResultdate(old.getDResultdate());
+		//	jytj.setDUsedTime(old.getDUsedTime());
+			//jytj.setILevel(old.getILevel());
+			te.setTeacherBaseInfo(old.getTeacherBaseInfo().getVName());
+			//jytj.setTUser(old.getTUser().getVUsername());
+			te.setVCompany(old.getVCompany());
+			//jytj.setVDoctor(old.getVDoctor());
+			te.setVId(old.getVId());
+			te.setVIssuer(old.getVIssuer());
+			te.setVLimit(old.getVLimit());
+			te.setVNation(old.getVNation());
+			te.setDeptName(old.getTeacherBaseInfo().getTOrg().getVName());
+			te.setTeacherCode(old.getTeacherBaseInfo().getVCode());
+			
+			if(old.getILevel()==null || old.getDIssueTime()==null){
+				te.setILevel("");
+				te.setDResultdate("");
+				te.setDIssueTime("");
+				te.setDUsedTime("");
+				te.setVDoctor("");
+				te.setVIssuer("");
+			}else{
+				if(old.getILevel()==0){
+					te.setILevel("Ⅰ级体检合格证");
+				}else if(old.getILevel()==1){
+					te.setILevel("Ⅰ级体检合格证(限91部运行)");
+				}else{
+					te.setILevel("Ⅱ级体检合格证");
+				}
+				te.setDResultdate(Utilities.format(old.getDResultdate()));
+				te.setDIssueTime(Utilities.format(old.getDIssueTime()));
+				te.setDUsedTime(Utilities.format(old.getDUsedTime()));
+				te.setVDoctor(old.getVDoctor());
+				te.setVIssuer(old.getVIssuer());
+			}
+		}
+		return te;
+	}
+	@SuppressWarnings("unchecked")
+	public VTTeaMedical readTeacherTjByName(String userName)
+			throws FinanceServiceException {
+		VTTeaMedical te = new VTTeaMedical();
+		String hql = "from TTeaMedical where teacherBaseInfo.VCode=?";
+		List<TTeaMedical> list = super.find(hql,userName);
+		if(list != null && list.size()>0){
+			TTeaMedical old = list.get(0);
+		//	jytj.setDCreatedate(old.getDCreatedate());
+		//	jytj.setDIssueTime(old.getDIssueTime());
+		//	jytj.setDResultdate(old.getDResultdate());
+		//	jytj.setDUsedTime(old.getDUsedTime());
+			//jytj.setILevel(old.getILevel());
+			te.setTeacherBaseInfo(old.getTeacherBaseInfo().getVName());
+			//jytj.setTUser(old.getTUser().getVUsername());
+			te.setVCompany(old.getVCompany());
+			//jytj.setVDoctor(old.getVDoctor());
+			te.setVId(old.getVId());
+			te.setVIssuer(old.getVIssuer());
+			te.setVLimit(old.getVLimit());
+			te.setVNation(old.getVNation());
+			te.setDeptName(old.getTeacherBaseInfo().getTOrg().getVName());
+			te.setTeacherCode(old.getTeacherBaseInfo().getVCode());
+			
+			if(old.getILevel()==null || old.getDIssueTime()==null){
+				te.setILevel("");
+				te.setDResultdate("");
+				te.setDIssueTime("");
+				te.setDUsedTime("");
+				te.setVDoctor("");
+				te.setVIssuer("");
+			}else{
+				if(old.getILevel()==0){
+					te.setILevel("Ⅰ级体检合格证");
+				}else if(old.getILevel()==1){
+					te.setILevel("Ⅰ级体检合格证(限91部运行)");
+				}else{
+					te.setILevel("Ⅱ级体检合格证");
+				}
+				te.setDResultdate(Utilities.format(old.getDResultdate()));
+				te.setDIssueTime(Utilities.format(old.getDIssueTime()));
+				te.setDUsedTime(Utilities.format(old.getDUsedTime()));
+				te.setVDoctor(old.getVDoctor());
+				te.setVIssuer(old.getVIssuer());
+			}
+		}
+		return te;
+	}
+	/**
+	 * @功能描述：通过教员ID查询该教员执照信息
+	 */
+	@SuppressWarnings("unchecked")
+	public TTeaLicense searchZz(String teacherid)
+			throws FinanceServiceException {
+		TTeaLicense jyzz = new TTeaLicense();
+		String hql = "from TTeaLicense where teacherBaseInfo.VId=?";
+		List<TTeaLicense> list = super.find(hql,teacherid);
+		if(list != null && list.size()>0){
+			jyzz = list.get(0);
+		}
+		return jyzz;
+	}
+	/**
+	 * @功能描述：用于Ajax返回查看教员执照信息
+	 */
+	@SuppressWarnings("unchecked")
+	public VTTeaLicense searchShowZz(String teacherid)
+			throws FinanceServiceException {
+		VTTeaLicense jyzz = new VTTeaLicense();
+		String hql = "from TTeaLicense where teacherBaseInfo.VId=?";
+		List<TTeaLicense> list = super.find(hql,teacherid);
+		
+		//教员执照等级
+		List<TDiction> zzdjlist = searchTDictionByType("教员执照等级");
+		//教员执照类型
+		List<TDiction> zzlxlist = searchTDictionByType("教员执照类型");
+		//执照类型
+		List<TDiction> zzlx = searchTDictionByType("教员类型");
+		//仪表等级
+		List<TDiction> ybdj = searchTDictionByType("仪表等级");
+		//飞机级别等级
+		List<TDiction> fjjbdj = searchTDictionByType("飞机级别等级");
+		//航空器类别
+		List<TDiction> hkqlb = searchTDictionByType("航空器类别");
+		//航空器型别等级
+		List<TDiction> hkqxbdj = searchTDictionByType("航空器型别等级");
+		//旋翼机级别等级
+		List<TDiction> xyjdj = searchTDictionByType("旋翼机级别等级");
+		//运输航空公司飞行教员执照等级
+		List<TDiction> ysdj = searchTDictionByType("运输航空公司飞行教员执照等级");
+		if(list != null && list.size()>0){
+			TTeaLicense old = list.get(0);
+			jyzz.setDChecktime(old.getDChecktime());
+			jyzz.setDCreatedate(old.getDCreatedate());
+			jyzz.setDEffectdate(old.getDEffectdate());
+			jyzz.setDExamtime(old.getDExamtime());
+			jyzz.setDIssuetime(old.getDIssuetime());
+			jyzz.setDLastchecktime(old.getDLastchecktime());
+			jyzz.setDNextchecktime(old.getDNextchecktime());
+			jyzz.setDUpdatedate(old.getDUpdatedate());
+			jyzz.setIHgz(old.getIHgz());
+			jyzz.setIJiankong(old.getIJiankong());
+			jyzz.setTeacherBaseInfo(old.getTeacherBaseInfo().getVName());
+			jyzz.setTUser(old.getTUser().getVUsername());
+			jyzz.setVCardid(old.getVCardid());
+			jyzz.setVCompany(old.getVCompany());
+			//zzdjlist
+			String[] zzdjle = null;
+			if(old.getVDengji() != null){
+				zzdjle = old.getVDengji().split(",");
+			}
+			String zzdjstr = "";
+			if(zzdjle != null && zzdjlist != null){
+				for(int i=0; i<zzdjle.length; i++){
+					for(int j=0; j<zzdjlist.size(); j++){
+						if(zzdjle[i].equals(zzdjlist.get(j).getVId())){
+							zzdjstr+=zzdjlist.get(j).getVName()+" ";
+						}
+					}
+				}
+			}
+			jyzz.setVDengji(zzdjstr);
+			//fjjbdj
+			String[] fjjbdjle = null;
+			if(old.getVFjjbdj() != null){
+				fjjbdjle = old.getVFjjbdj().split(",");
+			}
+			String fjjbdjstr = "";
+			if(fjjbdjle != null && fjjbdj != null){
+				for(int i=0; i<fjjbdjle.length; i++){
+					for(int j=0; j<fjjbdj.size(); j++){
+						if(fjjbdjle[i].equals(fjjbdj.get(j).getVId())){
+							fjjbdjstr+=fjjbdj.get(j).getVName()+" ";
+						}
+					}
+				}
+			}
+			jyzz.setVFjjbdj(fjjbdjstr);
+			//hkqxbdj
+			String[] hkqxbdjle = null;
+			if(old.getVHkqdj() != null){
+				hkqxbdjle = old.getVHkqdj().split(",");
+			}
+			String hkqxbdjstr = "";
+			if(hkqxbdjle != null && hkqxbdj != null){
+				for(int i=0; i<hkqxbdjle.length; i++){
+					for(int j=0; j<hkqxbdj.size(); j++){
+						if(hkqxbdjle[i].equals(hkqxbdj.get(j).getVId())){
+							hkqxbdjstr+=hkqxbdj.get(j).getVName()+" ";
+						}
+					}
+				}
+			}
+			jyzz.setVHkqdj(hkqxbdjstr);
+			//hkqlb
+			String[] hkqlble = null;
+			if(old.getVHkqlb() != null){
+				hkqlble = old.getVHkqlb().split(",");
+			}
+			String hkqlbstr = "";
+			if(hkqlble != null && hkqlb != null){
+				for(int i=0; i<hkqlble.length; i++){
+					for(int j=0; j<hkqlb.size(); j++){
+						if(hkqlble[i].equals(hkqlb.get(j).getVId())){
+							hkqlbstr+=hkqlb.get(j).getVName()+" ";
+						}
+					}
+				}
+			}
+			jyzz.setVHkqlb(hkqlbstr);
+			//zzlxlist
+			String[] zzlxlistle = null;
+			if(old.getVJyzzlx() != null){
+				zzlxlistle = old.getVJyzzlx().split(",");
+			}
+			String zzlxliststr = "";
+			if(zzlxlistle != null && zzlxlist != null){
+				for(int i=0; i<zzlxlistle.length; i++){
+					for(int j=0; j<zzlxlist.size(); j++){
+						if(zzlxlistle[i].equals(zzlxlist.get(j).getVId())){
+							zzlxliststr+=zzlxlist.get(j).getVName()+" ";
+						}
+					}
+				}
+			}
+			jyzz.setVJyzzlx(zzlxliststr);
+			//xyjdj
+			String[] xyjdjle = null;
+			if(old.getVXyjdj() != null){
+				xyjdjle = old.getVXyjdj().split(",");
+			}
+			String xyjdjstr = "";
+			if(xyjdjle != null && xyjdj != null){
+				for(int i=0; i<xyjdjle.length; i++){
+					for(int j=0; j<xyjdj.size(); j++){
+						if(xyjdjle[i].equals(xyjdj.get(j).getVId())){
+							xyjdjstr+=xyjdj.get(j).getVName()+" ";
+						}
+					}
+				}
+			}
+			jyzz.setVXyjdj(xyjdjstr);
+			//ybdj
+			String[] ybdjle = null;
+			if(old.getVYbdj() != null){
+				ybdjle = old.getVYbdj().split(",");
+			}
+			String ybdjstr = "";
+			if(ybdjle != null && ybdj != null){
+				for(int i=0; i<ybdjle.length; i++){
+					for(int j=0; j<ybdj.size(); j++){
+						if(ybdjle[i].equals(ybdj.get(j).getVId())){
+							ybdjstr+=ybdj.get(j).getVName()+" ";
+						}
+					}
+				}
+			}
+			jyzz.setVYbdj(ybdjstr);
+			//ysdj
+			String[] ysdjle = null;
+			if(old.getVYszzdj() != null){
+				ysdjle = old.getVYszzdj().split(",");
+			}
+			String ysdjstr = "";
+			if(ysdjle != null && ysdj != null){
+				for(int i=0; i<ysdjle.length; i++){
+					for(int j=0; j<ysdj.size(); j++){
+						if(ysdjle[i].equals(ysdj.get(j).getVId())){
+							ysdjstr+=ysdj.get(j).getVName()+"  ";
+						}
+					}
+				}
+			}
+			jyzz.setVYszzdj(ysdjstr);
+			//zzlx
+			String[] zzlxle = null;
+			if(old.getVZzlx() != null){
+				zzlxle = old.getVZzlx().split(",");
+			}
+			String zzlxstr = "";
+			if(zzlxle != null && zzlx != null){
+				for(int i=0; i<zzlxle.length; i++){
+					for(int j=0; j<zzlx.size(); j++){
+						if(zzlxle[i].equals(zzlx.get(j).getVId())){
+							zzlxstr+=zzlx.get(j).getVName()+" ";
+						}
+					}
+				}
+			}
+			jyzz.setVZzlx(zzlxstr);
+			jyzz.setVId(old.getVId());
+			jyzz.setVIssuer(old.getVIssuer());
+			jyzz.setVXingzhi(old.getVXingzhi());
+			jyzz.setDeptName(old.getTeacherBaseInfo().getTOrg().getVName());
+			jyzz.setTeacherCode(old.getTeacherBaseInfo().getVCode());
+		}
+		return jyzz;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public VTTeaLicense readTeacherZzByName(String userName)
+			throws FinanceServiceException {
+		VTTeaLicense jyzz = new VTTeaLicense();
+		String hql = "from TTeaLicense where teacherBaseInfo.VCode=?";
+		List<TTeaLicense> list = super.find(hql,userName);
+		
+		//教员执照等级
+		List<TDiction> zzdjlist = searchTDictionByType("教员执照等级");
+		//教员执照类型
+		List<TDiction> zzlxlist = searchTDictionByType("教员执照类型");
+		//执照类型
+		List<TDiction> zzlx = searchTDictionByType("教员类型");
+		//仪表等级
+		List<TDiction> ybdj = searchTDictionByType("仪表等级");
+		//飞机级别等级
+		List<TDiction> fjjbdj = searchTDictionByType("飞机级别等级");
+		//航空器类别
+		List<TDiction> hkqlb = searchTDictionByType("航空器类别");
+		//航空器型别等级
+		List<TDiction> hkqxbdj = searchTDictionByType("航空器型别等级");
+		//旋翼机级别等级
+		List<TDiction> xyjdj = searchTDictionByType("旋翼机级别等级");
+		//运输航空公司飞行教员执照等级
+		List<TDiction> ysdj = searchTDictionByType("运输航空公司飞行教员执照等级");
+		if(list != null && list.size()>0){
+			TTeaLicense old = list.get(0);
+			jyzz.setDChecktime(old.getDChecktime());
+			jyzz.setDCreatedate(old.getDCreatedate());
+			if(old.getDEffectdate()==null){
+				jyzz.setVeffectdate("");
+			}else{
+				jyzz.setVeffectdate(Utilities.format(old.getDEffectdate()));
+			}
+			jyzz.setDExamtime(old.getDExamtime());
+			if(old.getDIssuetime()==null){
+				jyzz.setVissuetime("");
+			}else{
+				jyzz.setVissuetime(Utilities.format(old.getDIssuetime()));
+			}
+			jyzz.setDLastchecktime(old.getDLastchecktime());
+			jyzz.setDNextchecktime(old.getDNextchecktime());
+			if(old.getDUpdatedate()==null){
+				jyzz.setVupdatedate("");
+			}else{
+				jyzz.setVupdatedate(Utilities.format(old.getDUpdatedate()));
+			}
+			jyzz.setIHgz(old.getIHgz());
+			jyzz.setIJiankong(old.getIJiankong());
+			jyzz.setTeacherBaseInfo(old.getTeacherBaseInfo().getVName());
+			jyzz.setTUser(old.getTUser().getVUsername());
+			jyzz.setVCardid(old.getVCardid());
+			jyzz.setVCompany(old.getVCompany());
+			//zzdjlist
+			String[] zzdjle = null;
+			if(old.getVDengji() != null){
+				zzdjle = old.getVDengji().split(",");
+			}
+			String zzdjstr = "";
+			if(zzdjle != null && zzdjlist != null){
+				for(int i=0; i<zzdjle.length; i++){
+					for(int j=0; j<zzdjlist.size(); j++){
+						if(zzdjle[i].equals(zzdjlist.get(j).getVId())){
+							zzdjstr+=zzdjlist.get(j).getVName()+" ";
+						}
+					}
+				}
+			}
+			jyzz.setVDengji(zzdjstr);
+			//fjjbdj
+			String[] fjjbdjle = null;
+			if(old.getVFjjbdj() != null){
+				fjjbdjle = old.getVFjjbdj().split(",");
+			}
+			String fjjbdjstr = "";
+			if(fjjbdjle != null && fjjbdj != null){
+				for(int i=0; i<fjjbdjle.length; i++){
+					for(int j=0; j<fjjbdj.size(); j++){
+						if(fjjbdjle[i].equals(fjjbdj.get(j).getVId())){
+							fjjbdjstr+=fjjbdj.get(j).getVName()+" ";
+						}
+					}
+				}
+			}
+			jyzz.setVFjjbdj(fjjbdjstr);
+			//hkqxbdj
+			String[] hkqxbdjle = null;
+			if(old.getVHkqdj() != null){
+				hkqxbdjle = old.getVHkqdj().split(",");
+			}
+			String hkqxbdjstr = "";
+			if(hkqxbdjle != null && hkqxbdj != null){
+				for(int i=0; i<hkqxbdjle.length; i++){
+					for(int j=0; j<hkqxbdj.size(); j++){
+						if(hkqxbdjle[i].equals(hkqxbdj.get(j).getVId())){
+							hkqxbdjstr+=hkqxbdj.get(j).getVName()+" ";
+						}
+					}
+				}
+			}
+			jyzz.setVHkqdj(hkqxbdjstr);
+			//hkqlb
+			String[] hkqlble = null;
+			if(old.getVHkqlb() != null){
+				hkqlble = old.getVHkqlb().split(",");
+			}
+			String hkqlbstr = "";
+			if(hkqlble != null && hkqlb != null){
+				for(int i=0; i<hkqlble.length; i++){
+					for(int j=0; j<hkqlb.size(); j++){
+						if(hkqlble[i].equals(hkqlb.get(j).getVId())){
+							hkqlbstr+=hkqlb.get(j).getVName()+" ";
+						}
+					}
+				}
+			}
+			jyzz.setVHkqlb(hkqlbstr);
+			//zzlxlist
+			String[] zzlxlistle = null;
+			if(old.getVJyzzlx() != null){
+				zzlxlistle = old.getVJyzzlx().split(",");
+			}
+			String zzlxliststr = "";
+			if(zzlxlistle != null && zzlxlist != null){
+				for(int i=0; i<zzlxlistle.length; i++){
+					for(int j=0; j<zzlxlist.size(); j++){
+						if(zzlxlistle[i].equals(zzlxlist.get(j).getVId())){
+							zzlxliststr+=zzlxlist.get(j).getVName()+" ";
+						}
+					}
+				}
+			}
+			jyzz.setVJyzzlx(zzlxliststr);
+			//xyjdj
+			String[] xyjdjle = null;
+			if(old.getVXyjdj() != null){
+				xyjdjle = old.getVXyjdj().split(",");
+			}
+			String xyjdjstr = "";
+			if(xyjdjle != null && xyjdj != null){
+				for(int i=0; i<xyjdjle.length; i++){
+					for(int j=0; j<xyjdj.size(); j++){
+						if(xyjdjle[i].equals(xyjdj.get(j).getVId())){
+							xyjdjstr+=xyjdj.get(j).getVName()+" ";
+						}
+					}
+				}
+			}
+			jyzz.setVXyjdj(xyjdjstr);
+			//ybdj
+			String[] ybdjle = null;
+			if(old.getVYbdj() != null){
+				ybdjle = old.getVYbdj().split(",");
+			}
+			String ybdjstr = "";
+			if(ybdjle != null && ybdj != null){
+				for(int i=0; i<ybdjle.length; i++){
+					for(int j=0; j<ybdj.size(); j++){
+						if(ybdjle[i].equals(ybdj.get(j).getVId())){
+							ybdjstr+=ybdj.get(j).getVName()+" ";
+						}
+					}
+				}
+			}
+			jyzz.setVYbdj(ybdjstr);
+			//ysdj
+			String[] ysdjle = null;
+			if(old.getVYszzdj() != null){
+				ysdjle = old.getVYszzdj().split(",");
+			}
+			String ysdjstr = "";
+			if(ysdjle != null && ysdj != null){
+				for(int i=0; i<ysdjle.length; i++){
+					for(int j=0; j<ysdj.size(); j++){
+						if(ysdjle[i].equals(ysdj.get(j).getVId())){
+							ysdjstr+=ysdj.get(j).getVName()+"  ";
+						}
+					}
+				}
+			}
+			jyzz.setVYszzdj(ysdjstr);
+			//zzlx
+			String[] zzlxle = null;
+			if(old.getVZzlx() != null){
+				zzlxle = old.getVZzlx().split(",");
+			}
+			String zzlxstr = "";
+			if(zzlxle != null && zzlx != null){
+				for(int i=0; i<zzlxle.length; i++){
+					for(int j=0; j<zzlx.size(); j++){
+						if(zzlxle[i].equals(zzlx.get(j).getVId())){
+							zzlxstr+=zzlx.get(j).getVName()+" ";
+						}
+					}
+				}
+			}
+			jyzz.setVZzlx(zzlxstr);
+			jyzz.setVId(old.getVId());
+			jyzz.setVIssuer(old.getVIssuer());
+			jyzz.setVXingzhi(old.getVXingzhi());
+			jyzz.setDeptName(old.getTeacherBaseInfo().getTOrg().getVName());
+			jyzz.setTeacherCode(old.getTeacherBaseInfo().getVCode());
+		}
+		return jyzz;
+	}
+	@SuppressWarnings("unchecked")
+	public VTTeaLicense searchShowZzHisory(String teacherid,String type)
+			throws FinanceServiceException {
+		VTTeaLicense jyzz = null;
+		String hql = "from TTeaLicense where teacherBaseInfo.VId=?";
+		if(type.equals("1")){
+			hql = "from TeacherLicenseupdate where TTeaLicense.teacherBaseInfo.VId=?";
+		}
+		List<TTeaLicense> list = super.find(hql,teacherid);
+		
+		//教员执照等级
+		List<TDiction> zzdjlist = searchTDictionByType("教员执照等级");
+		//教员执照类型
+		List<TDiction> zzlxlist = searchTDictionByType("教员执照类型");
+		//执照类型
+		List<TDiction> zzlx = searchTDictionByType("教员类型");
+		//仪表等级
+		List<TDiction> ybdj = searchTDictionByType("仪表等级");
+		//飞机级别等级
+		List<TDiction> fjjbdj = searchTDictionByType("飞机级别等级");
+		//航空器类别
+		List<TDiction> hkqlb = searchTDictionByType("航空器类别");
+		//航空器型别等级
+		List<TDiction> hkqxbdj = searchTDictionByType("航空器型别等级");
+		//旋翼机级别等级
+		List<TDiction> xyjdj = searchTDictionByType("旋翼机级别等级");
+		//运输航空公司飞行教员执照等级
+		List<TDiction> ysdj = searchTDictionByType("运输航空公司飞行教员执照等级");
+		if(list != null && list.size()>0){
+			if(type.equals("0")){
+				TTeaLicense old = list.get(0);
+				jyzz = new VTTeaLicense();
+				jyzz.setDChecktime(old.getDChecktime());
+				jyzz.setDCreatedate(old.getDCreatedate());
+				jyzz.setDEffectdate(old.getDEffectdate());
+				jyzz.setDExamtime(old.getDExamtime());
+				jyzz.setDIssuetime(old.getDIssuetime());
+				jyzz.setDLastchecktime(old.getDLastchecktime());
+				jyzz.setDNextchecktime(old.getDNextchecktime());
+				jyzz.setDUpdatedate(old.getDUpdatedate());
+				jyzz.setIHgz(old.getIHgz());
+				jyzz.setIJiankong(old.getIJiankong());
+				jyzz.setTeacherBaseInfo(old.getTeacherBaseInfo().getVName());
+				jyzz.setTUser(old.getTUser().getVUsername());
+				jyzz.setVCardid(old.getVCardid());
+				jyzz.setVCompany(old.getVCompany());
+				//zzdjlist
+				String[] zzdjle = null;
+				if(old.getVDengji() != null){
+					zzdjle = old.getVDengji().split(",");
+				}
+				String zzdjstr = "";
+				if(zzdjle != null && zzdjlist != null){
+					for(int i=0; i<zzdjle.length; i++){
+						for(int j=0; j<zzdjlist.size(); j++){
+							if(zzdjle[i].equals(zzdjlist.get(j).getVId())){
+								zzdjstr+=zzdjlist.get(j).getVName()+" ";
+							}
+						}
+					}
+				}
+				jyzz.setVDengji(zzdjstr);
+				//fjjbdj
+				String[] fjjbdjle = null;
+				if(old.getVFjjbdj() != null){
+					fjjbdjle = old.getVFjjbdj().split(",");
+				}
+				String fjjbdjstr = "";
+				if(fjjbdjle != null && fjjbdj != null){
+					for(int i=0; i<fjjbdjle.length; i++){
+						for(int j=0; j<fjjbdj.size(); j++){
+							if(fjjbdjle[i].equals(fjjbdj.get(j).getVId())){
+								fjjbdjstr+=fjjbdj.get(j).getVName()+" ";
+							}
+						}
+					}
+				}
+				jyzz.setVFjjbdj(fjjbdjstr);
+				//hkqxbdj
+				String[] hkqxbdjle = null;
+				if(old.getVHkqdj() != null){
+					hkqxbdjle = old.getVHkqdj().split(",");
+				}
+				String hkqxbdjstr = "";
+				if(hkqxbdjle != null && hkqxbdj != null){
+					for(int i=0; i<hkqxbdjle.length; i++){
+						for(int j=0; j<hkqxbdj.size(); j++){
+							if(hkqxbdjle[i].equals(hkqxbdj.get(j).getVId())){
+								hkqxbdjstr+=hkqxbdj.get(j).getVName()+" ";
+							}
+						}
+					}
+				}
+				jyzz.setVHkqdj(hkqxbdjstr);
+				//hkqlb
+				String[] hkqlble = null;
+				if(old.getVHkqlb() != null){
+					hkqlble = old.getVHkqlb().split(",");
+				}
+				String hkqlbstr = "";
+				if(hkqlble != null && hkqlb != null){
+					for(int i=0; i<hkqlble.length; i++){
+						for(int j=0; j<hkqlb.size(); j++){
+							if(hkqlble[i].equals(hkqlb.get(j).getVId())){
+								hkqlbstr+=hkqlb.get(j).getVName()+" ";
+							}
+						}
+					}
+				}
+				jyzz.setVHkqlb(hkqlbstr);
+				//zzlxlist
+				String[] zzlxlistle = null;
+				if(old.getVJyzzlx() != null){
+					zzlxlistle = old.getVJyzzlx().split(",");
+				}
+				String zzlxliststr = "";
+				if(zzlxlistle != null && zzlxlist != null){
+					for(int i=0; i<zzlxlistle.length; i++){
+						for(int j=0; j<zzlxlist.size(); j++){
+							if(zzlxlistle[i].equals(zzlxlist.get(j).getVId())){
+								zzlxliststr+=zzlxlist.get(j).getVName()+" ";
+							}
+						}
+					}
+				}
+				jyzz.setVJyzzlx(zzlxliststr);
+				//xyjdj
+				String[] xyjdjle = null;
+				if(old.getVXyjdj() != null){
+					xyjdjle = old.getVXyjdj().split(",");
+				}
+				String xyjdjstr = "";
+				if(xyjdjle != null && xyjdj != null){
+					for(int i=0; i<xyjdjle.length; i++){
+						for(int j=0; j<xyjdj.size(); j++){
+							if(xyjdjle[i].equals(xyjdj.get(j).getVId())){
+								xyjdjstr+=xyjdj.get(j).getVName()+" ";
+							}
+						}
+					}
+				}
+				jyzz.setVXyjdj(xyjdjstr);
+				//ybdj
+				String[] ybdjle = null;
+				if(old.getVYbdj() != null){
+					ybdjle = old.getVYbdj().split(",");
+				}
+				String ybdjstr = "";
+				if(ybdjle != null && ybdj != null){
+					for(int i=0; i<ybdjle.length; i++){
+						for(int j=0; j<ybdj.size(); j++){
+							if(ybdjle[i].equals(ybdj.get(j).getVId())){
+								ybdjstr+=ybdj.get(j).getVName()+" ";
+							}
+						}
+					}
+				}
+				jyzz.setVYbdj(ybdjstr);
+				//ysdj
+				String[] ysdjle = null;
+				if(old.getVYszzdj() != null){
+					ysdjle = old.getVYszzdj().split(",");
+				}
+				String ysdjstr = "";
+				if(ysdjle != null && ysdj != null){
+					for(int i=0; i<ysdjle.length; i++){
+						for(int j=0; j<ysdj.size(); j++){
+							if(ysdjle[i].equals(ysdj.get(j).getVId())){
+								ysdjstr+=ysdj.get(j).getVName()+"  ";
+							}
+						}
+					}
+				}
+				jyzz.setVYszzdj(ysdjstr);
+				//zzlx
+				String[] zzlxle = null;
+				if(old.getVZzlx() != null){
+					zzlxle = old.getVZzlx().split(",");
+				}
+				String zzlxstr = "";
+				if(zzlxle != null && zzlx != null){
+					for(int i=0; i<zzlxle.length; i++){
+						for(int j=0; j<zzlx.size(); j++){
+							if(zzlxle[i].equals(zzlx.get(j).getVId())){
+								zzlxstr+=zzlx.get(j).getVName()+" ";
+							}
+						}
+					}
+				}
+				jyzz.setVZzlx(zzlxstr);
+				jyzz.setVId(old.getVId());
+				jyzz.setVIssuer(old.getVIssuer());
+				jyzz.setVXingzhi(old.getVXingzhi());
+				jyzz.setDeptName(old.getTeacherBaseInfo().getTOrg().getVName());
+				jyzz.setTeacherCode(old.getTeacherBaseInfo().getVCode());
+			}else{
+				List<TeacherLicenseupdate> ulist= super.find(hql, teacherid);
+				if(ulist.size()>0){
+					jyzz = new VTTeaLicense();
+					TeacherLicenseupdate old = ulist.get(0);
+					jyzz.setDChecktime(old.getDChecktime());
+					jyzz.setDCreatedate(old.getDCreatedate());
+					jyzz.setDEffectdate(old.getDEffectdate());
+					jyzz.setDExamtime(old.getDExamtime());
+					jyzz.setDIssuetime(old.getDQfsj());
+					jyzz.setDLastchecktime(old.getDLastchecktime());
+					jyzz.setDNextchecktime(old.getDNextchecktime());
+					jyzz.setDUpdatedate(old.getDUpdatedate());
+					jyzz.setIHgz(old.getIHgz());
+					jyzz.setIJiankong(old.getIJiankong());
+					jyzz.setTeacherBaseInfo(old.getTeacherBaseInfo().getVName());
+					jyzz.setTUser(old.getTUser().getVUsername());
+					jyzz.setVCardid(old.getVCardid());
+					jyzz.setVCompany(old.getVQfdw());
+					//zzdjlist
+					String[] zzdjle = null;
+					if(old.getVDengji() != null){
+						zzdjle = old.getVDengji().split(",");
+					}
+					String zzdjstr = "";
+					if(zzdjle != null && zzdjlist != null){
+						for(int i=0; i<zzdjle.length; i++){
+							for(int j=0; j<zzdjlist.size(); j++){
+								if(zzdjle[i].equals(zzdjlist.get(j).getVId())){
+									zzdjstr+=zzdjlist.get(j).getVName()+" ";
+								}
+							}
+						}
+					}
+					jyzz.setVDengji(zzdjstr);
+					//fjjbdj
+					String[] fjjbdjle = null;
+					if(old.getVFjjbdj() != null){
+						fjjbdjle = old.getVFjjbdj().split(",");
+					}
+					String fjjbdjstr = "";
+					if(fjjbdjle != null && fjjbdj != null){
+						for(int i=0; i<fjjbdjle.length; i++){
+							for(int j=0; j<fjjbdj.size(); j++){
+								if(fjjbdjle[i].equals(fjjbdj.get(j).getVId())){
+									fjjbdjstr+=fjjbdj.get(j).getVName()+" ";
+								}
+							}
+						}
+					}
+					jyzz.setVFjjbdj(fjjbdjstr);
+					//hkqxbdj
+					String[] hkqxbdjle = null;
+					if(old.getVHkqdj() != null){
+						hkqxbdjle = old.getVHkqdj().split(",");
+					}
+					String hkqxbdjstr = "";
+					if(hkqxbdjle != null && hkqxbdj != null){
+						for(int i=0; i<hkqxbdjle.length; i++){
+							for(int j=0; j<hkqxbdj.size(); j++){
+								if(hkqxbdjle[i].equals(hkqxbdj.get(j).getVId())){
+									hkqxbdjstr+=hkqxbdj.get(j).getVName()+" ";
+								}
+							}
+						}
+					}
+					jyzz.setVHkqdj(hkqxbdjstr);
+					//hkqlb
+					String[] hkqlble = null;
+					if(old.getVHkqlb() != null){
+						hkqlble = old.getVHkqlb().split(",");
+					}
+					String hkqlbstr = "";
+					if(hkqlble != null && hkqlb != null){
+						for(int i=0; i<hkqlble.length; i++){
+							for(int j=0; j<hkqlb.size(); j++){
+								if(hkqlble[i].equals(hkqlb.get(j).getVId())){
+									hkqlbstr+=hkqlb.get(j).getVName()+" ";
+								}
+							}
+						}
+					}
+					jyzz.setVHkqlb(hkqlbstr);
+					//zzlxlist
+					String[] zzlxlistle = null;
+					if(old.getVJyzzlx() != null){
+						zzlxlistle = old.getVJyzzlx().split(",");
+					}
+					String zzlxliststr = "";
+					if(zzlxlistle != null && zzlxlist != null){
+						for(int i=0; i<zzlxlistle.length; i++){
+							for(int j=0; j<zzlxlist.size(); j++){
+								if(zzlxlistle[i].equals(zzlxlist.get(j).getVId())){
+									zzlxliststr+=zzlxlist.get(j).getVName()+" ";
+								}
+							}
+						}
+					}
+					jyzz.setVJyzzlx(zzlxliststr);
+					//xyjdj
+					String[] xyjdjle = null;
+					if(old.getVXyjdj() != null){
+						xyjdjle = old.getVXyjdj().split(",");
+					}
+					String xyjdjstr = "";
+					if(xyjdjle != null && xyjdj != null){
+						for(int i=0; i<xyjdjle.length; i++){
+							for(int j=0; j<xyjdj.size(); j++){
+								if(xyjdjle[i].equals(xyjdj.get(j).getVId())){
+									xyjdjstr+=xyjdj.get(j).getVName()+" ";
+								}
+							}
+						}
+					}
+					jyzz.setVXyjdj(xyjdjstr);
+					//ybdj
+					String[] ybdjle = null;
+					if(old.getVYbdj() != null){
+						ybdjle = old.getVYbdj().split(",");
+					}
+					String ybdjstr = "";
+					if(ybdjle != null && ybdj != null){
+						for(int i=0; i<ybdjle.length; i++){
+							for(int j=0; j<ybdj.size(); j++){
+								if(ybdjle[i].equals(ybdj.get(j).getVId())){
+									ybdjstr+=ybdj.get(j).getVName()+" ";
+								}
+							}
+						}
+					}
+					jyzz.setVYbdj(ybdjstr);
+					//ysdj
+					String[] ysdjle = null;
+					if(old.getVYszzdj() != null){
+						ysdjle = old.getVYszzdj().split(",");
+					}
+					String ysdjstr = "";
+					if(ysdjle != null && ysdj != null){
+						for(int i=0; i<ysdjle.length; i++){
+							for(int j=0; j<ysdj.size(); j++){
+								if(ysdjle[i].equals(ysdj.get(j).getVId())){
+									ysdjstr+=ysdj.get(j).getVName()+"  ";
+								}
+							}
+						}
+					}
+					jyzz.setVYszzdj(ysdjstr);
+					//zzlx
+					String[] zzlxle = null;
+					if(old.getVZzlx() != null){
+						zzlxle = old.getVZzlx().split(",");
+					}
+					String zzlxstr = "";
+					if(zzlxle != null && zzlx != null){
+						for(int i=0; i<zzlxle.length; i++){
+							for(int j=0; j<zzlx.size(); j++){
+								if(zzlxle[i].equals(zzlx.get(j).getVId())){
+									zzlxstr+=zzlx.get(j).getVName()+" ";
+								}
+							}
+						}
+					}
+					jyzz.setVZzlx(zzlxstr);
+					jyzz.setVId(old.getVId());
+					jyzz.setVIssuer(old.getVIssuer());
+					jyzz.setVXingzhi(old.getVXingzhi());
+					jyzz.setDeptName(old.getTeacherBaseInfo().getTOrg().getVName());
+					jyzz.setTeacherCode(old.getTeacherBaseInfo().getVCode());
+				}
+			}
+			
+		}
+
+		return jyzz;
+	}
+	/**
+	 * @功能描述：通过ID查询体检历史信息
+	 */
+	@SuppressWarnings("unchecked")
+	public TTeaMedicalhistory searchHistoryTj(String id)
+			throws FinanceServiceException {
+		String hql = "from TTeaMedicalhistory where VId=?";
+		List<TTeaMedicalhistory> tj = super.find(hql, id);
+		TTeaMedicalhistory tjhistory = new TTeaMedicalhistory();
+		if(tj != null && tj.size()>0){
+			tjhistory = tj.get(0);
+		}
+		return tjhistory;
+	}
+	/**
+	 * @功能描述：用于Ajax返回查看教员体检历史信息
+	 */
+	@SuppressWarnings("unchecked")
+	public VTTeaMedicalhistory searchHistoryShowTj(String id)
+			throws FinanceServiceException {
+		String hql = "from TTeaMedicalhistory where VId=?";
+		List<TTeaMedicalhistory> tj = super.find(hql, id);
+		VTTeaMedicalhistory tjhistory = new VTTeaMedicalhistory();
+		if(tj != null && tj.size()>0){
+			TTeaMedicalhistory old = tj.get(0);
+			tjhistory.setDCreatedate(old.getDCreatedate());
+			tjhistory.setDIssueTime(old.getDIssueTime());
+			tjhistory.setDResultdate(old.getDResultdate());
+			tjhistory.setDUsedTime(old.getDUsedTime());
+			tjhistory.setILevel(old.getILevel());
+			tjhistory.setTeacherBaseInfo(old.getTeacherBaseInfo().getVName());
+			tjhistory.setTTeaMedical(old.getTTeaMedical().getVId());
+			tjhistory.setTUser(old.getTUser().getVUsername());
+			tjhistory.setVCompany(old.getVCompany());
+			tjhistory.setVDoctor(old.getVDoctor());
+			tjhistory.setVId(old.getVId());
+			tjhistory.setVIssuer(old.getVIssuer());
+			tjhistory.setVLimit(old.getVLimit());
+			tjhistory.setVNation(old.getVNation());
+			tjhistory.setTeacherCode(old.getTeacherBaseInfo().getVCode());
+			tjhistory.setDeptName(old.getTeacherBaseInfo().getTOrg().getVName());
+		}
+		return tjhistory;
+	}
+	/**
+	 * @功能描述：通过ID查询教员执照升级历史信息
+	 */
+	@SuppressWarnings("unchecked")
+	public TeacherLicenseupdate searchHistoryZzSj(String id)
+			throws FinanceServiceException {
+		String hql = "from TeacherLicenseupdate where VId=?";
+		List<TeacherLicenseupdate> tj = super.find(hql, id);
+		TeacherLicenseupdate tjhistory = new TeacherLicenseupdate();
+		if(tj != null && tj.size()>0){
+			tjhistory = tj.get(0);
+		}
+		return tjhistory;
+	}
+	/**
+	 * @功能描述：用于Ajax返回查看教员执照升级历史信息
+	 */
+	@SuppressWarnings("unchecked")
+	public VTeacherLicenseupdate searchHistoryShowZzSj(String id)
+			throws FinanceServiceException {
+		String hql = "from TeacherLicenseupdate where VId=?";
+		List<TeacherLicenseupdate> tj = super.find(hql, id);
+		VTeacherLicenseupdate tjhistory = new VTeacherLicenseupdate();
+		//教员执照等级
+		List<TDiction> zzdjlist = searchTDictionByType("教员执照等级");
+		//教员执照类型
+		List<TDiction> zzlxlist = searchTDictionByType("教员执照类型-教员执照");
+		//执照类型
+		List<TDiction> zzlx = searchTDictionByType("执照类型");
+		//仪表等级
+		List<TDiction> ybdj = searchTDictionByType("仪表等级");
+		//飞机级别等级
+		List<TDiction> fjjbdj = searchTDictionByType("飞机级别等级");
+		//航空器类别
+		List<TDiction> hkqlb = searchTDictionByType("航空器类别");
+		//航空器型别等级
+		List<TDiction> hkqxbdj = searchTDictionByType("航空器型别等级");
+		//旋翼机级别等级
+		List<TDiction> xyjdj = searchTDictionByType("旋翼机级别等级");
+		//运输航空公司飞行教员执照等级
+		List<TDiction> ysdj = searchTDictionByType("运输航空公司飞行教员执照等级");
+		
+		if(tj != null && tj.size()>0){
+			TeacherLicenseupdate old = tj.get(0);
+			tjhistory.setDChecktime(old.getDChecktime());
+			tjhistory.setDCreatedate(old.getDCreatedate());
+			tjhistory.setDEffectdate(old.getDEffectdate());
+			tjhistory.setDExamtime(old.getDExamtime());
+			tjhistory.setDLastchecktime(old.getDLastchecktime());
+			tjhistory.setDNextchecktime(old.getDNextchecktime());
+			tjhistory.setDQfsj(old.getDQfsj());
+			tjhistory.setDUpdatedate(old.getDUpdatedate());
+			tjhistory.setIHgz(old.getIHgz());
+			tjhistory.setIJiankong(old.getIJiankong());
+			tjhistory.setTeacherBaseInfo(old.getTeacherBaseInfo().getVName());
+			tjhistory.setTTeaLicense(old.getTTeaLicense().getVId());
+			tjhistory.setTUser(old.getTUser().getVUsername());
+			tjhistory.setVCardid(old.getVCardid());
+			//zzdjlist
+			String[] zzdjle = null;
+			if(old.getVDengji() != null){
+				zzdjle = old.getVDengji().split(",");
+			}
+			String zzdjstr = "";
+			if(zzdjle != null && zzdjlist != null){
+				for(int i=0; i<zzdjle.length; i++){
+					for(int j=0; j<zzdjlist.size(); j++){
+						if(zzdjle[i].equals(zzdjlist.get(j).getVId())){
+							zzdjstr+=zzdjlist.get(j).getVName()+", ";
+						}
+					}
+				}
+			}
+			tjhistory.setVDengji(zzdjstr);
+			//fjjbdj
+			String[] fjjbdjle = null;
+			if(old.getVFjjbdj() != null){
+				fjjbdjle = old.getVFjjbdj().split(",");
+			}
+			String fjjbdjstr = "";
+			if(fjjbdjle != null && fjjbdj != null){
+				for(int i=0; i<fjjbdjle.length; i++){
+					for(int j=0; j<fjjbdj.size(); j++){
+						if(fjjbdjle[i].equals(fjjbdj.get(j).getVId())){
+							fjjbdjstr+=fjjbdj.get(j).getVName()+", ";
+						}
+					}
+				}
+			}
+			tjhistory.setVFjjbdj(fjjbdjstr);
+			//hkqxbdj
+			String[] hkqxbdjle = null;
+			if(old.getVHkqdj() != null){
+				hkqxbdjle = old.getVHkqdj().split(",");
+			}
+			String hkqxbdjstr = "";
+			if(hkqxbdjle != null && hkqxbdj != null){
+				for(int i=0; i<hkqxbdjle.length; i++){
+					for(int j=0; j<hkqxbdj.size(); j++){
+						if(hkqxbdjle[i].equals(hkqxbdj.get(j).getVId())){
+							hkqxbdjstr+=hkqxbdj.get(j).getVName()+", ";
+						}
+					}
+				}
+			}
+			tjhistory.setVHkqdj(hkqxbdjstr);
+			//hkqlb
+			String[] hkqlble = null;
+			if(old.getVHkqlb() != null){
+				hkqlble = old.getVHkqlb().split(",");
+			}
+			String hkqlbstr = "";
+			if(hkqlble != null && hkqlb != null){
+				for(int i=0; i<hkqlble.length; i++){
+					for(int j=0; j<hkqlb.size(); j++){
+						if(hkqlble[i].equals(hkqlb.get(j).getVId())){
+							hkqlbstr+=hkqlb.get(j).getVName()+", ";
+						}
+					}
+				}
+			}
+			tjhistory.setVHkqlb(hkqlbstr);
+			tjhistory.setVId(old.getVId());
+			tjhistory.setVIssuer(old.getVIssuer());
+			//zzlxlist
+			String[] zzlxlistle = null;
+			if(old.getVJyzzlx() != null){
+				zzlxlistle = old.getVJyzzlx().split(",");
+			}
+			String zzlxliststr = "";
+			if(zzlxlistle != null && zzlxlist != null){
+				for(int i=0; i<zzlxlistle.length; i++){
+					for(int j=0; j<zzlxlist.size(); j++){
+						if(zzlxlistle[i].equals(zzlxlist.get(j).getVId())){
+							zzlxliststr+=zzlxlist.get(j).getVName()+", ";
+						}
+					}
+				}
+			}
+			tjhistory.setVJyzzlx(zzlxliststr);
+			tjhistory.setVQfdw(old.getVQfdw());
+			tjhistory.setVXingzhi(old.getVXingzhi());
+			//xyjdj
+			String[] xyjdjle = null;
+			if(old.getVXyjdj() != null){
+				xyjdjle = old.getVXyjdj().split(",");
+			}
+			String xyjdjstr = "";
+			if(xyjdjle != null && xyjdj != null){
+				for(int i=0; i<xyjdjle.length; i++){
+					for(int j=0; j<xyjdj.size(); j++){
+						if(xyjdjle[i].equals(xyjdj.get(j).getVId())){
+							xyjdjstr+=xyjdj.get(j).getVName()+", ";
+						}
+					}
+				}
+			}
+			tjhistory.setVXyjdj(xyjdjstr);
+			//ybdj
+			String[] ybdjle = null;
+			if(old.getVYbdj() != null){
+				ybdjle = old.getVYbdj().split(",");
+			}
+			String ybdjstr = "";
+			if(ybdjle != null && ybdj != null){
+				for(int i=0; i<ybdjle.length; i++){
+					for(int j=0; j<ybdj.size(); j++){
+						if(ybdjle[i].equals(ybdj.get(j).getVId())){
+							ybdjstr+=ybdj.get(j).getVName()+", ";
+						}
+					}
+				}
+			}
+			tjhistory.setVYbdj(ybdjstr);
+			//ysdj
+			String[] ysdjle = null;
+			if(old.getVYszzdj() != null){
+				ysdjle = old.getVYszzdj().split(",");
+			}
+			String ysdjstr = "";
+			if(ysdjle != null && ysdj != null){
+				for(int i=0; i<ysdjle.length; i++){
+					for(int j=0; j<ysdj.size(); j++){
+						if(ysdjle[i].equals(ysdj.get(j).getVId())){
+							ysdjstr+=ysdj.get(j).getVName()+", ";
+						}
+					}
+				}
+			}
+			tjhistory.setVYszzdj(ysdjstr);
+			//zzlx
+			String[] zzlxle = null;
+			if(old.getVZzlx() != null){
+				zzlxle = old.getVZzlx().split(",");
+			}
+			String zzlxstr = "";
+			if(zzlxle != null && zzlx != null){
+				for(int i=0; i<zzlxle.length; i++){
+					for(int j=0; j<zzlx.size(); j++){
+						if(zzlxle[i].equals(zzlx.get(j).getVId())){
+							zzlxstr+=zzlx.get(j).getVName()+", ";
+						}
+					}
+				}
+			}
+			tjhistory.setVZzlx(zzlxstr);
+			tjhistory.setDeptName(old.getTeacherBaseInfo().getTOrg().getVName());
+			tjhistory.setTeacherCode(old.getTeacherBaseInfo().getVCode());
+		}
+		return tjhistory;
+	}
+	/**
+	 * @功能描述：通过ID查询执照检查信息
+	 */
+	@SuppressWarnings("unchecked")
+	public TTeaLicenseskilledcheck searchHistoryZzJc(String id)
+			throws FinanceServiceException {
+		String hql = "from TTeaLicenseskilledcheck where VId=?";
+		List<TTeaLicenseskilledcheck> tj = super.find(hql, id);
+		TTeaLicenseskilledcheck tjhistory = new TTeaLicenseskilledcheck();
+		if(tj != null && tj.size()>0){
+			tjhistory = tj.get(0);
+		}
+		return tjhistory;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public VOTTeaLicenseskilledcheck searchHistoryShowZzJc(String id)
+			throws FinanceServiceException {
+		String hql = "from TTeaLicenseskilledcheck where VId=?";
+		List<TTeaLicenseskilledcheck> tj = super.find(hql, id);
+		VOTTeaLicenseskilledcheck tjhistory = new VOTTeaLicenseskilledcheck();
+		if(tj != null && tj.size()>0){
+			TTeaLicenseskilledcheck old = tj.get(0);
+			tjhistory.setDCheckdate(old.getDCheckdate());
+			tjhistory.setDCreatedate(old.getDCreatedate());
+			tjhistory.setDEffectdate(old.getDEffectdate());
+			tjhistory.setIChecktype(old.getIChecktype());
+			tjhistory.setTeacherLicenseupdate(old.getTeacherLicenseupdate().getVCardid());
+			tjhistory.setTTeaLicense(old.getTTeaLicense().getVCardid());
+			tjhistory.setTUser(old.getTUser().getVUsername());
+			tjhistory.setVBz(old.getVBz());
+			tjhistory.setVCheckcontent(old.getVCheckcontent());
+			tjhistory.setVCheckteacher(old.getVCheckteacher());
+			tjhistory.setVFlyform(old.getVFlyform());
+			tjhistory.setVId(old.getVId());
+			tjhistory.setDeptName(old.getTTeaLicense().getTeacherBaseInfo().getTOrg().getVName());
+			tjhistory.setTeacherCode(old.getTTeaLicense().getTeacherBaseInfo().getVCode());
+		}
+		return tjhistory;
+	}
+	
+	/**
+	 * @功能描述：添加或修改执照检查信息
+	 */
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public boolean addOrUpZzJc(VTTeaLicenseskilledcheck teaZzJc)
+			throws FinanceServiceException {
+		boolean flag = false;
+		
+		TTeaLicense old = super.get(TTeaLicense.class, teaZzJc.getTTeaLicense().getVId());
+		
+		if(old==null || teaZzJc.getIChecktype()==null || teaZzJc.getIChecktype().length()==0){
+			throw new FinanceServiceException("保存检查信息失败，参数传递错误。");
+		}
+		
+		List<TTeaLicenseskilledcheck> list = new ArrayList<TTeaLicenseskilledcheck>();
+		TTeaLicenseskilledcheck t;
+
+		
+		String[] checktype = teaZzJc.getIChecktype().split(",");
+		
+		
+		Calendar rightNow = Calendar.getInstance(); 
+		
+		
+		
+		for(int i=0; i<checktype.length; i++){
+			t= new TTeaLicenseskilledcheck();
+			t.setTTeaLicense(teaZzJc.getTTeaLicense());
+			t.setDCheckdate(teaZzJc.getDCheckdate());
+			t.setVCheckcontent(teaZzJc.getVCheckcontent());
+			t.setVCheckteacher(teaZzJc.getVCheckteacher());
+			t.setVBz(teaZzJc.getVBz());
+			t.setVFlyform(teaZzJc.getVFlyform());
+			t.setIChecktype(Integer.parseInt(checktype[i]));
+			if(checktype[i].equals("0")){
+				rightNow.setTime(teaZzJc.getDCheckdate());
+				rightNow.add(Calendar.YEAR, 1);
+	
+			}else if(checktype[i].equals("1")){
+				rightNow.setTime(teaZzJc.getDCheckdate());
+				rightNow.add(Calendar.YEAR, 2);
+
+			}else if(checktype[i].equals("2")){
+				rightNow.setTime(teaZzJc.getDCheckdate());
+				rightNow.add(Calendar.YEAR, 2);
+			}else{
+				rightNow.setTime(teaZzJc.getDCheckdate());
+				rightNow.add(Calendar.YEAR, 1);
+			}
+			t.setDEffectdate(rightNow.getTime());//有效期
+			t.setDCreatedate(teaZzJc.getDCreatedate());
+			t.setTUser(teaZzJc.getTUser());
+			list.add(t);
+			
+		}
+		old.setDLastchecktime(teaZzJc.getDCheckdate());
+		if(teaZzJc.getDEffectdate()==null){
+			rightNow.setTime(teaZzJc.getDCheckdate());
+			rightNow.add(Calendar.YEAR, 1);
+			old.setDNextchecktime(rightNow.getTime());
+		}else{
+			old.setDNextchecktime(teaZzJc.getDEffectdate());
+		}
+		super.update(old);
+		super.saveOrUpdateALL(list);
+		/*
+		String hql = "from TTeaLicense where VId=?";
+		List<TTeaLicense> listt = super.find(hql,teaZzJc.getTTeaLicense().getVId());
+		TTeaLicense old = null;
+		if(listt != null && listt.size()>0){
+			old = listt.get(0);
+		}
+		
+		if(teaZzJc != null){
+			if(teaZzJc.getIChecktype()!=null){
+				Date dc = teaZzJc.getDCreatedate();
+				Date dn = teaZzJc.getDEffectdate();
+				String[] checktype = teaZzJc.getIChecktype().split(",");
+				for(int i=0; i<checktype.length; i++){
+					if(checktype[i]!=null&&!checktype[i].equals("")){
+						 = new TTeaLicenseskilledcheck();
+						if(teaZzJc.getVId()!=null && !teaZzJc.getVId().equals("") && !teaZzJc.getVId().equals("null")){
+							if(checktype[i].equals("0")){
+								t.setVId(teaZzJc.getVId());
+								t.setDCheckdate(teaZzJc.getDCheckdate());
+								t.setDCreatedate(teaZzJc.getDCreatedate());
+								t.setDEffectdate(teaZzJc.getDEffectdate());
+								t.setIChecktype(Integer.parseInt(checktype[i]));
+//								t.setTeacherLicenseupdate(teaZzJc.getTeacherLicenseupdate());
+								t.setTTeaLicense(teaZzJc.getTTeaLicense());
+								t.setTUser(teaZzJc.getTUser());
+								t.setVBz(teaZzJc.getVBz());
+								t.setVCheckcontent(teaZzJc.getVCheckcontent());
+								t.setVCheckteacher(teaZzJc.getVCheckteacher());
+								t.setVFlyform(teaZzJc.getVFlyform());
+								list.add(t);
+								if(old != null){
+									old.setDLastchecktime(dc);
+									old.setDNextchecktime(dn);
+								}
+							}else{
+								if(checktype[i].equals("1")){
+									if(old != null){
+										old.setDChecktime(dn);
+									}
+								}
+								if(checktype[i].equals("2")){
+									if(old != null){
+										old.setDExamtime(dn);
+									}
+								}
+								t.setVId(teaZzJc.getVId());
+								t.setDCheckdate(teaZzJc.getDCheckdate());
+								t.setDCreatedate(teaZzJc.getDCreatedate());
+								t.setDEffectdate(teaZzJc.getDEffectdate());
+								t.setIChecktype(Integer.parseInt(checktype[i]));
+								t.setTeacherLicenseupdate(null);
+								t.setTTeaLicense(teaZzJc.getTTeaLicense());
+								t.setTUser(teaZzJc.getTUser());
+								t.setVBz(teaZzJc.getVBz());
+								t.setVCheckcontent(teaZzJc.getVCheckcontent());
+								t.setVCheckteacher(teaZzJc.getVCheckteacher());
+								t.setVFlyform(teaZzJc.getVFlyform());
+								list.add(t);
+							}
+						}else{
+							if(checktype[i].equals("0")){
+								t.setDCheckdate(teaZzJc.getDCheckdate());
+								t.setDCreatedate(teaZzJc.getDCreatedate());
+								t.setDEffectdate(teaZzJc.getDEffectdate());
+								t.setIChecktype(Integer.parseInt(checktype[i]));
+//								t.setTeacherLicenseupdate(teaZzJc.getTeacherLicenseupdate());
+								t.setTTeaLicense(teaZzJc.getTTeaLicense());
+								t.setTUser(teaZzJc.getTUser());
+								t.setVBz(teaZzJc.getVBz());
+								t.setVCheckcontent(teaZzJc.getVCheckcontent());
+								t.setVCheckteacher(teaZzJc.getVCheckteacher());
+								t.setVFlyform(teaZzJc.getVFlyform());
+								list.add(t);
+								if(old != null){
+									old.setDLastchecktime(dc);
+									old.setDNextchecktime(dn);
+								}
+							}else{
+								if(checktype[i].equals("1")){
+									if(old != null){
+										old.setDChecktime(dn);
+									}
+								}
+								if(checktype[i].equals("2")){
+									if(old != null){
+										old.setDExamtime(dn);
+									}
+								}
+								t.setDCheckdate(teaZzJc.getDCheckdate());
+								t.setDCreatedate(teaZzJc.getDCreatedate());
+								t.setDEffectdate(teaZzJc.getDEffectdate());
+								t.setIChecktype(Integer.parseInt(checktype[i]));
+								t.setTeacherLicenseupdate(null);
+								t.setTTeaLicense(teaZzJc.getTTeaLicense());
+								t.setTUser(teaZzJc.getTUser());
+								t.setVBz(teaZzJc.getVBz());
+								t.setVCheckcontent(teaZzJc.getVCheckcontent());
+								t.setVCheckteacher(teaZzJc.getVCheckteacher());
+								t.setVFlyform(teaZzJc.getVFlyform());
+								list.add(t);
+							}
+						}
+					}
+				}
+				super.saveOrUpdateALL(list);
+				super.update(old);
+				flag = true;
+			}
+		}
+		*/
+		return flag;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public List<VOTTeaLicenseskilledcheck> readTeaLicenseCheckList(String teaid)
+			throws FinanceServiceException {
+		String hql =" from TTeaLicenseskilledcheck where TTeaLicense.teacherBaseInfo.VId=? and  teacherLicenseupdate is null";
+		List<TTeaLicenseskilledcheck> list = super.find(hql, teaid);
+		
+		List<VOTTeaLicenseskilledcheck> bList = new ArrayList<VOTTeaLicenseskilledcheck>();
+		VOTTeaLicenseskilledcheck vo;
+		for(TTeaLicenseskilledcheck t:list){
+			vo = new VOTTeaLicenseskilledcheck();
+			vo.setViewDCheckdate(Utilities.format(t.getDCheckdate()));
+			
+			//检查类型
+			if(t.getIChecktype()==0){
+				vo.setTypeName("熟练检查");
+			}else if(t.getIChecktype()==1){
+				vo.setTypeName("定期检查");
+			}else{
+				vo.setTypeName("实践考试");
+			}
+			vo.setVFlyform(t.getVFlyform());
+			vo.setVCheckteacher(t.getVCheckteacher());
+			vo.setViewDEffectdate(Utilities.format(t.getDEffectdate()));
+			long l1 = t.getDEffectdate().getTime();
+			long l2 = new Date().getTime();
+			long dd = (l1-l2)/1000/3600/24 + 1;
+			int d = (int)dd;
+			vo.setIday(d);//剩余天数
+			bList.add(vo);
+		}
+		return bList;
+	}
+	@SuppressWarnings("unchecked")
+	private List<VOTTeaLicenseskilledcheck> readTeaLicenseCheckListById(String uid)
+			throws FinanceServiceException {
+		String hql =" from TTeaLicenseskilledcheck where teacherLicenseupdate.VId=?";
+		List<TTeaLicenseskilledcheck> list = super.find(hql, uid);
+		
+		List<VOTTeaLicenseskilledcheck> bList = new ArrayList<VOTTeaLicenseskilledcheck>();
+		VOTTeaLicenseskilledcheck vo;
+		for(TTeaLicenseskilledcheck t:list){
+
+			vo = new VOTTeaLicenseskilledcheck();
+			vo.setViewDCheckdate(Utilities.format(t.getDCheckdate()));
+			
+			//检查类型
+			if(t.getIChecktype()==0){
+				vo.setTypeName("熟练检查");
+			}else if(t.getIChecktype()==1){
+				vo.setTypeName("定期检查");
+			}else{
+				vo.setTypeName("实践考试");
+			}
+			vo.setVFlyform(t.getVFlyform());
+			vo.setVCheckteacher(t.getVCheckteacher());
+			vo.setViewDEffectdate(Utilities.format(t.getDEffectdate()));
+			long l1 = t.getDEffectdate().getTime();
+			long l2 = new Date().getTime();
+			long dd = (l1-l2)/1000/3600/24 + 1;
+			int d = (int)dd;
+			vo.setIday(d);//剩余天数
+			bList.add(vo);
+		}
+		return bList;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public List<VTeacherBaseInfo> readTeacherLicenseListById(String teaid)
+			throws FinanceServiceException {
+		
+		String hql = " from TTeaLicense where teacherBaseInfo.VId=?";
+		String check = " from TTeaLicenseskilledcheck where TTeaLicense.VId=? and teacherLicenseupdate is null order by DCreatedate desc";
+		String update = " from TeacherLicenseupdate where TTeaLicense.VId=?";
+		List<VTeacherBaseInfo> vlist = new ArrayList<VTeacherBaseInfo>();
+		try {
+			List<TTeaLicense> list = super.find(hql, teaid);
+			if(list.size()==0){
+				
+				return null;
+			}
+			TTeaLicense old  = list.get(0);
+			VTeacherBaseInfo te = new VTeacherBaseInfo();
+			te.setVCode(old.getTeacherBaseInfo().getVCode());
+			te.setVId(old.getTeacherBaseInfo().getVId());
+			te.setVName(old.getTeacherBaseInfo().getVName());
+			te.setDeptName(old.getTeacherBaseInfo().getTOrg().getVName());
+			te.setVSfz(old.getVCardid());
+
+			te.setDResultdate(Utilities.format(old.getDLastchecktime()));//上一次熟练检查日期
+			te.setDIssueTime(Utilities.format(old.getDIssuetime()));//签发日期
+			te.setDUsedTime(Utilities.format(old.getDEffectdate()));//有效期
+			te.setVDoctor(Utilities.format(old.getDNextchecktime()));//下一熟练检查日期
+			te.setCheckList(readTeaLicenseCheckList(teaid));
+
+			te.setIExam(super.find(check, old.getVId()).size());//是否有检查信息
+			long l1 = old.getDEffectdate().getTime();
+			long l2 = new Date().getTime();
+			long dd = (l1-l2)/1000/3600/24 + 1;
+			int d = (int)dd;
+			te.setIday(d);//剩余天数
+			te.setUsed(0);//在用
+			vlist.add(te);
+			
+			List<TeacherLicenseupdate> ulist = super.find(update, old.getVId());
+
+			for(TeacherLicenseupdate u:ulist){
+				
+				
+				te = new VTeacherBaseInfo();
+				te.setVCode(old.getTeacherBaseInfo().getVCode());
+				te.setVId(old.getTeacherBaseInfo().getVId());
+				te.setVName(old.getTeacherBaseInfo().getVName());
+				te.setDeptName(old.getTeacherBaseInfo().getTOrg().getVName());
+				te.setVSfz(old.getVCardid());
+
+				te.setCheckList(readTeaLicenseCheckListById(u.getVId()));
+				te.setDResultdate(Utilities.format(u.getDLastchecktime()));//上一次熟练检查日期
+				te.setDIssueTime(Utilities.format(u.getDQfsj()));//签发日期
+				te.setDUsedTime(Utilities.format(u.getDEffectdate()));//有效期
+				te.setVDoctor(Utilities.format(u.getDNextchecktime()));//下一熟练检查日期
+
+				te.setIExam(super.find(check, u.getVId()).size());//是否有检查信息
+				l1 = u.getDEffectdate().getTime();
+				l2 = new Date().getTime();
+				dd = (l1-l2)/1000/3600/24 + 1;
+				d = (int)dd;
+				te.setIday(d);//剩余天数
+				te.setUsed(1);//在用
+				vlist.add(te);
+			}
+			
+			
+		} catch (HibernateException e) {
+			e.printStackTrace();
+			throw new FinanceServiceException("历史执照信息列表失败！", e);
+		}
+		return vlist;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public WarningInfo readTeacherWarningInfoById(String teaid)
+			throws FinanceServiceException {
+		int high = 0;
+		int middle = 0;
+		int low  = 0;
+		long l1 = 0;
+		long l2 = 0;
+		long dd = 0;
+		int d = 0;
+		//1.体检合格证
+		String tjhql = " from TTeaMedical where DUsedTime is not null and DUsedTime is not null and teacherBaseInfo.VCode=?";
+		
+		List<TTeaMedical> tlist = super.find(tjhql, teaid);
+		for(TTeaMedical old:tlist){
+
+			l1 = old.getDUsedTime().getTime();
+			l2 = new Date().getTime();
+			dd = (l1-l2)/1000/3600/24 + 1;
+			d = (int)dd;
+			if(d<=31){
+				high++;
+			}
+			if(d>31 && d<=61){
+				middle++;
+			}
+			if(d>61 && d<=90){
+				low++;
+			}
+		}
+		//2.执照
+		String zzhql = " from TTeaLicense where teacherBaseInfo.VCode=? and VCardid<>'0'";
+		
+		List<TTeaLicense> zlist = super.find(zzhql, teaid);
+		for(TTeaLicense old:zlist){
+
+			l1 = old.getDEffectdate().getTime();
+			l2 = new Date().getTime();
+			dd = (l1-l2)/1000/3600/24 + 1;
+			d = (int)dd;
+			if(d<=31){
+				high++;
+			}
+			if(d>31 && d<=61){
+				middle++;
+			}
+			if(d>61 && d<=90){
+				low++;
+			}
+		}
+		//3.熟练检查
+		String hql =" from TTeaLicenseskilledcheck where TTeaLicense.teacherBaseInfo.VCode=? and  teacherLicenseupdate is null";
+		List<TTeaLicenseskilledcheck> list = super.find(hql, teaid);
+		for(TTeaLicenseskilledcheck t:list){
+
+
+			l1 = t.getDEffectdate().getTime();
+			l2 = new Date().getTime();
+			dd = (l1-l2)/1000/3600/24 + 1;
+			d = (int)dd;//剩余天数
+			
+			if(d<=31){
+				high++;
+			}
+			if(d>31 && d<=61){
+				middle++;
+			}
+			if(d>61 && d<=90){
+				low++;
+			}
+		}
+		WarningInfo warn = new WarningInfo();
+		warn.setHigh(high);
+		warn.setMiddle(middle);
+		warn.setLow(low);
+		return warn;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public List<WarningInfo> readUserWarningInfoListById(String userid,String opt)
+			throws FinanceServiceException {
+		try{
+			
+			//根据登录用户id获取用户类型
+			TUser user = super.get(TUser.class, userid);
+			
+			if(user==null){
+				throw new FinanceServiceException("参数传递错误，获取信息失败。");
+			}
+			
+			String userType  = user.getIUserType().toString();//用户类型
+			String code = user.getVUsername();//学生或教员编号
+
+			List<WarningInfo> warnList = new ArrayList<WarningInfo>();
+			WarningInfo w;
+			
+			int high = 0;
+			int middle = 0;
+			int low  = 0;
+			long l1 = 0;
+			long l2 = 0;
+			long dd = 0;
+			int d = 0;
+			//1.体检合格证
+			String tjhql = " from TTeaMedical where DUsedTime is not null and DUsedTime is not null and teacherBaseInfo.VCode=?";
+			
+			List<TTeaMedical> tlist = super.find(tjhql, code);
+			for(TTeaMedical old:tlist){
+
+				l1 = old.getDUsedTime().getTime();
+				l2 = new Date().getTime();
+				dd = (l1-l2)/1000/3600/24 + 1;
+				d = (int)dd;
+				if(d<=31){
+					high++;
+				}
+				if(d>31 && d<=61){
+					middle++;
+				}
+				if(d>61 && d<=90){
+					low++;
+				}
+				w = new WarningInfo();
+				w.setWarningType(1);
+				w.setVId(old.getTeacherBaseInfo().getVId());
+				w.setVCode(old.getTeacherBaseInfo().getVCode());
+				w.setVName(old.getTeacherBaseInfo().getVName());
+				w.setDResultdate(Utilities.format(old.getDResultdate()));
+				w.setDIssueTime(Utilities.format(old.getDIssueTime()));
+				w.setDUsedTime(Utilities.format(old.getDUsedTime()));
+				w.setIday(d);
+				w.setHigh(high);
+				w.setMiddle(middle);
+				w.setLow(low);
+				w.setUserType(userType);
+				
+				if(opt.equals("1") && d<=31){
+					warnList.add(w);
+				}else if(opt.equals("2") && d>31 && d<=61){
+					warnList.add(w);
+				}else if(opt.equals("3") && d>61 && d<=90){
+					warnList.add(w);
+				}
+				
+			}
+			//2.执照
+			String zzhql = " from TTeaLicense where teacherBaseInfo.VCode=? and VCardid<>'0'";
+			
+			List<TTeaLicense> zlist = super.find(zzhql, code);
+			for(TTeaLicense old:zlist){
+
+				l1 = old.getDEffectdate().getTime();
+				l2 = new Date().getTime();
+				dd = (l1-l2)/1000/3600/24 + 1;
+				d = (int)dd;
+				if(d<=31){
+					high++;
+				}
+				if(d>31 && d<=61){
+					middle++;
+				}
+				if(d>61 && d<=90){
+					low++;
+				}
+				w = new WarningInfo();
+				w.setWarningType(2);
+				w.setVId(old.getTeacherBaseInfo().getVId());
+				w.setVCode(old.getTeacherBaseInfo().getVCode());
+				w.setVName(old.getTeacherBaseInfo().getVName());
+				w.setCheckType(old.getVCardid());//执照号
+				w.setDIssueTime(Utilities.format(old.getDIssuetime()));//签发日期
+				w.setDUsedTime(Utilities.format(old.getDEffectdate()));//有效期
+				w.setIday(d);
+				w.setHigh(high);
+				w.setMiddle(middle);
+				w.setLow(low);
+				w.setUserType(userType);
+				
+				if(opt.equals("1") && d<=31){
+					warnList.add(w);
+				}else if(opt.equals("2") && d>31 && d<=61){
+					warnList.add(w);
+				}else if(opt.equals("3") && d>61 && d<=90){
+					warnList.add(w);
+				}
+			}
+			//3.熟练检查
+			String hql =" from TTeaLicenseskilledcheck where TTeaLicense.teacherBaseInfo.VCode=? and  teacherLicenseupdate is null";
+			List<TTeaLicenseskilledcheck> list = super.find(hql, code);
+			for(TTeaLicenseskilledcheck t:list){
+
+				l1 = t.getDEffectdate().getTime();
+				l2 = new Date().getTime();
+				dd = (l1-l2)/1000/3600/24 + 1;
+				d = (int)dd;//剩余天数
+				
+				if(d<=31){
+					high++;
+				}
+				if(d>31 && d<=61){
+					middle++;
+				}
+				if(d>61 && d<=90){
+					low++;
+				}
+				w = new WarningInfo();
+				w.setWarningType(3);
+				w.setVId(t.getTTeaLicense().getTeacherBaseInfo().getVId());
+				w.setVCode(t.getTTeaLicense().getTeacherBaseInfo().getVCode());
+				w.setVName(t.getTTeaLicense().getTeacherBaseInfo().getVName());
+				w.setDIssueTime(Utilities.format(t.getDCheckdate()));
+				w.setDUsedTime(Utilities.format(t.getDEffectdate()));
+				if(t.getIChecktype()==0){
+					w.setCheckType("熟练检查");
+				}else if(t.getIChecktype()==1){
+					w.setCheckType("定期检查");
+				}else{
+					w.setCheckType("熟练考试");
+				}
+				w.setIday(d);
+				w.setCheckTeacher(t.getVCheckteacher());
+				w.setPlaneCode(t.getVFlyform());
+				w.setUserType(userType);
+				w.setHigh(high);
+				w.setMiddle(middle);
+				w.setLow(low);
+				if(opt.equals("1") && d>0 && d<=31){
+					warnList.add(w);
+				}else if(opt.equals("2") && d>31 && d<=61){
+					warnList.add(w);
+				}else if(opt.equals("3") && d>61 && d<=90){
+					warnList.add(w);
+				}
+			}
+			return warnList;
+		}catch(HibernateException e){
+			e.printStackTrace();
+			throw new FinanceServiceException("获取告警信息失败。");
+		}catch(Exception e){
+			e.printStackTrace();
+			throw new FinanceServiceException("获取告警信息失败。");
+		}
+		
+		
+	}
+
+	@SuppressWarnings("unchecked")
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void saveTeacherAssignTeacher(String id, String teacher,String userid)
+			throws FinanceServiceException {
+
+		String hql =" from TStuassignteacher where studentBaseInfo.VCode=?";
+		
+		TeacherBaseInfo stu = super.get(TeacherBaseInfo.class, id);
+		List<TStuassignteacher> list=super.find(hql,stu.getVCode());
+		if(list.size()>0){
+			
+			TStuassignteacher  t = list.get(0);
+			t.setTeacherBaseInfo(super.get(TeacherBaseInfo.class, teacher));
+			super.update(t);
+			
+		}else{
+			TStuassignteacher t = new TStuassignteacher();
+			t.setDCreatedate(new Date());
+			t.setDAssigndate(new Date());
+			List<StudentBaseInfo> slist = super.find(" from StudentBaseInfo where VCode=?", stu.getVCode());
+			t.setStudentBaseInfo(slist.get(0));
+			t.setTUser(super.get(TUser.class, userid));
+			t.setTeacherBaseInfo(super.get(TeacherBaseInfo.class, teacher));
+			super.save(t);
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	public List<VOutline> readCanUsedOutlineList(Map<String, Object> params) throws FinanceServiceException {
+
+		Criteria criteria = this.createCriteria(TOutline.class);
+		
+		if (params.get(QUERY_KEY_NAME) != null
+				&& !params.get(QUERY_KEY_NAME).equals("")) {
+			criteria.add(Restrictions.like(QUERY_KEY_NAME,"%" + params.get(QUERY_KEY_NAME) + "%"));
+		}
+		/*
+		String studentid = "";
+		if(params.get(QUERY_KEY_STUDENTID)!=null){
+			studentid = params.get(QUERY_KEY_STUDENTID).toString();
+		}
+		*/
+		criteria.add(Restrictions.eq("IStatus", IOutLineService.QUERY_AUDIT_TYPE_EFFECT));
+		criteria.addOrder(Order.desc(QUERY_KEY_DATE));
+		try {
+			Page page = this.pagedQuery(criteria, 1, 9);
+			List<VOutline> rList = new ArrayList<VOutline>();
+			VOutline vtr;
+			List<TOutline>list = page.getResult();
+			for(TOutline p:list){
+				vtr = new VOutline();
+				vtr.setVId(p.getVId());
+				vtr.setVName(p.getVName());
+				rList.add(vtr);
+			}
+
+			return rList;
+		} catch (HibernateException e) {
+			throw new FinanceServiceException("读取大纲列表失败："+e.getMessage());
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void saveTeacherAssignOutline(String id, String outlineid,String userid)
+			throws FinanceServiceException {
+		
+		String outlineHql =" from TDgdistribution where studentBaseInfo.VCode=? and  TOutline.VId=?";
+		
+		//String hql =" from TTeacherdgdistribution where teacherBaseInfo.VId=? and TOutline.VId=?";
+		TeacherBaseInfo stu = super.get(TeacherBaseInfo.class, id);
+		
+		List<TDgdistribution> list=super.find(outlineHql,stu.getVCode(),outlineid);
+		if(list.size()==0){
+			TDgdistribution t = new TDgdistribution();
+			t.setDCreatedate(new Date());
+			t.setTOutline(super.get(TOutline.class, outlineid));
+			t.setTUser(super.get(TUser.class, userid));
+			List<StudentBaseInfo> slist = super.find(" from StudentBaseInfo where VCode=?", stu.getVCode());
+			t.setStudentBaseInfo(slist.get(0));
+			super.save(t);
+			
+		}
+	}
+
+}

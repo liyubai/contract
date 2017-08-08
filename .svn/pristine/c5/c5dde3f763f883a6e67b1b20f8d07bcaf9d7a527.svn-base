@@ -1,0 +1,1794 @@
+package com.cauc.training.business.hibernate;
+
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.hibernate.Criteria;
+import org.hibernate.HibernateException;
+import org.hibernate.criterion.Order;
+import org.hibernate.criterion.Restrictions;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.business.IPlaneService;
+import com.cauc.training.business.ISystemUserService;
+import com.cauc.training.business.dao.GenericHibernateDAO;
+import com.cauc.training.pojos.PlaneCheckCycle;
+import com.cauc.training.pojos.Planecheck;
+import com.cauc.training.pojos.Planeform;
+import com.cauc.training.pojos.Planeinfo;
+import com.cauc.training.pojos.TDispatch;
+import com.cauc.training.pojos.TFlightTrainingrecord;
+import com.cauc.training.pojos.TOrg;
+import com.cauc.training.pojos.TOtheruser;
+import com.cauc.training.pojos.TPlaneexchange;
+import com.cauc.training.pojos.TPlanerelease;
+import com.cauc.training.pojos.TRepairrecord;
+import com.cauc.training.pojos.TUser;
+import com.cauc.training.pojos.TeacherBaseInfo;
+import com.cauc.training.util.Utilities;
+import com.cauc.training.vo.VOperateBean;
+import com.cauc.training.vo.VPlaneCheckCycle;
+import com.cauc.training.vo.VPlanecheck;
+import com.cauc.training.vo.VPlaneform;
+import com.cauc.training.vo.VPlaneinfo;
+import com.cauc.training.vo.VRepairrecord;
+
+
+
+/**
+ * @功能描述：用于管理飞机的实现类
+ * @author gFm
+ */
+@Service()
+public class PlaneServiceImpl extends GenericHibernateDAO implements IPlaneService {
+
+	private static Log log = LogFactory.getLog(PlaneServiceImpl.class);
+	
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void createPlaneform(Planeform pform) throws FinanceServiceException {
+		try{
+			
+			String hql = " from Planeform where VName=?";
+			if(super.find(hql, pform.getVName()).size()>0){
+				throw new FinanceServiceException("保存型号信息失败，该型号已经存在。");
+			}
+			pform.setDCreateDate(new Date());
+			super.save(pform);
+		}catch(HibernateException e){
+			throw new FinanceServiceException("保存型号信息失败，数据库连接错误，返回重试。", e);
+		}
+	}
+
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void updatePlaneform(Planeform pform) throws FinanceServiceException {
+		try{
+			
+			String hql = " from Planeform where VId<>? and VName=?";
+			if(super.find(hql,pform.getVId(), pform.getVName()).size()>0){
+				throw new FinanceServiceException("更新型号信息失败，该型号与数据库中原有的其它型号重复。");
+			}
+			Planeform v = super.get(Planeform.class, pform.getVId());
+			
+			v.setVName(pform.getVName());
+			v.setVChangshang(pform.getVChangshang());
+			v.setVXingzhi(pform.getVXingzhi());
+			v.setVFtd(pform.getVFtd());
+			v.setDShouming(pform.getDShouming());
+			v.setDJbweight(pform.getDJbweight());
+			v.setDFweight(pform.getDFweight());
+			v.setDLweight(pform.getDLweight());
+			v.setDJgweight(pform.getDJgweight());
+			v.setVBz(pform.getVBz());
+			
+			super.update(v);
+		}catch(HibernateException e){
+			throw new FinanceServiceException("更新型号信息失败，数据库连接错误，返回重试。", e);
+		}
+	}
+
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void deletePlaneform(String... ids) throws FinanceServiceException {
+		try {
+			for (String id : ids) {
+				
+				if(super.findBy(Planeinfo.class, "planeform.VId", id).size()>0){
+					throw new FinanceServiceException("该型号已经被引用，不能删除。");
+				}
+				super.removeById(Planeform.class, id);
+			}
+		}catch (HibernateException e) {
+			throw new FinanceServiceException("删除型号信息失败，数据库连接错误，返回重试。", e);
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	public List<VPlaneform> readPlaneformList(Map<String, Object> params)
+			throws FinanceServiceException {
+
+		Criteria criteria = this.createCriteria(Planeform.class);
+
+		if (params.get(QUERY_KEY_NAME) != null
+				&& !params.get(QUERY_KEY_NAME).equals(""))
+			criteria.add(Restrictions.like(QUERY_KEY_NAME, "%"
+					+ params.get(QUERY_KEY_NAME) + "%"));
+
+		criteria.addOrder(Order.asc("VId"));
+
+		try {
+			List<VPlaneform> blist = new ArrayList<VPlaneform>();
+			VPlaneform vp;
+			List<Planeform> list = criteria.list();
+			List<PlaneCheckCycle> checklist;
+			for(Planeform t:list){
+				vp = new VPlaneform();
+				vp.setVId(t.getVId());
+				vp.setVName(t.getVName());
+				vp.setVChangshang(t.getVChangshang());
+				vp.setVXingzhi(t.getVXingzhi());
+				vp.setVFtd(t.getVFtd());
+				vp.setDShouming(t.getDShouming());
+				vp.setDJbweight(t.getDJbweight());
+				vp.setDFweight(t.getDFweight());
+				vp.setDLweight(t.getDLweight());
+				vp.setDJgweight(t.getDJgweight());
+				vp.setVBz(t.getVBz());
+			
+				checklist = super.find(" from PlaneCheckCycle where VFormid=? order by ICycle", t.getVId());
+				vp.setCheckList(checklist);
+				blist.add(vp);
+			}
+			return blist;
+			
+		} catch (HibernateException e) {
+			log.error("读取型号信息列表失败", e);
+			throw new FinanceServiceException("读取型号信息列表失败,数据库连接错误，返回重试。", e);
+		}
+	}
+
+	public VPlaneform readVPlaneform(String id) throws FinanceServiceException {
+		try{
+			Planeform old = super.get(Planeform.class, id);
+			VPlaneform v = new VPlaneform();
+			v.setVId(old.getVId());
+			v.setVName(old.getVName());
+			v.setVChangshang(old.getVChangshang());
+			v.setVXingzhi(old.getVXingzhi());
+			v.setVFtd(old.getVFtd());
+			v.setDShouming(old.getDShouming());
+			v.setDJbweight(old.getDJbweight());
+			v.setDFweight(old.getDFweight());
+			v.setDLweight(old.getDLweight());
+			v.setDJgweight(old.getDJgweight());
+			v.setVBz(old.getVBz());
+			return v;
+			
+		}catch (HibernateException e) {
+
+			throw new FinanceServiceException("读取型号信息失败,数据库连接错误，返回重试。", e);
+		}
+		
+	}
+
+	//以下为飞机信息管理
+	@SuppressWarnings("unchecked")
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void createPlaneBaseInfo(Planeinfo pinfo) throws FinanceServiceException {
+		try{
+			
+			String hql = " from Planeinfo where VPlanecode=?";
+			if(super.find(hql, "" + pinfo.getVPlanecode()).size()>0){
+				throw new FinanceServiceException("保存航空器信息失败，机号已经存在。");
+			}
+			pinfo.setVPlanecode("" + pinfo.getVPlanecode());
+			pinfo.setDCreateDate(new Date());
+			
+			double used = pinfo.getDUsetime();
+			
+			//计算初始定检时长
+			int max = 0;
+			List<PlaneCheckCycle> list= super.find(" from PlaneCheckCycle where VFormid=? order by ICycle desc",
+					pinfo.getPlaneform().getVId());
+			if(list.size()>0){
+				max = list.get(0).getICycle()*60;
+			}
+			if(used>max && max>0)
+				used = used%max;
+			pinfo.setDCsdjtime(used);
+			super.save(pinfo);
+			
+			List<Planecheck> checkList = new ArrayList<Planecheck>();
+			Planecheck pk;
+			for(PlaneCheckCycle t:list){
+				
+				pk = new Planecheck();
+				pk.setDChecktime(new Date());
+				pk.setDCreateDate(new Date());
+				pk.setTUser(pinfo.getTUser());
+				pk.setPlaneinfo(pinfo);				
+				pk.setPlaneCheckCycle(t);
+				pk.setVCheckperson(pinfo.getTUser().getVRealname());
+				pk.setVCheckresult("适航");
+				pk.setIOne((int)pinfo.getDUsetime()/t.getICycle()/60 * t.getICycle() * 60);
+				checkList.add(pk);
+			}
+			
+			if(checkList.size()>0){
+				super.saveOrUpdateALL(checkList);
+			}
+			
+			
+		}catch(HibernateException e){
+			throw new FinanceServiceException("保存航空器信息失败，数据库连接错误，返回重试。", e);
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void updatePlaneBaseInfo(Planeinfo pinfo) throws FinanceServiceException {
+		try{
+
+			String hql = " from Planeinfo where VId<>? and VPlanecode=?";
+			if(super.find(hql,pinfo.getVId(), "" + pinfo.getVPlanecode()).size()>0){
+				throw new FinanceServiceException("更新航空器信息失败，机号与数据库中原有的其它机号重复。");
+			}
+			Planeinfo v = super.get(Planeinfo.class, pinfo.getVId());
+			
+			double used = pinfo.getDUsetime();
+			
+			//计算初始定检时长
+			int max = 0;
+			List<PlaneCheckCycle> list= super.find(" from PlaneCheckCycle where VFormid=? order by ICycle desc", v.getPlaneform().getVId());
+			if(list.size()>0){
+				max = list.get(0).getICycle()*60;
+			}
+			if(used>max && max>0)
+				used = used%max;
+			
+			v.setVPlanecode("" + pinfo.getVPlanecode());
+			v.setPlaneform(pinfo.getPlaneform());
+			v.setTOrg(pinfo.getTOrg());
+			v.setDEnterdate(pinfo.getDEnterdate());
+			v.setITimes(pinfo.getITimes());
+			v.setIStatus(pinfo.getIStatus());
+			v.setDUsetime(pinfo.getDUsetime());
+			
+			v.setDCsdjtime(used);
+			v.setVHgz(pinfo.getVHgz());
+			v.setVDw(pinfo.getVDw());
+			v.setVBz(pinfo.getVBz());
+			v.setVZhuce(pinfo.getVZhuce());
+			v.setVCountry(pinfo.getVCountry());
+			v.setDYbtime(pinfo.getDYbtime());
+			
+			List<Planecheck> checkList = new ArrayList<Planecheck>();
+			Planecheck pk;
+			for(PlaneCheckCycle t:list){
+				
+				pk = new Planecheck();
+				pk.setDChecktime(v.getDCreateDate());
+				pk.setDCreateDate(v.getDCreateDate());
+				pk.setTUser(v.getTUser());
+				pk.setPlaneinfo(v);				
+				pk.setPlaneCheckCycle(t);
+				pk.setVCheckperson(v.getTUser().getVRealname());
+				pk.setVCheckresult("适航");
+				pk.setIOne((int)pinfo.getDUsetime()/t.getICycle()/60 * t.getICycle() * 60);
+				checkList.add(pk);
+			}
+			
+			if(checkList.size()>0){
+				super.saveOrUpdateALL(checkList);
+			}
+			super.update(v);
+		}catch(HibernateException e){
+			throw new FinanceServiceException("更新航空器信息失败，数据库连接错误，返回重试。", e);
+		}
+	}
+
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void deletePlaneBaseInfo(String... ids) throws FinanceServiceException {
+		try {
+			for (String id : ids) {
+				
+				if(super.findBy(TFlightTrainingrecord.class, "planeinfo.VId", id).size()>0){
+					throw new FinanceServiceException("该航空器已经有飞行训练记录，不能删除。");
+				}
+				super.removeById(Planeinfo.class, id);
+			}
+		}catch (HibernateException e) {
+			throw new FinanceServiceException("删除航空器信息失败，数据库连接错误，返回重试。", e);
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	public List<Planeinfo> readPlaneBaseInfoList(Map<String, Object> params)
+			throws FinanceServiceException {
+
+		Criteria criteria = this.createCriteria(Planeinfo.class);
+
+		if (params.get(QUERY_KEY_PLANECODE) != null
+				&& !params.get(QUERY_KEY_PLANECODE).equals(""))
+			criteria.add(Restrictions.like(QUERY_KEY_PLANECODE, "%"
+					+ params.get(QUERY_KEY_PLANECODE) + "%"));
+		if (params.get(QUERY_KEY_DEVICETYPE) != null
+				&& !params.get(QUERY_KEY_DEVICETYPE).equals(""))
+			criteria.add(Restrictions.eq(QUERY_KEY_DEVICETYPE,  Integer.parseInt(params.get(QUERY_KEY_DEVICETYPE).toString())));
+		
+		
+		if (params.get(QUERY_KEY_BASEID) != null
+				&& !params.get(QUERY_KEY_BASEID).equals(""))
+			criteria.createCriteria("TOrg", "org").add(Restrictions.eq("VId",  params.get(QUERY_KEY_BASEID)));
+		
+		if (params.get(QUERY_KEY_FORMID) != null
+				&& !params.get(QUERY_KEY_FORMID).equals(""))
+			criteria.createCriteria("planeform", "pform").add(Restrictions.eq("VId",  params.get(QUERY_KEY_FORMID)));
+		
+		if (params.get(PLANE_STATUS) != null
+				&& !params.get(PLANE_STATUS).equals(""))
+			criteria.add(Restrictions.eq(PLANE_STATUS,  params.get(PLANE_STATUS)));
+		if(params.get("type") == null
+				|| params.get("type").equals("")){//历史记录录入、按数字排序
+			criteria.addOrder(Order.asc("planeform"));
+		}
+		
+		criteria.addOrder(Order.asc("VPlanecode"));
+		criteria.addOrder(Order.asc("VId"));
+		try {
+			List<Planeinfo> blist = new ArrayList<Planeinfo>();
+			Planeinfo p;
+			List<Planeinfo> list =  criteria.list();
+			for(Planeinfo t:list){
+				p = new Planeinfo();
+				p.setVId(t.getVId());
+				p.setTOrg(t.getTOrg());
+				p.setPlaneform(t.getPlaneform());
+				p.setVPlanecode(t.getVPlanecode());
+				p.setVCountry(t.getVCountry());
+				p.setVZhuce(t.getVZhuce());
+				p.setITimes(t.getITimes());
+				p.setVHgz(t.getVHgz());
+				p.setIStatus(t.getIStatus());
+				p.setVBz(Utilities.formatTime(t.getDUsetime()) + "," + Utilities.formatTime(t.getDYbtime()) + "," + Utilities.formatTime(t.getDCsdjtime()));
+				blist.add(p);
+			}
+			return blist;
+		} catch (HibernateException e) {
+			log.error("读取航空器信息列表失败", e);
+			throw new FinanceServiceException("读取航空器信息列表失败,数据库连接错误，返回重试。", e);
+		}
+	}
+	
+	//check
+	@SuppressWarnings("unchecked")
+	public List<VPlaneinfo> readPlaneCheckInfoList(Map<String, Object> params)
+			throws FinanceServiceException {
+
+		Criteria criteria = this.createCriteria(Planeinfo.class);
+
+		if (params.get(QUERY_KEY_PLANECODE) != null
+				&& !params.get(QUERY_KEY_PLANECODE).equals(""))
+			criteria.add(Restrictions.like(QUERY_KEY_PLANECODE, "%"
+					+ params.get(QUERY_KEY_PLANECODE) + "%"));
+		if (params.get(QUERY_KEY_DEVICETYPE) != null
+				&& !params.get(QUERY_KEY_DEVICETYPE).equals(""))
+			criteria.add(Restrictions.eq(QUERY_KEY_DEVICETYPE,  Integer.parseInt(params.get(QUERY_KEY_DEVICETYPE).toString())));
+		
+		
+		if (params.get(QUERY_KEY_BASEID) != null
+				&& !params.get(QUERY_KEY_BASEID).equals(""))
+			criteria.createCriteria("TOrg", "org").add(Restrictions.eq("VId",  params.get(QUERY_KEY_BASEID)));
+		
+		if (params.get(QUERY_KEY_FORMID) != null
+				&& !params.get(QUERY_KEY_FORMID).equals(""))
+			criteria.createCriteria("planeform", "pform").add(Restrictions.eq("VId",  params.get(QUERY_KEY_FORMID)));
+		
+		criteria.addOrder(Order.asc("planeform"));
+		criteria.addOrder(Order.asc("VPlanecode"));
+		criteria.addOrder(Order.asc("VId"));
+		String hql ="select sum(DFlytime) from TPlanerelease where planeinfo.VId=?";
+
+		String checkForm =" from PlaneCheckCycle where VFormid=? order by ICycle asc,VId asc";
+		List<PlaneCheckCycle> clist;
+		
+		List<VPlanecheck> checkList;
+		VPlanecheck vc;
+		String checkHql = "select sum(IOne) from Planecheck where planeinfo.VId=? and planeCheckCycle.VId=?";//定检总时间
+		List<Object> release;
+		List<Object> checkLong;
+		double f  = 0;
+		double dd = 0;//定检总时长
+		double d = 0;
+		try {
+			List<VPlaneinfo> blist = new ArrayList<VPlaneinfo>();
+			VPlaneinfo vp;
+			List<Planeinfo> list = criteria.list();
+			for(Planeinfo p:list){
+
+				//获取飞机飞行的总时长
+				d = 0;
+				f = 0;
+				release = super.find(hql, p.getVId());
+				for(Object o:release){
+					if(o!=null){
+						f += Double.parseDouble(o.toString());
+					}
+				}
+				//d = p.getDUsetime()-p.getDCsdjtime()+f;
+				d = p.getDUsetime()+f;
+				
+				vp = new VPlaneinfo();
+				vp.setVId(p.getVId());
+				vp.setVPlanecode(p.getVPlanecode());
+				vp.setPlaneform(p.getPlaneform().getVName());
+				
+				//获取定检类型
+				checkList = new ArrayList<VPlanecheck>();
+				
+				clist= super.find(checkForm, p.getPlaneform().getVId());
+				
+				for(int i=0;i<clist.size();i++){
+					dd=0;
+					checkLong = super.find(checkHql,p.getVId() ,clist.get(i).getVId());
+					for(Object cc:checkLong){
+						if(cc!=null){
+							dd+=Double.parseDouble(cc.toString());
+						}
+						
+					}
+
+					vc = new VPlanecheck();
+					if(clist.get(i).getICycle()/100==0){
+						vc.setTimes(0.5);
+					}else{
+						vc.setTimes(clist.get(i).getICycle()/100);
+					}
+					vc.setFormValue(clist.get(i).getICycle());
+					
+					
+					if(i==clist.size()-1){//最大换发
+						vc.setSurpValue(clist.get(i).getICycle()*60-p.getDUsetime()-f+dd);//剩余多少
+						
+					}else{
+						vc.setSurpValue(clist.get(i).getICycle()*60-d+dd);//剩余多少
+
+						vc.setIsChange(0);
+					}
+					if(vc.getFormValue()*60==vc.getSurpValue()){
+						vc.setVChecktype("0:00");
+					}else{
+						vc.setVChecktype(Utilities.formatTime(vc.getFormValue()*60-vc.getSurpValue()));
+					}
+					
+					vc.setShengValue(vc.getFormValue()*60-vc.getSurpValue());
+					checkList.add(vc);
+				}
+				
+				vp.setCheckList(checkList);
+				
+				vp.setIStatus(p.getIStatus());
+				vp.setVBz(Utilities.formatTime(p.getDUsetime()+f));
+				blist.add(vp);
+			}
+			return blist;
+		} catch (HibernateException e) {
+			log.error("读取航空器信息列表失败", e);
+			throw new FinanceServiceException("读取航空器信息列表失败,数据库连接错误，返回重试。", e);
+		}
+	}
+	private List<String> getAllChildList(String p,List<String> blist){
+
+
+		List<TOrg> tps= super.findBy(TOrg.class, "VParentid", p);
+		
+		for(TOrg tp:tps){
+			blist.add(tp.getVId());
+			getAllChildList(tp.getVId(),blist);
+		}
+		
+		return blist;
+	}
+	private List<String> getAllParentList(String p,List<String> blist){
+
+		TOrg tp= super.get(TOrg.class, p);
+		if(tp!=null){
+			blist.add(tp.getVParentid());
+			getAllParentList(tp.getVParentid(),blist);
+		}
+		return blist;
+	}
+	//机务放行
+	@SuppressWarnings("unchecked")
+	public List<VPlaneinfo> readPlaneReleaseInfoList(Map<String, Object> params)
+			throws FinanceServiceException {
+
+		Criteria criteria = this.createCriteria(Planeinfo.class);
+
+		//登录人所在基地
+		if (params.get(QUERY_LOGIN_USER_ID) != null
+				&& !params.get(QUERY_LOGIN_USER_ID).equals("")){
+			String rhql = "";
+			TUser user = super.get(TUser.class, params.get(QUERY_LOGIN_USER_ID).toString());
+			int type=user.getIUserType();
+			if(type==ISystemUserService.USERTYPE_TEACHER){
+				 
+				rhql = " from TeacherBaseInfo where VCode=?";
+				List<TeacherBaseInfo> list = super.find(rhql, user.getVUsername());
+				
+				String id = list.get(0).getTOrg().getVId();
+				if(id.equals(PLANE_BASE_CHAOYANG)){
+					criteria.createCriteria("TOrg", "org").add(Restrictions.eq("VId", PLANE_BASE_CHAOYANG));
+				}else if(id.equals(PLANE_BASE_NEIMENGGU)){
+					criteria.createCriteria("TOrg", "org").add(Restrictions.eq("VId", PLANE_BASE_NEIMENGGU));
+				}else{
+					//递归获取所有parentid
+					List<String> slist = new ArrayList<String>();
+					slist = getAllChildList(list.get(0).getTOrg().getVId(),slist);
+					slist = getAllParentList(list.get(0).getTOrg().getVId(),slist);				
+					criteria.createCriteria("TOrg", "org").add(Restrictions.in("VId",slist));
+				}
+				
+			}else if(type==ISystemUserService.USERTYPE_OTHER){
+				
+				rhql = " from TOtheruser where VCode=?";
+				List<TOtheruser> list = super.find(rhql, user.getVUsername());
+				
+				String id = list.get(0).getTOrg().getVId();
+				if(id.equals(PLANE_BASE_CHAOYANG)){
+					criteria.createCriteria("TOrg", "org").add(Restrictions.eq("VId", PLANE_BASE_CHAOYANG));
+				}else if(id.equals(PLANE_BASE_NEIMENGGU)){
+					criteria.createCriteria("TOrg", "org").add(Restrictions.eq("VId", PLANE_BASE_NEIMENGGU));
+				}else{
+					//递归获取所有parentid
+					List<String> slist = new ArrayList<String>();
+					slist = getAllChildList(list.get(0).getTOrg().getVId(),slist);
+					slist = getAllParentList(list.get(0).getTOrg().getVId(),slist);				
+					criteria.createCriteria("TOrg", "org").add(Restrictions.in("VId",slist));
+				}
+			}
+		}
+		if (params.get(QUERY_KEY_PLANECODE) != null
+				&& !params.get(QUERY_KEY_PLANECODE).equals(""))
+			criteria.add(Restrictions.like(QUERY_KEY_PLANECODE, "%"
+					+ params.get(QUERY_KEY_PLANECODE) + "%"));
+		//if (params.get(QUERY_KEY_DEVICETYPE) != null
+		//		&& !params.get(QUERY_KEY_DEVICETYPE).equals(""))
+			//criteria.add(Restrictions.eq(QUERY_KEY_DEVICETYPE,  Integer.parseInt(params.get(QUERY_KEY_DEVICETYPE).toString())));
+		
+		criteria.add(Restrictions.eq(QUERY_KEY_DEVICETYPE,  QUERY_DEVICE_TYPE_PLANE));
+		
+		if (params.get(QUERY_KEY_BASEID) != null
+				&& !params.get(QUERY_KEY_BASEID).equals(""))
+			criteria.createCriteria("TOrg", "org").add(Restrictions.eq("VId",  params.get(QUERY_KEY_BASEID)));
+		
+		if (params.get(QUERY_KEY_FORMID) != null
+				&& !params.get(QUERY_KEY_FORMID).equals(""))
+			criteria.createCriteria("planeform", "pform").add(Restrictions.eq("VId",  params.get(QUERY_KEY_FORMID)));
+		
+		//if (params.get(PLANE_STATUS) != null
+		//		&& !params.get(PLANE_STATUS).equals(""))
+		//	criteria.add(Restrictions.eq(PLANE_STATUS,  params.get(PLANE_STATUS)));
+		
+		criteria.add(Restrictions.eq(PLANE_STATUS,  PLANE_STATUS_USE));
+		
+		criteria.addOrder(Order.asc("planeform"));
+		criteria.addOrder(Order.asc("VPlanecode"));
+		criteria.addOrder(Order.asc("VId"));
+		String hql ="select sum(DFlytime) from TPlanerelease where planeinfo.VId=?";
+		
+		String dhql = "  from TPlanerelease where planeinfo.VId=? order by DRecycletime desc";
+		List<TPlanerelease> dlist;
+
+		String checkForm =" from PlaneCheckCycle where VFormid=? order by ICycle asc,VId asc";
+		List<PlaneCheckCycle> clist;
+		
+		List<VPlanecheck> checkList;
+		VPlanecheck vc;
+		String checkHql = "select sum(IOne) from Planecheck where planeinfo.VId=? and planeCheckCycle.VId=?";//定检总时间
+		List<Object> release;
+		List<Object> checklist;
+		double f  = 0;
+		double dd = 0;
+		double d = 0;
+		String str = "";
+		try {
+			List<VPlaneinfo> blist = new ArrayList<VPlaneinfo>();
+			VPlaneinfo vp;
+			List<Planeinfo> list = criteria.list();
+			for(Planeinfo p:list){
+				
+				vp = new VPlaneinfo();
+				dlist =super.find(dhql, p.getVId());
+				str="";
+				if(dlist.size()>0 && dlist.get(0).getIEngineEnd()!=null){
+					str= String.valueOf(dlist.get(0).getIEngineEnd()/60);
+					if(str.length()>3){
+						str = str.substring(0, 3);
+					}
+					vp.setVCountry(str);
+				}
+				
+				//获取飞机飞行的总时长
+				d = 0;
+				f = 0;
+				release = super.find(hql, p.getVId());
+				for(Object o:release){
+					if(o!=null){
+						f += Double.parseDouble(o.toString());
+					}
+				}
+				//d = p.getDUsetime()-p.getDCsdjtime()+f;
+				d = p.getDUsetime()+f;
+				
+				vp.setVId(p.getVId());
+				vp.setVPlanecode(p.getVPlanecode());
+				vp.setPlaneform(p.getPlaneform().getVName());
+				
+				//获取定检类型
+				checkList = new ArrayList<VPlanecheck>();
+				
+				clist= super.find(checkForm, p.getPlaneform().getVId());
+				
+				for(int i=0;i<clist.size();i++){
+					dd=0;
+					checklist = super.find(checkHql,p.getVId() ,clist.get(i).getVId());
+					for(Object cc:checklist){
+						if(cc!=null){
+							dd+=Double.parseDouble(cc.toString());
+						}
+						
+					}
+					vc = new VPlanecheck();
+					if(clist.get(i).getICycle()/100==0){
+						vc.setTimes(0.5);
+					}else{
+						vc.setTimes(clist.get(i).getICycle()/100);
+					}
+					vc.setFormValue(clist.get(i).getICycle());
+					
+					
+					if(i==clist.size()-1){//最大换发
+						vc.setSurpValue(clist.get(i).getICycle()*60-p.getDUsetime()-f+dd);//剩余多少
+						
+					}else{
+						vc.setSurpValue(clist.get(i).getICycle()*60-d+dd);//剩余多少
+						vc.setIsChange(0);
+					}
+					if(vc.getFormValue()*60==vc.getSurpValue()){
+						vc.setVChecktype("0:00");
+					}else{
+						vc.setVChecktype(Utilities.formatTime(vc.getFormValue()*60-vc.getSurpValue()));
+					}
+					
+					vc.setShengValue(vc.getFormValue()*60-vc.getSurpValue());
+					checkList.add(vc);
+				}
+				
+				vp.setCheckList(checkList);
+				
+				blist.add(vp);
+			}
+			return blist;
+		} catch (HibernateException e) {
+			log.error("读取航空器信息列表失败", e);
+			throw new FinanceServiceException("读取航空器信息列表失败,数据库连接错误，返回重试。");
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	public List<Planeinfo> readPlaneRecycleInfoList(Map<String, Object> params)
+			throws FinanceServiceException {
+
+		Criteria criteria = this.createCriteria(Planeinfo.class);
+
+		if (params.get(QUERY_KEY_PLANECODE) != null
+				&& !params.get(QUERY_KEY_PLANECODE).equals(""))
+			criteria.add(Restrictions.like(QUERY_KEY_PLANECODE, "%"
+					+ params.get(QUERY_KEY_PLANECODE) + "%"));
+		if (params.get(QUERY_KEY_DEVICETYPE) != null
+				&& !params.get(QUERY_KEY_DEVICETYPE).equals(""))
+			criteria.add(Restrictions.eq(QUERY_KEY_DEVICETYPE,  Integer.parseInt(params.get(QUERY_KEY_DEVICETYPE).toString())));
+		
+		
+		if (params.get(QUERY_KEY_BASEID) != null
+				&& !params.get(QUERY_KEY_BASEID).equals(""))
+			criteria.createCriteria("TOrg", "org").add(Restrictions.eq("VId",  params.get(QUERY_KEY_BASEID)));
+		
+		if (params.get(QUERY_KEY_FORMID) != null
+				&& !params.get(QUERY_KEY_FORMID).equals(""))
+			criteria.createCriteria("planeform", "pform").add(Restrictions.eq("VId",  params.get(QUERY_KEY_FORMID)));
+		
+		if (params.get(PLANE_STATUS) != null
+				&& !params.get(PLANE_STATUS).equals(""))
+			criteria.add(Restrictions.eq(PLANE_STATUS,  params.get(PLANE_STATUS)));
+		
+		criteria.addOrder(Order.asc("planeform"));
+		criteria.addOrder(Order.asc("VPlanecode"));
+		criteria.addOrder(Order.asc("VId"));
+		String disHql=" from TDispatch where planeinfo.VId=? and DRecycletime is null";//飞机的签派教员
+		
+		//String thql=" from TDispatch where planeinfo.VId=? and DRecycletime is not null order by DRecycletime desc";//再次签派教员，获取时间
+		List<TDispatch> plist;
+		//List<TDispatch> tlist;
+		try {
+			List<Planeinfo> blist = new ArrayList<Planeinfo>();
+			List<Planeinfo> list = criteria.list();
+			for(Planeinfo p:list){
+				
+				/*
+				p.setVCountry("");
+				p.setVHgz("");
+				tlist = super.find(thql, p.getVId());
+				System.out.println(p.getVId());
+				if(tlist.size()>0){
+					p.setVCountry(Utilities.formatNum(tlist.get(0).getDFlytime()));
+					p.setVHgz(Utilities.formatNum(tlist.get(0).getDKongzhong()));
+				}
+				*/
+				plist = super.find(disHql, p.getVId());
+				if(plist.size()>0){
+					p.setVBz(plist.get(0).getTeacherBaseInfo().getVName());
+					p.setVDw(Utilities.format(plist.get(0).getDDispatchtime(), "yyyy-MM-dd HH:mm:ss"));
+					//p.setVCountry("");
+					//p.setVHgz("");
+				}
+
+				blist.add(p);
+			}
+			return blist;
+		} catch (HibernateException e) {
+			log.error("读取航空器信息列表失败", e);
+			throw new FinanceServiceException("读取航空器信息列表失败,数据库连接错误，返回重试。", e);
+		}
+	}
+	@SuppressWarnings("unchecked")
+	public List<Planeinfo> readMaintenanceRecycleInfoList(Map<String, Object> params)
+			throws FinanceServiceException {
+
+		Criteria criteria = this.createCriteria(Planeinfo.class);
+
+		if (params.get(QUERY_KEY_PLANECODE) != null
+				&& !params.get(QUERY_KEY_PLANECODE).equals(""))
+			criteria.add(Restrictions.like(QUERY_KEY_PLANECODE, "%"
+					+ params.get(QUERY_KEY_PLANECODE) + "%"));
+		if (params.get(QUERY_KEY_DEVICETYPE) != null
+				&& !params.get(QUERY_KEY_DEVICETYPE).equals(""))
+			criteria.add(Restrictions.eq(QUERY_KEY_DEVICETYPE,  Integer.parseInt(params.get(QUERY_KEY_DEVICETYPE).toString())));
+		
+		
+		if (params.get(QUERY_KEY_BASEID) != null
+				&& !params.get(QUERY_KEY_BASEID).equals(""))
+			criteria.createCriteria("TOrg", "org").add(Restrictions.eq("VId",  params.get(QUERY_KEY_BASEID)));
+		
+		if (params.get(QUERY_KEY_FORMID) != null
+				&& !params.get(QUERY_KEY_FORMID).equals(""))
+			criteria.createCriteria("planeform", "pform").add(Restrictions.eq("VId",  params.get(QUERY_KEY_FORMID)));
+		
+		if (params.get(PLANE_STATUS) != null
+				&& !params.get(PLANE_STATUS).equals(""))
+			criteria.add(Restrictions.eq(PLANE_STATUS,  params.get(PLANE_STATUS)));
+		criteria.addOrder(Order.asc("planeform"));
+		criteria.addOrder(Order.asc("VPlanecode"));
+		criteria.addOrder(Order.asc("VId"));
+		String hql =" from TPlanerelease where planeinfo.VId=? and DRecycletime is null";
+		List<TPlanerelease> plist;
+		String str = "";
+		String dhql = "  from TPlanerelease where planeinfo.VId=? order by DRecycletime desc";
+		List<TPlanerelease> dlist;
+		try {
+			List<Planeinfo> blist = new ArrayList<Planeinfo>();
+			List<Planeinfo> list = criteria.list();
+			for(Planeinfo p:list){
+				
+				dlist =super.find(dhql, p.getVId());
+				p.setVCountry("");
+				if(dlist.size()>0 && dlist.get(0).getIEngineEnd()!=null){
+					str= String.valueOf(dlist.get(0).getIEngineEnd()/60);
+					if(str.length()>3){
+						str = str.substring(0, 3);
+					}
+					p.setVCountry(str);
+				}
+				
+				plist = super.find(hql, p.getVId());
+				if(plist.size()>0){
+					
+					p.setVBz(plist.get(0).getVReason());
+					if(plist.get(0).getIType()==null || plist.get(0).getIType()==0){
+						p.setVDw("正常");
+					}else{
+						p.setVDw("故障，待维修");
+					}
+					p.setVHgz(Utilities.format(plist.get(0).getDReleasetime(),"yyyy-MM-dd HH:mm:ss"));
+				}
+				blist.add(p);
+			}
+			return blist;
+		} catch (HibernateException e) {
+			log.error("读取航空器信息列表失败", e);
+			throw new FinanceServiceException("读取航空器信息列表失败,数据库连接错误，返回重试。", e);
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	public List<Planeinfo> readBugMaintenanceRecycleInfoList()
+			throws FinanceServiceException {
+
+	
+		String hql = " from Planeinfo where IStatus=0 and VId in ( select planeinfo.VId from TDispatch where DRecycletime is null)";
+		
+		String thql =" from TDispatch where planeinfo.VId=? and DRecycletime is null";
+		List<TDispatch> plist;
+		try {
+			List<Planeinfo> blist = new ArrayList<Planeinfo>();
+			List<Planeinfo> list = super.find(hql);
+			for(Planeinfo p:list){
+						
+				plist = super.find(thql, p.getVId());
+				if(plist.size()>0){
+					
+					p.setVBz("");
+					p.setVDw("正常");
+					p.setVHgz(Utilities.format(plist.get(0).getDDispatchtime(),"yyyy-MM-dd HH:mm:ss"));
+				}
+				blist.add(p);
+			}
+			return blist;
+
+		} catch (HibernateException e) {
+			log.error("读取航空器信息列表失败", e);
+			throw new FinanceServiceException("读取航空器信息列表失败,数据库连接错误，返回重试。");
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	public List<Planeinfo> readPlaneRepairInfoList(Map<String, Object> params)
+			throws FinanceServiceException {
+
+		Criteria criteria = this.createCriteria(Planeinfo.class);
+
+		if (params.get(QUERY_KEY_PLANECODE) != null
+				&& !params.get(QUERY_KEY_PLANECODE).equals(""))
+			criteria.add(Restrictions.like(QUERY_KEY_PLANECODE, "%"
+					+ params.get(QUERY_KEY_PLANECODE) + "%"));
+		if (params.get(QUERY_KEY_DEVICETYPE) != null
+				&& !params.get(QUERY_KEY_DEVICETYPE).equals(""))
+			criteria.add(Restrictions.eq(QUERY_KEY_DEVICETYPE,  Integer.parseInt(params.get(QUERY_KEY_DEVICETYPE).toString())));
+		
+		
+		if (params.get(QUERY_KEY_BASEID) != null
+				&& !params.get(QUERY_KEY_BASEID).equals(""))
+			criteria.createCriteria("TOrg", "org").add(Restrictions.eq("VId",  params.get(QUERY_KEY_BASEID)));
+		
+		if (params.get(QUERY_KEY_FORMID) != null
+				&& !params.get(QUERY_KEY_FORMID).equals(""))
+			criteria.createCriteria("planeform", "pform").add(Restrictions.eq("VId",  params.get(QUERY_KEY_FORMID)));
+		
+		criteria.add(Restrictions.eq("IStatus",  PLANE_STATUS_NO_USE));
+		//String chql = "select VId from Planeinfo where IStatus=?";
+		//List<String> vlist = super.find(chql, PLANE_STATUS_NO_USE);
+		//if(vlist.size()>0)
+		//	criteria.add(Restrictions.in("VId", vlist));
+		criteria.addOrder(Order.asc("planeform"));
+		criteria.addOrder(Order.asc("VPlanecode"));
+		criteria.addOrder(Order.asc("VId"));
+		String hql =" from TPlanerelease where planeinfo.VId=? and IType=1 order by DRecycletime desc";
+		//String disHql=" from TDispatch where planeinfo.VId=? and DRecycletime is null";//飞机的签派教员
+		
+		List<TPlanerelease> release;
+	//	Double f  = 0.00;
+		//Double d = 0.00;
+		
+		//int fifty =0;
+		//int one = 0;
+		//int two = 0;
+		//int three = 0;
+		try {
+			List<Planeinfo> blist = new ArrayList<Planeinfo>();
+			List<Planeinfo> list = criteria.list();
+			for(Planeinfo p:list){
+				//获取飞机飞行的总时长
+			//	f = 0.0;
+			//	fifty =0;
+			//	one = 0;
+			//	two = 0;
+			//	three = 0;
+				release = super.find(hql, p.getVId());
+
+				if(release.size()>0){
+					p.setVBz(release.get(0).getVReason());
+				}else{
+					p.setVBz("");
+				}
+				//结算出定检50、100、200、换发1500剩下的时长。
+				
+			//	d = p.getDUsetime()-p.getDCsdjtime()+f;
+
+			//	p.setDWstime(50-d+fifty);//50
+			//	p.setDYbtime(100-d+one);//100
+			//	p.setDEbtime(200-d+two);//200
+			//	p.setDYqwbtime(1500-p.getDUsetime()-f+three);//1500
+				
+			//	plist = super.find(disHql, p.getVId());
+			//	if(plist.size()>0){
+			//		p.setVBz(plist.get(0).getTeacherBaseInfo().getVName());
+			//	}
+			//	p.setDSjdjflytime(p.getDUsetime() +f);
+				blist.add(p);
+			}
+			return blist;
+		} catch (HibernateException e) {
+			log.error("读取航空器信息列表失败", e);
+			throw new FinanceServiceException("读取航空器信息列表失败,数据库连接错误，返回重试。", e);
+		}
+	}
+	@SuppressWarnings("unchecked")
+	public List<VPlaneinfo> readPlaneDispatchInfoList(Map<String, Object> params)//签派放行
+			throws FinanceServiceException {
+
+		Criteria criteria = this.createCriteria(Planeinfo.class);
+
+		if (params.get(QUERY_KEY_PLANECODE) != null
+				&& !params.get(QUERY_KEY_PLANECODE).equals(""))
+			criteria.add(Restrictions.like(QUERY_KEY_PLANECODE, "%"
+					+ params.get(QUERY_KEY_PLANECODE) + "%"));
+		if (params.get(QUERY_KEY_DEVICETYPE) != null
+				&& !params.get(QUERY_KEY_DEVICETYPE).equals(""))
+			criteria.add(Restrictions.eq(QUERY_KEY_DEVICETYPE,  Integer.parseInt(params.get(QUERY_KEY_DEVICETYPE).toString())));
+		
+		
+		if (params.get(QUERY_KEY_BASEID) != null
+				&& !params.get(QUERY_KEY_BASEID).equals(""))
+			criteria.createCriteria("TOrg", "org").add(Restrictions.eq("VId",  params.get(QUERY_KEY_BASEID)));
+		
+		if (params.get(QUERY_KEY_FORMID) != null
+				&& !params.get(QUERY_KEY_FORMID).equals(""))
+			criteria.createCriteria("planeform", "pform").add(Restrictions.eq("VId",  params.get(QUERY_KEY_FORMID)));
+		
+		if (params.get(PLANE_STATUS) != null
+				&& !params.get(PLANE_STATUS).equals(""))
+			criteria.add(Restrictions.eq(PLANE_STATUS,  params.get(PLANE_STATUS)));
+		
+		criteria.addOrder(Order.asc("planeform"));
+		criteria.addOrder(Order.asc("VPlanecode"));
+		criteria.addOrder(Order.asc("VId"));
+		String hql ="select sum(DFlytime) from TPlanerelease where planeinfo.VId=?";
+
+		String checkForm =" from PlaneCheckCycle where VFormid=? order by ICycle asc,VId asc";
+		List<PlaneCheckCycle> clist;
+		
+		List<VPlanecheck> checkList;
+		VPlanecheck vc;
+		String checkHql = "select sum(IOne) from Planecheck where planeinfo.VId=? and planeCheckCycle.VId=?";//定检总时间
+		List<Object> release;
+		List<Object> checklist;
+		double f  = 0;
+		double dd = 0;
+		double d = 0;
+		List<TeacherBaseInfo> tealist = readTeacherBaseInfoList(params);
+		try {
+			List<VPlaneinfo> blist = new ArrayList<VPlaneinfo>();
+			VPlaneinfo vp;
+			List<Planeinfo> list = criteria.list();
+			for(int j=0;j<list.size();j++){
+
+				//获取飞机飞行的总时长
+				d = 0;
+				f = 0;
+				release = super.find(hql, list.get(j).getVId());
+				for(Object o:release){
+					if(o!=null){
+						f += Double.parseDouble(o.toString());
+					}
+				}
+				//d = list.get(j).getDUsetime()-list.get(j).getDCsdjtime()+f;
+				d = list.get(j).getDUsetime()+f;
+				vp = new VPlaneinfo();
+				vp.setVId(list.get(j).getVId());
+				vp.setVPlanecode(list.get(j).getVPlanecode());
+				vp.setPlaneform(list.get(j).getPlaneform().getVName());
+				
+				//获取定检类型
+				checkList = new ArrayList<VPlanecheck>();
+				
+				clist= super.find(checkForm, list.get(j).getPlaneform().getVId());
+				
+				for(int i=0;i<clist.size();i++){
+					dd=0;
+					checklist = super.find(checkHql,list.get(j).getVId() ,clist.get(i).getVId());
+					for(Object cc:checklist){
+						if(cc!=null){
+							dd+=Double.parseDouble(cc.toString());
+						}
+						
+					}
+					vc = new VPlanecheck();
+					if(clist.get(i).getICycle()/100==0){
+						vc.setTimes(0.5);
+					}else{
+						vc.setTimes(clist.get(i).getICycle()/100);
+					}
+					vc.setFormValue(clist.get(i).getICycle());
+					
+					
+					if(i==clist.size()-1){//最大换发
+						vc.setSurpValue(clist.get(i).getICycle()*60-list.get(j).getDUsetime()-f+dd);//剩余多少
+						
+					}else{
+						vc.setSurpValue(clist.get(i).getICycle()*60-d+dd);//剩余多少
+						vc.setIsChange(0);
+					}
+					
+					if(vc.getFormValue()*60==vc.getSurpValue()){
+						vc.setVChecktype("0:00");
+					}else{
+						vc.setVChecktype(Utilities.formatTime(vc.getFormValue()*60-vc.getSurpValue()));
+					}
+					
+					vc.setShengValue(vc.getFormValue()*60-vc.getSurpValue());
+					checkList.add(vc);
+				}
+				
+				vp.setCheckList(checkList);
+				
+				//飞机分配默认的教员
+				if(j<tealist.size()){//教员的人数小于分机数
+					vp.setVBz(tealist.get(j).getVId());//利用备注字段存储教员id
+				}else{
+					vp.setVBz("0");
+				}
+				blist.add(vp);
+			}
+			return blist;
+		} catch (HibernateException e) {
+			log.error("读取航空器信息列表失败", e);
+			throw new FinanceServiceException("读取航空器信息列表失败,数据库连接错误，返回重试。", e);
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	public List<TeacherBaseInfo> readTeacherBaseInfoList(
+			Map<String, Object> params) throws FinanceServiceException {
+		String cond =" and  TDictionByVFlytype is not null " +
+					"and TDictionByVFlyform is not null and TDictionByVTecdengji is not null  order by VName";
+		//String hql = " from TeacherBaseInfo where VId not in (select teacherBaseInfo.VId from TDispatch  where DRecycletime is null)";
+		String hql = " from TeacherBaseInfo where 1=1";
+		hql+=cond;
+		//System.out.println(hql);
+		return super.find(hql);
+	}
+	public VPlaneinfo readVPlaneinfo(String id) throws FinanceServiceException {
+		try{
+			Planeinfo old = super.get(Planeinfo.class, id);
+			VPlaneinfo v = new VPlaneinfo();
+			v.setVId(old.getVId());
+			
+			v.setVPlanecode(old.getVPlanecode());
+			v.setPlaneform(old.getPlaneform().getVId());
+			v.setBaseid(old.getTOrg().getVId());
+			v.setDEnterdate(Utilities.format(old.getDEnterdate()));
+			v.setITimes(old.getITimes());
+			v.setIStatus(old.getIStatus());
+			v.setDUsetime(Utilities.formatTime(old.getDUsetime()));
+			v.setDCsdjtime(Utilities.formatTime(old.getDCsdjtime()));
+			v.setDYbtime(Utilities.formatTime(old.getDYbtime()));
+			v.setVHgz(old.getVHgz());
+			v.setVDw(old.getVDw());
+			v.setVBz(old.getVBz());
+			v.setVZhuce(old.getVZhuce());
+			v.setVCountry(old.getVCountry());
+			v.setIDeviceType(old.getIDeviceType());
+			return v;
+			
+		}catch (HibernateException e) {
+
+			throw new FinanceServiceException("读取航空器信息失败,数据库连接错误，返回重试。", e);
+		}
+		
+	}
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void changePlaneBase(Planeinfo p) throws FinanceServiceException {
+		try{
+
+			String[] ids = p.getVId().split(",");
+			List<TPlaneexchange> savelist = new ArrayList<TPlaneexchange>();
+			List<Planeinfo> splist = new ArrayList<Planeinfo>();
+			TPlaneexchange change;
+			Planeinfo old;
+			for(int i = 0;i<ids.length;i++){
+				
+				old = super.get(Planeinfo.class, ids[i]);
+				if(!old.getTOrg().getVId().equals(p.getTOrg().getVId())){
+					change = new TPlaneexchange();
+					change.setPlaneinfo(old);
+					change.setTOrgByVOldbase(old.getTOrg());
+					change.setDCreateDate(new Date());
+					change.setDEcchange(p.getDEnterdate());
+					change.setTUser(p.getTUser());
+					change.setTOrgByVNewbase(p.getTOrg());
+					change.setVReason(p.getVDw());
+					change.setVAccording(p.getVBz());
+					savelist.add(change);
+					
+					old.setTOrg(p.getTOrg());
+					splist.add(old);
+				}
+			}
+			
+			super.saveOrUpdateALL(savelist);
+			super.saveOrUpdateALL(splist);
+
+		}catch (HibernateException e) {
+
+			throw new RuntimeException("飞机调配失败,数据库连接错误，返回重试。", e);
+		}
+	}
+	
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void changePlaneStatus(Planeinfo p) throws FinanceServiceException {
+		try{
+
+			String[] ids = p.getVId().split(",");
+			List<Planeinfo> splist = new ArrayList<Planeinfo>();
+			Planeinfo old;
+			for(int i = 0;i<ids.length;i++){				
+				old = super.get(Planeinfo.class, ids[i]);
+				old.setIStatus(Integer.parseInt(p.getVPlanecode()));
+				splist.add(old);
+			}
+			
+			super.saveOrUpdateALL(splist);
+
+		}catch (HibernateException e) {
+
+			throw new FinanceServiceException("改变航空器状态失败,数据库连接错误，返回重试。", e);
+		}
+	}
+	
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void createplaneRepairRecord(TRepairrecord repair) throws FinanceServiceException {
+		try{
+
+			repair.setDCreateDate(new Date());
+			super.save(repair);
+			Planeinfo p =  super.get(Planeinfo.class, repair.getPlaneinfo().getVId());
+			p.setIStatus(PLANE_STATUS_USE);
+			super.update(p);
+
+		}catch (HibernateException e) {
+
+			throw new RuntimeException("录入飞机维修信息失败,数据库连接错误，返回重试。", e);
+		}
+	}
+	
+
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void createRepairReault(Planeinfo p) throws FinanceServiceException {
+		try{
+
+			/*
+			String hql =" from TRepairrecord where planeinfo.VId=? order by DCreateDate desc";
+			List<TRepairrecord> list = super.find(hql, p.getVId());
+			if(list.size()==0){
+				throw new FinanceServiceException("录入飞机维修结果失败,参数传递错误。");
+			}
+			*/
+			Planeinfo old = super.get(Planeinfo.class, p.getVId());
+			//old.setIStatus(Integer.parseInt(p.getVPlanecode()));
+			old.setIStatus(PLANE_STATUS_CHECK);
+			super.save(old);
+			//TRepairrecord r =  list.get(0);
+			//if(Integer.parseInt(p.getVPlanecode())==PLANE_STATUS_USE){
+			//	r.setVRepairresult("可以正常使用。");
+			//}else{
+			//	r.setVRepairresult("继续维修或故障。");
+			//}
+			//super.update(r);
+
+		}catch (HibernateException e) {
+
+			throw new RuntimeException("飞机维修失败,数据库连接错误，返回重试。", e);
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	public List<VRepairrecord> readPlaneRepairListById(String id)
+			throws FinanceServiceException {
+		try{
+			String hql =" from TRepairrecord where planeinfo.VId=? order by DCreateDate desc";
+			List<TRepairrecord> list = super.find(hql, id);
+			List<VRepairrecord> vlist = new ArrayList<VRepairrecord>();
+			VRepairrecord v;
+			for(TRepairrecord t:list){
+				v= new VRepairrecord();
+				v.setVContent(t.getVContent());
+				v.setVRepairresult(t.getVRepairresult());
+				v.setVRepairperson(t.getVRepairperson());
+				v.setDStarttime(Utilities.format(t.getDStarttime()));
+				v.setDEndtime(Utilities.format(t.getDEndtime()));
+				vlist.add(v);
+			}
+			
+			return vlist;
+		}catch (HibernateException e) {
+
+			throw new FinanceServiceException("获取信息失败,数据库连接错误，返回重试。", e);
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	public List<VPlanecheck> readPlaneCheckListById(String id)
+			throws FinanceServiceException {
+		try{
+			String hql =" from Planecheck where planeinfo.VId=? order by DCreateDate desc";
+			List<Planecheck> list = super.find(hql, id);
+			List<VPlanecheck> vlist = new ArrayList<VPlanecheck>();
+			VPlanecheck v;
+			for(Planecheck t:list){
+				v= new VPlanecheck();
+				v.setVCheckperson(t.getVCheckperson());
+				v.setVCheckresult(t.getVCheckresult());
+				v.setVChecktype(t.getVChecktype());
+				v.setDChecktime(Utilities.format(t.getDChecktime()));
+				v.setFormValue(t.getPlaneCheckCycle().getICycle());
+				vlist.add(v);
+			}
+			
+			return vlist;
+		}catch (HibernateException e) {
+
+			throw new FinanceServiceException("获取信息失败,数据库连接错误，返回重试。", e);
+		}
+	}
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void saveMaintenanceRelease(VOperateBean bean) throws FinanceServiceException {
+		try {
+			Planeinfo p;
+			List<Planeinfo> plist = new ArrayList<Planeinfo>();
+			TPlanerelease r;
+			List<TPlanerelease> rlist = new ArrayList<TPlanerelease>();
+			String[] ids = bean.getId().split(",");
+			TUser user = super.get(TUser.class, bean.getUserid());
+			String hql = " from TPlanerelease where planeinfo.VId = ?  and DRecycletime is null"; //回收时间是空，表示未回收
+			int hour = 0;
+			int minute = 0;
+			for (String id : ids) {
+				if(super.find(hql, id.split(";")[0]).size()==0){//防止重复签派
+					p = super.get(Planeinfo.class, id.split(";")[0]);
+					if(p==null){
+						throw new FinanceServiceException("机务放行失败,参数传递错误。");
+					}
+					r = new TPlanerelease();
+					r.setDCreateDate(new Date());
+					//System.out.println(id.split(";")[1]);
+					try {
+						r.setDReleasetime(Utilities.parse(id.split(";")[1], "yyyy-MM-dd HH:mm:ss"));
+					} catch (ParseException e) {
+					}
+					hour = Integer.parseInt(id.split(";")[2].substring(0, 5));
+					minute = Integer.parseInt(id.split(";")[2].substring(5, 6));
+					r.setIEngineStart(hour*60+minute*6);
+					r.setIAuditStatus(PLANE_AUDIT_STATUS_NO);//未确认
+					r.setDFlytime(0);
+					r.setPlaneinfo(p);
+					r.setTUser(user);
+					rlist.add(r);
+					
+					//改变飞机状态
+					p.setIStatus(PLANE_STATUS_RELEASE);
+					plist.add(p);
+
+				}
+
+			}
+			if(rlist.size()>0)
+				super.saveOrUpdateALL(rlist);
+			if(plist.size()>0)
+				super.saveOrUpdateALL(plist);
+			
+		}catch (HibernateException e) {
+			throw new RuntimeException("飞机放行失败，数据库连接错误，返回重试。", e);
+		}
+	}
+
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void savePlaneDispatch(VOperateBean bean) throws FinanceServiceException {
+		try {
+			Planeinfo p;
+			List<Planeinfo> plist = new ArrayList<Planeinfo>();
+			TDispatch r;
+			List<TDispatch> rlist = new ArrayList<TDispatch>();
+			TeacherBaseInfo tea;
+			String[] ids = bean.getId().split(",");
+			TUser user = super.get(TUser.class, bean.getUserid());
+			String hql = " from TDispatch where (planeinfo.VId = ? or teacherBaseInfo.VId=?) and DRecycletime is null"; //回收时间是空，表示未回收
+			for (String id : ids) {
+				if(super.find(hql, id.split(";")[0],id.split(";")[1]).size()==0){
+					p = super.get(Planeinfo.class, id.split(";")[0]);
+					if(p==null){
+						throw new FinanceServiceException("签派放行失败,参数传递错误。"); 
+					}
+					tea = super.get(TeacherBaseInfo.class, id.split(";")[1]);
+					if(tea==null){
+						throw new FinanceServiceException("签派放行失败,参数传递错误。");
+					}
+					r = new TDispatch();
+					r.setDCreateDate(new Date());
+					try {
+						r.setDDispatchtime(Utilities.parse(id.split(";")[2], "yyyy-MM-dd HH:mm:ss"));
+					} catch (ParseException e) {
+					}
+					r.setPlaneinfo(p);
+					r.setTUser(user);
+					r.setTeacherBaseInfo(tea);
+					rlist.add(r);
+					
+					//改变飞机状态
+					p.setIStatus(PLANE_STATUS_PATCH_RELEASE);
+					plist.add(p);
+				}
+			}
+			if(rlist.size()>0)
+				super.saveOrUpdateALL(rlist);
+			if(plist.size()>0)
+				super.saveOrUpdateALL(plist);
+		}catch (HibernateException e) {
+			e.printStackTrace();
+			throw new RuntimeException("飞机签派失败，数据库连接错误，返回重试。", e);
+		}catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException("飞机签派失败，数据库连接错误，返回重试。", e);
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void savePlaneRecycle(VOperateBean bean) throws FinanceServiceException {
+		try {
+			Planeinfo p;
+			List<Planeinfo> plist = new ArrayList<Planeinfo>();
+			
+			List<TPlanerelease> relist = new ArrayList<TPlanerelease>();
+			TPlanerelease re;
+			
+			TDispatch r;
+			List<TDispatch> rlist = new ArrayList<TDispatch>();	
+			
+			String[] ids = bean.getId().split(",");
+			
+			TUser user = super.get(TUser.class, bean.getUserid());
+			int type;
+			String hql = " from TDispatch where planeinfo.VId = ? and DRecycletime is null"; //签派，回收时间是空，表示未回收
+			
+			String rhql = " from TPlanerelease where planeinfo.VId = ? and DRecycletime is null"; //机务，回收时间是空，表示未回收
+			
+			for (String id : ids) {
+				
+					type= Integer.parseInt(id.split(";")[5]);
+					p = super.get(Planeinfo.class, id.split(";")[0]);
+					if(p==null){
+						throw new FinanceServiceException("签派回收失败,参数传递错误。");
+					}
+					r = ((List<TDispatch>)super.find(hql, id.split(";")[0])).get(0);
+					try {
+						r.setDRecycletime(Utilities.parse(id.split(";")[1], "yyyy-MM-dd HH:mm:ss"));
+					} catch (ParseException e) {
+
+					}
+					r.setDFlytime(Utilities.getMinitue(id.split(";")[2]));
+					r.setDKongzhong(Utilities.getMinitue(id.split(";")[4]));
+					r.setITimes(Integer.parseInt(id.split(";")[3]));
+					r.setTUser(user);
+					rlist.add(r);
+					
+					//改变飞机状态
+					p.setIStatus(PLANE_STATUS_PATCH_USE);
+					plist.add(p);
+					
+					if(type==1){//异常回收
+						re = ((List<TPlanerelease>)super.find(rhql, id.split(";")[0])).get(0);
+						re.setIType(1);
+						re.setVReason(id.split(";")[6]);
+						relist.add(re);
+					}
+				
+			}
+			if(relist.size()>0){
+				super.saveOrUpdateALL(relist);
+			}
+			if(rlist.size()>0)
+				super.saveOrUpdateALL(rlist);
+			if(plist.size()>0)
+				super.saveOrUpdateALL(plist);
+			
+		}catch (HibernateException e) {
+			throw new RuntimeException("飞机放行失败，数据库连接错误，返回重试。", e);
+		}
+	}
+	@SuppressWarnings("unchecked")
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void saveMaintenanceRecycle(VOperateBean bean) throws FinanceServiceException {
+		try {
+			Planeinfo p;
+			List<Planeinfo> plist = new ArrayList<Planeinfo>();
+			
+			TPlanerelease r;
+			List<TPlanerelease> rlist = new ArrayList<TPlanerelease>();	
+			//int idl = 0;
+			String[] ids = bean.getId().split(",");
+	//		int flag=2;
+			int hour = 0;
+			int minute = 0;
+			String hql = " from TPlanerelease where planeinfo.VId = ? and DRecycletime is null"; //回收时间是空，表示未回收
+			for (String id : ids) {
+				//idl = id.split(";").length;
+				p = super.get(Planeinfo.class, id.split(";")[0]);
+				if(p==null){
+					throw new FinanceServiceException("机务回收失败,参数传递错误。");
+				}
+				r = ((List<TPlanerelease>)super.find(hql, id.split(";")[0])).get(0);
+				
+				r.setDFlytime(Utilities.getMinitue(id.split(";")[1]));
+				r.setDKongzhong(Utilities.getMinitue(id.split(";")[3]));
+				
+				try {
+					r.setDRecycletime(Utilities.parse(id.split(";")[2], "yyyy-MM-dd HH:mm:ss"));
+				} catch (ParseException e) {
+					
+				}
+				hour = Integer.parseInt(id.split(";")[4].substring(0, 5));
+				minute = Integer.parseInt(id.split(";")[4].substring(5, 6));
+				r.setIEngineEnd(hour*60+minute*6);
+				//if(idl>3){
+				//	flag = Integer.parseInt(id.split(";")[3]);
+				if(r.getIType()==null){
+					r.setIType(0);
+				}
+					
+				//}
+				/*
+				if(idl>4){
+					r.setVReason(id.split(";")[4]);
+				}
+				*/
+				rlist.add(r);
+				
+				//改变飞机状态
+				if(r.getIType()==0){
+					p.setIStatus(PLANE_STATUS_USE);
+				}else{
+					p.setIStatus(PLANE_STATUS_NO_USE);
+				}
+				
+				plist.add(p);
+				
+			}
+			if(rlist.size()>0)
+				super.saveOrUpdateALL(rlist);
+			if(plist.size()>0)
+				super.saveOrUpdateALL(plist);
+			
+		}catch (HibernateException e) {
+			throw new RuntimeException("机务回收失败，数据库连接错误，返回重试。", e);
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void saveBugMaintenanceRecycle(VOperateBean bean) throws FinanceServiceException {
+		try {
+			Planeinfo p;
+			List<Planeinfo> plist = new ArrayList<Planeinfo>();
+			
+			TPlanerelease r;
+			List<TPlanerelease> rlist = new ArrayList<TPlanerelease>();	
+			//int idl = 0;
+			String[] ids = bean.getId().split(",");
+	//		int flag=2;
+			int hour = 0;
+			int minute = 0;
+			String hql = " from TPlanerelease where planeinfo.VId = ? and DRecycletime is null"; //回收时间是空，表示未回收
+			
+			String dhql = " from TDispatch where planeinfo.VId = ? and DRecycletime is null";
+			
+			List<TDispatch> dlist;
+			
+			for (String id : ids) {
+				//idl = id.split(";").length;
+				p = super.get(Planeinfo.class, id.split(";")[0]);
+				if(p==null){
+					throw new FinanceServiceException("机务回收失败,参数传递错误。");
+				}
+				r = ((List<TPlanerelease>)super.find(hql, id.split(";")[0])).get(0);
+				
+				r.setDFlytime(Utilities.getMinitue(id.split(";")[1]));
+				r.setDKongzhong(Utilities.getMinitue(id.split(";")[3]));
+				
+				
+				r.setDRecycletime(Utilities.parse(id.split(";")[2], "yyyy-MM-dd HH:mm:ss"));
+				
+				hour = Integer.parseInt(id.split(";")[4].substring(0, 5));
+				minute = Integer.parseInt(id.split(";")[4].substring(5, 6));
+				r.setIEngineEnd(hour*60+minute*6);
+				//if(idl>3){
+				//	flag = Integer.parseInt(id.split(";")[3]);
+				if(r.getIType()==null){
+					r.setIType(0);
+				}
+				dlist = super.find(dhql, id.split(";")[0]);
+				for(TDispatch d:dlist){
+					d.setDFlytime(Utilities.getMinitue(id.split(";")[1]));
+					d.setDRecycletime(Utilities.parse(id.split(";")[2], "yyyy-MM-dd HH:mm:ss"));
+					d.setITimes(Integer.parseInt(id.split(";")[5]));
+					d.setDKongzhong(Utilities.getMinitue(id.split(";")[3]));
+				}
+				//}
+				/*
+				if(idl>4){
+					r.setVReason(id.split(";")[4]);
+				}
+				*/
+				rlist.add(r);
+				
+				//改变飞机状态
+				if(r.getIType()==0){
+					p.setIStatus(PLANE_STATUS_USE);
+				}else{
+					p.setIStatus(PLANE_STATUS_NO_USE);
+				}
+				
+				plist.add(p);
+				
+			}
+			if(rlist.size()>0)
+				super.saveOrUpdateALL(rlist);
+			if(plist.size()>0)
+				super.saveOrUpdateALL(plist);
+			
+		}catch (HibernateException e) {
+			throw new RuntimeException("机务回收失败，数据库连接错误，返回重试。");
+		}catch (ParseException e) {
+			throw new RuntimeException("机务回收失败，数据库连接错误，返回重试。");
+		}
+	}
+	@SuppressWarnings("unchecked")
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void savePlaneRecycleToTeacher(VOperateBean bean) throws FinanceServiceException {
+		try {
+			
+			TDispatch r = new TDispatch();
+
+			String planeid = bean.getId();
+			String teaid = bean.getName();
+			TUser user = super.get(TUser.class, bean.getUserid());
+			String hql = " from TDispatch where planeinfo.VId = ? and DRecycletime is null"; //回收时间是空，表示未回收
+			List<TDispatch> list = super.find(hql, planeid.split(";")[0]);
+			TDispatch old = list.get(0);
+			old.setDRecycletime(Utilities.parse(planeid.split(";")[1], "yyyy-MM-dd HH:mm:ss"));
+			old.setDFlytime(Utilities.getMinitue(planeid.split(";")[3]));
+			old.setDKongzhong(Utilities.getMinitue(planeid.split(";")[5]));
+			old.setITimes(Integer.parseInt(planeid.split(";")[4]));
+			super.update(old);
+			
+			//再次签派
+			r.setDCreateDate(new Date());
+			r.setDDispatchtime(Utilities.parse(planeid.split(";")[2], "yyyy-MM-dd HH:mm:ss"));
+			r.setPlaneinfo(old.getPlaneinfo());
+			r.setTeacherBaseInfo(super.get(TeacherBaseInfo.class, teaid));
+			r.setTUser(user);
+			super.save(r);
+			
+		}catch (HibernateException e) {
+			throw new RuntimeException("回收直接签派教员失败，数据库连接错误，返回重试。", e);
+		}catch (ParseException e) {
+			throw new RuntimeException("回收直接签派教员失败，日期格式错误。", e);
+		}
+	}
+	
+	//saveCheck
+	@SuppressWarnings("unchecked")
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void savePlaneCheck(Planecheck check) throws FinanceServiceException {
+		try {
+			List<Planecheck> saveList = new ArrayList<Planecheck>();
+			Planecheck scheck;
+
+			//算出该飞机还剩多少时长，将其值减去，否则超出范围
+			String hql ="select sum(DFlytime) from TPlanerelease where planeinfo.VId=?";//飞行总时间
+			List<Object> release;
+			Double f  = 0.00;
+			Double d = 0.00;
+
+			Planeinfo p = super.get(Planeinfo.class, check.getPlaneinfo().getVId());
+			
+			release = super.find(hql, check.getPlaneinfo().getVId());
+			
+			for(Object o:release){
+				if(o!=null){
+					f += Double.parseDouble(o.toString());
+				}
+			}
+			
+			String maxHql = " from PlaneCheckCycle where VFormid=? order by ICycle desc";
+			List<PlaneCheckCycle> maxlist= super.find(maxHql, p.getPlaneform().getVId());
+			int max = maxlist.get(0).getICycle();
+			
+			//定检类型
+			PlaneCheckCycle form = super.get(PlaneCheckCycle.class, check.getPlaneCheckCycle().getVId());
+			
+			//boolean isChange = false;
+			//是否是换发
+			//if(max==form.getICycle()){
+			//	isChange= true;
+			//}
+			
+			String formHql =" from PlaneCheckCycle where VFormid=? and ICycle<=?";
+			List<PlaneCheckCycle> formList = super.find(formHql, p.getPlaneform().getVId(),form.getICycle());
+			
+			String checkHql = "select sum(IOne) from Planecheck where planeinfo.VId=? and planeCheckCycle.VId=?";//定检总时间
+
+			List<Object> checklist;
+			double dd=0;
+			//d = p.getDUsetime()-p.getDCsdjtime()+f;//总飞行时长
+			d = p.getDUsetime()+f;//总飞行时长
+			for(int i=0;i<formList.size();i++){
+				dd=0;
+				checklist = super.find(checkHql,p.getVId() ,formList.get(i).getVId());
+				for(Object cc:checklist){
+					if(cc!=null){
+						dd+=Double.parseDouble(cc.toString());
+					}	
+				}
+				scheck = new Planecheck();
+				scheck.setTUser(check.getTUser());
+				scheck.setDCreateDate(new Date());
+				scheck.setVCheckperson(check.getVCheckperson());
+				scheck.setDChecktime(check.getDChecktime());
+				scheck.setVCheckresult(check.getVCheckresult());
+				scheck.setPlaneinfo(p);
+				scheck.setPlaneCheckCycle(formList.get(i));
+				
+				if(max==formList.get(i).getICycle()){
+					scheck.setIOne(p.getDUsetime() + f-dd);
+				}else{
+					scheck.setIOne(d-dd);
+				}
+				saveList.add(scheck);
+			}
+			
+			/*
+			for(Object[] c:checklist){
+
+				if(c[0]!=null){
+					fifty+=Double.parseDouble(c[0].toString());
+					
+				}
+				if(c[1]!=null){
+					one+=Double.parseDouble(c[1].toString());
+					
+				}
+				if(c[2]!=null){
+					two+=Double.parseDouble(c[2].toString());
+					
+				}
+				if(c[3]!=null){
+					three+=Double.parseDouble(c[3].toString());
+					
+				}
+			}
+			*/
+			
+			
+			//用多少冲多少，保障完全恢复。
+			
+			/*
+			if(type.equals("0")){
+				check.setIFifty(d-fifty);
+			}
+			else if(type.equals("1")){//100包含50
+				check.setIFifty(d-fifty);
+				check.setIOne(d-one);
+			}
+			else if(type.equals("2")){//200包含100、50
+				check.setIFifty(d-fifty);
+				check.setIOne(d-one);
+				check.setITwo(d-two);
+			}
+			else if(type.equals("3")){
+				check.setIThree(p.getDUsetime() + f-three);
+			}else{
+				
+			}
+			*/
+			p.setIStatus(PLANE_STATUS_USE);
+			super.update(p);
+			super.saveOrUpdateALL(saveList);
+		}catch (HibernateException e) {
+			throw new RuntimeException("保存定检失败，数据库连接错误，返回重试。", e);
+		}
+	}
+	
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void saveSetPlaneCheckForm(PlaneCheckCycle checkForm)
+			throws FinanceServiceException {
+		try{
+			String hql =" from PlaneCheckCycle where VFormid=? and ICycle=?";
+			if(super.find(hql, checkForm.getVFormid(),checkForm.getICycle()).size()>0){
+				throw new FinanceServiceException("设置定检类型失败，该机型的定检类型已经设置。");
+			}
+			super.save(checkForm);
+		}catch(HibernateException e){
+			throw new FinanceServiceException("设置定检类型失败，数据库连接错误，返回重试。", e);
+		}
+	}
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void updateSetPlaneCheckForm(PlaneCheckCycle checkForm)
+			throws FinanceServiceException {
+		try{
+			PlaneCheckCycle old = super.get(PlaneCheckCycle.class, checkForm.getVId());
+			old.setICycle(checkForm.getICycle());
+			super.update(old);
+		}catch(HibernateException e){
+			throw new FinanceServiceException("编辑定检类型失败，数据库连接错误，返回重试。", e);
+		}
+	}
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void deleteSetPlaneCheckForm(String id)
+			throws FinanceServiceException {
+		try{
+			super.removeById(PlaneCheckCycle.class, id); 
+		}catch(HibernateException e){
+			throw new FinanceServiceException("删除定检类型失败，数据库连接错误，返回重试。", e);
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	public List<VPlaneCheckCycle> readPlaneCheckFormList(String id)
+			throws FinanceServiceException {
+		Planeinfo p= super.get(Planeinfo.class, id);
+		String hql =" from PlaneCheckCycle where VFormid=?";
+		List<PlaneCheckCycle> list = super.find(hql,p.getPlaneform().getVId());
+		List<VPlaneCheckCycle> blist = new ArrayList<VPlaneCheckCycle>();
+		VPlaneCheckCycle  vp;
+		for(PlaneCheckCycle t:list){
+			vp = new VPlaneCheckCycle();
+			vp.setVId(t.getVId());
+			vp.setICycle(t.getICycle());
+			blist.add(vp);
+			
+		}
+		return blist;
+	}
+
+	@SuppressWarnings("unchecked")
+	public List<Planeinfo> readXqlAndMnjInfoList(Map<String, Object> params)
+			throws FinanceServiceException {
+		Criteria criteria = this.createCriteria(Planeinfo.class);
+
+		criteria.add(Restrictions.or(Restrictions.eq(QUERY_KEY_DEVICETYPE,1),Restrictions.eq(QUERY_KEY_DEVICETYPE,2)));
+		if (params.get(QUERY_KEY_BASEID) != null
+				&& !params.get(QUERY_KEY_BASEID).equals(""))
+			criteria.createCriteria("TOrg", "org").add(Restrictions.eq("VId",  params.get(QUERY_KEY_BASEID)));
+		
+		if (params.get(PLANE_STATUS) != null
+				&& !params.get(PLANE_STATUS).equals(""))
+			criteria.add(Restrictions.eq(PLANE_STATUS,  PLANE_STATUS_USE));
+		
+		criteria.addOrder(Order.asc("planeform"));
+		criteria.addOrder(Order.asc("VPlanecode"));
+		criteria.addOrder(Order.asc("VId"));
+		try {
+			return criteria.list();
+		} catch (HibernateException e) {
+			log.error("读取航空器信息列表失败", e);
+			throw new FinanceServiceException("读取航空器信息列表失败,数据库连接错误，返回重试。", e);
+		}
+	}
+}

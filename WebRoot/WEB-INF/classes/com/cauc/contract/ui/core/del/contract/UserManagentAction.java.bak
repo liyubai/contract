@@ -1,0 +1,83 @@
+package com.cauc.training.ui.core.del.contract;
+
+import java.util.List;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.business.contract.IUserManagentService;
+import com.cauc.training.pojos.TContractUser;
+import com.cauc.training.ui.common.BaseActionSupport;
+
+/**
+ * 用户管理的Action
+ * 
+ * @author litie
+ */
+public class UserManagentAction extends BaseActionSupport {
+
+	private TContractUser user;
+
+	public TContractUser getUser() {
+		return user;
+	}
+
+	public void setUser(TContractUser user) {
+		this.user = user;
+	}
+
+	private List<TContractUser> userList;
+
+	public List<TContractUser> getUserList() {
+		return userList;
+	}
+
+	public void setUserList(List<TContractUser> userList) {
+		this.userList = userList;
+	}
+
+	/**
+	 * serialVersionUID
+	 */
+	private static final long serialVersionUID = -1718773443350401081L;
+
+	/**
+	 * 查询显示用户管理页面用的数据
+	 * 
+	 * @return
+	 */
+	public String showManagent() {
+		IUserManagentService service = getFactory().getFinanceProviderInstance().getContractUserManagentService();
+		userList = service.readAllUser();
+		return SUCCESS;
+	}
+
+	/**
+	 * 增加用户信息
+	 * 
+	 * @return
+	 */
+	public String addUser() {
+		try {
+			IUserManagentService service = getFactory().getFinanceProviderInstance().getContractUserManagentService();
+			service.saveUser(user);
+			return showManagent();
+		} catch (FinanceServiceException e) {
+			return ERROR;
+		}
+	}
+
+	/**
+	 * 更新用户信息
+	 * 
+	 * @return
+	 */
+	public String updateUser() {
+		try {
+			IUserManagentService service = getFactory().getFinanceProviderInstance().getContractUserManagentService();
+			service.saveUser(user);
+			return SUCCESS;
+		} catch (FinanceServiceException e) {
+			return ERROR;
+		}
+	}
+
+}

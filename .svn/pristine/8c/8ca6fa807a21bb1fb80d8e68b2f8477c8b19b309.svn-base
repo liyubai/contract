@@ -1,0 +1,29 @@
+package com.cauc.training.business.contract;
+
+import java.util.List;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.pojos.TContractUser;
+
+/**
+ * 用户管理的Service
+ * 
+ * @author litie
+ */
+public interface IUserManagentService {
+
+	/**
+	 * 查询所有用户信息
+	 * 
+	 * @return
+	 */
+	List<TContractUser> readAllUser();
+
+	/**
+	 * 保持用户信息
+	 * 
+	 * @param user
+	 */
+	void saveUser(TContractUser user) throws FinanceServiceException;
+
+}

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts PUBLIC
+    "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN"
+    "http://struts.apache.org/dtds/struts-2.0.dtd">
+<struts>
+	<package name="AvgStatistics" extends="ErsDefault" namespace="/">
+		<!-- 显示平均统计信息 -->
+		<action name="showAvgStatistics" class="com.cauc.contract.ui.core.AvgStatisticsAction"
+			 method="showAvgStatistics">
+			<result name="success" >/pages/collection/cAverageStatistics.jsp</result>
+		</action>
+	</package>
+</struts> 

@@ -1,0 +1,1754 @@
+package com.cauc.training.business.hibernate;
+
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import org.hibernate.Criteria;
+import org.hibernate.HibernateException;
+import org.hibernate.criterion.Order;
+import org.hibernate.criterion.Restrictions;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.business.IFlightTrainingRecordService;
+import com.cauc.training.business.ISystemUserManagerService;
+import com.cauc.training.business.dao.GenericHibernateDAO;
+import com.cauc.training.business.dao.support.Page;
+import com.cauc.training.config.FinanceConfig;
+import com.cauc.training.pojos.StudentBaseInfo;
+import com.cauc.training.pojos.TDgdistribution;
+import com.cauc.training.pojos.TOrg;
+import com.cauc.training.pojos.TOtheruser;
+import com.cauc.training.pojos.TOutline;
+import com.cauc.training.pojos.TStuassignbase;
+import com.cauc.training.pojos.TStuassigngroup;
+import com.cauc.training.pojos.TUser;
+import com.cauc.training.pojos.TUserRights;
+import com.cauc.training.pojos.TeacherBaseInfo;
+import com.cauc.training.util.Utilities;
+import com.cauc.training.vo.VOTUser;
+import com.cauc.training.vo.VPlanecheck;
+import com.cauc.training.vo.VStatisticsByDay;
+import com.cauc.training.vo.VStudentBaseInfo;
+
+@Service("systemUserManagerServiceImpl")
+public class SystemUserManagerServiceImpl extends GenericHibernateDAO implements ISystemUserManagerService {
+
+	/**
+	 * 功能：根据编号，判断该用户是否已存在 
+	 * @param name：用户编号
+	*/
+	@SuppressWarnings("unchecked")
+	private boolean isExistTUser(String name) throws FinanceServiceException {
+		//该标志位用于表示用户是否已存在，false:表示不存在
+		boolean flag = false;
+		String hql = "from TUser where VUsername=?";
+		List<TUser> userList = super.find(hql, name);
+		if (userList != null && userList.size() > 0){
+			flag = true;
+		}
+		return flag;
+			
+	}
+
+	
+	/**
+	 * 功能：根据编号和主键，判断该用户是否已存在 ，主要用于编辑时判断
+	 * @param vid：主键
+	 * @param name：用户编号
+	*/
+
+	@SuppressWarnings({ "unused", "unchecked" })
+	private boolean isExistTUser(String vid, String name) throws FinanceServiceException {
+		//该标志位用于表示文件是否已存在，false:表示不存在
+		boolean flag = false;
+		String hql = "from TUser where VId!=? and VUsername=?";
+		List<TUser> userList = super.find(hql, new Object[]{vid, name});
+		if (userList != null && userList.size() > 0){
+			flag = true;
+		}
+		return flag;
+			
+	}
+	
+	/**
+	 * 功能：保存用户账号
+	 * @param user
+	 * @throws FinanceServiceException
+	*/
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void saveUserAccount(TUser user) throws FinanceServiceException {
+		if(user != null){
+			if(isExistTUser(user.getVUsername())){
+				throw new FinanceServiceException("保存用户账号失败，该账号已经存在！");
+			}else{
+				try{
+					super.save(user);
+				}catch(HibernateException e){
+					throw new FinanceServiceException("保存用户账号失败！", e);
+				}
+			}
+
+		}else{
+			throw new FinanceServiceException("保存用户账号失败！");
+		}
+
+	}
+
+	/**
+	 * 更新用户账号
+	 * @param user
+	 * @throws FinanceServiceException
+	*/
+	@SuppressWarnings("unchecked")
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void updateUserAccount(TUser user) throws FinanceServiceException {
+		try {
+			TUser old = super.get(TUser.class, user.getVId());
+		
+			/**
+			 * 是否更新密码，由下列条件决定：
+			 * 
+			 * 如果用户账号原有加密过的密码与传入的TUser对象的未加密的密码不相同，则说明修改过密码，
+			 * 这时将新密码进行加密，然后重新设置
+			 * 
+			 * 如果用户账号原有加密过的密码与传入的TUser对象的未加密的密码相同，则说明没有修改过密码，
+			 * 这时不需要重新设置密码
+			 * 
+			*/
+			//System.out.println(user.getVPassword());
+			if(user.getVPassword()!=null && !user.getVPassword().equals("")){
+				//System.out.println(1);
+				//加密用户登录密码
+				if(FinanceConfig.getBooleanProperty("passwds.encryption.enabled")){
+					//System.out.println(2);
+				   String encodePsw = Utilities.encodePassword(user.getVPassword(), FinanceConfig.getProperty("passwds.encryption.algorithm"));
+				   old.setVPassword(encodePsw);
+				}
+			}
+			//old.setIStatus(user.getIStatus());
+			//System.out.println(user.getIAdminStatus());
+			
+			String hql =" from TOtheruser where VCode=?";
+			List<TOtheruser> list=super.find(hql, old.getVUsername());
+			
+			if(list.size()>0){
+				TOtheruser o = list.get(0);
+				o.setVCode(user.getVUsername());
+				super.update(o);
+			}
+			
+			hql =" from StudentBaseInfo where VCode=?";
+			List<StudentBaseInfo> slist=super.find(hql, old.getVUsername());
+			
+			if(slist.size()>0){
+				StudentBaseInfo s = slist.get(0);
+				s.setVCode(user.getVUsername());
+				super.update(s);
+			}
+			
+			hql =" from TeacherBaseInfo where VCode=?";
+			List<TeacherBaseInfo> tlist=super.find(hql, old.getVUsername());
+			
+			if(tlist.size()>0){
+				TeacherBaseInfo t = tlist.get(0);
+				t.setVCode(user.getVUsername());
+				super.update(t);
+			}
+			old.setVLdap(user.getVLdap());
+			old.setVUsername(user.getVUsername());
+			old.setVRealname(user.getVRealname());
+			old.setVJob(user.getVJob());
+			old.setIAdminStatus(user.getIAdminStatus());
+			super.update(old);
+			
+			
+		}catch (HibernateException e) {
+			throw new RuntimeException("更新用户账号失败。", e);
+		}
+
+	}
+
+	/**
+	 * 更新用户状态（可单一更新，也可批量更新）
+	 * @param ids：String... ids 表示定义一个可变变量，即ids就是一个字符串数组，等价于String[] ids
+	 * @param status：状态值
+	 * @throws FinanceServiceException
+	 */	
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void updateUserStatus(int status, String... ids) throws FinanceServiceException {
+	
+		if(ids != null && ids.length >0){
+			try {
+				for (String id : ids) {
+				//	System.out.println(id);
+
+					TUser old = super.get(TUser.class, id);
+					old.setIStatus(status);
+					super.update(old);
+					//super.removeById(TUser.class, id);
+				}
+			}catch (HibernateException e) {
+				e.printStackTrace();
+				throw new FinanceServiceException("更新用户状态失败！", e);
+			}
+		}
+		
+	}
+
+	/**删除用户账号（可单一删除，也可批量删除）
+	 * 
+	 * @param ids
+	 * @throws FinanceServiceException
+	 * 说明：String... ids 表示定义一个可变变量，即Ids就是一个字符串数组，等价于String[] ids
+	 */
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void deleteUserAccountByIds(String... ids) throws FinanceServiceException {
+		if(ids != null && ids.length >0){
+			try {
+				for (String id : ids) {
+					//System.out.println(id);
+//					if(super.findBy(TRole.class, "TUser.VId", id).size()>0){
+//						throw new FinanceServiceException("该用户账号已经被引用，不能删除！");
+//					}
+					//逻辑删除
+					TUser old = super.get(TUser.class, id);
+					old.setIStatus(-1);
+					super.update(old);
+					//super.removeById(TUser.class, id);
+				}
+			}catch (HibernateException e) {
+				e.printStackTrace();
+				throw new FinanceServiceException("删除用户账号信息失败", e);
+			}
+		}
+
+	}
+
+	/**恢复默认密码，默认密码与用户账号相同
+	 * 
+	 * @param id
+	 * @throws FinanceServiceException
+	 */
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void recoverDefaultPassword(String id) throws FinanceServiceException{
+		try{
+			TUser user =  super.get(TUser.class, id);
+			
+			String defaultPassword = user.getVUsername();
+			//加密用户登录密码
+			if(FinanceConfig.getBooleanProperty("passwds.encryption.enabled")){
+			   String encodePsw = Utilities.encodePassword(defaultPassword, FinanceConfig.getProperty("passwds.encryption.algorithm"));
+			   user.setVPassword(encodePsw);
+			}
+			
+
+			super.update(user);
+		}catch(HibernateException e){
+			throw new FinanceServiceException("恢复默认密码失败", e);
+		}
+	}
+	/**
+	 * 根据用户ID查询用户账号
+	 * @param id
+	 */	
+	public VOTUser searchSystemUserAccountById(String id) throws FinanceServiceException{
+
+		VOTUser ovuser = new VOTUser();
+		try{
+			TUser user =  super.get(TUser.class, id);
+			ovuser.setVId(user.getVId());
+			ovuser.setVUsername(user.getVUsername());
+			ovuser.setVPassword(user.getVPassword());
+			ovuser.setIAdminStatus(user.getIAdminStatus());
+			ovuser.setVRealname(user.getVRealname());
+			ovuser.setVJob(user.getVJob());
+			ovuser.setLdap(user.getVLdap());
+		}catch(HibernateException e){
+			throw new FinanceServiceException("读取用户账号信息失败", e);
+		}
+		return ovuser;
+
+	}
+
+	/**
+	 * 根据用户ID查询用户账号
+	 * @param id
+	 * 返回值为TUser
+	 */
+	public TUser searchUserAccountById(String id) throws FinanceServiceException{
+		TUser tuser = null;
+		try{
+			tuser =  super.get(TUser.class, id);
+		}catch(HibernateException e){
+			throw new FinanceServiceException("读取用户账号信息失败", e);
+		}
+		return tuser;
+	}
+	
+	/**
+	 * 功能：根据用户状态查询用户账号
+	 * @param params：Map结构，key为TUser中的VUsername，value为用户输入的关键字
+	 * @param status：用户状态，0：正常（开通）；1：停用；-1：删除。
+	 *                特别说明：如果要查询所有状态，则将该参数值固定设置为：10
+	 * @param pageNo：当前页号
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	@SuppressWarnings("unchecked")
+	public Page searchStatuUserAccountByStatus(Map<String,Object> params, int status, String pageNo) throws FinanceServiceException {
+		Page page = null;
+		//使用Criteria查询TRole对象
+		Criteria criteria = this.createCriteria(TUser.class);
+		//如果查询条件不为空，则添加查询条件
+		if (params.get(QUERY_KEY_USERACCOUNT) != null && !params.get(QUERY_KEY_USERACCOUNT).equals("")){
+	
+			//按用户名查询
+			List<String> ids = new ArrayList<String>();
+			String userHql = "select VCode from StudentBaseInfo where VName like ?";
+			ids.addAll(super.find(userHql, "%" + params.get(QUERY_KEY_USERACCOUNT) + "%"));
+			userHql = "select VCode from TeacherBaseInfo where VName like ?";
+			ids.addAll(super.find(userHql, "%" + params.get(QUERY_KEY_USERACCOUNT) + "%"));
+			userHql = "select VCode from TOtheruser where VName like ?";
+			ids.addAll(super.find(userHql, "%" + params.get(QUERY_KEY_USERACCOUNT) + "%"));
+			userHql= "select VUsername from TUser where VUsername like ? or VRealname like ?";
+			ids.addAll(super.find(userHql, "%" + params.get(QUERY_KEY_USERACCOUNT) + "%", "%" + params.get(QUERY_KEY_USERACCOUNT) + "%"));
+			if(ids.size()>0){
+				criteria.add(Restrictions.in("VUsername", ids));
+			}else{
+				criteria.add(Restrictions.eq("VUsername", "0"));
+			}
+			
+		}	
+		
+		if (params.get(QUERY_KEY_USER_TYPE) != null && !params.get(QUERY_KEY_USER_TYPE).equals("")){
+			
+			criteria.add(Restrictions.eq(QUERY_KEY_USER_TYPE, Integer.parseInt(params.get(QUERY_KEY_USER_TYPE).toString())));
+		}
+		if(status == 0){//如果状态为0，则表示查询正常（已开通）状态的系统用户账号，这时将添加状态条件
+			criteria.add(Restrictions.eq(ISystemUserManagerService.QUERY_KEY_USERSTATUS, 0));
+		}else if(status == 1){//如果状态为1，则表示查询停用状态的系统用户账号，这时将添加状态条件
+			criteria.add(Restrictions.eq(ISystemUserManagerService.QUERY_KEY_USERSTATUS, 1));
+		}else if(status == -1){//如果状态为-1，则表示查询删除状态的系统用户账号，这时将添加状态条件
+			criteria.add(Restrictions.eq(ISystemUserManagerService.QUERY_KEY_USERSTATUS, -1));
+		}
+		//如果状态为10，则表示查询所有状态的系统用户账号，这时不添加状态条件
+		
+		//添加排序
+		criteria.addOrder(Order.asc("IUserType"));
+		criteria.addOrder(Order.asc("VUsername"));
+		criteria.addOrder(Order.asc(QUERY_KEY_USERSTATUS));//用户状态
+		criteria.addOrder(Order.desc(QUERY_KEY_TUSER_DATE));//创建日期
+		//System.out.println("key: " + params.get(QUERY_KEY_NAME));
+		Integer pageIndex = Integer.parseInt(pageNo);
+		String hql =" from TUserRights where TUserByVUserid.VId=?";
+		List<TUserRights> rightList;
+		try {
+			page = this.pagedQuery(criteria, pageIndex);
+			List<VOTUser> vlist = new ArrayList<VOTUser>();
+			VOTUser v;
+			List<TUser> list = page.getResult();
+			List<TeacherBaseInfo> tlist;
+			List<StudentBaseInfo> slist;
+			List<TOtheruser> olist;
+			for(TUser u:list){
+				v = new VOTUser();
+				v.setDCreateDate(u.getDCreateDate());
+				v.setIAdminStatus(u.getIAdminStatus());
+				v.setIStatus(u.getIStatus());
+				v.setIUserType(String.valueOf(u.getIUserType()));
+				v.setVId(u.getVId());
+				v.setVJob(u.getVJob());
+				v.setLdap(u.getVLdap());
+				//System.out.println(u.getVLdap());
+				//获取真实姓名与部门
+				if(u.getIUserType()==USERTYPE_STUDENT){
+					slist = super.find(" from StudentBaseInfo where VCode=?", u.getVUsername());
+					if(slist.size()>0){
+						v.setVRealname(slist.get(0).getVName());
+						if(slist.get(0).getTOrg()!=null){
+							v.setVJob(slist.get(0).getTOrg().getVName());
+						}else{
+							v.setVJob("");
+						}
+						
+					}else{
+						v.setVRealname("");
+						v.setVJob("");
+					}
+				}else if(u.getIUserType()==USERTYPE_TEACHER){
+					tlist = super.find(" from TeacherBaseInfo where VCode=?", u.getVUsername());
+					if(tlist.size()>0){
+						v.setVRealname(tlist.get(0).getVName());
+						if(tlist.get(0).getTOrg()!=null){
+							v.setVJob(tlist.get(0).getTOrg().getVName());
+						}else{
+							v.setVJob("");
+						}
+						
+					}else{
+						v.setVRealname("");
+						v.setVJob("");
+					}
+					
+				}else if(u.getIUserType()==USERTYPE_OTHER){
+					olist = super.find(" from TOtheruser where VCode=?", u.getVUsername());
+					if(olist.size()>0){
+						v.setVRealname(olist.get(0).getVName());
+						if(olist.get(0).getTOrg()!=null){
+							v.setVJob(olist.get(0).getTOrg().getVName());
+						}else{
+							v.setVJob("");
+						}
+					}else{
+						v.setVRealname("");
+						v.setVJob("");
+					}
+				}else{
+					v.setVRealname(u.getVRealname());
+					v.setVJob(u.getVJob());
+				}
+				rightList = super.find(hql, u.getVId());
+				if(rightList.size()>0){
+					v.setRoleName(rightList.get(0).getTRole().getVName());
+				}else{
+					v.setRoleName("");
+				}
+				v.setVUsername(u.getVUsername());
+				if(u.getVSign()==null || u.getVSign().equals("")){
+					v.setSign("否");
+				}else{
+					v.setSign("是");
+				}
+				
+				vlist.add(v);
+			}
+			page.setData(vlist);
+		} catch (HibernateException e) {
+			e.printStackTrace();
+			throw new FinanceServiceException("查询所有用户信息列表失败", e);
+		}
+		return page;
+	}
+
+//	/**
+//	 * 功能：查询已开通用户账号
+//	 * @param params：Map结构，key为TUser中的IStatus，value为状态数值
+//	 * @param pageNo：当前页号
+//	 * @return
+//	 * @throws FinanceServiceException
+//	 */
+//	public Page searchOpenedStatusUserAccount(Map<String, Object> params, String pageNo) throws FinanceServiceException {
+//		Page page = null;
+//		//使用Criteria查询TRole对象
+//		Criteria criteria = this.createCriteria(TUser.class);
+//		//如果查询条件不为空，则添加查询条件
+//		if (params.get(QUERY_KEY_USERACCOUNT) != null && !params.get(QUERY_KEY_USERACCOUNT).equals("")){
+//			
+//			criteria.add(Restrictions.like(QUERY_KEY_USERACCOUNT, "%" + params.get(QUERY_KEY_USERACCOUNT) + "%"));
+//		}
+//		//用户状态：0表示已开通
+//		criteria.add(Restrictions.eq(QUERY_KEY_USERSTATUS, 0));
+//		
+//		criteria.addOrder(Order.desc(QUERY_KEY_TUSER_DATE));
+//		//System.out.println("key: " + params.get(QUERY_KEY_NAME));
+//		Integer pageIndex = Integer.parseInt(pageNo);
+//		try {
+//			page = this.pagedQuery(criteria, pageIndex);
+//		} catch (HibernateException e) {
+//			e.printStackTrace();
+//			throw new FinanceServiceException("查询已开通用户账号信息列表失败", e);
+//		}
+//		return page;
+//	}
+//
+//	/**
+//	 * 功能：查询已停用用户账号
+//	 * @param params：Map结构，key为TUser中的IStatus，value为状态数值
+//	 * @param pageNo：当前页号
+//	 * @return
+//	 * @throws FinanceServiceException
+//	 */
+//	public Page searchDisabledStatusUserAccount(Map<String, Object> params, String pageNo) throws FinanceServiceException {
+//		Page page = null;
+//		//使用Criteria查询TRole对象
+//		Criteria criteria = this.createCriteria(TUser.class);
+//		//如果查询条件不为空，则添加查询条件
+//		if (params.get(QUERY_KEY_USERACCOUNT) != null && !params.get(QUERY_KEY_USERACCOUNT).equals("")){
+//			
+//			criteria.add(Restrictions.like(QUERY_KEY_USERACCOUNT, "%" + params.get(QUERY_KEY_USERACCOUNT) + "%"));
+//		}
+//		//用户状态：1表示停用
+//		criteria.add(Restrictions.eq(QUERY_KEY_USERSTATUS, 1));
+//		
+//		criteria.addOrder(Order.desc(QUERY_KEY_TUSER_DATE));
+//		//System.out.println("key: " + params.get(QUERY_KEY_NAME));
+//		Integer pageIndex = Integer.parseInt(pageNo);
+//		try {
+//			page = this.pagedQuery(criteria, pageIndex);
+//		} catch (HibernateException e) {
+//			e.printStackTrace();
+//			throw new FinanceServiceException("查询已停用用户账号信息列表失败", e);
+//		}
+//		return page;
+//	}
+//
+//	/**
+//	 * 功能：查询已删除用户账号
+//	 * @param params：Map结构，key为TUser中的IStatus，value为状态数值
+//	 * @param pageNo：当前页号
+//	 * @return
+//	 * @throws FinanceServiceException
+//	 */
+//	public Page searchDeleteStatusUserAccount(Map<String, Object> params, String pageNo) throws FinanceServiceException {
+//		Page page = null;
+//		//使用Criteria查询TRole对象
+//		Criteria criteria = this.createCriteria(TUser.class);
+//		//如果查询条件不为空，则添加查询条件
+//		if (params.get(QUERY_KEY_USERACCOUNT) != null && !params.get(QUERY_KEY_USERACCOUNT).equals("")){
+//			
+//			criteria.add(Restrictions.like(QUERY_KEY_USERACCOUNT, "%" + params.get(QUERY_KEY_USERACCOUNT) + "%"));
+//		}
+//		//用户状态：-1表示删除
+//		criteria.add(Restrictions.eq(QUERY_KEY_USERSTATUS, -1));
+//		
+//		criteria.addOrder(Order.desc(QUERY_KEY_TUSER_DATE));
+//		//System.out.println("key: " + params.get(QUERY_KEY_NAME));
+//		Integer pageIndex = Integer.parseInt(pageNo);
+//		try {
+//			page = this.pagedQuery(criteria, pageIndex);
+//		} catch (HibernateException e) {
+//			e.printStackTrace();
+//			throw new FinanceServiceException("查询已删除用户账号信息列表失败", e);
+//		}
+//		return page;
+//	}
+
+	
+	
+	/**
+	 * 功能：查询教员信息
+	 * @param params：Map结构，条件有两个：1、key为TeacherBaseInfo中的VCode，value为用户输入的关键字；2、key为TeacherBaseInfo中的VName，value为用户输入的关键字
+	 * @param pageNo：当前页号
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page searchTeachersInfo(Map<String, Object> params, String pageNo) throws FinanceServiceException {
+		Page page = null;
+		//使用Criteria查询TRole对象
+		Criteria criteria = this.createCriteria(TeacherBaseInfo.class);
+		//如果查询条件不为空，则添加查询条件：编号
+		/*
+		if (params.get(QUERY_KEY_VCODE) != null && !params.get(QUERY_KEY_VCODE).equals("")){
+			
+			criteria.add(Restrictions.like(QUERY_KEY_VCODE, "%" + params.get(QUERY_KEY_VCODE) + "%"));
+		}
+		
+		//如果查询条件不为空，则添加查询条件：姓名
+		if (params.get(QUERY_KEY_VNAME) != null && !params.get(QUERY_KEY_VNAME).equals("")){
+			
+			criteria.add(Restrictions.like(QUERY_KEY_VNAME, "%" + params.get(QUERY_KEY_VNAME) + "%"));
+		}
+		*/
+		if (params.get(QUERY_KEY_VNAME) != null && !params.get(QUERY_KEY_VNAME).equals("")){
+			
+			criteria.add(Restrictions.or(Restrictions.like(QUERY_KEY_VNAME, "%" + params.get(QUERY_KEY_VNAME) + "%"),
+					Restrictions.like(QUERY_KEY_VCODE, "%" + params.get(QUERY_KEY_VNAME) + "%")));
+		}
+
+		//如果查询条件不为空，则添加查询条件：账号是否已开通标志位，这里设置为0，显示未开通状态的
+		criteria.add(Restrictions.eq(QUERY_KEY_OPENSTATUS, 0));
+		
+		criteria.addOrder(Order.desc(QUERY_KEY_INFO_DATE));
+		//System.out.println("key: " + params.get(QUERY_KEY_NAME));
+		Integer pageIndex = Integer.parseInt(pageNo);
+		try {
+			page = this.pagedQuery(criteria, pageIndex);
+		} catch (HibernateException e) {
+			e.printStackTrace();
+			throw new FinanceServiceException("查询教员信息列表失败", e);
+		}
+		return page;
+	}
+
+	/**
+	 * 功能：查询学员信息
+	 * @param params：Map结构，条件有两个：1、key为StudentBaseInfo中的VCode，value为用户输入的关键字；2、key为StudentBaseInfo中的VName，value为用户输入的关键字
+	 * @param pageNo：当前页号
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public Page searchStudentsInfo(Map<String, Object> params, String pageNo) throws FinanceServiceException {
+		Page page = null;
+		//使用Criteria查询TRole对象
+		Criteria criteria = this.createCriteria(StudentBaseInfo.class);
+		//如果查询条件不为空，则添加查询条件：编号
+		/*
+		if (params.get(QUERY_KEY_VCODE) != null && !params.get(QUERY_KEY_VCODE).equals("")){
+			
+			criteria.add(Restrictions.like(QUERY_KEY_VCODE, "%" + params.get(QUERY_KEY_VCODE) + "%"));
+		}
+		
+		//如果查询条件不为空，则添加查询条件：姓名
+		if (params.get(QUERY_KEY_VNAME) != null && !params.get(QUERY_KEY_VNAME).equals("")){
+			
+			criteria.add(Restrictions.like(QUERY_KEY_VNAME, "%" + params.get(QUERY_KEY_VNAME) + "%"));
+		}*/
+		if (params.get(QUERY_KEY_VNAME) != null && !params.get(QUERY_KEY_VNAME).equals("")){
+			
+			criteria.add(Restrictions.or(Restrictions.like(QUERY_KEY_VNAME, "%" + params.get(QUERY_KEY_VNAME) + "%"),
+					Restrictions.like(QUERY_KEY_VCODE, "%" + params.get(QUERY_KEY_VNAME) + "%")));
+		}
+		//如果查询条件不为空，则添加查询条件：账号是否已开通标志位，这里设置为0，显示未开通状态的
+		criteria.add(Restrictions.eq(QUERY_KEY_OPENSTATUS, 0));
+		criteria.add(Restrictions.eq("IUsertype", 0));
+		criteria.addOrder(Order.desc(QUERY_KEY_INFO_DATE));
+		//System.out.println("key: " + params.get(QUERY_KEY_NAME));
+		Integer pageIndex = Integer.parseInt(pageNo);
+		try {
+			page = this.pagedQuery(criteria, pageIndex);
+		} catch (HibernateException e) {
+			e.printStackTrace();
+			throw new FinanceServiceException("查询学员信息列表失败", e);
+		}
+		return page;
+	}
+
+	/**
+	 * 功能：查询其他人员信息
+	 * @param params：Map结构，条件有两个：1、key为TOtheruser中的VCode，value为用户输入的关键字；2、key为TOtheruser中的VName，value为用户输入的关键字
+	 * @param pageNo：当前页号
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public Page searchOtherUsersInfo(Map<String, Object> params, String pageNo) throws FinanceServiceException {
+		Page page = null;
+		//使用Criteria查询TRole对象
+		Criteria criteria = this.createCriteria(TOtheruser.class);
+		//如果查询条件不为空，则添加查询条件：编号
+		/*
+		if (params.get(QUERY_KEY_VCODE) != null && !params.get(QUERY_KEY_VCODE).equals("")){
+			
+			criteria.add(Restrictions.like(QUERY_KEY_VCODE, "%" + params.get(QUERY_KEY_VCODE) + "%"));
+		}
+		
+		//如果查询条件不为空，则添加查询条件：姓名
+		if (params.get(QUERY_KEY_VNAME) != null && !params.get(QUERY_KEY_VNAME).equals("")){
+			
+			criteria.add(Restrictions.like(QUERY_KEY_VNAME, "%" + params.get(QUERY_KEY_VNAME) + "%"));
+		}*/
+		if (params.get(QUERY_KEY_VNAME) != null && !params.get(QUERY_KEY_VNAME).equals("")){
+			
+			criteria.add(Restrictions.or(Restrictions.like(QUERY_KEY_VNAME, "%" + params.get(QUERY_KEY_VNAME) + "%"),
+					Restrictions.like(QUERY_KEY_VCODE, "%" + params.get(QUERY_KEY_VNAME) + "%")));
+		}
+		//如果查询条件不为空，则添加查询条件：账号是否已开通标志位，这里设置为0，显示未开通状态的信盵	
+		criteria.add(Restrictions.eq(QUERY_KEY_OPENSTATUS, 0));	
+		
+		criteria.addOrder(Order.desc(QUERY_KEY_INFO_DATE));
+		//System.out.println("key: " + params.get(QUERY_KEY_NAME));
+		Integer pageIndex = Integer.parseInt(pageNo);
+		try {
+			page = this.pagedQuery(criteria, pageIndex);
+		} catch (HibernateException e) {
+			e.printStackTrace();
+			throw new FinanceServiceException("查询其他人员信息列表失败", e);
+		}
+		return page;
+	}
+	
+	/**
+	 * 开通教员、学员、其他人员的登录账号信息（可单一开通，也可批量开通）
+	 * @param userType：开通账号的人员类别。1：表示教员；2：表示学员；3：表示其他人员
+	 * @param ids：String... ids 表示定义一个可变变量，即ids就是一个字符串数组，等价于String[] ids
+	 * @param createUserId：当前操作的人员的主键
+	 * @throws FinanceServiceException
+	 */
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void openTSOUserAccount(int userType, String createUserId, String... ids) throws FinanceServiceException{
+		if(ids != null && ids.length >0){
+			try {
+				for (String id : ids) {
+					//System.out.println(id);
+					String vcode = null;
+
+					
+					if(userType == ISystemUserManagerService.USERTYPE_TEACHER){
+						//取得教员信息
+						TeacherBaseInfo teacher = super.get(TeacherBaseInfo.class, id);
+						teacher.setOpenStatus(1);//表示该教员账号信息已开通，0：未开通；1：已开通
+						vcode = teacher.getVCode();
+						if(super.findBy(TUser.class, "VUsername", vcode).size()>0){
+							throw new FinanceServiceException("开通账号信息失败，该账号已经开通。");
+						}
+						super.update(teacher);
+					}else if(userType == ISystemUserManagerService.USERTYPE_STUDENT){
+						//取得学员信息 
+						StudentBaseInfo stu = super.get(StudentBaseInfo.class, id);
+						stu.setOpenStatus(1);//表示该学员账号信息已开通，0：未开通；1：已开通
+						vcode = stu.getVCode();
+						if(super.findBy(TUser.class, "VUsername", vcode).size()>0){
+							throw new FinanceServiceException("开通账号信息失败，该账号已经开通。");
+						}
+						super.update(stu);
+					}else if(userType == ISystemUserManagerService.USERTYPE_OTHER){
+						//取得其他人员信息
+						TOtheruser other = super.get(TOtheruser.class, id);
+						other.setOpenStatus(1);//表示该其他人员账号信息已开通，0：未开通；1：已开通
+						vcode = other.getVCode();
+						if(super.findBy(TUser.class, "VUsername", vcode).size()>0){
+							throw new FinanceServiceException("开通账号信息失败，该账号已经开通。");
+						}
+						super.update(other);
+					}
+					
+					if(vcode != null && !vcode.trim().equals("")){
+						
+						TUser userAccount = new TUser();
+						userAccount.setVUsername(vcode);
+						
+						//加密用户登录密码
+						if(FinanceConfig.getBooleanProperty("passwds.encryption.enabled")){
+						   String encodePsw = Utilities.encodePassword(vcode, FinanceConfig.getProperty("passwds.encryption.algorithm"));
+						   userAccount.setVPassword(encodePsw);
+						}
+
+						userAccount.setVCreateUserId(createUserId);
+						userAccount.setDCreateDate(new Date());
+						userAccount.setIStatus(0);//开通
+						//设置用户类型
+						userAccount.setIUserType(userType);
+						
+						userAccount.setIAdminStatus(0);//非管理员
+						
+						super.save(userAccount);
+					}else{
+						throw new FinanceServiceException("开通账号信息失败，参数传递错误。");
+					}
+					
+
+				}
+			}catch (HibernateException e) {
+				e.printStackTrace();
+				throw new RuntimeException("开通账号信息失败，数据库连接错误。");
+			}
+		}
+	}
+
+
+	@SuppressWarnings("unchecked")
+	public List<VStatisticsByDay> readStatisticsByDayList(
+			Map<String, Object> params) throws FinanceServiceException {
+		try{
+			String s = params.get(QUERY_KEY_BEGIN_DATE).toString();
+			String e = params.get(QUERY_KEY_EDN_DATE).toString();
+			
+			Date d1 = Utilities.parse(s,"yyyy-MM-dd");
+			Date d2 = Utilities.parse(e,"yyyy-MM-dd");
+			
+			long l1 = d1.getTime();
+			long l2 = d2.getTime();
+			long dd = (l2-l1)/1000/3600/24 + 1;
+			int d = (int)dd;
+			if(d>180){
+				throw new FinanceServiceException("获取信息失败，为了保证系统性能，开始日期与结束日期不要超六个月。");
+			}
+			Calendar rightNow = Calendar.getInstance(); 
+			
+			List<VStatisticsByDay> blist = new ArrayList<VStatisticsByDay>();
+			VStatisticsByDay vs;
+			String sql = "select pform.atimes,pform.d_trantime,pform.v_id,pform.d_flydate,tplane.totalplanes," +
+					"zc.zctimes,zc.dfzctimes from ( select SUM(x.atimes) as atimes,SUM(d_trantime) as d_trantime," +
+					"x.v_id,x.d_flydate from ( select isnull(a.i_landdaytimes,0)+isnull(a.i_langnighttimes,0)" +
+					" as atimes,isnull(a.d_trantime,0) as d_trantime,c.v_id,a.d_flydate from t_flightTrainingrecord" +
+					" a left join planeinfo b on a.v_planeid=b.v_id left join planeform c on b.v_planeform=c.v_id" +
+					" where a.d_flydate between ? and ?) x where x.d_flydate is not null" +
+					" group by x.v_id,x.d_flydate) pform left join (select COUNT(y.planes) as totalplanes," +
+					"y.d_flydate,y.cid from ( select top 10000 1 as planes,x.cid,x.d_flydate from" +
+					" (select c.v_id as cid,b.v_id,a.d_flydate from t_flightTrainingrecord a left join planeinfo b" +
+					" on a.v_planeid=b.v_id left join planeform c on b.v_planeform=c.v_id where a.d_flydate" +
+					" between ? and ?) x where x.d_flydate is not null  group by" +
+					" x.d_flydate,x.cid,x.v_id order by x.d_flydate) y group by y.d_flydate,y.cid) tplane" +
+					" on pform.d_flydate=tplane.d_flydate and pform.v_id=tplane.cid left join (select SUM(m.zctimes) as zctimes," +
+					"SUM(m.dfzctimes) as dfzctimes,m.d_flydate from (select  a.d_flydate,case when b.v_id" +
+					" is NULL then 0 else isnull(a.i_landdaytimes,0)+isnull(a.i_langnighttimes,0) end as zctimes," +
+					" case  when c.v_id is null then 0 else isnull(a.i_landdaytimes,0)+isnull(a.i_langnighttimes,0)" +
+					" end as dfzctimes from t_flightTrainingrecord a left join (select * from t_trainingLesson" +
+					" where i_trainType=1) b on a.v_lessonid=b.v_id left join ( select * from t_trainingLesson" +
+					" where i_trainType=1 and i_fxxz=1) c on a.v_lessonid=c.v_id where a.d_flydate between ? and ?) m" +
+					" group by m.d_flydate) zc on pform.d_flydate=zc.d_flydate  order by pform.d_flydate asc";
+			List<Object[]> list = super.createSQLQuery(sql, s,e,s,e,s,e).list();
+			String flyDate = "";
+			int flag = 0;
+			int times = 0;
+			double planeTime = 0;
+			double mnjTime = 0;
+			int dd1 = 0;
+			int dd2 = 0;
+			int dd3 = 0;
+			int dd4 = 0;
+			int dd5 = 0;
+			int dd6 = 0;
+			int dd7 = 0;
+			double dd8 = 0;
+			double dd9 = 0;
+			double dd10 = 0;
+			double dd11 =0;
+			double dd12 = 0;
+			double dd13 = 0;
+			int dd14 = 0;
+			int dd15 = 0;
+			for(int i=0;i<d;i++){
+				times = 0;
+				planeTime = 0;
+				mnjTime = 0;
+				rightNow.setTimeInMillis(l1);
+				rightNow.add(Calendar.DAY_OF_MONTH,i);
+				vs = new VStatisticsByDay();
+				
+				vs.setFlyDate(Utilities.format(rightNow.getTime(),"yyyy-MM-dd"));
+				for( int j=0; j<list.size();j++){
+					flyDate = Utilities.format((Date)list.get(j)[3],"yyyy-MM-dd");
+					if(vs.getFlyDate().equals(flyDate)){
+						
+						if(list.get(j)[2].equals(QUERY_KEY_PLANE_C90)){
+							dd1+=Integer.parseInt(list.get(j)[4].toString());
+							vs.setC90(list.get(j)[4].toString());
+							vs.setC90Time(Utilities.formatTime(Double.parseDouble(list.get(j)[1].toString())));
+							planeTime+=Double.parseDouble(list.get(j)[1].toString());//时间
+							dd10+=Double.parseDouble(list.get(j)[1].toString());
+						}
+						if(list.get(j)[2].equals(QUERY_KEY_PLANE_DA42)){
+							dd2+=Integer.parseInt(list.get(j)[4].toString());
+							vs.setDa42(list.get(j)[4].toString());
+							vs.setDa42Time(Utilities.formatTime(Double.parseDouble(list.get(j)[1].toString())));
+							planeTime+=Double.parseDouble(list.get(j)[1].toString());//时间
+							dd11+=Double.parseDouble(list.get(j)[1].toString());
+						}
+						if(list.get(j)[2].equals(QUERY_KEY_PLANE_DA40)){
+							dd3+=Integer.parseInt(list.get(j)[4].toString());
+							vs.setDa40(list.get(j)[4].toString());
+							vs.setDa40Time(Utilities.formatTime(Double.parseDouble(list.get(j)[1].toString())));
+							planeTime+=Double.parseDouble(list.get(j)[1].toString());//时间
+							dd12+=Double.parseDouble(list.get(j)[1].toString());
+						}
+						if(list.get(j)[2].equals(QUERY_KEY_PLANE_DA20)){
+							dd4+=Integer.parseInt(list.get(j)[4].toString());
+							vs.setDa20(list.get(j)[4].toString());
+							vs.setDa20Time(Utilities.formatTime(Double.parseDouble(list.get(j)[1].toString())));
+							planeTime+=Double.parseDouble(list.get(j)[1].toString());//时间
+							dd13+=Double.parseDouble(list.get(j)[1].toString());
+						}
+						if(list.get(j)[2].equals(QUERY_KEY_PLANE_FTD42)){
+							dd5+=Integer.parseInt(list.get(j)[4].toString());
+							vs.setFtd42(list.get(j)[4].toString());
+							mnjTime+=Double.parseDouble(list.get(j)[1].toString());//模拟机时间
+						}
+						if(list.get(j)[2].equals(QUERY_KEY_PLANE_FTD40)){
+							dd6+=Integer.parseInt(list.get(j)[4].toString());
+							vs.setFtd40(list.get(j)[4].toString());
+							mnjTime+=Double.parseDouble(list.get(j)[1].toString());//模拟机时间
+						}					
+						times+=Integer.parseInt(list.get(j)[0].toString());//架次
+						vs.setZcNumber(list.get(j)[5].toString());
+						vs.setZcdfNumber(list.get(j)[6].toString());
+						list.remove(j);//先处理，再移除，提升运算速度。
+						j--;
+					}
+					
+				}
+				if(vs.getZcNumber()!=null){
+					dd14+=Integer.parseInt(vs.getZcNumber());
+				}
+				if(vs.getZcdfNumber()!=null){
+					dd15+=Integer.parseInt(vs.getZcdfNumber());
+				}
+				
+				vs.setFlyNumber(String.valueOf(times));//每日总架次
+				dd7+=times;
+				vs.setFlyTime(Utilities.formatTime(planeTime));
+				dd8+=planeTime;
+				vs.setMnjTime(Utilities.formatTime(mnjTime));
+				dd9+=mnjTime;
+				if(planeTime>=50*60 && planeTime<=100*50){
+					flag = 1;
+				}else if(planeTime>100*60 && planeTime<=150*60){
+					flag = 2;
+				}else if(planeTime>150*60){
+					flag = 3;
+				}else{
+					flag = 0;
+				}
+				vs.setFlag(flag);
+				blist.add(vs);
+			}
+			//合计放入最后一行
+			vs = new VStatisticsByDay();
+			vs.setFlyDate("小计");
+			vs.setC90(String.valueOf(dd1));
+			vs.setDa42(String.valueOf(dd2));
+			vs.setDa40(String.valueOf(dd3));
+			vs.setDa20(String.valueOf(dd4));
+			vs.setFtd42(String.valueOf(dd5));
+			vs.setFtd40(String.valueOf(dd6));
+			vs.setFlyNumber(String.valueOf(dd7));
+			
+			vs.setFlyTime(Utilities.formatTime(dd8));
+			vs.setMnjTime(Utilities.formatTime(dd9));
+			vs.setC90Time(Utilities.formatTime(dd10));
+			vs.setDa42Time(Utilities.formatTime(dd11));
+			vs.setDa40Time(Utilities.formatTime(dd12));
+			vs.setDa20Time(Utilities.formatTime(dd13));
+			
+			vs.setZcNumber(String.valueOf(dd14));
+			vs.setZcdfNumber(String.valueOf(dd15));
+			if(dd8>=50*60 && dd8<=100*60){
+				flag = 1;
+			}else if(dd8>100*50 && dd8<=150*60){
+				flag = 2;
+			}else if(dd8>150*60){
+				flag = 3;
+			}else{
+				flag = 0;
+			}
+			vs.setFlag(flag);
+			blist.add(vs);
+			return blist;
+		}catch (ParseException e) {
+			throw new FinanceServiceException("获取信息失败，数据库连接错误。");
+		}
+		catch (HibernateException e) {
+			throw new FinanceServiceException("获取信息失败，数据库连接错误。");
+		}
+	}
+
+
+	@SuppressWarnings("unchecked")
+	public List<VStatisticsByDay> statisticsByMonthListData(
+			Map<String, Object> params) throws FinanceServiceException {
+		Integer year = Integer.parseInt(params.get("year").toString());
+		Integer month = Integer.parseInt(params.get("month").toString());
+		String hql = "select teacherBaseInfoByVTeacherid.TOrg.VId,teacherBaseInfoByVTeacherid.VName," +
+				"sum(DTrantime),TTrainingLesson.IType,TTrainingLesson.IFxxz,teacherBaseInfoByVTeacherid.VId" +
+				" from TFlightTrainingrecord where year(DFlydate)=? and month(DFlydate)=?" +
+				" group by teacherBaseInfoByVTeacherid.TOrg.VId,teacherBaseInfoByVTeacherid.VName," +
+				"teacherBaseInfoByVTeacherid.VId,TTrainingLesson.IType,TTrainingLesson.IFxxz"; 
+		String one = "4028816a470f515801470fa211bf0020";//一大队
+		String two = "4028816a470f515801470fa22eca0021";//二大队
+		String three = "4028816a470f515801470fa275520022";//三大队
+		//IType 0:飞机  1:训练器
+		//IFxxz 0:带飞  1:单飞
+		List<VStatisticsByDay>  blist = new ArrayList<VStatisticsByDay>();
+		VStatisticsByDay vs;
+		List<Object[]> list = super.find(hql, year,month);
+		//System.out.println(list.size());
+		/**
+		    flyDate	
+		    c90;
+			da42;
+			da40;
+			da20;
+			ftd42;
+		 */
+		//将重复的人员去掉
+		Map<Object,Object> map = new HashMap<Object, Object>();
+		for(int j=0; j<list.size();j++){
+			map.put(list.get(j)[5], list.get(j)[0]);
+		}
+		
+		Iterator iter = map.entrySet().iterator();
+		Map.Entry entry;
+		String t;
+		String v;
+		int k =0;
+		double daifei1 = 0;
+		double danfei1 = 0;
+		double mnj1 = 0;
+		while (iter.hasNext()){
+			entry = (Map.Entry) iter.next();
+			t = (String)entry.getKey();
+			v = (String)entry.getValue();
+			
+			if(!one.equals(v) && !two.equals(v) && !three.equals(v)){//机关
+				vs = new VStatisticsByDay();
+				vs.setFlyDate("机关");
+				k++;
+				vs.setC90(String.valueOf(k));
+				
+				for( int j=0; j<list.size();j++){
+					
+					 if(list.get(j)[5].equals(t)){//人
+						vs.setDa42(list.get(j)[1].toString());
+						//课程
+						if(list.get(j)[3].equals(0)){
+							if(list.get(j)[4].equals(0))
+							{
+								daifei1+=Double.parseDouble(list.get(j)[2].toString());
+								vs.setDa40(Utilities.formatTime(Double.parseDouble(list.get(j)[2].toString())));
+							}else if(list.get(j)[4].equals(1)){
+								danfei1+=Double.parseDouble(list.get(j)[2].toString());
+								vs.setDa20(Utilities.formatTime(Double.parseDouble(list.get(j)[2].toString())));
+							}else{
+							}
+						}else if(list.get(j)[3].equals(1)){
+							mnj1+=Double.parseDouble(list.get(j)[2].toString());
+							vs.setFtd42(Utilities.formatTime(Double.parseDouble(list.get(j)[2].toString())));
+						}else{					
+						}
+					}
+					 
+				}
+				
+				blist.add(vs);
+			}
+			
+		}
+		vs = new VStatisticsByDay();
+		vs.setFlyDate("机关");
+		vs.setC90("");
+		vs.setDa42("合计");
+		vs.setDa40(Utilities.formatTime(daifei1));
+		vs.setDa20(Utilities.formatTime(danfei1));
+		vs.setFtd42(Utilities.formatTime(mnj1));
+		blist.add(vs);
+		int m=0;
+		double daifei2 = 0;
+		double danfei2 = 0;
+		double mnj2 = 0;
+		iter = map.entrySet().iterator();
+		while (iter.hasNext()){
+			entry = (Map.Entry) iter.next();
+			t = (String)entry.getKey();
+			v = (String)entry.getValue();
+			
+			if(one.equals(v)){//一大队
+				vs = new VStatisticsByDay();
+				vs.setFlyDate("飞行一队");
+				m++;
+				vs.setC90(String.valueOf(m));
+				
+				for( int j=0; j<list.size();j++){
+					
+					 if(list.get(j)[5].equals(t)){//人
+						vs.setDa42(list.get(j)[1].toString());
+						//课程
+						if(list.get(j)[3].equals(0)){
+							if(list.get(j)[4].equals(0)){
+								daifei2+= Double.parseDouble(list.get(j)[2].toString());
+								vs.setDa40(Utilities.formatTime(Double.parseDouble(list.get(j)[2].toString())));
+							}else if(list.get(j)[4].equals(1)){
+								danfei2+=Double.parseDouble(list.get(j)[2].toString());
+								vs.setDa20(Utilities.formatTime(Double.parseDouble(list.get(j)[2].toString())));
+							}else{
+							}
+						}else if(list.get(j)[3].equals(1)){
+							mnj2+=Double.parseDouble(list.get(j)[2].toString());
+							vs.setFtd42(Utilities.formatTime(Double.parseDouble(list.get(j)[2].toString())));
+						}else{					
+						}
+					}
+					 
+				}
+				
+				blist.add(vs);
+			}
+			
+		}
+		vs = new VStatisticsByDay();
+		vs.setFlyDate("飞行一队");
+		vs.setC90("");
+		vs.setDa42("合计");
+		vs.setDa40(Utilities.formatTime(daifei2));
+		vs.setDa20(Utilities.formatTime(danfei2));
+		vs.setFtd42(Utilities.formatTime(mnj2));
+		blist.add(vs);
+		int n = 0;
+		double daifei3 = 0;
+		double danfei3 = 0;
+		double mnj3 = 0;
+		iter = map.entrySet().iterator();
+		while (iter.hasNext()){
+			entry = (Map.Entry) iter.next();
+			t = (String)entry.getKey();
+			v = (String)entry.getValue();
+			if(two.equals(v)){//二大队
+				
+				vs = new VStatisticsByDay();
+				vs.setFlyDate("飞行二队");
+				n++;
+				vs.setC90(String.valueOf(n));
+				
+				for( int j=0; j<list.size();j++){
+					
+					 if(list.get(j)[5].equals(t)){//人
+						vs.setDa42(list.get(j)[1].toString());
+						//课程
+						if(list.get(j)[3].equals(0)){
+							if(list.get(j)[4].equals(0)){
+								daifei3+=Double.parseDouble(list.get(j)[2].toString());
+								vs.setDa40(Utilities.formatTime(Double.parseDouble(list.get(j)[2].toString())));
+							}else if(list.get(j)[4].equals(1)){
+								danfei3+=Double.parseDouble(list.get(j)[2].toString());
+								vs.setDa20(Utilities.formatTime(Double.parseDouble(list.get(j)[2].toString())));
+							}else{
+							}
+						}else if(list.get(j)[3].equals(1)){
+							mnj3+=Double.parseDouble(list.get(j)[2].toString());
+							vs.setFtd42(Utilities.formatTime(Double.parseDouble(list.get(j)[2].toString())));
+						}else{					
+						}
+					}
+					 
+				}
+				
+				blist.add(vs);
+			}
+			
+		}
+		vs = new VStatisticsByDay();
+		vs.setFlyDate("飞行二队");
+		vs.setC90("");
+		vs.setDa42("合计");
+		vs.setDa40(Utilities.formatTime(daifei3));
+		vs.setDa20(Utilities.formatTime(danfei3));
+		vs.setFtd42(Utilities.formatTime(mnj3));
+		blist.add(vs);
+		int l = 0;
+		double daifei4 = 0;
+		double danfei4 = 0;
+		double mnj4 = 0;
+		iter = map.entrySet().iterator();
+		while (iter.hasNext()){
+			entry = (Map.Entry) iter.next();
+			t = (String)entry.getKey();
+			v = (String)entry.getValue();
+			
+			if(three.equals(v)){//二大队
+				vs = new VStatisticsByDay();
+				vs.setFlyDate("飞行三队");
+				l++;
+				vs.setC90(String.valueOf(l));
+				
+				for( int j=0; j<list.size();j++){
+					
+					 if(list.get(j)[5].equals(t)){//人
+						vs.setDa42(list.get(j)[1].toString());
+						//课程
+						if(list.get(j)[3].equals(0)){
+							if(list.get(j)[4].equals(0)){
+								daifei4+=Double.parseDouble(list.get(j)[2].toString());
+								vs.setDa40(Utilities.formatTime(Double.parseDouble(list.get(j)[2].toString())));
+							}else if(list.get(j)[4].equals(1)){
+								danfei4+=Double.parseDouble(list.get(j)[2].toString());
+								vs.setDa20(Utilities.formatTime(Double.parseDouble(list.get(j)[2].toString())));
+							}else{
+							}
+						}else if(list.get(j)[3].equals(1)){
+							mnj4+=Double.parseDouble(list.get(j)[2].toString());
+							vs.setFtd42(Utilities.formatTime(Double.parseDouble(list.get(j)[2].toString())));
+						}else{					
+						}
+					}
+					 
+				}
+				
+				blist.add(vs);
+			}
+			
+		}
+		vs = new VStatisticsByDay();
+		vs.setFlyDate("飞行三队");
+		vs.setC90("");
+		vs.setDa42("合计");
+		vs.setDa40(Utilities.formatTime(daifei4));
+		vs.setDa20(Utilities.formatTime(danfei4));
+		vs.setFtd42(Utilities.formatTime(mnj4));
+		blist.add(vs);
+		
+		vs = new VStatisticsByDay();
+		vs.setFlyDate("");
+		vs.setC90("");
+		vs.setDa42("合计");
+		vs.setDa40(Utilities.formatTime(daifei1+daifei2+daifei3+daifei4));
+		vs.setDa20(Utilities.formatTime(danfei1+danfei2+danfei3+danfei4));
+		vs.setFtd42(Utilities.formatTime(mnj1+mnj2+mnj3+mnj4));
+		blist.add(vs);
+		return blist;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public List<VStatisticsByDay> statisticsByYearListData(
+			Map<String, Object> params) throws FinanceServiceException {
+		Integer year = Integer.parseInt(params.get("year").toString());
+		String hql = "select teacherBaseInfoByVTeacherid.TOrg.VId,teacherBaseInfoByVTeacherid.VName," +
+				"sum(DTrantime),TTrainingLesson.IType,TTrainingLesson.IFxxz,teacherBaseInfoByVTeacherid.VId" +
+				" from TFlightTrainingrecord where year(DFlydate)=?" +
+				" group by teacherBaseInfoByVTeacherid.TOrg.VId,teacherBaseInfoByVTeacherid.VName," +
+				"teacherBaseInfoByVTeacherid.VId,TTrainingLesson.IType,TTrainingLesson.IFxxz"; 
+		String one = "4028816a470f515801470fa211bf0020";//一大队
+		String two = "4028816a470f515801470fa22eca0021";//二大队
+		String three = "4028816a470f515801470fa275520022";//三大队
+		//IType 0:飞机  1:训练器
+		//IFxxz 0:带飞  1:单飞
+		List<VStatisticsByDay>  blist = new ArrayList<VStatisticsByDay>();
+		VStatisticsByDay vs;
+		List<Object[]> list = super.find(hql, year);
+		//System.out.println(list.size());
+		/**
+		    flyDate	
+		    c90;
+			da42;
+			da40;
+			da20;
+			ftd42;
+		 */
+		//将重复的人员去掉
+		Map<Object,Object> map = new HashMap<Object, Object>();
+		for(int j=0; j<list.size();j++){
+			map.put(list.get(j)[5], list.get(j)[0]);
+		}
+		
+		Iterator iter = map.entrySet().iterator();
+		Map.Entry entry;
+		String t;
+		String v;
+		int k =0;
+		double daifei1 = 0;
+		double danfei1 = 0;
+		double mnj1 = 0;
+		while (iter.hasNext()){
+			entry = (Map.Entry) iter.next();
+			t = (String)entry.getKey();
+			v = (String)entry.getValue();
+			
+			if(!one.equals(v) && !two.equals(v) && !three.equals(v)){//机关
+				vs = new VStatisticsByDay();
+				vs.setFlyDate("机关");
+				k++;
+				vs.setC90(String.valueOf(k));
+				
+				for( int j=0; j<list.size();j++){
+					
+					 if(list.get(j)[5].equals(t)){//人
+						vs.setDa42(list.get(j)[1].toString());
+						//课程
+						if(list.get(j)[3].equals(0)){
+							if(list.get(j)[4].equals(0))
+							{
+								daifei1+=Double.parseDouble(list.get(j)[2].toString());
+								vs.setDa40(Utilities.formatTime(Double.parseDouble(list.get(j)[2].toString())));
+							}else if(list.get(j)[4].equals(1)){
+								danfei1+=Double.parseDouble(list.get(j)[2].toString());
+								vs.setDa20(Utilities.formatTime(Double.parseDouble(list.get(j)[2].toString())));
+							}else{
+							}
+						}else if(list.get(j)[3].equals(1)){
+							mnj1+=Double.parseDouble(list.get(j)[2].toString());
+							vs.setFtd42(Utilities.formatTime(Double.parseDouble(list.get(j)[2].toString())));
+						}else{					
+						}
+					}
+					 
+				}
+				
+				blist.add(vs);
+			}
+			
+		}
+		vs = new VStatisticsByDay();
+		vs.setFlyDate("机关");
+		vs.setC90("");
+		vs.setDa42("合计");
+		vs.setDa40(Utilities.formatTime(daifei1));
+		vs.setDa20(Utilities.formatTime(danfei1));
+		vs.setFtd42(Utilities.formatTime(mnj1));
+		blist.add(vs);
+		int m=0;
+		double daifei2 = 0;
+		double danfei2 = 0;
+		double mnj2 = 0;
+		iter = map.entrySet().iterator();
+		while (iter.hasNext()){
+			entry = (Map.Entry) iter.next();
+			t = (String)entry.getKey();
+			v = (String)entry.getValue();
+			
+			if(one.equals(v)){//一大队
+				vs = new VStatisticsByDay();
+				vs.setFlyDate("飞行一队");
+				m++;
+				vs.setC90(String.valueOf(m));
+				
+				for( int j=0; j<list.size();j++){
+					
+					 if(list.get(j)[5].equals(t)){//人
+						vs.setDa42(list.get(j)[1].toString());
+						//课程
+						if(list.get(j)[3].equals(0)){
+							if(list.get(j)[4].equals(0)){
+								daifei2+= Double.parseDouble(list.get(j)[2].toString());
+								vs.setDa40(Utilities.formatTime(Double.parseDouble(list.get(j)[2].toString())));
+							}else if(list.get(j)[4].equals(1)){
+								danfei2+=Double.parseDouble(list.get(j)[2].toString());
+								vs.setDa20(Utilities.formatTime(Double.parseDouble(list.get(j)[2].toString())));
+							}else{
+							}
+						}else if(list.get(j)[3].equals(1)){
+							mnj2+=Double.parseDouble(list.get(j)[2].toString());
+							vs.setFtd42(Utilities.formatTime(Double.parseDouble(list.get(j)[2].toString())));
+						}else{					
+						}
+					}
+					 
+				}
+				
+				blist.add(vs);
+			}
+			
+		}
+		vs = new VStatisticsByDay();
+		vs.setFlyDate("飞行一队");
+		vs.setC90("");
+		vs.setDa42("合计");
+		vs.setDa40(Utilities.formatTime(daifei2));
+		vs.setDa20(Utilities.formatTime(danfei2));
+		vs.setFtd42(Utilities.formatTime(mnj2));
+		blist.add(vs);
+		int n = 0;
+		double daifei3 = 0;
+		double danfei3 = 0;
+		double mnj3 = 0;
+		iter = map.entrySet().iterator();
+		while (iter.hasNext()){
+			entry = (Map.Entry) iter.next();
+			t = (String)entry.getKey();
+			v = (String)entry.getValue();
+			if(two.equals(v)){//二大队
+				
+				vs = new VStatisticsByDay();
+				vs.setFlyDate("飞行二队");
+				n++;
+				vs.setC90(String.valueOf(n));
+				
+				for( int j=0; j<list.size();j++){
+					
+					 if(list.get(j)[5].equals(t)){//人
+						vs.setDa42(list.get(j)[1].toString());
+						//课程
+						if(list.get(j)[3].equals(0)){
+							if(list.get(j)[4].equals(0)){
+								daifei3+=Double.parseDouble(list.get(j)[2].toString());
+								vs.setDa40(Utilities.formatTime(Double.parseDouble(list.get(j)[2].toString())));
+							}else if(list.get(j)[4].equals(1)){
+								danfei3+=Double.parseDouble(list.get(j)[2].toString());
+								vs.setDa20(Utilities.formatTime(Double.parseDouble(list.get(j)[2].toString())));
+							}else{
+							}
+						}else if(list.get(j)[3].equals(1)){
+							mnj3+=Double.parseDouble(list.get(j)[2].toString());
+							vs.setFtd42(Utilities.formatTime(Double.parseDouble(list.get(j)[2].toString())));
+						}else{					
+						}
+					}
+					 
+				}
+				
+				blist.add(vs);
+			}
+			
+		}
+		vs = new VStatisticsByDay();
+		vs.setFlyDate("飞行二队");
+		vs.setC90("");
+		vs.setDa42("合计");
+		vs.setDa40(Utilities.formatTime(daifei3));
+		vs.setDa20(Utilities.formatTime(danfei3));
+		vs.setFtd42(Utilities.formatTime(mnj3));
+		blist.add(vs);
+		int l = 0;
+		double daifei4 = 0;
+		double danfei4 = 0;
+		double mnj4 = 0;
+		iter = map.entrySet().iterator();
+		while (iter.hasNext()){
+			entry = (Map.Entry) iter.next();
+			t = (String)entry.getKey();
+			v = (String)entry.getValue();
+			
+			if(three.equals(v)){//二大队
+				vs = new VStatisticsByDay();
+				vs.setFlyDate("飞行三队");
+				l++;
+				vs.setC90(String.valueOf(l));
+				
+				for( int j=0; j<list.size();j++){
+					
+					 if(list.get(j)[5].equals(t)){//人
+						vs.setDa42(list.get(j)[1].toString());
+						//课程
+						if(list.get(j)[3].equals(0)){
+							if(list.get(j)[4].equals(0)){
+								daifei4+=Double.parseDouble(list.get(j)[2].toString());
+								vs.setDa40(Utilities.formatTime(Double.parseDouble(list.get(j)[2].toString())));
+							}else if(list.get(j)[4].equals(1)){
+								danfei4+=Double.parseDouble(list.get(j)[2].toString());
+								vs.setDa20(Utilities.formatTime(Double.parseDouble(list.get(j)[2].toString())));
+							}else{
+							}
+						}else if(list.get(j)[3].equals(1)){
+							mnj4+=Double.parseDouble(list.get(j)[2].toString());
+							vs.setFtd42(Utilities.formatTime(Double.parseDouble(list.get(j)[2].toString())));
+						}else{					
+						}
+					}
+					 
+				}
+				
+				blist.add(vs);
+			}
+			
+		}
+		vs = new VStatisticsByDay();
+		vs.setFlyDate("飞行三队");
+		vs.setC90("");
+		vs.setDa42("合计");
+		vs.setDa40(Utilities.formatTime(daifei4));
+		vs.setDa20(Utilities.formatTime(danfei4));
+		vs.setFtd42(Utilities.formatTime(mnj4));
+		blist.add(vs);
+		
+		vs = new VStatisticsByDay();
+		vs.setFlyDate("");
+		vs.setC90("");
+		vs.setDa42("合计");
+		vs.setDa40(Utilities.formatTime(daifei1+daifei2+daifei3+daifei4));
+		vs.setDa20(Utilities.formatTime(danfei1+danfei2+danfei3+danfei4));
+		vs.setFtd42(Utilities.formatTime(mnj1+mnj2+mnj3+mnj4));
+		blist.add(vs);
+		return blist;
+	}
+
+
+	@SuppressWarnings("unchecked")
+	public VStatisticsByDay statisticalAllDataReport(
+			Map<String, Object> params) throws FinanceServiceException {
+		
+		//1.获取已经参加训练的学生
+		int stus = 0;
+		String hql ="select count(*) from StudentBaseInfo where VId in(select studentBaseInfo.VId from TFlightTrainingrecord)";
+		List<Object> list=super.find(hql);
+		
+		if(list.size()>0){
+			stus = Integer.parseInt(list.get(0).toString());
+		}
+		
+		//2.计算参加训练的大纲小时数
+		double zHours = 0;
+		TOutline out;
+		hql =" select TOutline.VId from TFlightTrainingrecord group by TOutline.VId,studentBaseInfo.VId";
+		List<Object> olist = super.find(hql);
+		for(Object o:olist){
+			out = super.get(TOutline.class, o.toString());
+			if(out!=null){
+				zHours+=out.getDTraintime();
+			}
+		}
+		
+		//3.已飞的小时数
+		double yHours = 0;
+		hql = "select sum(DTrantime) from TFlightTrainingrecord";
+		List<Object> ylist  = super.find(hql);
+		if(ylist.size()>0){
+			yHours = Double.parseDouble(ylist.get(0).toString());
+		}
+		
+		//4.未飞的小时数
+		double wHours = zHours-yHours;
+		
+		//5.已飞的百分比
+		double ybl = 0;
+		if(zHours>0){
+			ybl = yHours/zHours;
+		}
+		//6.未飞的百分比
+		double wbl = 1-ybl;
+		
+		VStatisticsByDay vs = new VStatisticsByDay();
+		vs.setFlyDate(String.valueOf(stus));
+		vs.setC90(Utilities.formatTime(zHours));
+		vs.setDa42(Utilities.formatTime(yHours));
+		vs.setDa40(Utilities.formatTime(wHours));
+		vs.setDa20(Utilities.getXxje(ybl*100));
+		vs.setFtd42(Utilities.getXxje(wbl*100));
+		return vs;
+	}
+
+
+	@SuppressWarnings("unchecked")
+	public List<VStatisticsByDay> statisticalCompanyReport(
+			Map<String, Object> params) throws FinanceServiceException {
+		
+		String cond = "";
+		String oHql = " from TOtheruser where VCode=?";
+		List<TOtheruser> oList = super.find(oHql, params.get(QUERY_KEY_USERACCOUNT));
+		if(oList.size()>0){
+				cond+=" and VId='"+oList.get(0).getTOrg().getVId()+"'";
+			
+		}
+
+		//1.获取已经参加训练的学生
+		int stus = 0;
+		String hql ="select TOrg.VId,count(*) from StudentBaseInfo where VId in(select studentBaseInfo.VId from TFlightTrainingrecord)" +
+				" group by TOrg.VId";
+		List<Object[]> slist=super.find(hql);
+		
+		//if(list.size()>0){
+		//	stus = Integer.parseInt(list.get(0).toString());
+		//}
+		
+		//2.计算参加训练的大纲小时数
+		double zHours = 0;
+		TOutline out;
+		hql =" select studentBaseInfo.TOrg.VId,TOutline.VId from TFlightTrainingrecord " +
+				"group by studentBaseInfo.TOrg.VId,TOutline.VId,studentBaseInfo.VId";
+		List<Object[]> zlist = super.find(hql);
+		List<VPlanecheck> vlist = new ArrayList<VPlanecheck>();
+		VPlanecheck vo;
+		for(Object[] z:zlist){
+			
+			out = super.get(TOutline.class, z[1].toString());
+			if(out!=null){
+				vo = new VPlanecheck();
+				vo.setVChecktype(z[0].toString());
+				vo.setTimes(out.getDTraintime());
+				vlist.add(vo);
+			}
+			
+		}
+		
+		
+		//3.已飞的小时数
+		double yHours = 0;
+		hql = "select studentBaseInfo.TOrg.VId,sum(DTrantime) from TFlightTrainingrecord " +
+				" group by studentBaseInfo.TOrg.VId";
+		List<Object[]> ylist  = super.find(hql);
+		//if(ylist.size()>0){
+		//	yHours = Double.parseDouble(ylist.get(0).toString());
+		//}
+		
+		List<VStatisticsByDay> blist = new ArrayList<VStatisticsByDay>();
+		VStatisticsByDay vs;
+		//1.获取所有航空公司
+		String parentid="fbd3253b48cb0a620148cb3e07910017";//航空公司
+		hql =" from TOrg where VParentid=? "+cond+" order by DCreateDate asc";
+		List<TOrg> list = super.find(hql, parentid);
+		double wHours  = 0;
+		double ybl = 0;
+		double wbl = 0;
+		for(int i=0;i<list.size();i++){
+			stus = 0;
+			zHours = 0;
+			yHours = 0;
+			wHours = 0;
+			ybl = 0;
+			wbl = 0;
+			vs = new VStatisticsByDay();
+			vs.setFlyDate(list.get(i).getVName());
+			vs.setC90(list.get(i).getVId());
+			
+			for(Object[] s:slist){
+				if(list.get(i).getVId().equals(s[0]) && s[1]!=null){
+					stus+=Integer.parseInt(s[1].toString());;
+				}
+			}
+			for(VPlanecheck z:vlist){
+				if(list.get(i).getVId().equals(z.getVChecktype())){
+					zHours+=z.getTimes();
+				}
+			}
+			for(Object[] y:ylist){
+				if(list.get(i).getVId().equals(y[0])){
+					yHours+=Double.parseDouble(y[1].toString());
+				}
+			}
+			if(stus>0){
+				vs.setDa42(String.valueOf(stus));
+			}else{
+				vs.setDa42("");
+			}
+			if(zHours>0){
+				vs.setDa40(Utilities.formatTime(zHours));
+			}else{
+				vs.setDa40("");
+			}
+			if(yHours>0){
+				vs.setDa20(Utilities.formatTime(yHours));
+			}else{
+				vs.setDa20("");
+			}
+			//4.未飞的小时数
+			wHours = zHours-yHours;
+			
+			//5.已飞的百分比
+			if(zHours>0){
+				ybl = yHours/zHours;
+			}
+			//6.未飞的百分比
+			wbl = 1-ybl;
+			vs.setFtd42(Utilities.formatTime(wHours));
+			if(ybl>0){
+				vs.setFtd40(Utilities.getXxje(ybl*100) + "%");
+				vs.setFlyNumber(Utilities.getXxje(wbl*100)+"%");
+			}else{
+				vs.setFtd40("");
+				vs.setFlyNumber("");
+			}
+			if(stus>0){
+				blist.add(vs);
+			}
+		}
+		//2.获取统计数据
+		return blist;
+	}
+
+	@SuppressWarnings("unchecked")
+	private String getCond(Object o){
+		String cond = "";
+		String oHql = " from TOtheruser where VCode=?";
+		List<TOtheruser> oList = super.find(oHql, o);
+		if(oList.size()>0){
+			
+			String pid = "fbd3253b48cb0a620148cb3e07910017"; //航空公司
+			if(oList.get(0).getTOrg().getVParentid().equals(pid)){
+				cond+=" and studentBaseInfo.TOrg.VId='"+oList.get(0).getTOrg().getVId()+"'";
+			}
+		}
+		return cond;
+	}
+
+	@SuppressWarnings("unchecked")
+	public Page statisticsByWeekListData(Map<String, Object> params,
+			String pageNo) throws FinanceServiceException {
+		try {
+			
+			String cond = getCond(params.get(QUERY_KEY_USERACCOUNT));
+			
+			int pageSize = FinanceConfig.getIntProperty("default.index.max");
+			
+			String hql =" from TDgdistribution where studentBaseInfo.TDictionByVStuStatusid.VId='"+
+			IFlightTrainingRecordService.STUDENT_STATUS_GUO_NEI_TRAINING+"' "+cond+
+			" order by studentBaseInfo.VId,DCreatedate asc";//已经分配大纲的学生
+			String baseHql =" from TStuassignbase where studentBaseInfo.VId=?";//基地
+			List<TStuassignbase> baseList;
+			String groupHql =" from TStuassigngroup where studentBaseInfo.VId=?";//大队
+			List<TStuassigngroup> gList;
+			String recordHql ="select sum(DTrantime) from TFlightTrainingrecord where studentBaseInfo.VId=?";//该学生所有记录
+			List<Object> rList;
+			String weekHql ="select sum(DTrantime) from TFlightTrainingrecord where studentBaseInfo.VId=?" +
+					" and datediff(week,DFlydate,getdate())=0";//本周
+			
+			Integer pageIndex = Integer.parseInt(pageNo);
+			Page page = this.pagedQuery(hql, pageIndex, pageSize);
+			
+			List<VStudentBaseInfo> blist = new ArrayList<VStudentBaseInfo>();
+			VStudentBaseInfo vs;
+			double flightedHours=0;
+			Calendar cal;
+			long zweek = 0;
+			long yweek=0;
+			Date date = new Date();
+			List<TDgdistribution> list = page.getResult();
+			for(TDgdistribution d:list){
+				cal = Calendar.getInstance();
+				flightedHours = 0;
+				zweek = 0;
+				yweek = 0;
+				vs = new VStudentBaseInfo();
+				vs.setVCode(d.getStudentBaseInfo().getVCode());
+				vs.setVName(d.getStudentBaseInfo().getVName());
+				baseList = super.find(baseHql, d.getStudentBaseInfo().getVId());
+				if(baseList.size()>0){
+					vs.setJg(baseList.get(0).getTOrg().getVName());
+				}
+				gList = super.find(groupHql,  d.getStudentBaseInfo().getVId());
+				if(gList.size()>0){
+					vs.setByyx(gList.get(0).getTOrg().getVName());
+				}
+				
+				vs.setIday(d.getICycle());
+				if(d.getIType()==0){
+					vs.setVSyd("周");
+					cal.add(Calendar.WEEK_OF_YEAR, d.getICycle());
+				}else if(d.getIType()==1){
+					vs.setVSyd("年");
+					cal.add(Calendar.YEAR, d.getICycle());
+				}else{
+					vs.setVSyd("月");
+					cal.add(Calendar.MONTH, d.getICycle());
+				}
+				vs.setCompanyName(d.getStudentBaseInfo().getTOrg().getVName());
+				vs.setOutlineName(d.getTOutline().getVName());
+				vs.setCreateTime(Utilities.format(d.getDEnterDate()));
+				//已飞小时数
+				rList = super.find(recordHql, d.getStudentBaseInfo().getVId());
+				if(rList.size()>0 && rList.get(0)!=null){
+					flightedHours = Double.parseDouble(rList.get(0).toString());
+				}
+				
+				vs.setZy(Utilities.formatTime(flightedHours));
+				//本周
+				rList = super.find(weekHql, d.getStudentBaseInfo().getVId());
+				if(rList.size()>0 && rList.get(0)!=null){
+					vs.setSyd(Utilities.formatTime(Double.parseDouble(rList.get(0).toString())));
+				}
+				vs.setJtzz(Utilities.formatTime(d.getTOutline().getDTraintime()-flightedHours));
+				yweek = (date.getTime()-d.getDEnterDate().getTime())/1000/60/60/24/7;
+				vs.setXlxz(String.valueOf(yweek));
+				zweek = (cal.getTime().getTime()-date.getTime())/1000/60/60/24/7;
+				vs.setXxlx(String.valueOf(zweek-yweek));
+				blist.add(vs);
+			}
+			page.setData(blist);
+			return page;
+		} catch (HibernateException e) {
+			throw new FinanceServiceException("查询信息失败", e);
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public TUser usbKeyToUser(String userid, String uniqueId)
+			throws FinanceServiceException {
+		
+		TUser user = super.get(TUser.class, userid);
+		if(user==null){
+			throw new FinanceServiceException("绑定失败：用户不存在。");
+		}
+		String hql = " from TUser where VSign=?";
+		List<TUser> list = super.find(hql, uniqueId);
+		TUser oldUser;
+		if(list.size()>0){
+			oldUser= list.get(0);
+			
+			if(oldUser.getVId().equals(userid)){
+				return user;
+			}
+			
+			oldUser.setVSign("");
+			super.update(oldUser);
+		}
+		user.setVSign(uniqueId);
+		super.update(user);
+		return user;
+	}
+}

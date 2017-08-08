@@ -1,0 +1,136 @@
+package com.cauc.contract.business;
+/*
+ * @(#)ISystemUserService.java
+ * Description:	user service interface
+ * Version :	0.0.1
+ * Copyright:	Copyright (c) 2014
+ * Create by:	fuchaohui  2014-6-25
+ */
+
+import java.util.List;
+
+import com.cauc.contract.FinanceServiceException;
+import com.cauc.contract.pojos.Contract;
+//import com.cauc.training.vo.VAbroadaviationschool;
+import com.cauc.contract.pojos.Dictionary;
+import com.cauc.contract.pojos.Payment;
+import com.cauc.contract.pojos.Student;
+
+/**
+ * 合同增删改服务接口
+ * 
+ * @author fuchaohui
+ *
+ */
+public interface IContractModifyService {
+
+	/**
+	 * 新增合同
+	 * 
+	 * @param contractEnity
+	 *            合同实体类
+	 * @throws ErsServiceException
+	 *             抛出此异常表示在新增用户时候发生错误
+	 */
+	public void addContract(Contract contractEnity) throws FinanceServiceException;
+
+	/**
+	 * 获得最大合同ID
+	 * 
+	 * @throws ErsServiceException
+	 *             抛出此异常表示在新增用户时候发生错误
+	 */
+	public int getMaxCID() throws FinanceServiceException;
+
+	/**
+	 * 查看是否存在合同
+	 * 
+	 * @param CID
+	 *            合同ID
+	 * @throws ErsServiceException
+	 *             抛出此异常表示在新增用户时候发生错误
+	 */
+	public boolean isExistContract(int CID) throws FinanceServiceException;
+
+	/**
+	 * 生成Ztree
+	 * 
+	 * @param dID
+	 *            数据字典表父及ID
+	 * @throws FinanceServiceException 
+	 * @throws ErsServiceException
+	 *             抛出此异常表示在新增用户时候发生错误
+	 */
+	public List<Dictionary> initZtree(int dID) throws FinanceServiceException ;
+	
+	/**
+	 * 更新合同表
+	 * 
+	 * @param oldContract
+	 *            页面要更新的合同类
+	 * @throws FinanceServiceException 
+	 * @throws ErsServiceException
+	 *             抛出此异常表示在新增用户时候发生错误
+	 */
+	public void updateContract(Contract oldContract)throws FinanceServiceException ;
+	/**
+	 * 新增付款表
+	 * 
+	 * @param oldContract
+	 *            页面要更新的合同类
+	 * @param gradeInfo
+	 *            合同年级信息      
+	 * @param payMentData
+	 *            付款信息     
+	 * @throws FinanceServiceException 
+	 * @throws ErsServiceException
+	 *             抛出此异常表示在新增用户时候发生错误
+	 */
+	public void savePayMent(Contract oldConEneity, String gradeInfo, String payMentData) throws FinanceServiceException;
+	
+	/**
+	 * @功能描述：根据CID查询合同表内容
+	 */
+	public Contract selContract(int CID) throws FinanceServiceException;
+	/**
+	 * @功能描述：根据CID删除付款表内容
+	 */
+	public boolean del(Contract oldContract) throws FinanceServiceException ;
+	/**
+	 * @功能描述：查看是否存在付款内容
+	 */
+	public boolean isExistPayment(int PId) throws FinanceServiceException;
+	
+	/**
+	 * @功能描述：根据PId查询付款表内容
+	 */
+	public Payment selPayment(int PId) throws FinanceServiceException;
+	/**
+	 * @功能描述：更新付款表
+	 */
+	public void updatePayment(Payment oldPayment) throws FinanceServiceException ;
+	/**
+	 * @功能描述：根据contractId复制合同
+	 */
+	public List<Contract> copyContract(String contractId) throws FinanceServiceException;
+	//保存复制合同信息
+	public void copyContractSave(Contract Contract) throws FinanceServiceException;
+	/**
+	 * 判断合同编号是否存在
+	 */
+	public int isNotExistContractId(String contractId) throws FinanceServiceException;
+	/**
+	 * 根据contractId查询全部合同
+	 */
+	public List<Contract> ConContractId(Contract contract) throws FinanceServiceException;
+	/**
+	 * 获取合同编号截取G后最大数字
+	 */
+	public int getMaxContractId() throws FinanceServiceException;
+	/**
+	 * 根据年级获取学生信息
+	 */
+	public String searchStudent(int gradeyear,String contractNo) throws FinanceServiceException;
+	/**根据学生no更新学生表合同号*/
+	public void updateStudent(String contractId,String everystudent) throws FinanceServiceException;
+}

@@ -1,0 +1,111 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<!-- Generated 2016-11-16 14:35:17 by Hibernate Tools 3.5.0.Final -->
+<hibernate-mapping>
+    <class name="com.cauc.contract.pojos.Payment" table="Payment" schema="dbo" catalog="trainingRecord">
+        <id name="PId" type="int">
+            <column name="P_ID" />
+            <generator class="native" />
+        </id>
+        <property name="PName" type="string">
+            <column name="P_NAME" length="100" />
+        </property>
+        <property name="PFundBudgetType" type="java.lang.Integer">
+            <column name="P_FUND_BUDGET_TYPE" />
+        </property>
+        <property name="PProcessState" type="java.lang.Integer">
+            <column name="P_PROCESS_STATE" />
+        </property>
+        <property name="PBuildFeeStandardPrice" type="float">
+            <column name="P_BUILD_FEE_STANDARD_PRICE" precision="53" scale="0" />
+        </property>
+        <property name="PTrainFeeStandardPrice" type="float">
+            <column name="P_TRAIN_FEE_STANDARD_PRICE" precision="53" scale="0" />
+        </property>
+        <property name="PPaymentPercent" type="float">
+            <column name="P_PAYMENT_PERCENT" precision="53" scale="0" />
+        </property>
+        <property name="PContractId" type="string">
+            <column name="P_CONTRACT_ID" length="20" />
+        </property>
+        <property name="PContractKey" type="java.lang.Integer">
+            <column name="P_CONTRACT_KEY" />
+        </property>
+        <property name="PContractGrade" type="java.lang.Integer">
+            <column name="P_CONTRACT_GRADE" />
+        </property>
+        <property name="PGradeStudentCount" type="java.lang.Integer">
+            <column name="P_GRADE_STUDENT_COUNT" />
+        </property>
+        <property name="PReceiveMoney" type="float">
+            <column name="P_RECEIVE_MONEY" precision="53" scale="0" />
+        </property>
+        <property name="PReceiveDate" type="timestamp">
+            <column name="P_RECEIVE_DATE" length="23" />
+        </property>
+        <property name="PTotalPrice" type="float">
+            <column name="P_TOTAL_PRICE" precision="53" scale="0" />
+        </property>
+        <property name="PAddTime" generated="insert" type="timestamp">
+            <column name="P_ADD_TIME" length="23" default="CURRENT_TIMESAMP" />
+        </property>
+        <property name="PAddUser" type="string">
+            <column name="P_ADD_USER" length="20" />
+        </property>
+        <property name="PLastModifyTime" generated="always"  type="timestamp">
+            <column name="P_LAST_MODIFY_TIME" length="23" default="CURRENT_TIMESAMP" />
+        </property>
+        <property name="PLastModifyUser" type="string">
+            <column name="P_LAST_MODIFY_USER" length="20" />
+        </property>
+        <property name="CCompy" type="int">
+            <column name="C_COMPY" not-null="true" />
+        </property>
+        <property name="PRemark" type="string">
+            <column name="P_REMARK" length="500" />
+        </property>
+        <property name="PMoney" type="float">
+            <column name="P_MONEY" precision="53" scale="0" />
+        </property>
+        <property name="PRealityDate" type="string">
+            <column name="P_REALITY_DATE" length="500" />
+        </property>
+        <property name="PStatus" type="java.lang.Integer">
+            <column name="P_STATUS" />
+        </property>
+        <property name="PStage" type="string">
+            <column name="P_STAGE" length="50" />
+        </property>
+        <property name="PPrivateName" type="string">
+            <column name="P_PRIVATE_NAME" length="50" />
+        </property>
+        <property name="PCompy" type="java.lang.Integer">
+            <column name="P_COMPY" />
+        </property>
+        <property name="PPicture" type="string">
+            <column name="P_PICTURE" length="500" />
+        </property>
+        <property name="PNotice" type="string">
+            <column name="P_NOTICE" />
+        </property>
+        <property name="PNoticeUrl" type="string">
+            <column name="P_NOTICE_URL" length="500" />
+        </property>
+        <property name="PNoticeStatus" type="java.lang.Integer">
+            <column name="P_NOTICE_STATUS" />
+        </property>
+        <property name="PCurrentStage" type="java.lang.Integer">
+            <column name="P_CURRENT_STAGE" />
+        </property>
+        <property name="PGeneralPhase" type="java.lang.Integer">
+            <column name="P_GENERAL_PHASE" />
+        </property>
+		 <property name="PStudentInfo" type="string">
+            <column name="P_STUDENT_INFO" length="2000" />
+        </property>
+        <property name="PAymentNumber" type="string">
+            <column name="P_AYMENT_NUMBER" length="50" />
+        </property>
+    </class>
+</hibernate-mapping>

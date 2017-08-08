@@ -1,0 +1,1506 @@
+package com.cauc.training.ui.core.del;
+
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.lang.StringUtils;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.business.IStudentService;
+import com.cauc.training.business.ITeacherManagentService;
+import com.cauc.training.pojos.TDiction;
+import com.cauc.training.pojos.TTeaLicense;
+import com.cauc.training.pojos.TTeaLicenseskilledcheck;
+import com.cauc.training.pojos.TTeaMedical;
+import com.cauc.training.pojos.TTeaMedicalhistory;
+import com.cauc.training.pojos.TUser;
+import com.cauc.training.pojos.TeacherBaseInfo;
+import com.cauc.training.pojos.TeacherLicenseupdate;
+import com.cauc.training.ui.common.BaseActionSupport;
+import com.cauc.training.util.Utilities;
+import com.cauc.training.vo.VHistorySearch;
+import com.cauc.training.vo.VOTTeaLicenseskilledcheck;
+import com.cauc.training.vo.VOrg;
+import com.cauc.training.vo.VOutline;
+import com.cauc.training.vo.VSearchTeacherZz;
+import com.cauc.training.vo.VTTeaLicense;
+import com.cauc.training.vo.VTTeaLicenseskilledcheck;
+import com.cauc.training.vo.VTTeaMedical;
+import com.cauc.training.vo.VTTeaMedicalhistory;
+import com.cauc.training.vo.VTeacherBaseInfo;
+import com.cauc.training.vo.VTeacherLicenseupdate;
+import com.cauc.training.vo.WarningInfo;
+/**
+ * @描述：教员管理
+ * @author 果福明
+ */
+public class TeacherManagentAction extends BaseActionSupport {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 5947424315144935327L;
+
+	/**
+	 * 教员基础信息
+	 */
+	private TeacherBaseInfo teacher;
+	private VTeacherBaseInfo vteacher;
+	/**
+	 * 教员体检信息
+	 */
+	private TTeaMedical teachertj;
+	private VTTeaMedical vteachertj;
+	/**
+	 * 教员执照信息
+	 */
+	private TTeaLicense teacherZz;
+	private VTTeaLicense voteacherZz;
+	/**
+	 * 用于查询教员执照升级信息
+	 */
+	private VSearchTeacherZz vteacherZz;
+	private TeacherLicenseupdate tlsu;
+	private VTeacherLicenseupdate vtlsu;
+	/**
+	 * 执照检查信息
+	 */
+	private VTTeaLicenseskilledcheck teaZzJc;
+	private TTeaLicenseskilledcheck teZzJc;
+	private VOTTeaLicenseskilledcheck vteaZzJc;
+	private List<VOTTeaLicenseskilledcheck> viewLicenseskilledcheckList;
+	
+	private List<VTeacherBaseInfo> viewTeacherBaseInfoList;
+	/**
+	 * 用于历史查询
+	 */
+	private VHistorySearch historySearch;
+	private TTeaMedicalhistory historytj;
+	private VTTeaMedicalhistory vhistorytj;
+	/**
+	 * 用于存储教员基本信息列表
+	 */
+	private List<TeacherBaseInfo> list;
+	private List<VTeacherBaseInfo> tlist;
+	
+	private List<VTeacherBaseInfo> teacherList;
+	// 查询关键字
+	private String key;
+	// 教员ID
+	private String id;
+	//教员体检Id
+	private String tjId;
+	// 用于页面显示文字
+	private String aoru;
+	// 用于判断是否为查看页面
+	private String showPeople;
+	// 部门名称
+	private String deptName;
+	// 部门ID
+	private String deptId;
+	// 飞行教员类型
+	private List<TDiction> fxjyTypeList;
+	// 地面教员类型
+	private List<TDiction> dmjyTypeList;
+	// 所飞机型
+	private List<TDiction> sfjxList;
+	// 所聘技术等级
+	private List<TDiction> spjsdjList;
+	// 民族
+	private List<TDiction> mzList;
+	// 文化程度
+	private List<TDiction> whcdList;
+	//籍贯
+	private List<TDiction> jiguanList;
+	//用于删除人员传参
+	private String peopleids;
+	//教员执照等级
+	private List<TDiction> jyzzDjList;
+	//教员执照类型
+	private List<TDiction> jyzzLxList;
+	//执照类型
+	private List<TDiction> zzLxList;
+	//仪表等级
+	private List<TDiction> ybDjList;
+	//飞机级别等级
+	private List<TDiction> fjJbList;
+	//航空器类别
+	private List<TDiction> hkqLbList;
+	//航空器型别等级
+	private List<TDiction> hkqXbList;
+	//旋翼机级别等级
+	private List<TDiction> xyjJbList;
+	//运输航空公司飞行教员执照等级
+	private List<TDiction> ysHkgsList;
+	
+	private List<WarningInfo> warnList;//告警信息列表
+	
+	private String studentid;
+	private String teacherid;
+	
+	private List<VOutline> outlineList;//大纲列表
+	private String outlineid;//大纲id
+	
+	private VOrg viewOrg;
+	
+	//获取大纲列表
+	public String readTeacherOutlineList() {
+		Map<String, Object> queryMap = new HashMap<String, Object>();
+		 queryMap.put(ITeacherManagentService.QUERY_KEY_NAME, this.key);
+		 queryMap.put("studentid", this.getStudentid());
+		try {
+			outlineList = getFactory().getFinanceProviderInstance()
+					.getTeacherManagentService().readCanUsedOutlineList(queryMap);
+		} catch (FinanceServiceException e) {
+
+		}
+		return SUCCESS;
+	}
+	//保存大纲分配
+	public String saveTeacherAssignOutline(){
+		
+		viewOrg = new VOrg();
+		if(StringUtils.isBlank(this.getOutlineid())){
+			viewOrg.setFlag(false);
+			viewOrg.setMessage("请选择大纲。");
+			return SUCCESS;
+		}
+
+		if(StringUtils.isBlank(this.getStudentid())){
+			viewOrg.setFlag(false);
+			viewOrg.setMessage("请选择教员。");
+			return SUCCESS;
+		}
+
+		try {
+			getFactory().getFinanceProviderInstance().getTeacherManagentService().
+			saveTeacherAssignOutline(studentid,outlineid,getLoginContext().getUserId());
+			viewOrg.setFlag(true);
+		} catch (FinanceServiceException e) {
+			viewOrg.setFlag(false);
+			viewOrg.setMessage(e.getMessage());
+			return SUCCESS;
+		}
+		viewOrg.setMessage("教员分配大纲成功。");
+		return SUCCESS;
+	}
+	public String saveTeacherAssignTeacher(){
+		
+		viewOrg = new VOrg();
+		if(StringUtils.isBlank(this.getTeacherid())){
+			viewOrg.setFlag(false);
+			viewOrg.setMessage("请选择教员的教员。");
+			return SUCCESS;
+		}
+
+		if(StringUtils.isBlank(this.getStudentid())){
+			viewOrg.setFlag(false);
+			viewOrg.setMessage("请选择教员。");
+			return SUCCESS;
+		}
+
+		try {
+			getFactory().getFinanceProviderInstance().getTeacherManagentService().
+			saveTeacherAssignTeacher(studentid,teacherid,getLoginContext().getUserId());
+			viewOrg.setFlag(true);
+		} catch (FinanceServiceException e) {
+			viewOrg.setFlag(false);
+			viewOrg.setMessage(e.getMessage());
+			return SUCCESS;
+		}
+		viewOrg.setMessage("分配教员成功。");
+		return SUCCESS;
+	}
+	
+	public String readUserWarningInfoById() {
+
+		if(getLoginContext().getLoginUserType() ==3 || getLoginContext().getLoginUserType() ==4){//不是学员或者教员
+			//warnList = null;
+			//return SUCCESS;
+		}
+		try {
+			warnList = getFactory()
+					.getFinanceProviderInstance()
+					.getTeacherManagentService()
+					.readUserWarningInfoListById(this.getLoginContext().getUserId(),aoru);
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+			warnList = null;
+		}
+		return SUCCESS;
+	}
+	
+	//=============教员基础信息==============
+	
+	public String searchZzHistoryTeacherById() {
+
+		try {
+			viewTeacherBaseInfoList = getFactory().getFinanceProviderInstance()
+					.getTeacherManagentService().readTeacherLicenseListById(id);
+		} catch (FinanceServiceException e) {
+
+		}
+
+		return SUCCESS;
+	}
+
+	//教员执照检查信息
+	public String readTeaLicenseCheckList(){
+		try {
+			viewLicenseskilledcheckList = getFactory()
+					.getFinanceProviderInstance().getTeacherManagentService()
+					.readTeaLicenseCheckList(id);
+		} catch (FinanceServiceException e) {
+			viewLicenseskilledcheckList = null;
+		}
+		return SUCCESS;
+	}
+	
+	public String readSelectTeacherList(){ 
+		 Map<String, Object> queryMap = new HashMap<String, Object>();
+		 queryMap.put("key", this.key);
+		 queryMap.put("studentid", this.getStudentid());
+		try {
+			teacherList = getFactory().getFinanceProviderInstance()
+					.getTeacherManagentService().canAssignTeacherList(queryMap,
+							getPageIndex());
+
+		} catch (FinanceServiceException e) {
+		}
+		return SUCCESS;
+	}
+	
+	/**
+	 * 分页查询教员信息列表
+	 */
+	public String searchListTeacher() {
+		String result = "pageList";
+		
+//		try {
+//
+//			tlist = getFactory().getFinanceProviderInstance()
+//					.getTeacherManagentService().searchTeacherList(deptId, key);
+//
+////			 // 获得接口
+////			 ITeacherManagentService iand = getFactory()
+////			 .getFinanceProviderInstance().getTeacherManagentService();
+////			 // 构造查询参数
+////			 Map<String, Object> queryMap = new HashMap<String, Object>();
+////			 queryMap.put("key", this.key);
+////			 queryMap.put("id", this.deptId);
+////			 // 设置分页
+////			 setPage(iand.searchTeacherPageList(queryMap, getPageIndex()));
+//		} catch (FinanceServiceException e) {
+//			setStatusMsg("查询教员信息列表出错！");
+//		}
+		return result;
+	}
+	/**
+	 * @功能描述：用于点击部门树查询相应部门下的教员
+	 */
+	public String searchListAjaxTeacher() {
+		String result = "ajaxTeacherList";
+		try {
+//			tlist = getFactory().getFinanceProviderInstance()
+//					.getTeacherManagentService().searchTeacherList(deptId, key);
+			ITeacherManagentService iand = getFactory()
+			 .getFinanceProviderInstance().getTeacherManagentService();
+			 // 构造查询参数
+			 Map<String, Object> queryMap = new HashMap<String, Object>();
+			 queryMap.put("key", this.key);
+			 queryMap.put("id", this.deptId);
+			 // 设置分页
+			 setPage(iand.searchTeacherPageList(queryMap, getPageIndex()));
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		return result;
+	}
+	/**
+	 * @功能描述：跳转至添加或修改或查看页面
+	 */
+	public String toAddOrUpTeacher() {
+		String result = "toAddOrUp";
+		setDeptId(this.deptId);
+		setKey(key);
+		// 飞行教员类型
+		try {
+			IStudentService studentService =  getFactory().getFinanceProviderInstance().getStudentService();
+			jiguanList = studentService.readDictionList(IStudentService.QUERY_JIGUAN);
+			fxjyTypeList = getFactory().getFinanceProviderInstance()
+					.getTeacherManagentService().searchTDictionByType("飞行教员类型");
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		// 地面教员类型
+		try {
+			dmjyTypeList = getFactory().getFinanceProviderInstance()
+					.getTeacherManagentService().searchTDictionByType("地面教员类型");
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		// 所飞机型
+		try {
+			sfjxList = getFactory().getFinanceProviderInstance()
+					.getTeacherManagentService().searchTDictionByType("所飞机型");
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		// 所聘技术等级
+		try {
+			spjsdjList = getFactory().getFinanceProviderInstance()
+					.getTeacherManagentService().searchTDictionByType("所聘技术等级");
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		// 民族
+		try {
+			mzList = getFactory().getFinanceProviderInstance()
+					.getTeacherManagentService().searchTDictionByType("民族");
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		// 文化程度
+		try {
+			whcdList = getFactory().getFinanceProviderInstance()
+					.getTeacherManagentService().searchTDictionByType("文化程度");
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+
+		if (StringUtils.isBlank(getId())) {
+			// 用于判断是否为查看教员信息，如果是查看，则页面不显示保存按钮，否则显示保存按钮
+			setShowPeople("");
+			// 用于页面显示表头
+			//setAoru("添加　　　所属部门：" + deptName);
+		} else {
+			try {
+				teacher = getFactory().getFinanceProviderInstance()
+						.getTeacherManagentService().searchTeacherById(id);
+			} catch (FinanceServiceException e1) {
+				e1.printStackTrace();
+			}
+			String dptname="";
+			try {
+				dptname = getFactory().getFinanceProviderInstance()
+						.getTeacherManagentService().searchOrgName(
+								teacher.getTOrg().getVId());
+			} catch (FinanceServiceException e) {
+				e.printStackTrace();
+			}
+			if (StringUtils.isBlank(getShowPeople())) {
+				// 用于判断是否为查看人员信息，如果是查看，则页面不显示保存按钮，否则显示保存按钮
+				setShowPeople("");
+				// 用于页面显示表头
+				//setAoru("修改 　　　　编号：" + teacher.getVCode() + "　　　　部门：" + dptname);
+			} else {
+				// 用于判断是否为查看人员信息，如果是查看，则页面不显示保存按钮，否则显示保存按钮
+				setShowPeople(this.showPeople);
+				// 用于页面显示表头
+				//setAoru("查看　　　　编号：" + teacher.getVCode() + "　　　　部门：" + dptname);
+			}
+		}
+		return result;
+	}
+	
+	/**
+	 * @功能描述：用于查看教员基础信息
+	 */
+	public String showMessageAjaxTeacher(){
+		try {
+			vteacher = getFactory().getFinanceProviderInstance()
+					.getTeacherManagentService().searchVTeacherById(id);
+		} catch (FinanceServiceException e1) {
+			e1.printStackTrace();
+		}
+		return "showMessageTeacher";
+	}
+	public String readTeacherBaseInfoByName(){
+		try {
+			
+			vteacher = getFactory().getFinanceProviderInstance()
+					.getTeacherManagentService().readTeacherBaseInfoByName(getLoginContext().getUserName());
+		} catch (FinanceServiceException e1) {
+			e1.printStackTrace();
+		}
+		return SUCCESS;
+	}
+	/**
+	 * @功能描述：添加或修改教员基本信息
+	 */
+	public String addOrUpTeacher() {
+		// 获取用户对象,取得登录者，即创建该角色的人
+		TUser tuser=null;
+		try {
+			tuser = getFactory().getFinanceProviderInstance()
+					.getSysUserService().readSysUserByLoginID(
+							this.getLoginContext().getLoginId());
+		} catch (FinanceServiceException e1) {
+			e1.printStackTrace();
+		}
+		Date date = new Date();
+
+		if (StringUtils.isBlank(teacher.getVName())) {
+			setStatusMsg("教员姓名不能为空！");
+			setStatusMsg("1");
+		} else {
+			try {
+				if (StringUtils.isBlank(teacher.getVId())) {
+					this.teacher.setTUser(tuser);
+					this.teacher.setDCreatedate(date);
+					this.teacher.setOpenStatus(0);
+					getFactory().getFinanceProviderInstance()
+							.getTeacherManagentService().saveTeacherBaseInfo(
+									teacher);
+					setStatusMsg("保存教员成功！");
+					setStatusMsg("0");
+				} else {
+					getFactory().getFinanceProviderInstance()
+							.getTeacherManagentService().updateTeacher(teacher);
+					setStatusMsg("更新教员成功！");
+					setStatusMsg("0");
+				}
+				// 用于返回至列表页面是选中树形节点
+				setDeptId(teacher.getTOrg().getVId());
+			} catch (FinanceServiceException e) {
+				setStatusMsg("教员保存失败！");
+				setStatusMsg("1");
+			}
+		}
+
+		return "saveSuccess";
+	}
+	/**
+	 * @功能描述：删除教员信息
+	 */
+	public String deleteTeacher(){
+		if (StringUtils.isBlank(getPeopleids())) {
+			setStatusMsg("请选择要删除的人员！");
+			setStatusMsg("1");
+		} else {
+			String[] ids = this.peopleids.split(",");
+			if (ids != null && ids.length > 0) {
+				try{
+					setDeptId(deptId);
+					// 删除教员
+					getFactory().getFinanceProviderInstance().getTeacherManagentService().deleteTeacher(ids);
+					setStatusMsg("删除教员成功！");
+					setStatusMsg("0");
+				}catch(FinanceServiceException e){
+					setStatusMsg("教员已经被引用，不能删除！");
+					setStatusMsg("1");
+				}
+			}
+		}
+		return "deleteTeacher";
+	}
+	
+	//==================教员体检信息开始===============
+	/**
+	 * @功能描述：查询教员体检列表
+	 */
+	public String searchTjListTeacher() {
+		String result = "pageTjList";
+//		try {
+//			tlist = getFactory().getFinanceProviderInstance()
+//					.getTeacherManagentService().searchTeacherTjList(deptId, key);
+//		} catch (FinanceServiceException e) {
+//			setStatusMsg("查询教员体检信息列表出错！");
+//		}
+		//System.out.println(this.getKey());
+		return result;
+	}
+	public String searchListTjAjaxTeacher() {
+		String result = "ajaxTeacherTjList";
+		try {
+//			tlist = getFactory().getFinanceProviderInstance()
+//					.getTeacherManagentService().searchTeacherTjList(deptId, key);
+			
+			ITeacherManagentService iand = getFactory()
+			 .getFinanceProviderInstance().getTeacherManagentService();
+			 // 构造查询参数
+			 Map<String, Object> queryMap = new HashMap<String, Object>();
+			 queryMap.put("key", this.key);
+			 queryMap.put("id", this.deptId);
+			 // 设置分页
+			 setPage(iand.searchTeacherTjPageList(queryMap, getPageIndex()));
+
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		return result;
+	}
+	/**
+	 * @功能描述：跳转到添加或者修改教员体检信息
+	 */
+	public String toAddOrUpTjTeacher(){
+		String result="toAddOrUpTj";
+		setDeptId(deptId);
+		String[] idid = id.split(",");
+		setId(idid[0]);
+		TTeaMedical teachertjs = null;
+		try {
+			teachertjs = getFactory().getFinanceProviderInstance().getTeacherManagentService().searchTj(idid[0]);
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		if (StringUtils.isBlank(getTjId())) {//如果体检ID为空则为添加
+			if(teachertjs != null){
+				setTjId(teachertjs.getDUsedTime()+"");
+			}else{
+				setTjId("");
+			}
+			// 用于判断是否为查看教员体检信息，如果是查看，则页面不显示保存按钮，否则显示保存按钮
+			setShowPeople("");
+			// 用于页面显示表头
+			//setAoru("添加体检信息　　　教员编号：" + idid[2]+"　　　教员姓名："+ idid[1]+"　　　所在部门："+ idid[3]);
+		}else{//修改或查看
+			if(StringUtils.isBlank(getShowPeople())){//修改
+				teachertj = teachertjs;
+				// 用于页面显示表头
+			//	setAoru("修改体检信息　　　教员编号：" + idid[2]+"　　　教员姓名："+ idid[1]+"　　　所在部门："+ idid[3]);
+			}else{//查看
+				teachertj = teachertjs;
+				// 用于页面显示表头
+			//	setAoru("查看体检信息　　　教员编号：" + idid[2]+"　　　教员姓名："+ idid[1]+"　　　所在部门："+ idid[3]);
+			}
+		}
+		return result;
+	}
+	/**
+	 * @功能描述：用于查看教员体检信息
+	 */
+	public String showMessageTjAjaxTeacher(){
+		try {
+			vteachertj = getFactory().getFinanceProviderInstance().getTeacherManagentService().searchShowTj(id);
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		return "showMessageTjTeacher";
+	}
+	public String readTeacherTjByName(){
+		try {
+			//System.out.println(1);
+			vteachertj = getFactory().getFinanceProviderInstance()
+					.getTeacherManagentService()
+					.readTeacherTjByName(getLoginContext().getUserName());
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		return SUCCESS;
+	}
+	/**
+	 * @功能描述：添加或修改体检信息
+	 */
+	public String addOrUpTjTeacher(){
+		String result="addOrUpTj";
+		//TTeaMedical
+		try {
+			TUser tuser = getFactory().getFinanceProviderInstance()
+			.getSysUserService().readSysUserByLoginID(
+					this.getLoginContext().getLoginId());
+			teachertj.setDCreatedate(new Date());
+			teachertj.setTUser(tuser);
+			
+			getFactory().getFinanceProviderInstance().getTeacherManagentService().addOrUpTj(teachertj,tuser);
+			setStatusMsg("教员体检信息保存成功！");
+			setStatusMsg("0");
+		} catch (FinanceServiceException e) {
+			setStatusMsg("保存教员体检信息出错！");
+			setStatusMsg("1");
+		}
+		return result;
+	}
+	
+	/**
+	 * @功能描述：跳转到体检历史记录查询页面
+	 */
+	public String searchTjHistoryTeacher(){
+		setDeptId(deptId);
+		setKey(key);
+		return "searchTjHistory";
+	}
+	/**
+	 * @功能描述：查询体检历史记录列表
+	 */
+	public String searchTjHistoryListTeacher(){
+//		VHistorySearch historySearch
+		setDeptId(deptId);
+		setKey(key);
+		 // 获得接口
+		 ITeacherManagentService iand = getFactory()
+		 .getFinanceProviderInstance().getTeacherManagentService();
+		try {
+			setHistorySearch(historySearch);
+			setPage(iand.searchTjHistory(historySearch, getPageIndex()));
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		return "searchTjHistoryList";
+	}
+	/**
+	 * @功能描述：用于查看教员体检历史信息
+	 */
+	public String showMessageHistoryTjAjaxTeacher(){
+		String result = "toShowTj";
+		try {
+			vhistorytj = getFactory().getFinanceProviderInstance().getTeacherManagentService().searchHistoryShowTj(id);
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		return result;
+	}
+	
+	//==================教员体检信息结束===================
+	//===========教员执照信息开始=============
+	/**
+	 * @功能描述：查询教员执照列表
+	 * @return
+	 */
+	public String searchZzListTeacher() {
+		String result = "pageZzList";
+//		try {
+//			tlist = getFactory().getFinanceProviderInstance()
+//					.getTeacherManagentService().searchTeacherZzList(deptId, key);
+//		} catch (FinanceServiceException e) {
+//			setStatusMsg("查询教员执照信息列表出错！");
+//		}
+		return result;
+	}
+	public String searchZzListAjaxTeacher() {
+		String result = "ajaxTeacherZzList";
+		try {
+//			tlist = getFactory().getFinanceProviderInstance()
+//					.getTeacherManagentService().searchTeacherZzList(deptId, key);
+			
+			ITeacherManagentService iand = getFactory()
+			 .getFinanceProviderInstance().getTeacherManagentService();
+			 // 构造查询参数
+			 Map<String, Object> queryMap = new HashMap<String, Object>();
+			 queryMap.put("key", this.key);
+			 queryMap.put("id", this.deptId);
+			 // 设置分页
+			 setPage(iand.searchTeacherZzPageList(queryMap, getPageIndex()));
+		} catch (FinanceServiceException e) {
+			setStatusMsg("查询教员执照信息列表出错！");
+			setStatusMsg("1");
+		}
+		return result;
+	}
+	/**
+	 * @功能描述：跳转到添加或者修改教员执照信息
+	 */
+	public String toAddOrUpZzTeacher(){
+		//TTeaLicense teacherZz
+		String result="toAddOrUpZz";
+		setDeptId(deptId);
+		setKey(key);
+		String[] idid = id.split(",");
+		setId(idid[0]);
+		
+		//教员执照等级
+		try {
+			jyzzDjList = getFactory().getFinanceProviderInstance()
+					.getTeacherManagentService().searchTDictionByType("教员执照等级");
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		//教员执照类型
+		try {
+			jyzzLxList = getFactory().getFinanceProviderInstance()
+					.getTeacherManagentService().searchTDictionByType("教员执照类型");
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		//执照类型
+		try {
+			zzLxList = getFactory().getFinanceProviderInstance()
+					.getTeacherManagentService().searchTDictionByType("教员类型");
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		//仪表等级
+		try {
+			ybDjList = getFactory().getFinanceProviderInstance()
+					.getTeacherManagentService().searchTDictionByType("仪表等级");
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		//飞机级别等级
+		try {
+			fjJbList = getFactory().getFinanceProviderInstance()
+					.getTeacherManagentService().searchTDictionByType("飞机级别等级");
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		//航空器类别
+		try {
+			hkqLbList = getFactory().getFinanceProviderInstance()
+					.getTeacherManagentService().searchTDictionByType("航空器类别");
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		//航空器型别等级
+		try {
+			hkqXbList = getFactory().getFinanceProviderInstance()
+					.getTeacherManagentService().searchTDictionByType("航空器型别等级");
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		//旋翼机级别等级
+		try {
+			xyjJbList = getFactory().getFinanceProviderInstance()
+					.getTeacherManagentService().searchTDictionByType("旋翼机级别等级");
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		//运输航空公司飞行教员执照等级
+		try {
+			ysHkgsList = getFactory().getFinanceProviderInstance()
+					.getTeacherManagentService().searchTDictionByType("运输航空公司飞行教员执照等级");
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		
+		try {
+			teacherZz = getFactory().getFinanceProviderInstance().getTeacherManagentService().searchZz(idid[0]);
+			setAoru(teacherZz.getTeacherBaseInfo().getVSfz());
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		setShowPeople(showPeople);
+		
+		if(tjId != null && tjId.equals("tjid")){
+			// 用于页面显示表头
+			//setAoru("添加执照信息　　　教员编号：" + idid[2]+"　　　教员姓名："+ idid[1]+"　　　所在部门："+ idid[3]);
+			return "toAddZz";
+		}
+		
+		/*
+		if(StringUtils.isBlank(getShowPeople())){//修改
+			// 用于页面显示表头
+			setAoru("修改执照信息　　　教员编号：" + idid[2]+"　　　教员姓名："+ idid[1]+"　　　所在部门："+ idid[3]);
+		}else{//查看
+			// 用于页面显示表头
+			setAoru("查看执照信息　　　教员编号：" + idid[2]+"　　　教员姓名："+ idid[1]+"　　　所在部门："+ idid[3]);
+		}
+		*/
+		
+		return result;
+	}
+	
+	/**
+	 * @功能描述：用于查看教员执照信息
+	 */
+	public String showMessageZzAjaxTeacher(){
+		try {
+			voteacherZz = getFactory().getFinanceProviderInstance().getTeacherManagentService().searchShowZz(id);
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		return "showMessageZzTeacher";
+	}
+	
+	public String readTeacherZzByName(){
+		try {
+			voteacherZz = getFactory().getFinanceProviderInstance()
+					.getTeacherManagentService()
+					.readTeacherZzByName(this.getLoginContext().getUserName());
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		return SUCCESS;
+	}
+	
+	public String showMessageZzAjaxHistory(){
+
+		try {
+			voteacherZz = getFactory().getFinanceProviderInstance().getTeacherManagentService().searchShowZzHisory(id,key);
+
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		return SUCCESS;
+	}
+	/**
+	 * @功能描述：跳转到升级教员执照信息
+	 */
+	public String toUpZzTeacher(){
+		//TTeaLicense teacherZz
+		String result="toUpZz";
+		setDeptId(deptId);
+		setKey(key);
+		String[] idid = id.split(",");
+		setId(idid[0]);
+		
+		//教员执照等级
+		try {
+			jyzzDjList = getFactory().getFinanceProviderInstance()
+					.getTeacherManagentService().searchTDictionByType("教员执照等级");
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		//教员执照类型
+		try {
+			jyzzLxList = getFactory().getFinanceProviderInstance()
+					.getTeacherManagentService().searchTDictionByType("教员执照类型");
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		//执照类型
+		try {
+			zzLxList = getFactory().getFinanceProviderInstance()
+					.getTeacherManagentService().searchTDictionByType("教员类型");
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		//仪表等级
+		try {
+			ybDjList = getFactory().getFinanceProviderInstance()
+					.getTeacherManagentService().searchTDictionByType("仪表等级");
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		//飞机级别等级
+		try {
+			fjJbList = getFactory().getFinanceProviderInstance()
+					.getTeacherManagentService().searchTDictionByType("飞机级别等级");
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		//航空器类别
+		try {
+			hkqLbList = getFactory().getFinanceProviderInstance()
+					.getTeacherManagentService().searchTDictionByType("航空器类别");
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		//航空器型别等级
+		try {
+			hkqXbList = getFactory().getFinanceProviderInstance()
+					.getTeacherManagentService().searchTDictionByType("航空器型别等级");
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		//旋翼机级别等级
+		try {
+			xyjJbList = getFactory().getFinanceProviderInstance()
+					.getTeacherManagentService().searchTDictionByType("旋翼机级别等级");
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		//运输航空公司飞行教员执照等级
+		try {
+			ysHkgsList = getFactory().getFinanceProviderInstance()
+					.getTeacherManagentService().searchTDictionByType("运输航空公司飞行教员执照等级");
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		
+		TTeaLicense teacherzzs = null;
+		try {
+			teacherzzs = getFactory().getFinanceProviderInstance().getTeacherManagentService().searchZz(idid[0]);
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		setShowPeople(showPeople);
+		
+		teacherZz = teacherzzs;
+		// 用于页面显示表头
+		//setAoru("升级执照信息　　　教员编号：" + idid[2]+"　　　教员姓名："+ idid[1]+"　　　所在部门："+ idid[3]);
+		return result;
+	}
+	/**
+	 * @功能描述：升级执照信息
+	 */
+	public String upZzTeacher(){
+		String result="addOrUpZz";
+		try {
+			setDeptId(deptId);
+			setKey(key);
+			TUser tuser = getFactory().getFinanceProviderInstance()
+			.getSysUserService().readSysUserByLoginID(
+					this.getLoginContext().getLoginId());
+			teacherZz.setDCreatedate(new Date());
+			teacherZz.setTUser(tuser);
+			
+			getFactory().getFinanceProviderInstance().getTeacherManagentService().upZz(teacherZz,tuser);
+			setStatusMsg("升级教员执照信息成功！");
+			setStatusMsg("0");
+		} catch (FinanceServiceException e) {
+			setStatusMsg("升级教员执照信息出错！");
+			setStatusMsg("1");
+		}
+		return result;
+	}
+	/**
+	 * @功能描述：添加或修改执照信息
+	 */
+	public String addOrUpZzTeacher(){
+		String result="addOrUpZz";
+		try {
+			setDeptId(deptId);
+			setKey(key);
+			TUser tuser = getFactory().getFinanceProviderInstance()
+			.getSysUserService().readSysUserByLoginID(
+					this.getLoginContext().getLoginId());
+			teacherZz.setDCreatedate(new Date());
+			teacherZz.setTUser(tuser);
+			
+			getFactory().getFinanceProviderInstance().getTeacherManagentService().addOrUpZz(teacherZz,tuser);
+			setStatusMsg("教员执照信息保存成功！");
+			setStatusMsg("0");
+		} catch (FinanceServiceException e) {
+			setStatusMsg("保存教员执照信息出错！");
+			setStatusMsg("1");
+		}
+		return result;
+	}
+	/**
+	 * @功能描述：跳转到执照升级历史记录查询页面
+	 */
+	public String searchZzHistoryTeacher(){
+		//教员执照等级
+		try {
+			jyzzDjList = getFactory().getFinanceProviderInstance()
+					.getTeacherManagentService().searchTDictionByType("教员执照等级");
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		//教员执照类型
+		try {
+			jyzzLxList = getFactory().getFinanceProviderInstance()
+					.getTeacherManagentService().searchTDictionByType("教员执照类型-教员执照");
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		//执照类型
+		try {
+			zzLxList = getFactory().getFinanceProviderInstance()
+					.getTeacherManagentService().searchTDictionByType("执照类型");
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		//仪表等级
+		try {
+			ybDjList = getFactory().getFinanceProviderInstance()
+					.getTeacherManagentService().searchTDictionByType("仪表等级");
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		//飞机级别等级
+		try {
+			fjJbList = getFactory().getFinanceProviderInstance()
+					.getTeacherManagentService().searchTDictionByType("飞机级别等级");
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		//航空器类别
+		try {
+			hkqLbList = getFactory().getFinanceProviderInstance()
+					.getTeacherManagentService().searchTDictionByType("航空器类别");
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		//航空器型别等级
+		try {
+			hkqXbList = getFactory().getFinanceProviderInstance()
+					.getTeacherManagentService().searchTDictionByType("航空器型别等级");
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		//旋翼机级别等级
+		try {
+			xyjJbList = getFactory().getFinanceProviderInstance()
+					.getTeacherManagentService().searchTDictionByType("旋翼机级别等级");
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		//运输航空公司飞行教员执照等级
+		try {
+			ysHkgsList = getFactory().getFinanceProviderInstance()
+					.getTeacherManagentService().searchTDictionByType("运输航空公司飞行教员执照等级");
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		setDeptId(deptId);
+		setKey(key);
+		return "searchZzHistory";
+	}
+	/**
+	 * @功能描述：查询执照升级历史记录列表
+	 */
+	public String searchZzHistoryListTeacher(){
+		setDeptId(deptId);
+		setKey(key);
+		 // 获得接口
+		 ITeacherManagentService iand = getFactory()
+		 .getFinanceProviderInstance().getTeacherManagentService();
+		try {
+			setVteacherZz(vteacherZz);
+			setPage(iand.searchZzHistory(vteacherZz, getPageIndex()));
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		return "searchZzHistoryList";
+	}
+	/**
+	 * @功能描述：显示执照升级历史信息
+	 */
+	public String showMessageHistoryZzAjaxTeacher(){
+		String result = "toShowZz";
+		try {
+			vtlsu = getFactory().getFinanceProviderInstance().getTeacherManagentService().searchHistoryShowZzSj(id);
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		return result;
+	}
+	
+	/**
+	 * @功能描述：跳转到添加执照检查信息
+	 */
+	public String toAddOrUpZzJcTeacher(){
+		String result="toAddOrUpZzJc";
+		setDeptId(deptId);
+		setKey(key);
+		String[] idid = id.split(",");
+		setId(idid[0]);
+		try {
+			teacherZz = getFactory().getFinanceProviderInstance().getTeacherManagentService().searchZz(idid[0]);
+			setViewDate(Utilities.format(new Date()));
+			Calendar rightNow = Calendar.getInstance();
+			rightNow.setTime(new Date());
+			rightNow.add(Calendar.YEAR, 1);
+			setAoru(Utilities.format(rightNow.getTime()));
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		//setAoru("添加执照检查信息　　　教员编号：" + idid[2]+"　　　教员姓名："+ idid[1]+"　　　所在部门："+ idid[3]);
+		return result;
+	}
+	/**
+	 * @功能描述：跳转到执照检查记录查询页面
+	 */
+	public String searchZzJcHistoryTeacher(){
+		setDeptId(deptId);
+		setKey(key);
+		return "searchZzJcHistory";
+	}
+	/**
+	 * @功能描述：查询执照检查记录列表
+	 */
+	public String searchZzJcHistoryListTeacher(){
+//		VHistorySearch historySearch
+		setDeptId(deptId);
+		setKey(key);
+		 // 获得接口
+		 ITeacherManagentService iand = getFactory()
+		 .getFinanceProviderInstance().getTeacherManagentService();
+		try {
+			setHistorySearch(historySearch);
+			setPage(iand.searchZzJcHistory(historySearch, getPageIndex()));
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		return "searchZzJcHistoryList";
+	}
+	/**
+	 * @功能描述：查看执照检查信息
+	 */
+	public String showMessageHistoryZzJcAjaxTeacher(){
+		String result = "toShowZzJc";
+		try {
+			//TTeaLicenseskilledcheck teZzJc;
+			setDeptId(deptId);
+			setKey(key);
+			setHistorySearch(historySearch);
+			vteaZzJc = getFactory().getFinanceProviderInstance().getTeacherManagentService().searchHistoryShowZzJc(id);
+//			System.out.println(teZzJc.getTTeaLicense().getTeacherBaseInfo().getVName());
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		return result;
+	}
+	/**
+	 * @功能描述：添加执照检查信息
+	 */
+	public String upOrShowZzJcTeacher(){
+		String result="upOrShowZzJc";
+		setDeptId(deptId);
+		setKey(key);
+		//TTeaLicenseskilledcheck teaZzJc
+		try {
+			TUser tuser = getFactory().getFinanceProviderInstance()
+			.getSysUserService().readSysUserByLoginID(
+					this.getLoginContext().getLoginId());
+			teaZzJc.setTUser(tuser);
+			teaZzJc.setDCreatedate(new Date());
+			
+			getFactory().getFinanceProviderInstance().getTeacherManagentService().addOrUpZzJc(teaZzJc);
+		} catch (FinanceServiceException e1) {
+			e1.printStackTrace();
+		}
+		return result;
+	}
+	/**
+	 * @功能描述：跳转到执照检查信息
+	 */
+	public String toUpZzJcTeacher(){
+		setDeptId(deptId);
+		setKey(key);
+		setHistorySearch(historySearch);
+		try {
+			teZzJc = getFactory().getFinanceProviderInstance().getTeacherManagentService().searchHistoryZzJc(id);
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		return "toUpZzJc";
+	}
+	/**
+	 * @功能描述：更改执照检查信息
+	 */
+	public String upZzJcTeacher(){
+		setDeptId(deptId);
+		setKey(key);
+		setHistorySearch(historySearch);
+		try {
+			TUser tuser = getFactory().getFinanceProviderInstance()
+			.getSysUserService().readSysUserByLoginID(
+					this.getLoginContext().getLoginId());
+			teaZzJc.setTUser(tuser);
+			teaZzJc.setDCreatedate(new Date());
+			
+			getFactory().getFinanceProviderInstance().getTeacherManagentService().addOrUpZzJc(teaZzJc);
+		} catch (FinanceServiceException e1) {
+			e1.printStackTrace();
+		}
+		return "upZzJc";
+	}
+	//==========教员执照信息结束====================
+	
+	// ----------------------setter and getter---------------------
+	public TeacherBaseInfo getTeacher() {
+		return teacher;
+	}
+	public void setTeacher(TeacherBaseInfo teacher) {
+		this.teacher = teacher;
+	}
+	public List<TeacherBaseInfo> getList() {
+		return list;
+	}
+	public void setList(List<TeacherBaseInfo> list) {
+		this.list = list;
+	}
+	public String getKey() {
+		return key;
+	}
+	public void setKey(String key) {
+		this.key = key;
+	}
+	public String getAoru() {
+		return aoru;
+	}
+	public void setAoru(String aoru) {
+		this.aoru = aoru;
+	}
+	public String getShowPeople() {
+		return showPeople;
+	}
+	public void setShowPeople(String showPeople) {
+		this.showPeople = showPeople;
+	}
+	public String getId() {
+		return id;
+	}
+	public void setId(String id) {
+		this.id = id;
+	}
+	public String getDeptName() {
+		return deptName;
+	}
+	public void setDeptName(String deptName) {
+		this.deptName = deptName;
+	}
+	public String getDeptId() {
+		return deptId;
+	}
+	public void setDeptId(String deptId) {
+		this.deptId = deptId;
+	}
+	public List<TDiction> getFxjyTypeList() {
+		return fxjyTypeList;
+	}
+	public void setFxjyTypeList(List<TDiction> fxjyTypeList) {
+		this.fxjyTypeList = fxjyTypeList;
+	}
+	public List<TDiction> getDmjyTypeList() {
+		return dmjyTypeList;
+	}
+	public void setDmjyTypeList(List<TDiction> dmjyTypeList) {
+		this.dmjyTypeList = dmjyTypeList;
+	}
+	public List<TDiction> getSfjxList() {
+		return sfjxList;
+	}
+	public void setSfjxList(List<TDiction> sfjxList) {
+		this.sfjxList = sfjxList;
+	}
+	public List<TDiction> getSpjsdjList() {
+		return spjsdjList;
+	}
+	public void setSpjsdjList(List<TDiction> spjsdjList) {
+		this.spjsdjList = spjsdjList;
+	}
+	public List<TDiction> getMzList() {
+		return mzList;
+	}
+	public void setMzList(List<TDiction> mzList) {
+		this.mzList = mzList;
+	}
+	public List<TDiction> getWhcdList() {
+		return whcdList;
+	}
+	public void setWhcdList(List<TDiction> whcdList) {
+		this.whcdList = whcdList;
+	}
+	public List<VTeacherBaseInfo> getTlist() {
+		return tlist;
+	}
+	public void setTlist(List<VTeacherBaseInfo> tlist) {
+		this.tlist = tlist;
+	}
+	public String getPeopleids() {
+		return peopleids;
+	}
+	public void setPeopleids(String peopleids) {
+		this.peopleids = peopleids;
+	}
+	public TTeaMedical getTeachertj() {
+		return teachertj;
+	}
+	public void setTeachertj(TTeaMedical teachertj) {
+		this.teachertj = teachertj;
+	}
+	public String getTjId() {
+		return tjId;
+	}
+	public void setTjId(String tjId) {
+		this.tjId = tjId;
+	}
+	public VHistorySearch getHistorySearch() {
+		return historySearch;
+	}
+	public void setHistorySearch(VHistorySearch historySearch) {
+		this.historySearch = historySearch;
+	}
+	public TTeaMedicalhistory getHistorytj() {
+		return historytj;
+	}
+	public void setHistorytj(TTeaMedicalhistory historytj) {
+		this.historytj = historytj;
+	}
+	public TTeaLicense getTeacherZz() {
+		return teacherZz;
+	}
+	public void setTeacherZz(TTeaLicense teacherZz) {
+		this.teacherZz = teacherZz;
+	}
+	public List<TDiction> getJyzzDjList() {
+		return jyzzDjList;
+	}
+	public void setJyzzDjList(List<TDiction> jyzzDjList) {
+		this.jyzzDjList = jyzzDjList;
+	}
+	public List<TDiction> getJyzzLxList() {
+		return jyzzLxList;
+	}
+	public void setJyzzLxList(List<TDiction> jyzzLxList) {
+		this.jyzzLxList = jyzzLxList;
+	}
+	public List<TDiction> getZzLxList() {
+		return zzLxList;
+	}
+	public void setZzLxList(List<TDiction> zzLxList) {
+		this.zzLxList = zzLxList;
+	}
+	public List<TDiction> getYbDjList() {
+		return ybDjList;
+	}
+	public void setYbDjList(List<TDiction> ybDjList) {
+		this.ybDjList = ybDjList;
+	}
+	public List<TDiction> getFjJbList() {
+		return fjJbList;
+	}
+	public void setFjJbList(List<TDiction> fjJbList) {
+		this.fjJbList = fjJbList;
+	}
+	public List<TDiction> getHkqLbList() {
+		return hkqLbList;
+	}
+	public void setHkqLbList(List<TDiction> hkqLbList) {
+		this.hkqLbList = hkqLbList;
+	}
+	public List<TDiction> getHkqXbList() {
+		return hkqXbList;
+	}
+	public void setHkqXbList(List<TDiction> hkqXbList) {
+		this.hkqXbList = hkqXbList;
+	}
+	public List<TDiction> getXyjJbList() {
+		return xyjJbList;
+	}
+	public void setXyjJbList(List<TDiction> xyjJbList) {
+		this.xyjJbList = xyjJbList;
+	}
+	public List<TDiction> getYsHkgsList() {
+		return ysHkgsList;
+	}
+	public void setYsHkgsList(List<TDiction> ysHkgsList) {
+		this.ysHkgsList = ysHkgsList;
+	}
+	public VTTeaLicenseskilledcheck getTeaZzJc() {
+		return teaZzJc;
+	}
+	public void setTeaZzJc(VTTeaLicenseskilledcheck teaZzJc) {
+		this.teaZzJc = teaZzJc;
+	}
+	public VSearchTeacherZz getVteacherZz() {
+		return vteacherZz;
+	}
+	public void setVteacherZz(VSearchTeacherZz vteacherZz) {
+		this.vteacherZz = vteacherZz;
+	}
+	public TTeaLicenseskilledcheck getTeZzJc() {
+		return teZzJc;
+	}
+	public void setTeZzJc(TTeaLicenseskilledcheck teZzJc) {
+		this.teZzJc = teZzJc;
+	}
+	public TeacherLicenseupdate getTlsu() {
+		return tlsu;
+	}
+	public void setTlsu(TeacherLicenseupdate tlsu) {
+		this.tlsu = tlsu;
+	}
+	public VTeacherBaseInfo getVteacher() {
+		return vteacher;
+	}
+	public void setVteacher(VTeacherBaseInfo vteacher) {
+		this.vteacher = vteacher;
+	}
+	public VTTeaMedical getVteachertj() {
+		return vteachertj;
+	}
+	public void setVteachertj(VTTeaMedical vteachertj) {
+		this.vteachertj = vteachertj;
+	}
+	public VTTeaLicense getVoteacherZz() {
+		return voteacherZz;
+	}
+	public void setVoteacherZz(VTTeaLicense voteacherZz) {
+		this.voteacherZz = voteacherZz;
+	}
+	public VTeacherLicenseupdate getVtlsu() {
+		return vtlsu;
+	}
+	public void setVtlsu(VTeacherLicenseupdate vtlsu) {
+		this.vtlsu = vtlsu;
+	}
+	public VTTeaMedicalhistory getVhistorytj() {
+		return vhistorytj;
+	}
+	public void setVhistorytj(VTTeaMedicalhistory vhistorytj) {
+		this.vhistorytj = vhistorytj;
+	}
+	public VOTTeaLicenseskilledcheck getVteaZzJc() {
+		return vteaZzJc;
+	}
+	public void setVteaZzJc(VOTTeaLicenseskilledcheck vteaZzJc) {
+		this.vteaZzJc = vteaZzJc;
+	}
+	public List<VOTTeaLicenseskilledcheck> getViewLicenseskilledcheckList() {
+		return viewLicenseskilledcheckList;
+	}
+	public void setViewLicenseskilledcheckList(
+			List<VOTTeaLicenseskilledcheck> viewLicenseskilledcheckList) {
+		this.viewLicenseskilledcheckList = viewLicenseskilledcheckList;
+	}
+
+	public List<VTeacherBaseInfo> getViewTeacherBaseInfoList() {
+		return viewTeacherBaseInfoList;
+	}
+
+	public void setViewTeacherBaseInfoList(
+			List<VTeacherBaseInfo> viewTeacherBaseInfoList) {
+		this.viewTeacherBaseInfoList = viewTeacherBaseInfoList;
+	}
+
+	public List<WarningInfo> getWarnList() {
+		return warnList;
+	}
+
+	public void setWarnList(List<WarningInfo> warnList) {
+		this.warnList = warnList;
+	}
+
+	public List<VTeacherBaseInfo> getTeacherList() {
+		return teacherList;
+	}
+
+	public void setTeacherList(List<VTeacherBaseInfo> teacherList) {
+		this.teacherList = teacherList;
+	}
+
+	public VOrg getViewOrg() {
+		return viewOrg;
+	}
+
+	public void setViewOrg(VOrg viewOrg) {
+		this.viewOrg = viewOrg;
+	}
+
+	public String getStudentid() {
+		return studentid;
+	}
+
+	public void setStudentid(String studentid) {
+		this.studentid = studentid;
+	}
+
+	public String getTeacherid() {
+		return teacherid;
+	}
+
+	public void setTeacherid(String teacherid) {
+		this.teacherid = teacherid;
+	}
+
+	public List<VOutline> getOutlineList() {
+		return outlineList;
+	}
+
+	public void setOutlineList(List<VOutline> outlineList) {
+		this.outlineList = outlineList;
+	}
+
+	public String getOutlineid() {
+		return outlineid;
+	}
+
+	public void setOutlineid(String outlineid) {
+		this.outlineid = outlineid;
+	}
+	public List<TDiction> getJiguanList() {
+		return jiguanList;
+	}
+	public void setJiguanList(List<TDiction> jiguanList) {
+		this.jiguanList = jiguanList;
+	}
+	
+	
+}

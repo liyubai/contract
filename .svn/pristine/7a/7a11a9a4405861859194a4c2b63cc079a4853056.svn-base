@@ -1,0 +1,653 @@
+
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>转场航线字典管理</title>
+<link rel="stylesheet" href="themes/cupertino/jquery.ui.all.css">
+<script src="scripts/jquery.min.js"></script>
+<script src="scripts/jquery-ui.min.js"></script>
+<script src="scripts/ui/jquery.ui.position.min.js"></script>
+<script src="scripts/ui/jquery.ui.core.min.js"></script>
+<script src="scripts/ui/jquery.ui.widget.min.js"></script>
+<script src="scripts/ui/jquery.ui.button.min.js"></script>
+<script src="scripts/ui/jquery.ui.tabs.min.js"></script>
+<script src="scripts/ui/jquery.ui.dialog.min.js"></script>
+<script src="scripts/ui/jquery.ui.menu.min.js"></script>
+<script src="scripts/function.min.js"></script>
+<style>
+
+fieldset { padding: 0 1em 0 1em; border:0; width: 85%; }
+.validateTips { border: 1px solid transparent; padding: 0 0.5em 0 0.5em; margin: 0; line-height: 30px; }
+</style>
+<script>
+$(function() {
+
+	$("div.dropDownList").each(function(i){
+		 new $.dropDownList(i,true,240);
+	})
+	
+	var $checkboxes=$("input[name='checkboxName']"),$checkAllUsersBox=$("#checkAllUsersBox");
+	$checkboxes.change(function(){
+		if(!this.checked) $checkAllUsersBox[0].checked=false;
+		if($checkboxes.size()==$checkboxes.filter(":checked").size()) $checkAllUsersBox[0].checked=true;
+		$checkAllUsersBox.trigger("change");
+	});
+	$checkAllUsersBox.click(function(){
+		$checkboxes.each(function(){
+			this.checked = $checkAllUsersBox[0].checked;
+			$(this).trigger("change");
+		});
+	});
+
+	var name = $( "#srcourse" ),
+		startStationId=$("#startStationId"), 
+		endStationId=$("#endStationId"),
+		allFields = $( [] ).add( name ),
+		tips = $( ".validateTips" );
+
+	function updateTips( t ) {
+		tips.html( t ).addClass( "ui-state-highlight" );
+		setTimeout(function() {
+			tips.removeClass( "ui-state-highlight", 1500 );
+		}, 2000 );
+	}
+
+	function checkLength( o, n, min, max ) {
+		if ( o.val().length > max || o.val().length < min ) {
+			o.addClass( "error" ).focus();
+			updateTips( "<span class='ui-icon-custom ui-icon-custom-warning' style='margin-top: 6px;'></span>" + n + "的长度必须在" +
+				min + "和" + max + "之间" );
+			return false;
+		} else {
+			return true;
+		}
+	}
+
+	function checkRegexp( o, regexp, n ) {
+		if ( !( regexp.test( o.val() ) ) ) {
+			o.addClass( "error" ).focus();
+			updateTips( "<span class='ui-icon-custom ui-icon-custom-warning' style='margin-top: 6px;'></span>" + n );
+			return false;
+		} else {
+			return true;
+		}
+	}
+	
+	function checkEquals( o,p, n ) {
+
+		if ( o.val()==p.val() ) {
+			o.addClass( "error" ).focus();
+			updateTips( "<span class='ui-icon-custom ui-icon-custom-warning' style='margin-top: 6px;'></span>" + n );
+			return false;
+		} else {
+			return true;
+		}
+	}
+
+	$( "#dialogForm1" ).dialog({//添加、编辑窗口
+		autoOpen: false,
+		height: 300,
+		width: 400,
+		modal: true,
+		resizable: false,
+		buttons: {
+			"确 定": function() {
+				//确定按钮的处理代码段：
+				var bValid = true;
+				allFields.removeClass( "error" );
+
+				bValid = bValid && checkEquals( startStationId, endStationId, "始发站与到达站不能相同" );
+				bValid = bValid && checkLength( name, "请输入航段里程", 1, 20);
+				bValid = bValid && checkRegexp( name, /^[0-9]*$/, "航段里程应为数字" );
+				
+				if ( bValid ) {
+
+					$("#startid").val(startStationId.val());
+					$("#endid").val(endStationId.val());
+					$("#course").val(name.val());
+					$("#unitSubjectForm").submit();
+					$( this ).dialog( "close" );
+				}
+
+
+			},
+			"取 消": function() {
+				$( this ).dialog( "close" );
+			}
+		},
+		close: function() {
+			allFields.val( "" ).removeClass( "error" );
+		}
+	});
+	$("#modalDialogButton1").click(function(){// 添加
+		
+		$("#dialogForm1").dialog('option', 'title', '新建转场航线');
+		tips.removeClass("ui-state-highlight").html("请填写所有信息");
+		$("#input.error").removeClass("error");
+		$("#dialogForm1").dialog( "open" );
+	});
+		
+	$("#modalDialogButton2").click(function(){//编辑
+		var k =0;
+		var str="";
+		var r1=document.getElementsByName('checkboxName');
+		for(i=0;i<r1.length;i++){
+			if(r1[i].checked==true){
+				k++;
+				str=r1[i].value;
+			}
+		}
+		if(k==0){
+			$("#dialogForm3Warning").html("请选择要编辑的内容。");
+			$( "#dialogForm3" ).dialog( "open" );
+			return;
+		}
+
+		if(k>1){
+			$("#dialogForm3Warning").html("请选择一条信息编辑。");
+			$( "#dialogForm3" ).dialog( "open" );
+			return;
+		}
+		execEdit(str);
+	});
+
+	function execEdit(str){
+		//通过json读取字典对象
+		params = {"id":str};
+		$.ajax({
+			type:"post",
+			url:"showChangedbaseflylineById.do",
+			data:params,
+			dataType:"json",
+			success:function(data){
+				//编辑为窗口赋值
+				$("#VId").val(data.VId);
+				$("#startStationId").val(data.startStationId);
+				$("#startStationId").change();
+				$("#endStationId").val(data.endStationId);
+				$("#endStationId").change();
+				$("#srcourse").val(data.DCourse);
+				$("#dialogForm1").dialog('option', 'title', '编辑转场航线');
+				$("#unitSubjectForm").attr("action","updateChangedbaseflyline.do");
+				$("#dialogForm1").dialog( "open" );
+			},
+			error:function(){
+				$("#dialogForm3Warning").html("数据库连接错误，获取对象失败，请重试。");
+				$( "#dialogForm3" ).dialog( "open" );
+				return;
+			}
+		});	
+	}
+
+	$("button.icon").click(function(){
+		var str = this.id;
+		var opt = str.split(",")[0];
+		var id = str.split(",")[1];
+		if(opt==0){
+			execEdit(id);
+		}else{
+			$("#unitSubjectDicIdListId").val(id);
+			$( "#dialogForm2" ).dialog( "open" );
+		}
+	});
+	$("#modalDialogButton3").click(function(){//删除
+		var k =0;
+		var str="";
+		var r1=document.getElementsByName('checkboxName');
+		for(i=0;i<r1.length;i++){
+			if(r1[i].checked==true){
+				k++;
+				str+=r1[i].value+",";
+			}
+		}
+		
+		if(k==0){
+			$("#dialogForm3Warning").html("请选择要删除的内容。");
+			$( "#dialogForm3" ).dialog( "open" );
+			return;
+		}
+		$("#unitSubjectDicIdListId").val(str);
+		$( "#dialogForm2" ).dialog( "open" );
+		
+	});
+
+	
+	$("#modalDialogButton4").click(function(){//查询
+		$("#searchKey").val($("#searchUser").val());
+		$( "#searchForm" ).submit();
+	});
+	$("#modalDialogButton5").click(function(){//刷新
+		$("#searchKey").val("");
+		$( "#searchForm" ).submit();
+	});
+	$( "#dialogForm2" ).dialog({//删除内容窗口
+		autoOpen: false,
+		height: 200,
+		width: 400,
+		modal: true,
+		resizable: false,
+		buttons: {
+			"确 定": function() {
+				
+				$("#deleteForm").submit();
+			},
+			"取 消": function() {
+				$( this ).dialog( "close" );
+			}
+		},
+		close: function() {
+			allFields.val( "" ).removeClass( "error" );
+		}
+	});
+	$( "#dialogForm3" ).dialog({//警告信息窗口
+		autoOpen: false,
+		height: 200,
+		width: 400,
+		modal: true,
+		resizable: false,
+		buttons: {
+			"确 定": function() {
+				$( this ).dialog( "close" );
+			}
+		},
+		close: function() {
+			allFields.val( "" ).removeClass( "error" );
+		}
+	});
+});
+</script>
+<!-- 此js务必放在所有页面自带的js后面加载 -->
+<script src="scripts/base.min.js"></script>
+</head>
+<body class="hide">
+<div id="leftPartA"><div>
+<ul class="foldList">
+	<li><span class="ui-icon ui-icon-carat-1-s"></span>训练大纲管理(4)</li>
+	<ul class="itemList">
+		<li><a class="navLink" href="open_outLineList.do" id="navLink4">训练大纲管理</a></li>
+		<li><a class="navLink" href="Func11_1.html" id="navLink4">大纲审批</a></li>
+        <li><a class="navLink" href="Func11_2.html" id="navLink4">学员分配大纲</a></li>
+        <li><a class="navLink" href="Func11_3.html" id="navLink4">学员大纲变更</a></li>
+	</ul>
+</ul>
+<span class="panelLine"></span>
+<ul class="foldList">
+	<li><span class="ui-icon ui-icon-carat-1-s"></span>课程管理(6)</li>
+	<ul class="itemList">
+		<li><a href="open_trainingLessonList.do">训练课程管理</a></li>
+		<li><a class="navLink" href="Func11_1.html" id="navLink4">为大纲分配课目</a></li>
+        <li><a href="open_stationList.do">站名管理</a></li>
+        <li  class="active" style="cursor:default"><a>转场航线字典管理</a></li>
+        <li><a class="navLink" href="Func11_3.html" id="navLink4" >为转场的课目设置转场航线</a></li>
+        <li><a href="open_unitSubjectDictionaryList.do">单元科目字典管理</a></li>
+	</ul>
+</ul>
+<span class="panelLine"></span>
+<ul class="foldList">
+	<li><span class="ui-icon ui-icon-carat-1-s"></span>训练科目管理(3)</li>
+	<ul class="itemList">
+		<li><a href="open_trainsubjectList.do">训练科目字典管理</a></li>
+		<li><a class="navLink" href="Func11_1.html" id="navLink4">训练科目分类</a></li>
+        <li><a class="navLink" href="Func11_2.html" id="navLink4">大纲设置训练科目</a></li>
+	</ul>
+</ul>
+</div></div>
+
+<div id="rightPartA"><div>
+
+<div class="panelBox buttonBox">
+
+    <button id="modalDialogButton1" class="green" primary="ui-icon-button-addnew">新建转场航线</button>
+    
+    <button class="normal barLeft" id="modalDialogButton2">编辑</button>
+    <button class="normal barMiddle" id="modalDialogButton3">删除</button>
+    <button class="normal barRight" id="modalDialogButton5">刷新</button>
+    
+    <div class="buttonInput relative left" width="180" height="28">
+    <input id="searchUser" name="searchUser"  type="text" maxlength="50"/><button id="modalDialogButton4" title="输入起点或终点的名称">查询</button>
+    </div>
+
+</div>
+
+<div class="Panel ui-corner-all-0" id="Panel2">
+
+	<div class="panelContent">
+
+		<table class="panelTable" id="usersTable" border="0" cellspacing="0" cellpadding="3">
+			<thead>
+			  <tr class="trSpliter">
+				<th width="39"></th>
+				<th width="160"></th>
+				<th width="166"></th>
+				<th width="168"></th>
+				<th width="144"></th>
+                <th></th>
+			  </tr>
+              
+			  <tr>
+				<th class="thSortableGray" style="padding-left: 6px;"><input type="checkbox" value="" id="checkAllUsersBox"><b></b></th>
+				<th class="thSortableGray">始发站</th>
+				<th class="thSortableGray">到达站</th>
+				<th class="thSortableGray">航段里程(千米)</th>
+				<th class="thSortableGray">创建时间</th>
+				<th class="thSortableGray">&nbsp;</th>
+			  </tr>
+			</thead>
+			<tbody>
+            
+			  <tr>
+				<td><input name="checkboxName" type="checkbox" value="4028816a47326829014732933f4c0001"><b></b></td>
+				<td class="searchRange" >通辽</td>
+				<td class="searchRange" >乌兰浩特</td>
+				<td class="searchRange" >600</td>
+				<td>2014-07-14 09:53:36</td>
+				<td><span class="hide"><button class="icon"  icon="ui-icon-pencil" title="编辑" id="0,4028816a47326829014732933f4c0001"></button><button class="icon" icon="ui-icon-trash" title="删除"  id="1,4028816a47326829014732933f4c0001"></button></span></td>
+			  </tr>
+              
+			  <tr>
+				<td><input name="checkboxName" type="checkbox" value="fbd32245471fe0d601472024e0a20016"><b></b></td>
+				<td class="searchRange" >朝阳</td>
+				<td class="searchRange" >呼伦贝尔</td>
+				<td class="searchRange" >600</td>
+				<td>2014-07-10 19:59:53</td>
+				<td><span class="hide"><button class="icon"  icon="ui-icon-pencil" title="编辑" id="0,fbd32245471fe0d601472024e0a20016"></button><button class="icon" icon="ui-icon-trash" title="删除"  id="1,fbd32245471fe0d601472024e0a20016"></button></span></td>
+			  </tr>
+              
+			  <tr>
+				<td><input name="checkboxName" type="checkbox" value="fbd32245471fe0d601472023c9720015"><b></b></td>
+				<td class="searchRange" >唐山</td>
+				<td class="searchRange" >朝阳</td>
+				<td class="searchRange" >500</td>
+				<td>2014-07-10 19:58:42</td>
+				<td><span class="hide"><button class="icon"  icon="ui-icon-pencil" title="编辑" id="0,fbd32245471fe0d601472023c9720015"></button><button class="icon" icon="ui-icon-trash" title="删除"  id="1,fbd32245471fe0d601472023c9720015"></button></span></td>
+			  </tr>
+              
+			  <tr>
+				<td><input name="checkboxName" type="checkbox" value="fbd32245471fe0d60147201353270014"><b></b></td>
+				<td class="searchRange" >朝阳</td>
+				<td class="searchRange" >唐山</td>
+				<td class="searchRange" >500</td>
+				<td>2014-07-10 19:40:43</td>
+				<td><span class="hide"><button class="icon"  icon="ui-icon-pencil" title="编辑" id="0,fbd32245471fe0d60147201353270014"></button><button class="icon" icon="ui-icon-trash" title="删除"  id="1,fbd32245471fe0d60147201353270014"></button></span></td>
+			  </tr>
+              
+			  <tr>
+				<td><input name="checkboxName" type="checkbox" value="fbd32245471fe0d601471ff8b34e0013"><b></b></td>
+				<td class="searchRange" >锡林浩特</td>
+				<td class="searchRange" >哈尔滨</td>
+				<td class="searchRange" >400</td>
+				<td>2014-07-10 19:11:38</td>
+				<td><span class="hide"><button class="icon"  icon="ui-icon-pencil" title="编辑" id="0,fbd32245471fe0d601471ff8b34e0013"></button><button class="icon" icon="ui-icon-trash" title="删除"  id="1,fbd32245471fe0d601471ff8b34e0013"></button></span></td>
+			  </tr>
+              
+			  <tr>
+				<td><input name="checkboxName" type="checkbox" value="fbd32245471fe0d601471ff8806a0012"><b></b></td>
+				<td class="searchRange" >唐山</td>
+				<td class="searchRange" >呼和浩特</td>
+				<td class="searchRange" >200</td>
+				<td>2014-07-10 19:11:25</td>
+				<td><span class="hide"><button class="icon"  icon="ui-icon-pencil" title="编辑" id="0,fbd32245471fe0d601471ff8806a0012"></button><button class="icon" icon="ui-icon-trash" title="删除"  id="1,fbd32245471fe0d601471ff8806a0012"></button></span></td>
+			  </tr>
+              
+			  <tr>
+				<td><input name="checkboxName" type="checkbox" value="fbd32245471fe0d601471ff6d95d0011"><b></b></td>
+				<td class="searchRange" >通辽</td>
+				<td class="searchRange" >唐山</td>
+				<td class="searchRange" >600</td>
+				<td>2014-07-10 19:09:36</td>
+				<td><span class="hide"><button class="icon"  icon="ui-icon-pencil" title="编辑" id="0,fbd32245471fe0d601471ff6d95d0011"></button><button class="icon" icon="ui-icon-trash" title="删除"  id="1,fbd32245471fe0d601471ff6d95d0011"></button></span></td>
+			  </tr>
+              
+			  <tr>
+				<td><input name="checkboxName" type="checkbox" value="fbd32245471fe0d601471ff606980010"><b></b></td>
+				<td class="searchRange" >天津</td>
+				<td class="searchRange" >朝阳</td>
+				<td class="searchRange" >120</td>
+				<td>2014-07-10 19:08:43</td>
+				<td><span class="hide"><button class="icon"  icon="ui-icon-pencil" title="编辑" id="0,fbd32245471fe0d601471ff606980010"></button><button class="icon" icon="ui-icon-trash" title="删除"  id="1,fbd32245471fe0d601471ff606980010"></button></span></td>
+			  </tr>
+              
+			  <tr>
+				<td><input name="checkboxName" type="checkbox" value="fbd32245471fe0d601471ff55a96000f"><b></b></td>
+				<td class="searchRange" >乌兰浩特</td>
+				<td class="searchRange" >长春</td>
+				<td class="searchRange" >800</td>
+				<td>2014-07-10 19:07:58</td>
+				<td><span class="hide"><button class="icon"  icon="ui-icon-pencil" title="编辑" id="0,fbd32245471fe0d601471ff55a96000f"></button><button class="icon" icon="ui-icon-trash" title="删除"  id="1,fbd32245471fe0d601471ff55a96000f"></button></span></td>
+			  </tr>
+              
+			  <tr>
+				<td><input name="checkboxName" type="checkbox" value="fbd32245471fe0d601471ff4ee29000e"><b></b></td>
+				<td class="searchRange" >朝阳</td>
+				<td class="searchRange" >乌兰浩特</td>
+				<td class="searchRange" >200</td>
+				<td>2014-07-10 19:07:31</td>
+				<td><span class="hide"><button class="icon"  icon="ui-icon-pencil" title="编辑" id="0,fbd32245471fe0d601471ff4ee29000e"></button><button class="icon" icon="ui-icon-trash" title="删除"  id="1,fbd32245471fe0d601471ff4ee29000e"></button></span></td>
+			  </tr>
+              
+			  <tr>
+				<td><input name="checkboxName" type="checkbox" value="fbd32245471fe0d601471fe1cd320001"><b></b></td>
+				<td class="searchRange" >朝阳</td>
+				<td class="searchRange" >通辽</td>
+				<td class="searchRange" >500</td>
+				<td>2014-07-10 18:46:37</td>
+				<td><span class="hide"><button class="icon"  icon="ui-icon-pencil" title="编辑" id="0,fbd32245471fe0d601471fe1cd320001"></button><button class="icon" icon="ui-icon-trash" title="删除"  id="1,fbd32245471fe0d601471fe1cd320001"></button></span></td>
+			  </tr>
+              
+			 
+			  <tr>
+				<td>&nbsp;<b></b></td>
+				<td class="searchRange" >&nbsp;</td>
+				<td class="searchRange" >&nbsp;</td>
+				<td class="searchRange" >&nbsp;</td>
+				<td></td>
+				<td></td>
+			  </tr>
+              
+			  <tr>
+				<td>&nbsp;<b></b></td>
+				<td class="searchRange" >&nbsp;</td>
+				<td class="searchRange" >&nbsp;</td>
+				<td class="searchRange" >&nbsp;</td>
+				<td></td>
+				<td></td>
+			  </tr>
+              
+			  <tr>
+				<td>&nbsp;<b></b></td>
+				<td class="searchRange" >&nbsp;</td>
+				<td class="searchRange" >&nbsp;</td>
+				<td class="searchRange" >&nbsp;</td>
+				<td></td>
+				<td></td>
+			  </tr>
+              
+			  <tr>
+				<td>&nbsp;<b></b></td>
+				<td class="searchRange" >&nbsp;</td>
+				<td class="searchRange" >&nbsp;</td>
+				<td class="searchRange" >&nbsp;</td>
+				<td></td>
+				<td></td>
+			  </tr>
+              
+			  <tr>
+				<td>&nbsp;<b></b></td>
+				<td class="searchRange" >&nbsp;</td>
+				<td class="searchRange" >&nbsp;</td>
+				<td class="searchRange" >&nbsp;</td>
+				<td></td>
+				<td></td>
+			  </tr>
+              
+			  <tr>
+				<td>&nbsp;<b></b></td>
+				<td class="searchRange" >&nbsp;</td>
+				<td class="searchRange" >&nbsp;</td>
+				<td class="searchRange" >&nbsp;</td>
+				<td></td>
+				<td></td>
+			  </tr>
+              
+			  <tr>
+				<td>&nbsp;<b></b></td>
+				<td class="searchRange" >&nbsp;</td>
+				<td class="searchRange" >&nbsp;</td>
+				<td class="searchRange" >&nbsp;</td>
+				<td></td>
+				<td></td>
+			  </tr>
+              
+			  <tr>
+				<td>&nbsp;<b></b></td>
+				<td class="searchRange" >&nbsp;</td>
+				<td class="searchRange" >&nbsp;</td>
+				<td class="searchRange" >&nbsp;</td>
+				<td></td>
+				<td></td>
+			  </tr>
+              
+			  <tr>
+				<td>&nbsp;<b></b></td>
+				<td class="searchRange" >&nbsp;</td>
+				<td class="searchRange" >&nbsp;</td>
+				<td class="searchRange" >&nbsp;</td>
+				<td></td>
+				<td></td>
+			  </tr>
+              
+			</tbody>
+		</table>
+
+	</div>
+
+</div>
+
+</div>
+
+
+</div>
+
+
+<div id="dialogForm1"  title="新建转场航线">
+	<p class="validateTips" >请填写所有信息</p>
+     <span class="panelLine"></span>
+		始&nbsp;发&nbsp;站：&nbsp;&nbsp;&nbsp;
+        <div class="dropDownList">
+        <button></button>
+        <ul>
+        	<table width="100%" border="0" cellpadding="0" cellspacing="0">
+     
+    <tr>
+    <td height="24"><li><a href="#N" val="4028816a46febde50146fec1dd50000c" class="inline"><span class="ui-icon ui-icon-bullet"></span>朝阳</a></li></td>
+    
+    
+    
+    <td height="24"><li><a href="#N" val="4028816a46febde50146fec19a76000b" class="inline">通辽</a></li></td>
+    
+    
+    
+    <td height="24"><li><a href="#N" val="4028816a46febde50146fec177d7000a" class="inline">天津</a></li></td>
+    
+    </tr>
+    <tr>
+    <td height="24"><li><a href="#N" val="4028816a46febde50146fec15d1a0009" class="inline">沈阳</a></li></td>
+    
+    
+    
+    <td height="24"><li><a href="#N" val="4028816a46febde50146fec12af70008" class="inline">唐山</a></li></td>
+    
+    
+    
+    <td height="24"><li><a href="#N" val="4028816a46febde50146fec08ebe0007" class="inline">乌兰浩特</a></li></td>
+    
+    </tr>
+    <tr>
+    <td height="24"><li><a href="#N" val="4028816a46febde50146fec05e810006" class="inline">长春</a></li></td>
+    
+    
+    
+    <td height="24"><li><a href="#N" val="4028816a46febde50146fec027fc0005" class="inline">哈尔滨</a></li></td>
+    
+    
+    
+    <td height="24"><li><a href="#N" val="4028816a46febde50146fec000960004" class="inline">呼伦贝尔</a></li></td>
+    
+    </tr>
+    <tr>
+    <td height="24"><li><a href="#N" val="4028816a46febde50146febf42380003" class="inline">包头</a></li></td>
+    
+    
+    
+    <td height="24"><li><a href="#N" val="4028816a46febde50146febf1da70002" class="inline">呼和浩特</a></li></td>
+    
+    
+    
+    <td height="24"><li><a href="#N" val="4028816a46febde50146febe7a920001" class="inline">锡林浩特</a></li></td>
+    
+    </tr>
+    
+    
+    </table>
+        </ul>
+       <input type="hidden"  id="startStationId" value="4028816a46febde50146fec1dd50000c"/>
+    	</div><span class="panelLine"></span>
+         到&nbsp;达&nbsp;站：&nbsp;&nbsp;&nbsp;
+        <div class="dropDownList">
+       <button></button>
+        <ul>
+        	<li><a href="#N" val="4028816a46febde50146fec1dd50000c" class="inline"><span class="ui-icon ui-icon-bullet"></span>朝阳&nbsp;&nbsp;&nbsp;&nbsp;</a><a href="#N" val="4028816a46febde50146fec19a76000b" class="inline">通辽&nbsp;&nbsp;&nbsp;&nbsp;</a><a href="#N" val="4028816a46febde50146fec177d7000a" class="inline">天津&nbsp;&nbsp;&nbsp;&nbsp;</a><a href="#N" val="4028816a46febde50146fec15d1a0009" class="inline">沈阳&nbsp;&nbsp;&nbsp;&nbsp;</a><a href="#N" val="4028816a46febde50146fec12af70008" class="inline">唐山&nbsp;&nbsp;&nbsp;&nbsp;</a><a href="#N" val="4028816a46febde50146fec08ebe0007" class="inline">乌兰浩特</a><a href="#N" val="4028816a46febde50146fec05e810006" class="inline">长春&nbsp;&nbsp;&nbsp;&nbsp;</a><a href="#N" val="4028816a46febde50146fec027fc0005" class="inline">哈尔滨&nbsp;&nbsp;</a><a href="#N" val="4028816a46febde50146fec000960004" class="inline">呼伦贝尔</a><a href="#N" val="4028816a46febde50146febf42380003" class="inline">包头&nbsp;&nbsp;&nbsp;&nbsp;</a><a href="#N" val="4028816a46febde50146febf1da70002" class="inline">呼和浩特</a><a href="#N" val="4028816a46febde50146febe7a920001" class="inline">锡林浩特</a></li>
+        </ul>
+        <input type="hidden"  id="endStationId" value="4028816a46febde50146fec1dd50000c" />
+    	</div>
+        <span class="panelLine"></span>
+    	航段里程： &nbsp;<input type="text"  id="srcourse" class="text ui-widget-content ui-corner-all" style="width:200px;" />（千米）
+</div>
+
+<div id="dialogForm2">
+	<fieldset>
+		<div class="panelLeft" style="width: 55px;"><img src="themes/cupertino/images/warning.png" /></div>
+		<div class="panelRight" style="margin-left: 75px;">
+			<span style="font-size: 14px; font-weight: bold; color: #555555; line-height:23px;">确定要删除选中的信息吗？<br/>信息删除后不可恢复。</span>
+		</div>
+	</fieldset>	
+</div>
+
+<div id="dialogForm3">
+	<fieldset>
+		<div class="panelLeft" style="width: 55px;"><img src="themes/cupertino/images/warning.png" /></div>
+		<div class="panelRight" style="margin-left: 75px;">
+			<span style="font-size: 14px; font-weight: bold; color: #555555;" id="dialogForm3Warning"></span>
+		</div>
+	</fieldset>	
+</div>
+
+
+
+<form id="unitSubjectForm" method="post" action="createChangedbaseflyline.do">
+<input type="hidden" name="line.VId" id="VId"/>
+<input type="hidden" name="line.stationByStartStationid.VId" id="startid" />
+<input type="hidden" name="line.stationByEndStationId.VId" id="endid" />
+<input type="hidden" name="line.DCourse" id="course" />
+</form>
+
+<form  action="open_changedbaseflylineList.do" method="get" id="searchForm">
+<input name="name" type="hidden" id="searchKey">
+</form>
+<form  action="deleteChangedbaseflyline.do" method="get" id="deleteForm">
+<input name="unitSubjectDicIdStr" type="hidden" id="unitSubjectDicIdListId">
+</form>
+<input type="hidden"  id="statusMsgId" value="" />
+</body>
+</html>
+<script>
+var operateResult=$("#statusMsgId").val();
+$(function(){
+	if(operateResult!=null&&operateResult!=""){
+		$("#dialogForm3Warning").html(operateResult);
+		$( "#dialogForm3" ).dialog( "open" );//操作成功后返回提示页面
+	}
+});
+</script>

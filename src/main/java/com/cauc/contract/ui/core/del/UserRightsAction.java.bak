@@ -1,0 +1,206 @@
+package com.cauc.training.ui.core.del;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.pojos.TRole;
+import com.cauc.training.pojos.TUser;
+import com.cauc.training.pojos.TUserRights;
+import com.cauc.training.ui.common.BaseActionSupport;
+import com.cauc.training.vo.VOTUserRight;
+
+/**
+ * 用户与角色的绑定
+ * 
+ * */
+
+public class UserRightsAction extends BaseActionSupport {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 4545051806093731544L;
+
+	//存储当前用户ID
+	private String userId;
+	
+	//存储当前选中的角色Id，格式为：各个功能Id之间使用英文逗号分隔
+	private String roleIds;
+	
+	private String isWrite;
+	
+	//用户-角色绑定成功标志位，0：成功；1：失败
+	private int flag = 1;
+	
+	//存储VO形式的角色集合
+	private List<VOTUserRight> voTUserRightList;
+	
+	//查询关键字
+	private String key;
+	private String userType;
+	
+	public String saveUserRights(){
+		//String result = SUCCESS;
+		String roleId = "";
+		//用于存储TRoleFunction对象
+		List<TUserRights> turs = new ArrayList<TUserRights>();
+		if(this.userId != null && !this.userId.trim().equals("")){
+			//System.out.println("userId: " + this.userId);
+			//System.out.println("roleId: " + this.roleIds);
+			try {
+				// 获取用户对象,取得登录者，即创建该角色的人
+				TUser tuser = getFactory().getFinanceProviderInstance().getSysUserService().readSysUserByLoginID(this.getLoginContext().getLoginId());
+				
+				//获取当前要分配角色的TUser对象
+				TUser curUser = getFactory().getFinanceProviderInstance().getSystemUserManagerService().searchUserAccountById(userId);
+				
+				
+				/**
+				 * 如果roleIds非null，则表示该用户已经与新的角色绑定了，操作的步骤是：
+				 *  1、先删除该用户原有的与角色绑定关系
+				 *  2、再将新的绑定关系进行存储
+				 * 
+				 * */
+				if(this.roleIds != null && !this.roleIds.trim().equals("") ){
+										
+					String[] temp = this.roleIds.split(",");
+					if(temp != null && temp.length > 0){
+						//删除该用户当前所关联的角色
+						getFactory().getFinanceProviderInstance().getUserRightsManagerService().deleteAllTUserRights(this.userId);
+						
+						for(int i=0; i<temp.length; i++){
+							//System.out.println(temp[i]);
+							roleId = temp[i];
+							//获取TRole对象
+							TRole role = getFactory().getFinanceProviderInstance().getRoleService().searchRoleById(roleId);
+						
+							//创建用户-角色绑定对象（即用-角色关联对象）
+						    TUserRights tur = new TUserRights();
+						    tur.setTUserByVCreateUserId(tuser);//创建该TUserRights对象的TUser对象
+						    tur.setTUserByVUserid(curUser);//关联的TUser对象
+						    tur.setIIsWrite(Integer.parseInt(isWrite));
+						    tur.setTRole(role);
+						    tur.setDCreateDate(new Date());
+						    												    
+						    turs.add(tur);
+						}
+						//保存新的用户-角色关系
+						getFactory().getFinanceProviderInstance().getUserRightsManagerService().saveTUserRights(turs);
+						this.flag = 0;
+						setStatusMsg("用户与角色绑定成功！");
+						setStatusMsg("0");
+					}
+				}else{ //如果roleIds为null，表示该用户的所有与角色的绑定去除，这时删除该用户与角色的绑定关系
+					
+					//删除该角色当前所关联的功能
+					getFactory().getFinanceProviderInstance().getUserRightsManagerService().deleteAllTUserRights(this.userId);
+					this.flag = 0;
+				}
+
+			} catch (FinanceServiceException e) {
+				setStatusMsg("用户-角色绑定失败！");
+				setStatusMsg("1");
+				//e.printStackTrace();
+				this.flag = 1;
+			}
+		}else{
+			setStatusMsg("用户-角色绑定失败！");
+			setStatusMsg("1");
+			this.flag = 1;
+		}
+		
+		return SUCCESS;
+	}
+	
+	/**
+	 * 获取所有角色，包括与当前用户绑定的角色
+	 * */
+	public String searchRolesForBindingUser(){
+
+		try {
+			voTUserRightList = getFactory().getFinanceProviderInstance().getUserRightsManagerService().searchAllRolesList(this.userId);
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+
+		return SUCCESS;
+	}
+	
+	
+	public String getRoleId() {
+		return userId;
+	}
+	
+	public void setRoleId(String roleId) {
+		this.userId = roleId;
+	}
+	
+	public String getFunctionIds() {
+		return roleIds;
+	}
+	
+	public void setFunctionIds(String functionIds) {
+		this.roleIds = functionIds;
+	}
+	
+	public int getFlag() {
+		return flag;
+	}
+	
+	public void setFlag(int flag) {
+		this.flag = flag;
+	}
+
+	public String getUserId() {
+		return userId;
+	}
+
+	public void setUserId(String userId) {
+		this.userId = userId;
+	}
+
+	public String getRoleIds() {
+		return roleIds;
+	}
+
+	public void setRoleIds(String roleIds) {
+		this.roleIds = roleIds;
+	}
+
+	public List<VOTUserRight> getVoTUserRightList() {
+		return voTUserRightList;
+	}
+
+	public void setVoTUserRightList(List<VOTUserRight> voTUserRightList) {
+		this.voTUserRightList = voTUserRightList;
+	}
+
+	public String getKey() {
+		return key;
+	}
+
+	public void setKey(String key) {
+		this.key = key;
+	}
+
+	public String getUserType() {
+		return userType;
+	}
+
+	public void setUserType(String userType) {
+		this.userType = userType;
+	}
+
+	public String getIsWrite() {
+		return isWrite;
+	}
+
+	public void setIsWrite(String isWrite) {
+		this.isWrite = isWrite;
+	}
+	
+	
+	
+}

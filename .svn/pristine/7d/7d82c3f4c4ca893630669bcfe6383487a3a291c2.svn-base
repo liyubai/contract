@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE struts PUBLIC
+    "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN"
+    "http://struts.apache.org/dtds/struts-2.0.dtd">
+<struts>
+	<package name="ajax_teacher" extends="ErsDefault" namespace="/system">
+		<action name="*TeacherAjaxAction" class="com.cauc.training.ui.core.TeacherManagentAction"	method="{1}AjaxTeacher">
+			<!-- 基本信息 -->
+			<result name="ajaxTeacherList"  type="json">
+				<param name="root">page</param>
+			</result>
+			<result name="showMessageTeacher"  type="json">
+				<param name="root">vteacher</param>
+			</result>
+			<!-- 体检 -->
+			<result name="ajaxTeacherTjList"  type="json">
+				<param name="root">page</param>
+			</result>
+			<!-- 执照 -->
+			<result name="ajaxTeacherZzList"  type="json">
+				<param name="root">page</param>
+			</result>
+			
+			<result name="showMessageTjTeacher"  type="json">
+				<param name="root">vteachertj</param>
+			</result>
+			<result name="toShowTj"  type="json">
+				<param name="root">vhistorytj</param>
+			</result>
+			<result name="showMessageZzTeacher"  type="json">
+				<param name="root">voteacherZz</param>
+			</result>
+			<result name="toShowZz"  type="json">
+				<param name="root">vtlsu</param>
+			</result>
+			<result name="toShowZzJc"  type="json">
+				<param name="root">vteaZzJc</param>
+			</result>
+		</action>
+		
+		<action name="showTeacherBaseInfoByName" class="com.cauc.training.ui.core.TeacherManagentAction"
+			method="readTeacherBaseInfoByName">
+			<result name="success" type="json">
+		       <param name="root">vteacher</param>
+		    </result>
+		</action>
+		<action name="showTeacherTjByName" class="com.cauc.training.ui.core.TeacherManagentAction"
+			method="readTeacherTjByName">
+			<result name="success" type="json">
+		       <param name="root">vteachertj</param>
+		    </result>
+		</action>
+		<action name="showTeacherZzByName" class="com.cauc.training.ui.core.TeacherManagentAction"
+			method="readTeacherZzByName">
+			<result name="success" type="json">
+		       <param name="root">voteacherZz</param>
+		    </result>
+		</action>
+		<action name="showTeaLicenseCheckList" class="com.cauc.training.ui.core.TeacherManagentAction"	
+			method="readTeaLicenseCheckList">
+			<result name="success" type="json">
+		       <param name="root">viewLicenseskilledcheckList</param>
+		    </result>
+		</action>
+		<action name="showMessageZzTeacherAjaxHistory" class="com.cauc.training.ui.core.TeacherManagentAction"
+			method="showMessageZzAjaxHistory">
+			<result name="success" type="json">
+		       <param name="root">voteacherZz</param>
+		    </result>
+		</action>
+		
+		<action name="showUserWarningInfoById" class="com.cauc.training.ui.core.TeacherManagentAction"	method="readUserWarningInfoById">
+			<result name="success" type="json">
+		       <param name="root">warnList</param>
+		    </result>
+		</action>
+		
+		<action name="showSelectTeacherList" class="com.cauc.training.ui.core.TeacherManagentAction"	method="readSelectTeacherList">
+			<result name="success" type="json">
+		       <param name="root">teacherList</param>
+		    </result>
+		</action>
+		
+		<action name="saveTeacherAssignTeacher" class="com.cauc.training.ui.core.TeacherManagentAction"	method="saveTeacherAssignTeacher">
+			<result name="success" type="json">
+		       <param name="root">viewOrg</param>
+		    </result>
+		</action>
+		
+		<!-- 显示大纲列表 -->
+		<action name="showCanSelectTeacherOutlineList" class="com.cauc.training.ui.core.TeacherManagentAction"
+			method="readTeacherOutlineList">
+			<result name="success" type="json">
+		       <param name="root">outlineList</param>
+		    </result>
+		</action>
+		<!-- 保存分配大纲 -->
+		<action name="saveTeacherAssignOutline" class="com.cauc.training.ui.core.TeacherManagentAction"
+			method="saveTeacherAssignOutline">
+			<result name="success" type="json">
+		       <param name="root">viewOrg</param>
+		    </result>
+		</action>
+	</package>
+	<package name="teacher_management" extends="ErsDefault" namespace="/system">
+		<action name="searchZzHistoryTeacherById" class="com.cauc.training.ui.core.TeacherManagentAction"	
+		method="searchZzHistoryTeacherById">
+		
+			<result name="success">/WEB-INF/teacher/searchTeacherHistoryZzList.jsp</result>
+		</action>
+		<action name="*TeacherAction" class="com.cauc.training.ui.core.TeacherManagentAction"	method="{1}Teacher">
+			<!-- 教员基础信息管理 -->
+			<result name="pageList">/WEB-INF/teacher/teacherBaseInfoList.jsp</result>
+			<result name="toAddOrUp">/WEB-INF/teacher/addTeacher.jsp</result>
+			<result name="saveSuccess" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">searchListTeacherAction.do</param>
+				<param name="deptId">${deptId}</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+			<result name="deleteTeacher" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">searchListTeacherAction.do</param>
+				<param name="deptId">${deptId}</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+			<!-- 体检 -->
+			<result name="pageTjList">/WEB-INF/teacher/teacherTjList.jsp</result>
+			<result name="toAddOrUpTj">/WEB-INF/teacher/addTeacherTj.jsp</result>
+			<result name="addOrUpTj" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">searchTjListTeacherAction.do</param>
+				<param name="deptId">${deptId}</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+			<result name="searchTjHistory">/WEB-INF/teacher/searchTeacherTj.jsp</result>
+			<result name="searchTjHistoryList">/WEB-INF/teacher/searchTeacherHistoryTjList.jsp</result>
+			<!-- 执照 -->
+			<result name="pageZzList">/WEB-INF/teacher/teacherZzList.jsp</result>
+			<result name="toAddOrUpZz">/WEB-INF/teacher/editTeacherZz.jsp</result>
+			<result name="toAddZz">/WEB-INF/teacher/addTeacherZz.jsp</result>
+			<result name="toUpZz">/WEB-INF/teacher/upTeacherZz.jsp</result>
+			<result name="addOrUpZz" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">searchZzListTeacherAction.do</param>
+				<param name="deptId">${deptId}</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+			<result name="toAddOrUpZzJc">/WEB-INF/teacher/addTeacherZzJc.jsp</result>
+			<result name="upOrShowZzJc" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">searchZzListTeacherAction.do</param>
+				<param name="deptId">${deptId}</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+			<result name="searchZzHistory">/WEB-INF/teacher/searchTeacherZz.jsp</result>
+			<result name="searchZzJcHistory">/WEB-INF/teacher/searchTeacherZzJc.jsp</result>
+			<result name="searchZzJcHistoryList">/WEB-INF/teacher/searchTeacherHistoryZzJcList.jsp</result>
+			<result name="searchZzHistoryList">/WEB-INF/teacher/searchTeacherHistoryZzList.jsp</result>
+			<result name="toUpZzJc">/WEB-INF/teacher/upHistoryZzJc.jsp</result>
+			<result name="upZzJc" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">searchZzJcHistoryListTeacherAction.do</param>
+				<param name="deptId">${deptId}</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		
+	</package>
+</struts> 

@@ -1,0 +1,116 @@
+package com.cauc.training.business.hibernate;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.business.IStudentAndStatusRelationService;
+import com.cauc.training.business.dao.GenericHibernateDAO;
+import com.cauc.training.pojos.StudentAndstautsRelation;
+import com.cauc.training.pojos.TDiction;
+import com.cauc.training.pojos.TDictype;
+
+@Service("studentAndStatusRelationServiceImpl")
+public class StudentAndStatusRelationServiceImpl extends GenericHibernateDAO implements IStudentAndStatusRelationService {
+	/**
+	 * @功能描述：通过关键字查询学生状态与学籍状态关系集合
+	 */
+	@SuppressWarnings("unchecked")
+	public List<StudentAndstautsRelation> searchlist(String key,String key1)
+			throws FinanceServiceException {
+		String hql = "from StudentAndstautsRelation where 1=1";
+		if(key != null && !key.equals("")){
+			hql += " and TDictionByVStuStatusid.VId = '"+key+"'";
+		}
+		if(key1 != null && !key1.equals("")){
+			hql += " and TDictionByVStudentid.VId = '"+key1+"'";
+		}
+		
+		return super.find(hql);
+	}
+	/**
+	 * @功能描述：通过类型名称查询学生和学籍状态
+	 */
+	@SuppressWarnings("unchecked")
+	public List<TDiction> searchDictionByName(String name)
+			throws FinanceServiceException {
+		String dicTypeId = searchDicTypeIdByName(name);
+		String hql = "from TDiction where TDictype.VId=?";
+		return super.find(hql, dicTypeId);
+	}
+	/**
+	 * @功能描述：通过字典类型名称查询字典类型ID
+	 */
+	@SuppressWarnings("unchecked")
+	public String searchDicTypeIdByName(String typeName){
+		String dicId = "";
+		String hql = "from TDictype where VName=?";
+		List<TDictype> dictype = super.find(hql, typeName);
+		if(dictype!=null && dictype.size()>0){
+			dicId = dictype.get(0).getVId();
+		}
+		return dicId;
+	}
+	/**
+	 * @功能描述：保存学生状态与学籍状态关
+	 */
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public boolean save(StudentAndstautsRelation sasr)
+			throws FinanceServiceException {
+		boolean flag = false;
+		String str = sasr.getTDictionByVStudentid().getVId();
+		String[] sid = str.split(",");
+		List<StudentAndstautsRelation> list = new ArrayList<StudentAndstautsRelation>();
+		if(sid != null && sid.length>0){
+			for(int i=0; i<sid.length;i++){
+				StudentAndstautsRelation sa = new StudentAndstautsRelation();
+				sa.setDCreatetime(sasr.getDCreatetime());
+				TDiction td = new TDiction();
+				td.setVId(sid[i]);
+				sa.setTDictionByVStudentid(td);
+				sa.setTDictionByVStuStatusid(sasr.getTDictionByVStuStatusid());
+				sa.setTUser(sasr.getTUser());
+				if(!checkCF(sa)){
+					list.add(sa);
+				}
+			}
+		}
+		if(list != null && list.size()>0){
+			super.saveOrUpdateALL(list);
+			flag = true;
+		}
+		return flag;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public boolean checkCF(StudentAndstautsRelation sa){
+		boolean flag = false;
+		String hql = "from StudentAndstautsRelation where TDictionByVStuStatusid.VId='"+sa.getTDictionByVStuStatusid().getVId()+"' and TDictionByVStudentid.VId='"+sa.getTDictionByVStudentid().getVId()+"'";
+		List<StudentAndstautsRelation> list = super.find(hql);
+		if(list != null && list.size()>0){
+			flag = true;
+		}
+		return flag;
+	}
+	/**
+	 * @功能描述：删除学生状态与学籍状态关
+	 */
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public boolean deleteStatus(String ids) throws FinanceServiceException {
+		boolean flag = false;
+		if(ids != null && !ids.equals("")){
+			String[] id = ids.split(",");
+			if(id != null && id.length>0){
+				for(String i : id){
+					super.removeById(StudentAndstautsRelation.class, i);
+				}
+				flag = true;
+			}
+		}
+		return flag;
+	}
+}

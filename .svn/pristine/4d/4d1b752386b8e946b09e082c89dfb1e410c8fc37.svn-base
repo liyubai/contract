@@ -1,0 +1,63 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>设置课程</title>
+<style type="text/css">
+<!--
+body {
+	margin-left: 0px;
+	margin-top: 0px;
+	margin-right: 0px;
+	margin-bottom: 0px;
+}
+td{ font-size:10pt; line-height:21px;}
+-->
+</style></head>
+
+<body>
+<table width="100%" border="0" align="left" cellpadding="0" cellspacing="0" background="images/bj.gif">
+  <tr>
+    <td colspan="3" background="images/top_bj.gif"><img src="images/top.gif" width="1186" height="90" /></td>
+  </tr>
+  <tr>
+    <td width="200" height="500" valign="top"><img src="images/left2.gif" width="200" height="390" usemap="#Map" border="0" /></td>
+    <td width="10" align="center" valign="top">&nbsp;</td>
+    <td valign="top" bgcolor="#FFFFFF"><p><img src="images/10.gif" width="972" height="452" /><br />
+      说明： 未分配课程的班级放在列表的前边显示。<br />
+      班级课程分数线设置表：t_pointLine<br />
+      理论课程管理表：t_lesson<br />
+      创建人表：t_user <br />
+      班级表：t_setClass  <br />
+      t_pointLine表中有课程(t_lesson)的id与班级(t_setClass)的id与用户(t_user)的id外键关联 <br />
+      点设置课程首先选择班级，然后选择一门或多门课程，进入分数设置页面<br />
+      <img src="images/11.gif" width="437" height="311" /><br />
+      录入第一行之后，下面所有的行，除课程名称外自动填充第一行的分数线、补考次数、两次考试间隔三项内容，因为课程大部分内容是相同的。<br />
+      <img src="images/12.gif" width="1013" height="400" />      <br />
+        点已设置的课程对之编辑，页面如下图的dialog窗体<br />
+        <img src="images/13.gif" width="437" height="311" />        <br />
+        <br />
+        <br />
+        <br />
+      </p>
+    
+    </td>
+  </tr>
+</table>
+<map name="Map" id="Map">
+  <area shape="rect" coords="16,6,111,32" href="stulist.html" />
+  <area shape="rect" coords="23,59,99,87" href="addclass.html" />
+  <area shape="rect" coords="27,91,92,116" href="setlesson.html" />
+  <area shape="rect" coords="20,117,95,140" href="scoreList.html" />
+  <area shape="rect" coords="19,145,127,166" href="kaoshi.html" />
+  <area shape="rect" coords="19,166,109,195" href="tijian.html" />
+  <area shape="rect" coords="16,198,103,222" href="zhizhao.html" />
+  <area shape="rect" coords="18,226,96,250" href="zhuangtai.html" />
+  <area shape="rect" coords="19,254,99,275" href="mianshi.html" />
+  <area shape="rect" coords="18,279,116,305" href="jidi.html" />
+  <area shape="rect" coords="17,308,114,329" href="dadui.html" />
+  <area shape="rect" coords="14,330,117,354" href="wancheng.html" />
+  <area shape="rect" coords="14,356,115,380" href="biye.html" />
+</map>
+</body>
+</html>

@@ -1,0 +1,79 @@
+package com.cauc.training.ui.core.del;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.struts2.ServletActionContext;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.business.IOnlineCounterService;
+import com.cauc.training.pojos.TUserOnline;
+import com.cauc.training.ui.common.BaseActionSupport;
+import com.cauc.training.ui.common.LoginContext;
+
+public class OnlineCounterAction extends BaseActionSupport {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -7248287907784759860L;
+	private List<LoginContext> list = new ArrayList<LoginContext>();
+	private int count;
+	private List<TUserOnline> userOnlineList;
+	// 查询关键字
+	private String key;
+	
+	@SuppressWarnings("unchecked")
+	public String HqOnlineList(){
+		HttpServletRequest request = ServletActionContext.getRequest();
+		Map<String,LoginContext> map = (Map<String,LoginContext>)request.getSession().getServletContext().getAttribute("onlineUserMap");
+		for (Entry<String, LoginContext> entry : map.entrySet()) {
+			list.add(entry.getValue());
+		}
+		count = list.size();
+		return SUCCESS;
+	}
+	
+	public String searchList(){
+		IOnlineCounterService onlineCounSer = getFactory().getFinanceProviderInstance().getOnlineCounterService();
+		Map<String, Object> queryMap = new HashMap<String, Object>();
+		queryMap.put("userId", this.key);
+		try {
+			count = onlineCounSer.searchCount();
+			setPage(onlineCounSer.searchPageList(queryMap, getPageIndex()));
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		return SUCCESS;
+	}
+	
+	public List<LoginContext> getList() {
+		return list;
+	}
+	public void setList(List<LoginContext> list) {
+		this.list = list;
+	}
+	public int getCount() {
+		return count;
+	}
+	public void setCount(int count) {
+		this.count = count;
+	}
+	public List<TUserOnline> getUserOnlineList() {
+		return userOnlineList;
+	}
+	public void setUserOnlineList(List<TUserOnline> userOnlineList) {
+		this.userOnlineList = userOnlineList;
+	}
+	public String getKey() {
+		return key;
+	}
+	public void setKey(String key) {
+		this.key = key;
+	}
+}

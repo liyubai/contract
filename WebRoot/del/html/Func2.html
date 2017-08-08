@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>main</title>
+
+<link rel="stylesheet" href="themes/cupertino/jquery.ui.all.css">
+<script src="scripts/jquery.min.js"></script>
+<script src="scripts/jquery-ui.min.js"></script>
+<script src="scripts/ui/jquery.ui.position.min.js"></script>
+<script src="scripts/ui/jquery.ui.core.min.js"></script>
+<script src="scripts/ui/jquery.ui.widget.min.js"></script>
+<script src="scripts/ui/jquery.ui.button.min.js"></script>
+<script src="scripts/ui/jquery.ui.tabs.min.js"></script>
+<script src="scripts/ui/jquery.ui.dialog.min.js"></script>
+<script src="scripts/ui/jquery.ui.menu.min.js"></script>
+<script src="scripts/function.min.js"></script>
+
+<style>
+.testDiv { padding: 5px; }
+</style>
+<script>
+$(function() {
+
+	//功能2
+	/*
+	//div的id必须是dropDownList+i的格式，否则无法识别。
+	//可以用下面两种方法来控制按钮的边角：
+	dropDownList1.css({ "border-bottom-left-radius": "0px", "border-top-right-radius": "0" });
+	dropDownList1.css("border-bottom-right-radius", "0px");
+	var dropDownList2 = new $.dropDownList(2,true,220);
+	*/
+	
+	new $.dropDownList(0,true,220);
+	
+	//功能2
+	$("#content").html("<li><a href=\"#N\" val=\"1\"><span class=\"ui-icon ui-icon-bullet\"></span>通讯录中对应的姓名优先&nbsp;<span style=\"color:#549546\">(推荐)</span></a></li><li><a href=\"#N\" class=\"inline\" val=\"21\">选项1</a><a href=\"#N\" class=\"inline\" val=\"22\">选项2</a><a href=\"#N\" class=\"inline\" val=\"23\">选项3</a><a href=\"#N\" class=\"inline\" val=\"24\">选项4</a></li>");
+	new $.dropDownList(1,true,260);
+});
+</script>
+<!-- 此js务必放在所有页面自带的js后面加载 -->
+<script src="scripts/base.min.js"></script>
+</head>
+<body class="hide">
+
+<div id="leftPartA"><div>
+
+<ul class="itemList">
+	<li><a class="navLink" href="main1.html" id="navLink0" title="我的首页">我的首页</a><!-- (10) --></li>
+	<li><a class="navLink" href="peopleManage.html" id="navLink1" title="人员管理">人员管理</a></li>
+	<li><a class="navLink" href="trainingManage.html" id="navLink2" title="飞行训练管理">飞行训练管理</a></li>
+	<li><a class="navLink" href="aircraftManage.html" id="navLink3" title="航空器管理">航空器管理</a></li>
+	<li><a class="navLink" href="summaryManage.html" id="navLink4" title="飞行训练大纲管理">飞行训练大纲管理</a></li>
+	<li><a class="navLink" href="systemManage.html" id="navLink5" title="系统管理">系统管理</a></li>
+	<li><a class="navLink" href="marksManage.html" id="navLink6" title="成绩管理">成绩管理</a>
+</ul>
+<span class="panelLine"></span>
+<ul class="itemList">
+	<li><a class="navLink" href="Func1.html" id="navLink101" title="功能展示1">功能展示1</a></li>
+	<li class="active"><a class="navLink" href="Func2.html" id="navLink102" title="功能展示2">功能展示2</a></li>
+	<li><a class="navLink" href="Func3.html" id="navLink103" title="功能展示3">功能展示3</a></li>
+	<li><a class="navLink" href="Func4.html" id="navLink104" title="功能展示4">功能展示4</a></li>
+	<li><a class="navLink" href="Func5.html" id="navLink105" title="功能展示5">功能展示5</a></li>
+	<li><a class="navLink" href="Func6.html" id="navLink106" title="功能展示6">功能展示6</a></li>
+	<li><a class="navLink" href="Func7.html" id="navLink107" title="功能展示7">功能展示7</a></li>
+	<li><a class="navLink" href="Func8.html" id="navLink108" title="功能展示8">功能展示8</a></li>
+	<li><a class="navLink" href="Func9.html" id="navLink109" title="功能展示9">功能展示9</a></li>
+	<li><a class="navLink" href="Func10.html" id="navLink110" title="功能展示10">功能展示10</a></li>
+</ul>
+<ul class="foldList">
+	<li><span class="ui-icon ui-icon-carat-1-e"></span>功能展示11</li>
+	<ul class="itemList hide">
+		<li><a class="navLink" href="Func11.html" id="navLink111" title="功能展示11" tabTitle="功能展示11[HTML]">HTML版本</a></li>
+		<li><a class="navLink" href="Func11_1.html" id="navLink11101" title="功能展示11" tabTitle="功能展示11[JS]">JS版本</a></li>
+	</ul>
+</ul>
+<ul class="itemList">
+	<li><a class="navLink" href="Func12.html" id="navLink112" title="功能展示12">功能展示12</a></li>
+	<li><a class="navLink" href="Func13.html" id="navLink113" title="功能展示13">功能展示13</a></li>
+	<li><a class="navLink" href="Func14.html" id="navLink114" title="功能展示14">功能展示14</a></li>
+</ul>
+
+</div></div>
+
+
+
+<div id="rightPartA"><div>
+
+<div class="testDiv">
+功能2：自定义下拉菜单类。div的class必须是dropDownList，否则无法识别。button里放从数据库读取的默认文字，input的value里放从数据库读取的默认数值<br>
+<div class="dropDownList" id="dropDownList0" style="margin:10px;">
+	<button>通讯录中对应的姓名优先&nbsp;<span style="color:#549546">(推荐)</span></button>
+	<ul>
+		<li><a href="#N" val="1"><span class="ui-icon ui-icon-bullet"></span>通讯录中对应的姓名优先&nbsp;<span style="color:#549546">(推荐)</span></a></li>
+		<li><a href="#N" val="2">发邮件时填写的姓名优先</a></li>
+	</ul>
+	<input type="hidden" name="这个修改成表单项名称" value="2" />
+</div>
+
+<div class="dropDownList" id="dropDownList1" style="margin:10px;">
+	<button>通讯录中对应的姓名优先&nbsp;<span style="color:#549546">(推荐)</span></button>
+	<ul id="content">
+		
+	</ul>
+	<input type="hidden" name="这个修改成表单项名称" value="24" />
+</div>
+
+</div>
+
+</div></div>
+
+
+
+<div id="bottomPartA"><div>
+
+<button class="green" style="position: absolute; left: 10px;">保存</button>
+<button class="normal" style="position: absolute; left: 70px;">取消</button>
+<button class="normal" style="position: absolute; right: 30px;">还原为默认</button>
+
+</div></div>
+
+</body>
+</html>

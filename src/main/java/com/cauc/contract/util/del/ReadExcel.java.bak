@@ -1,0 +1,484 @@
+package com.cauc.training.util.del;
+
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.lang.StringUtils;
+
+import com.cauc.training.util.Utilities;
+import com.cauc.training.vo.VStudentBaseInfo;
+
+import jxl.Cell;
+import jxl.CellType;
+import jxl.DateCell;
+import jxl.Sheet;
+import jxl.Workbook;
+
+public class ReadExcel {
+	public static Map<String,VStudentBaseInfo> readExcelInfo(String file) {
+		
+		Map<String, VStudentBaseInfo> map = new HashMap<String, VStudentBaseInfo>(); 
+		
+		VStudentBaseInfo vs;
+		try {
+		
+			Cell cell = null;
+			InputStream is = new FileInputStream(file);
+			Workbook book = Workbook.getWorkbook(is);
+			if(book==null){
+				return map;
+			}
+			Sheet sheet;
+			int bookCounts = book.getNumberOfSheets();
+			if(bookCounts==0){
+				return map;
+			}
+			sheet = book.getSheet(0);
+            int totalRows = sheet.getRows();//行数
+            int totalCols = sheet.getColumns();//列数
+            if(totalRows<1){
+            	return map;
+            }
+            if(totalCols<2){
+            	return map;
+            }
+            int code=-1;
+            int name = -1;
+            int sex = -1;
+            int sfz = -1;
+            int iclass=-1;
+            int company = -1;
+            int jg = -1;
+            int dirth =-1;
+            int syd = -1;
+            int type = -1;
+            int zhuangtai = -1;
+            int xueji = -1;
+            int form = -1;
+            int free = -1;
+            int rxny = -1;
+            int lxny = -1;
+            int lxfs = -1;
+            int byyx = -1;
+            int zzmm = -1;
+            int mz= -1;
+            int jtzz = -1;
+            int whcd = -1;
+            int yysp = -1;
+            int zy = -1;
+            for(int col=0;col<totalCols;col++){
+    			cell = sheet.getCell(col, 0);
+    			if(cell.getContents().equals("学号")){
+    				code = col;
+    			}
+    		}
+            for(int col=0;col<totalCols;col++){
+    			cell = sheet.getCell(col, 0);
+    			if(cell.getContents().equals("姓名")){
+    				name = col;
+    			}
+    		}
+            for(int col=0;col<totalCols;col++){
+    			cell = sheet.getCell(col, 0);
+    			if(cell.getContents().equals("身份证号")){
+    				sfz = col;
+    			}
+    		}
+            for(int col=0;col<totalCols;col++){
+    			cell = sheet.getCell(col, 0);
+    			if(cell.getContents().equals("性别")){
+    				sex = col;
+    			}
+    		}
+            for(int col=0;col<totalCols;col++){
+    			cell = sheet.getCell(col, 0);
+    			if(cell.getContents().indexOf("班级")!=-1){
+    				iclass = col;
+    			}
+    		}
+            for(int col=0;col<totalCols;col++){
+    			cell = sheet.getCell(col, 0);
+    			if(cell.getContents().indexOf("学生类型")!=-1){
+    				type = col;
+    			}
+    		}
+            for(int col=0;col<totalCols;col++){
+    			cell = sheet.getCell(col, 0);
+    			if(cell.getContents().indexOf("所属公司")!=-1){
+    				company = col;
+    			}
+    		}
+            for(int col=0;col<totalCols;col++){
+    			cell = sheet.getCell(col, 0);
+    			if(cell.getContents().indexOf("出生年月")!=-1){
+    				dirth = col;
+    			}
+    		}
+            for(int col=0;col<totalCols;col++){
+    			cell = sheet.getCell(col, 0);
+    			if(cell.getContents().indexOf("籍贯")!=-1){
+    				jg = col;
+    			}
+    		}
+            for(int col=0;col<totalCols;col++){
+    			cell = sheet.getCell(col, 0);
+    			if(cell.getContents().indexOf("生源地")!=-1){
+    				syd = col;
+    			}
+    		}
+            
+            for(int col=0;col<totalCols;col++){
+    			cell = sheet.getCell(col, 0);
+    			if(cell.getContents().indexOf("学生状态")!=-1){
+    				zhuangtai = col;
+    			}
+    		}
+            
+            for(int col=0;col<totalCols;col++){
+    			cell = sheet.getCell(col, 0);
+    			if(cell.getContents().indexOf("学籍状态")!=-1){
+    				xueji = col;
+    			}
+    		}
+            
+            for(int col=0;col<totalCols;col++){
+    			cell = sheet.getCell(col, 0);
+    			if(cell.getContents().indexOf("招生形式")!=-1){
+    				form = col;
+    			}
+    		}
+            
+            for(int col=0;col<totalCols;col++){
+    			cell = sheet.getCell(col, 0);
+    			if(cell.getContents().indexOf("自费")!=-1){
+    				free = col;
+    			}
+    		}
+            
+            for(int col=0;col<totalCols;col++){
+    			cell = sheet.getCell(col, 0);
+    			if(cell.getContents().indexOf("入校年月")!=-1){
+    				rxny = col;
+    			}
+    		}
+            
+            for(int col=0;col<totalCols;col++){
+    			cell = sheet.getCell(col, 0);
+    			if(cell.getContents().indexOf("离校年月")!=-1){
+    				lxny = col;
+    			}
+    		}
+            
+            for(int col=0;col<totalCols;col++){
+    			cell = sheet.getCell(col, 0);
+    			if(cell.getContents().indexOf("联系方式")!=-1){
+    				lxfs = col;
+    			}
+    		}
+            
+            for(int col=0;col<totalCols;col++){
+    			cell = sheet.getCell(col, 0);
+    			if(cell.getContents().indexOf("毕业院校")!=-1){
+    				byyx = col;
+    			}
+    		}
+            for(int col=0;col<totalCols;col++){
+    			cell = sheet.getCell(col, 0);
+    			if(cell.getContents().indexOf("政治面貌")!=-1){
+    				zzmm = col;
+    			}
+    		}
+            for(int col=0;col<totalCols;col++){
+    			cell = sheet.getCell(col, 0);
+    			if(cell.getContents().indexOf("民族")!=-1){
+    				mz = col;
+    			}
+    		}
+            for(int col=0;col<totalCols;col++){
+    			cell = sheet.getCell(col, 0);
+    			if(cell.getContents().indexOf("家庭住址")!=-1){
+    				jtzz = col;
+    			}
+    		}
+            for(int col=0;col<totalCols;col++){
+    			cell = sheet.getCell(col, 0);
+    			if(cell.getContents().indexOf("文化程度")!=-1){
+    				whcd = col;
+    			}
+    		}
+            for(int col=0;col<totalCols;col++){
+    			cell = sheet.getCell(col, 0);
+    			if(cell.getContents().indexOf("英语水平")!=-1){
+    				yysp = col;
+    			}
+    		}
+            for(int col=0;col<totalCols;col++){
+    			cell = sheet.getCell(col, 0);
+    			if(cell.getContents().indexOf("专业")!=-1){
+    				zy = col;
+    			}
+    		}
+            if(code==-1 || name==-1){
+            	return map;
+            }
+            for (int j = 1; j < totalRows; j++) {
+            	
+            	vs = new VStudentBaseInfo();
+            	for(int col=0;col<totalCols;col++){
+            		if(col==code){
+            			vs.setVCode(sheet.getCell(code, j).getContents().replace("'", ""));
+            		}
+            		if(col==name){
+            			vs.setVName(sheet.getCell(name, j).getContents());
+            		}
+            		if(col==sex){
+            			vs.setVGender(sheet.getCell(sex, j).getContents());
+            		}
+            		if(col==sfz){
+            			vs.setVCardid(sheet.getCell(sfz, j).getContents());
+            		}
+            		if(col==iclass){
+            			vs.setVClassNoid(sheet.getCell(iclass, j).getContents());
+            		}
+            		if(col==type){
+            			vs.setStuTypeName(sheet.getCell(type, j).getContents());
+            		}
+            		if(col==company){
+            			vs.setCompanyName(sheet.getCell(company, j).getContents());//通过公司名获取id
+            		}
+            		if(col==jg){
+            			vs.setJg(sheet.getCell(jg, j).getContents());
+            		}
+            		if(col==dirth){
+            			vs.setCreateTime(sheet.getCell(dirth, j).getContents().replace("-", ""));
+            		}
+            		if(col==syd){
+            			vs.setSyd(sheet.getCell(syd, j).getContents());
+            		}
+            		
+            		if(col==zhuangtai){
+            			vs.setStuStatusName(sheet.getCell(zhuangtai, j).getContents());
+            		}
+            		
+            		if(col==xueji){
+            			vs.setXjStatusName(sheet.getCell(xueji, j).getContents());
+            		}
+            		
+            		if(col==form){
+            			vs.setFormName(sheet.getCell(form, j).getContents());
+            		}
+            		
+            		if(col==free){
+            			vs.setFreeTypeName(sheet.getCell(free, j).getContents());
+            		}
+            		
+            		if(col==rxny){
+            			vs.setRxny(sheet.getCell(rxny, j).getContents().replace("-", ""));
+            		}
+            		
+            		if(col==lxny){
+            			vs.setLxny(sheet.getCell(lxny, j).getContents().replace("-", ""));
+            		}
+            		
+            		if(col==lxfs){
+            			vs.setLxfs(sheet.getCell(lxfs, j).getContents());
+            		}
+            		
+            		if(col==byyx){
+            			vs.setByyx(sheet.getCell(byyx, j).getContents());
+            		}
+            		
+            		if(col==zzmm){
+            			vs.setZzmm(sheet.getCell(zzmm, j).getContents());
+            		}
+            		
+            		if(col==mz){
+            			vs.setNation(sheet.getCell(mz, j).getContents());
+            		}
+            		
+            		if(col==jtzz){
+            			vs.setJtzz(sheet.getCell(jtzz, j).getContents());
+            		}
+            		
+            		if(col==whcd){
+            			vs.setWhcd(sheet.getCell(whcd, j).getContents());
+            		}
+            		
+            		if(col==yysp){
+            			vs.setEnLevel(sheet.getCell(yysp, j).getContents());
+            		}
+            		
+            		if(col==zy){
+            			vs.setZy(sheet.getCell(zy, j).getContents());
+            		}
+            	}
+            	map.put(vs.getVCode(), vs);
+
+            }
+            is.close();
+			book.close();
+
+		
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		return map;
+	}
+	
+	public static List<VStudentBaseInfo> readScoreExcelInfo(String file) {
+		
+		List<VStudentBaseInfo> map = new ArrayList<VStudentBaseInfo>(); 
+		
+		VStudentBaseInfo vs;
+		try {
+		
+			Cell cell = null;
+			InputStream is = new FileInputStream(file);
+			Workbook book = Workbook.getWorkbook(is);
+			if(book==null){
+				return map;
+			}
+			Sheet sheet;
+			int bookCounts = book.getNumberOfSheets();
+			if(bookCounts==0){
+				return map;
+			}
+			sheet = book.getSheet(0);
+            int totalRows = sheet.getRows();//行数
+            int totalCols = sheet.getColumns();//列数
+            if(totalRows<1){
+            	return map;
+            }
+            if(totalCols<2){
+            	return map;
+            }
+            int code=-1;//学号
+            int name = -1;//名字
+            int iclass=-1;//班级
+            int lesson = -1;//课程
+            int score = -1;//成绩
+            int dirth =-1;//考试日期
+            DateCell dc;
+            Date date;
+            for(int col=0;col<totalCols;col++){
+    			cell = sheet.getCell(col, 0);
+    			if(cell.getContents().equals("学号")){
+    				code = col;
+    			}
+    		}
+            for(int col=0;col<totalCols;col++){
+    			cell = sheet.getCell(col, 0);
+    			if(cell.getContents().equals("姓名")){
+    				name = col;
+    			}
+    		}
+
+            for(int col=0;col<totalCols;col++){
+    			cell = sheet.getCell(col, 0);
+    			if(cell.getContents().indexOf("班级")!=-1){
+    				iclass = col;
+    			}
+    		}
+            for(int col=0;col<totalCols;col++){
+    			cell = sheet.getCell(col, 0);
+    			if(cell.getContents().indexOf("考试代码")!=-1){
+    				lesson = col;
+    			}
+    		}
+            for(int col=0;col<totalCols;col++){
+    			cell = sheet.getCell(col, 0);
+    			if(cell.getContents().indexOf("成绩")!=-1){
+    				score = col;
+    			}
+    		}
+            for(int col=0;col<totalCols;col++){
+    			cell = sheet.getCell(col, 0);
+    			if(cell.getContents().indexOf("考试日期")!=-1){
+    				dirth = col;
+    			}
+    		}
+  
+            if(code==-1 || name==-1){
+            	return map;
+            }
+
+            
+            for (int j = 1; j < totalRows; j++) {
+            	
+            	
+        		if(StringUtils.isBlank(sheet.getCell(0, j).getContents()) || StringUtils.isBlank(sheet.getCell(1, j).getContents())){
+        			continue;
+        		}
+            	
+            	
+            	vs = new VStudentBaseInfo();
+            	for(int col=0;col<totalCols;col++){
+            		
+            		if(col==code){
+            			vs.setVCode(sheet.getCell(code, j).getContents().replace("'", ""));//以0开头的学号
+            		}
+            		if(col==name){
+            			vs.setVName(sheet.getCell(name, j).getContents());
+            		}
+           
+            		if(col==iclass){
+            			vs.setVClassNoid(sheet.getCell(iclass, j).getContents());
+            		}
+
+            		if(col==lesson){
+            			vs.setCompanyName(sheet.getCell(lesson, j).getContents());//课程
+            		}
+
+            		if(col==dirth){
+            			if(sheet.getCell(dirth, j).getType()==CellType.DATE){
+            				dc = (DateCell)sheet.getCell(dirth, j);
+            				date = dc.getDate();
+            				vs.setCreateTime(Utilities.format(date));//考试日期
+            			}
+            			
+            			
+            		}
+            		if(col==score){
+            			vs.setSyd(sheet.getCell(score, j).getContents());//成绩
+            		}
+            		
+            	}
+            	
+            	map.add(vs);
+
+            }
+            is.close();
+			book.close();
+
+		
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		return map;
+	}
+	public static void main(String[] args) {
+		System.out.println(("131391107").substring(4, 5));
+		//String path="D:\\Book1.xls";
+		//System.out.println(readExcelInfo(path).size());
+	}
+
+}

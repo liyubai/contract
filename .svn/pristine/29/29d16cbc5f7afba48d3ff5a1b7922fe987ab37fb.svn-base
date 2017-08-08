@@ -1,0 +1,187 @@
+/*
+ *@(#) SubVolumeData.java
+ */
+package com.cauc.training.util.del;
+
+/**
+ * 
+ * 分卷数据
+ * @author zhaochunhui
+ *
+ */
+public class SubVolumeData implements java.io.Serializable{
+
+	private static final long serialVersionUID = 3540636942507910072L;
+	
+	private String kdName;//考点名称
+	
+	private String kdid;//考点编号
+	
+	private Integer kcid;//考场ID
+	
+	private Long startZwid;//座位开始ID
+	
+	private Long endZwid;//座位结束ID
+	
+	private String zykskm;//专业考试科目
+	
+	private Integer sfwyjs;//是否为研究生 0 非研究生 1研究生
+	
+	private Long ksCount;//考生人数
+	
+	public SubVolumeData(){
+		
+	}
+	/**
+	 * 构造函数
+	 * 
+	 * @param kdName 考点名称
+	 * @param kdid 考点ID
+	 * @param kcid 考场ID
+	 * @param startZwid 开始座位ID
+	 * @param endZwid 结束座位ID
+	 * @param zykskm 专业考试科目
+	 * @param sfwyjs 是否为研究生
+	 * @param ksCount 数量
+	 */
+	public SubVolumeData(String kdName, String kdid, Integer kcid, Long startZwid, Long endZwid, String zykskm, Integer sfwyjs, Long ksCount) {
+		this.kdName = kdName;
+		this.kdid = kdid;
+		this.kcid = kcid;
+		this.startZwid = startZwid;
+		this.endZwid = endZwid;
+		this.zykskm = zykskm;
+		this.sfwyjs = sfwyjs;
+		this.ksCount = ksCount;
+	}
+
+	/**
+	 * 获取结束座位ID
+	 * @return endZwid
+	 */
+	public Long getEndZwid() {
+		return endZwid;
+	}
+
+	/**
+	 * 设置结束座位ID
+	 * @param endZwid 要设置的 endZwid
+	 */
+	public void setEndZwid(Long endZwid) {
+		this.endZwid = endZwid;
+	}
+
+	/**
+	 * 获取考场ID
+	 * @return kcid
+	 */
+	public Integer getKcid() {
+		return kcid;
+	}
+
+	/**
+	 * 设置考场ID
+	 * @param kcid 要设置的 kcid
+	 */
+	public void setKcid(Integer kcid) {
+		this.kcid = kcid;
+	}
+
+	/**
+	 * 获取考点ID
+	 * @return kdid
+	 */
+	public String getKdid() {
+		return kdid;
+	}
+
+	/**
+	 * 设置考点ID
+	 * @param kdid 要设置的 kdid
+	 */
+	public void setKdid(String kdid) {
+		this.kdid = kdid;
+	}
+
+	/**
+	 * 获取考点名称
+	 * @return kdName
+	 */
+	public String getKdName() {
+		return kdName;
+	}
+
+	/**
+	 * 设置考点名称
+	 * @param kdName 要设置的 kdName
+	 */
+	public void setKdName(String kdName) {
+		this.kdName = kdName;
+	}
+
+	/**
+	 * 获取人数
+	 * @return ksCount
+	 */
+	public Long getKsCount() {
+		return ksCount;
+	}
+
+	/**
+	 * 设置人数
+	 * @param ksCount 要设置的 ksCount
+	 */
+	public void setKsCount(Long ksCount) {
+		this.ksCount = ksCount;
+	}
+
+	/**
+	 * 获取是否为研究生 0 非 1 是
+	 * （招聘职位上要求的学历）
+	 * @return sfwyjs
+	 */
+	public Integer getSfwyjs() {
+		return sfwyjs;
+	}
+
+	/**
+	 * 设置是否为研究生 0 非 1是
+	 * （招聘职位上要求的学历）
+	 * @param sfwyjs 要设置的 sfwyjs
+	 */
+	public void setSfwyjs(Integer sfwyjs) {
+		this.sfwyjs = sfwyjs;
+	}
+
+	/**
+	 * 获取开始座位ID
+	 * @return startZwid
+	 */
+	public Long getStartZwid() {
+		return startZwid;
+	}
+
+	/**
+	 * 设置开始座位ID
+	 * @param startZwid 要设置的 startZwid
+	 */
+	public void setStartZwid(Long startZwid) {
+		this.startZwid = startZwid;
+	}
+
+	/**
+	 * 获取专业考试科目
+	 * @return zykskm
+	 */
+	public String getZykskm() {
+		return zykskm;
+	}
+
+	/**
+	 * 设置专业考试科目
+	 * @param zykskm 要设置的 zykskm
+	 */
+	public void setZykskm(String zykskm) {
+		this.zykskm = zykskm;
+	}
+}

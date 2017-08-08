@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE struts PUBLIC
+    "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN"
+    "http://struts.apache.org/dtds/struts-2.0.dtd">
+<struts>
+	<package name="ajax_statistics" extends="ErsDefault" namespace="/system">
+	
+		<!-- 获取大纲单元 -->
+		<action name="showUnitTrainingRecordFitCheckListByOutlineId" class="com.cauc.training.ui.core.LogAction"
+		method="readUnitTrainingRecordFitCheckListByOutlineId">
+			<result name="success" type="json">
+				<param name="root">viewCompletionList</param>
+			</result>
+		</action>
+		<!-- 获取单元阶段 -->
+		<action name="showPhaseTrainingRecordFitCheckListByUnitId" class="com.cauc.training.ui.core.LogAction"
+		method="readPhaseTrainingRecordFitCheckListByOutlineId">
+			<result name="success" type="json">
+				<param name="root">viewCompletionList</param>
+			</result>
+		</action>
+		
+		<!-- 保存课程校验 -->
+		<action name="saveTrainingLessonFitCheck"  class="com.cauc.training.ui.core.LogAction" 
+		 method="saveTrainingLessonFitCheck">
+			<result name="success" type="json">
+				<param name="root">viewOrg</param>
+			</result>
+		</action>
+	</package>
+	<package name="statistics_management" extends="ErsDefault" namespace="/system">	
+		<!-- 统计报表 -->
+		<action name="open_statisticalReport" class="com.cauc.training.ui.core.SystemUserManagerAction"
+			method="statisticsByDayListData">
+			<result name="success">/WEB-INF/statistics/report.jsp</result>
+		</action>
+		<!-- 月报表 -->
+		<action name="open_statisticalMonthReport" class="com.cauc.training.ui.core.SystemUserManagerAction"
+			method="statisticsByMonthListData">
+			<result name="success">/WEB-INF/statistics/monthReport.jsp</result>
+		</action>
+		<!-- 年报表 -->
+		<action name="open_statisticalYearReport" class="com.cauc.training.ui.core.SystemUserManagerAction"
+			method="statisticsByYearListData">
+			<result name="success">/WEB-INF/statistics/yearReport.jsp</result>
+		</action>
+		<!-- 整体进度统计表 -->
+		<action name="open_statisticalAllDataReport" class="com.cauc.training.ui.core.SystemUserManagerAction"
+			method="statisticalAllDataReport">
+			<result name="success">/WEB-INF/statistics/allDateReport.jsp</result>
+		</action>
+		<!-- 航空公司统计表 -->
+		<action name="open_statisticalCompanyReport" class="com.cauc.training.ui.core.SystemUserManagerAction"
+			method="statisticalCompanyReport">
+			<result name="success">/WEB-INF/statistics/companyReport.jsp</result>
+		</action>
+		<!-- 历史记录查询统计查询 -->
+		<action name="open_historyFlightTrainingRecordPageTj"
+		 class="com.cauc.training.ui.core.FlightTrainingRecordAction" 
+		 method="openStatisticsHistoryFlightTrainingRecordPage">
+			<result name="success">/WEB-INF/statistics/historyFlightTrainingRecordTongJi.jsp</result>
+		</action>
+		<!-- 完成情况查询统计查询 -->
+		<action name="open_flightTrainingRecordCompletionPageTj"
+		 class="com.cauc.training.ui.core.FlightTrainingRecordAction" 
+		 method="openStatisticsFlightTrainingRecordCompletionPage">
+			<result name="success">/WEB-INF/statistics/flightTrainingRecordCompletionTongJi.jsp</result>
+		</action>
+		<!-- 导出学生成绩 -->
+		<action name="exportDataFlightTrainingRecordCompletion" class="com.cauc.training.ui.core.FlightTrainingRecordAction"
+		 method="downloadFile">
+			<result name="success" type="stream">
+				<param name="contentType">
+					application/octet-stream;charset=ISO8859-1
+				</param>
+				<param name="inputStream">inputStream</param>
+				<param name="contentDisposition">
+					attachment;filename="${attachmentName}"
+				</param>
+				<param name="bufferSize">4096</param>
+			</result>
+		</action>
+		<!-- 训练统计周表 -->
+		<action name="open_statisticalWeekReport" class="com.cauc.training.ui.core.SystemUserManagerAction"
+			method="statisticsByWeekListData">
+			<result name="success">/WEB-INF/statistics/weekReport.jsp</result>
+		</action>
+		
+		<!-- 强制转场课程记录查询 -->
+		<action name="open_AFL52TrainingLessonRecordPage"
+		 class="com.cauc.training.ui.core.LogAction" 
+		 method="openAFL52TrainingLessonRecordPage">
+			<result name="success">/WEB-INF/statistics/AFL52TrainingLessonRecordPage.jsp</result>
+		</action>
+		<!-- 转场不是同一天的记录 -->
+		<action name="open_zhuanChangNoSameDayRecordPage"
+		 class="com.cauc.training.ui.core.LogAction" 
+		 method="readZhuanChangNoSameDayRecordList">
+			<result name="success">/WEB-INF/statistics/zhuanChangNoSameDayRecordPage.jsp</result>
+		</action>
+		<!-- 强制三点转场不是三点的记录 -->
+		<action name="open_zhuanChangNoTreePosRecordPage"
+		 class="com.cauc.training.ui.core.LogAction" 
+		 method="readZhuanChangNoTreePosRecordList">
+			<result name="success">/WEB-INF/statistics/zhuanChangNoTreePosRecordPage.jsp</result>
+		</action>
+		<!-- 课程符合性校验 -->
+		<action name="open_trainingLessonFitCheck"
+		 class="com.cauc.training.ui.core.LogAction" 
+		 method="trainingLessonFitCheck">
+			<result name="success">/WEB-INF/statistics/trainingLessonFitCheck.jsp</result>
+		</action>
+		<!-- 整体课程 -->
+		<action name="open_statisticsWholeLessonBase"
+		 class="com.cauc.training.ui.core.LogAction" 
+		 method="statisticsWholeLessonBase">
+			<result name="success">/WEB-INF/statistics/statisticsWholeLessonBase.jsp</result>
+		</action>
+		<action name="open_statisticsWholeLessonHz"
+		 class="com.cauc.training.ui.core.LogAction" 
+		 method="statisticsWholeLessonHz">
+			<result name="success">/WEB-INF/statistics/statisticsWholeLessonHz.jsp</result>
+		</action>
+		<action name="open_statisticsWholeLessonZc"
+		 class="com.cauc.training.ui.core.LogAction" 
+		 method="statisticsWholeLessonZc">
+			<result name="success">/WEB-INF/statistics/statisticsWholeLessonZc.jsp</result>
+		</action>
+		<action name="open_statisticsWholeLessonXb"
+		 class="com.cauc.training.ui.core.LogAction" 
+		 method="statisticsWholeLessonXb">
+			<result name="success">/WEB-INF/statistics/statisticsWholeLessonXb.jsp</result>
+		</action>
+		<!-- 非整体课程  -->
+		<action name="open_statisticsNoWholeLessonAll"
+		 class="com.cauc.training.ui.core.LogAction" 
+		 method="statisticsNoWholeLessonAll">
+			<result name="success">/WEB-INF/statistics/statisticsNoWholeLessonAll.jsp</result>
+		</action>
+		<action name="open_statisticsNoWholeLessonBase"
+		 class="com.cauc.training.ui.core.LogAction" 
+		 method="statisticsNoWholeLessonBase">
+			<result name="success">/WEB-INF/statistics/statisticsNoWholeLessonBase.jsp</result>
+		</action>
+		<action name="open_statisticsNoWholeLessonSi"
+		 class="com.cauc.training.ui.core.LogAction" 
+		 method="statisticsNoWholeLessonSi">
+			<result name="success">/WEB-INF/statistics/statisticsNoWholeLessonSi.jsp</result>
+		</action>
+		<action name="open_statisticsNoWholeLessonShang"
+		 class="com.cauc.training.ui.core.LogAction" 
+		 method="statisticsNoWholeLessonShang">
+			<result name="success">/WEB-INF/statistics/statisticsNoWholeLessonShang.jsp</result>
+		</action>
+		<!--飞行教员统计 -->
+		<action name="open_statisticsFlyTeacherSort"
+		 class="com.cauc.training.ui.core.LogAction" 
+		 method="statisticsFlyTeacherSort">
+			<result name="success">/WEB-INF/statistics/statisticsFlyTeacherSort.jsp</result>
+		</action>
+		
+		<action name="open_statisticsFlyTeacherBase"
+		 class="com.cauc.training.ui.core.LogAction" 
+		 method="statisticsFlyTeacherBase">
+			<result name="success">/WEB-INF/statistics/statisticsFlyTeacherBase.jsp</result>
+		</action>
+		<!-- 飞机时间与发动机计时器校验 -->
+		<action name="open_planeTimeAndEngineTimeCheck"
+		 class="com.cauc.training.ui.core.LogAction" 
+		 method="planeTimeAndEngineTimeCheck">
+			<result name="success">/WEB-INF/statistics/planeTimeAndEngineTimeCheck.jsp</result>
+		</action>
+		
+		<!-- 学生时间与签派时间与机务时间校验  -->
+		<action name="open_studentTimeAndDispatchTimeCheck"
+		 class="com.cauc.training.ui.core.LogAction" 
+		 method="studentTimeAndDispatchTimeCheck">
+			<result name="success">/WEB-INF/statistics/studentTimeAndDispatchTimeCheck.jsp</result>
+		</action>
+	</package>
+</struts> 

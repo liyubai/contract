@@ -1,0 +1,142 @@
+package com.cauc.training.business.hibernate;
+
+import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.List;
+
+import org.hibernate.Query;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.cauc.training.business.ISequenceManager;
+import com.cauc.training.business.dao.GenericHibernateDAO;
+import com.cauc.training.pojos.Seq;
+
+@Service("sequenceManagerImpl")
+public class SequenceManagerImpl extends GenericHibernateDAO implements ISequenceManager {
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public synchronized long getNextId(String obj) {
+		IdSeq idSeq = (IdSeq) hBuffer.get(obj);
+		if (idSeq != null) {
+			long nNextId = idSeq.getNextId();
+			if (nNextId > 0)
+				return nNextId;
+			if (nNextId < 0)
+				return getNextIdFromDB(idSeq, obj);
+			else
+				return refreshIdSeqFromDB(idSeq, obj);
+		}
+		return refreshIdSeqFromDB(idSeq, obj);
+	}
+
+	public synchronized long getNextId() {
+		return getNextId("SEQ");
+	}
+
+	public class IdSeq {
+
+		private long nextId;
+
+		private long maxId;
+
+		private long cacheSize;
+
+		public long getCacheSize() {
+			return cacheSize;
+		}
+
+		public IdSeq setCacheSize(long _cacheSize) {
+			cacheSize = _cacheSize >= 1 ? _cacheSize : 1;
+			return this;
+		}
+
+		public long getMaxId() {
+			return maxId;
+		}
+
+		public synchronized long getNextId() {
+			if (nextId < 1)
+				return 0;
+			if (nextId <= maxId)
+				return nextId++;
+			else
+				return -1;
+		}
+
+		public synchronized IdSeq setNextId(long _nextId) {
+			if (nextId >= maxId && _nextId > maxId) {
+				nextId = _nextId;
+				maxId = (nextId + cacheSize) - 1;
+			}
+			return this;
+		}
+
+		public IdSeq() {
+			this(0, 0);
+		}
+
+		public IdSeq(long _nextId) {
+			this(_nextId, 0);
+		}
+
+		public IdSeq(long _nextId, long _cacheSize) {
+			maxId = 0;
+			cacheSize = 5;
+			setCacheSize(_cacheSize);
+			nextId = _nextId;
+		}
+	}
+
+	private Hashtable hBuffer;
+
+	public void init() {
+		hBuffer = new Hashtable(50);
+		List list = this.getAll(Seq.class);
+		Iterator it = list.iterator();
+		Seq seq = null;
+		while (it.hasNext()) {
+			seq = (Seq) it.next();
+			hBuffer.put(seq.getObj(), new IdSeq(seq.getNextId(), seq.getCacheSize()));
+		}
+	}
+
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	private long refreshIdSeqFromDB(IdSeq _idSeq, String obj) {
+
+		String hql = "select MAX(nextId) from Seq";
+		List list = this.find(hql);
+		long nNextId = 1;
+		if (list != null && list.size() > 0)
+			nNextId = ((Long) list.get(0)).longValue() + 1;
+		_idSeq.setNextId(nNextId);
+		hql = "update Seq set nextId=" + (_idSeq.getMaxId() + 1) + " where obj='" + obj + "'";
+		Query q = createQuery(hql);
+		q.executeUpdate();
+		return _idSeq.getNextId();
+	}
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	private long getNextIdFromDB(IdSeq _idSeq, String obj) {
+		long nNextId = 0;
+		String hql = "select c.nextId from Seq as c where obj=?";
+		List list = this.find(hql, obj);
+		if (list != null && list.size() > 0)
+			nNextId = ((Long) list.get(0)).longValue();
+		_idSeq.setNextId(nNextId);
+		hql = "update Seq set nextId=nextId+" + _idSeq.getCacheSize() + " where obj = ?";
+		Query q = createQuery(hql, obj);
+		q.executeUpdate();
+		return _idSeq.getNextId();
+	}
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void insertTest(long seq) {
+		String sql = "insert into t_test (seq) values (?)";
+		Query q = createSQLQuery(sql, seq);
+		q.executeUpdate();
+	}
+
+	public void updateTest(Seq s) {
+		super.saveOrUpdate(s);
+		
+	}
+}

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE struts PUBLIC
+    "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN"
+    "http://struts.apache.org/dtds/struts-2.0.dtd">
+<struts>
+	<package name="user_contract_management" extends="ErsDefault" namespace="/contract">
+		<!-- 显示用户管理信息 -->
+		<action name="userManagent_showManagent" class="com.cauc.contract.ui.core.UserManagentAction" 
+			method="showManagent">
+			<result name="success">/pages/user/cUserList.jsp</result>
+		</action>
+		<!-- 插入 -->
+		<action name="userManagent_addUser" class="com.cauc.contract.ui.core.UserManagentAction" 
+			method="addUser">
+			<result name="success">/pages/user/cUserList.jsp</result>
+		</action>
+		<!-- 更新 -->
+		<action name="userManagent_updateUser" class="com.cauc.contract.ui.core.UserManagentAction"
+			 method="updateUser">
+			<result name="success" type="redirectAction">userManagent_showManagent.do</result>
+		</action>
+		<!-- 判断用户是否已经存在 -->
+		<action name="findUserName" class="com.cauc.contract.ui.core.UserManagentAction"
+			 method="findUserName">
+			<result name="success" ></result>
+		</action>
+	</package>
+</struts> 

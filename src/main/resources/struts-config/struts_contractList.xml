@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE struts PUBLIC
+    "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN"
+    "http://struts.apache.org/dtds/struts-2.0.dtd">
+<struts>
+	<package name="cContractQueryList" extends="ErsDefault" namespace="/contract">
+	
+		<!-- 首次加载查询全部合同 -->
+		<action name="cAllContractQueryList" class="com.cauc.contract.ui.core.contractQueryListAction"
+			 method="allContractQueryList">
+			<result name="success" >/pages/contract/cContractList.jsp</result>
+			<result name="input">error.jsp</result>
+		</action>
+		<!-- 查询 -->
+		<action name="cContractQueryList" class="com.cauc.contract.ui.core.contractQueryListAction"
+			 method="contractQueryList">
+			<result name="success" >/pages/contract/cContractList.jsp</result>
+			
+		</action>
+		
+		<!-- 查看合同 -->
+		<action name="cViewContract" class="com.cauc.contract.ui.core.contractQueryListAction"
+			 method="viewContract">
+			<result name="success" >/pages/contract/cViewContract.jsp</result>
+		</action>
+	</package>
+	
+
+</struts> 

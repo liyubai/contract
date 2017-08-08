@@ -1,0 +1,161 @@
+package com.cauc.training.ui.core.del;
+
+import java.util.List;
+
+import org.apache.commons.lang.StringUtils;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.pojos.TFunction;
+import com.cauc.training.ui.common.BaseActionSupport;
+import com.cauc.training.vo.VFunction;
+import com.cauc.training.vo.VOrg;
+
+public class FunctionAction extends BaseActionSupport {
+
+	/**
+	 * 功能模块管理
+	 */
+	private static final long serialVersionUID = 6154335622536505972L;
+
+	private String parentid;
+	private TFunction function;
+	private String id;
+	private VOrg viewOrg;
+	private List<VFunction> functionList;
+
+	
+	public String readFunctionById(){
+		try{
+			setViewOrg(getFactory().getFinanceProviderInstance().getFunctionService().readFunctionById(id));
+		}catch(FinanceServiceException e){
+			e.printStackTrace();
+		}
+		return SUCCESS;
+	}
+	public String readFunctionTree(){
+
+		try {
+			functionList = getFactory().getFinanceProviderInstance().getFunctionService().readFunctionList(parentid);
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+
+		return SUCCESS;
+	}
+    //读取全部功能模块（节点），用于生成非延时加载树的生成
+	public String readAllFunctionTree(){
+
+		try {
+			functionList = getFactory().getFinanceProviderInstance().getFunctionService().readAllFunctionList();
+			
+		   // System.out.println(functionList.size());
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+
+		return SUCCESS;
+	}
+	
+
+	public String readFunctionInfoList(){
+		
+		return SUCCESS;
+	}
+	
+	public String createFunction(){
+	
+		viewOrg = new VOrg();
+		if(function.getVId()!=null || function.getVId().equals("")){
+			function.setVId(null);
+		}
+		try{
+			function.setTUser(getFactory().getFinanceProviderInstance()
+								.getSysUserService()
+								.readSysUserByLoginID(getLoginContext().getLoginId()));
+			getFactory().getFinanceProviderInstance().getFunctionService().saveFunction(function);
+			viewOrg.setMessage(function.getVId());//借此存储返回的id
+			viewOrg.setFlag(true);
+		}catch(FinanceServiceException e){
+			viewOrg.setMessage(e.getMessage());
+			viewOrg.setFlag(false);
+		}
+		return SUCCESS;
+	}
+	public String deleteFunction(){ 
+		viewOrg = new VOrg();
+		if(this.getId()==null || getId().equals("")){
+			viewOrg.setFlag(false);
+			viewOrg.setMessage("功能模块删除失败 ，参数传递错误。");
+			return SUCCESS;
+		}
+		
+		try{
+			getFactory().getFinanceProviderInstance().getFunctionService().deleteFunctionById(id);
+			viewOrg.setFlag(true);
+		}catch (FinanceServiceException e) {
+			viewOrg.setMessage(e.getMessage());
+			viewOrg.setFlag(false);
+		}
+		return SUCCESS;
+	}
+	public String updateFunction(){
+		viewOrg = new VOrg();
+		if(StringUtils.isBlank(function.getVId()) || StringUtils.isBlank(function.getVName())){
+			viewOrg.setFlag(false);
+			viewOrg.setMessage("更新失败 ，参数传递错误。");
+			return SUCCESS;
+		}
+		try{
+			getFactory().getFinanceProviderInstance().getFunctionService().updateFunction(function);
+			setId(function.getVId());
+			viewOrg.setFlag(true);
+		}catch (FinanceServiceException e) {
+			viewOrg.setFlag(false);
+			viewOrg.setMessage("更新失败 ，数据库连接超时，请重试。");
+			return SUCCESS;
+		}
+		return SUCCESS;
+	}
+	//----------------------setter and getter--------------------
+	public String getParentid() {
+		return parentid;
+	}
+
+	public void setParentid(String parentid) {
+		this.parentid = parentid;
+	}
+
+	public TFunction getFunction() {
+		return function;
+	}
+
+	public void setFunction(TFunction function) {
+		this.function = function;
+	}
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
+	public VOrg getViewOrg() {
+		return viewOrg;
+	}
+
+	public void setViewOrg(VOrg viewOrg) {
+		this.viewOrg = viewOrg;
+	}
+	public List<VFunction> getFunctionList() {
+		return functionList;
+	}
+	public void setFunctionList(List<VFunction> functionList) {
+		this.functionList = functionList;
+	}
+	
+
+	
+	
+}

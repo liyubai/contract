@@ -1,0 +1,466 @@
+/*
+ * @(#)ISystemUserService.java
+ * Description:	user service interface
+ * Version :	0.0.1
+ * Copyright:	Copyright (c) 2012
+ * Create by:	fuchaohui
+ */
+
+package com.cauc.contract.business.hibernate;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.hibernate.HibernateException;
+import org.hibernate.Query;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.cauc.contract.FinanceServiceException;
+import com.cauc.contract.business.IContractModifyService;
+import com.cauc.contract.business.dao.GenericHibernateDAO;
+import com.cauc.contract.pojos.Account;
+import com.cauc.contract.pojos.Contract;
+import com.cauc.contract.pojos.ContractCPnameInfo;
+import com.cauc.contract.pojos.ContractGradeInfo;
+import com.cauc.contract.pojos.Dictionary;
+import com.cauc.contract.pojos.Payment;
+import com.cauc.contract.pojos.Student;
+import com.cauc.contract.pojos.StudentExtend;
+import com.cauc.contract.util.CommonUtils;
+import com.cauc.contract.util.Constants;
+import com.cauc.contract.util.JsonToBean;
+import com.sun.org.apache.commons.collections.CollectionUtils;
+
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+
+/**
+ * 增加合同部分Service实现类
+ * 
+ * @author baib
+ * 
+ */
+@Service
+public class ContractModifyImpl extends GenericHibernateDAO implements IContractModifyService {
+	private static Log log = LogFactory.getLog(ContractModifyImpl.class);
+
+	/**
+	 * 新增合同
+	 * 
+	 * @param contractEnity
+	 *            合同实体类
+	 * @throws ErsServiceException
+	 *             抛出此异常表示在新增用户时候发生错误
+	 */
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void addContract(Contract contractEnity) throws FinanceServiceException {
+		if (contractEnity != null) {
+			try {
+				super.save(contractEnity);
+			} catch (HibernateException e) {
+				log.error("新增合同失败", e);
+				throw new FinanceServiceException("新增合同失败", e);
+			}
+		} else {
+			log.error("新增合同失败");
+			throw new FinanceServiceException("新增合同失败！");
+		}
+	}
+
+	/**
+	 * 功能：查询合同表最大主键ID
+	 */
+	public int getMaxCID() throws FinanceServiceException {
+		Integer maxCID;
+		try {
+			String hql = "select isnull(max(CId),0) from Contract ";
+			maxCID = (Integer) super.createQuery(hql).uniqueResult();
+		} catch (HibernateException e) {
+			log.error("新增合同失败");
+			throw new FinanceServiceException("新增合同失败！");
+		}
+		return maxCID;
+	}
+	/**
+	 * 获取合同编号截取G后最大数字
+	 */
+
+	@SuppressWarnings("unused")
+	public int getMaxContractId() throws FinanceServiceException {
+		Integer MaxContractId = null;
+		Calendar tempYear = Calendar.getInstance();
+		// CAUC +当前年份+ -G
+		String temp = Constants.CONTRACT_ID + tempYear.get(Calendar.YEAR) + Constants.CONTRACT_ID_MIDDLE;
+		String sql="SELECT TOP 1 substring(C_CONTRACT_ID,11,len(C_CONTRACT_ID)-10) from Contract "
+				+ "WHERE C_CONTRACT_ID LIKE '"+temp+"%' AND "
+				+ "charindex('-',substring(C_CONTRACT_ID,10,len(C_CONTRACT_ID)-10))<1 "
+				+ "ORDER BY C_ID DESC";
+		Object obj = super.createSQLQuery(sql).uniqueResult();
+		if(obj!=null){
+			MaxContractId=Integer.valueOf(obj.toString());
+		}else{
+			MaxContractId = 0;
+		}
+		return MaxContractId;
+	}
+	/**
+	 * 功能：判断是否存在
+	 */
+	@SuppressWarnings("unchecked")
+	public boolean isExistContract(int CID) throws FinanceServiceException {
+		// 该标志位用于表示合同ID是否已存在，false:表示不存在
+		boolean flag = false;
+		String hql = " from Contract where CId=?";
+		List<Contract> contractList = super.find(hql, CID);
+		if (contractList != null && contractList.size() > 0) {
+			flag = true;
+		}
+		return flag;
+	}
+
+	/**
+	 * 功能：判断是否存在
+	 */
+	@SuppressWarnings("unchecked")
+	public boolean isExistPayment(int PId) throws FinanceServiceException {
+		// 该标志位用于表示合同PId是否已存在，false:表示不存在
+		boolean flag = false;
+		String hql = " from Payment where PId=?";
+		List<Payment> PaymentList = super.find(hql, PId);
+		if (PaymentList != null && PaymentList.size() > 0) {
+			flag = true;
+		}
+		return flag;
+	}
+//	@SuppressWarnings("unchecked")
+//	public boolean isNotExistContractId(String CContractId) throws FinanceServiceException {
+//		// 该标志位用于表示合同编号是否已存在，false:表示不存在
+//		boolean flag = false;
+//		String sql = "select CContractId from Contract where CContractId like '"+CContractId+"-%' ";
+//		List<Object[]> ContractList = super.createSQLQuery(sql).list();
+//		if (ContractList == null || ContractList.size() == 0) {
+//			flag = true;
+//		}
+//		return flag;
+//	}
+	public int isNotExistContractId(String contractId) throws FinanceServiceException {
+		// 该标志位用于表示合同编号是否已存在，false:表示不存在
+		String sql = "select count(C_CONTRACT_ID) from Contract where C_CONTRACT_ID like '"+contractId+"-%' ";
+		   Query query = this.getSession().createQuery(sql);
+		   long count= (Long) query.uniqueResult();
+		   System.out.println(count);
+		   if(count==0)
+			   return 0;
+		   if(count>0) 
+			   return 1;
+           return 0; 
+		
+	}
+
+	/**
+	 * 功能：获取Ztree
+	 */
+	@SuppressWarnings("unchecked")
+	public List<Dictionary> initZtree(int dID) throws FinanceServiceException {
+		// String hql = " from Dictionary where dictionaryId=?";
+		String sql = "  select a.dictionaryId,a.dictionaryName,a.level,a.parentId, '('+isnull(a.childId,0)+')',a.topId   from Dictionary a , f_cid("
+				+ dID + ",1) b where a.DictionaryId = b.id Order by a.ParentId,a.level ";
+		List<Object[]> tempList = super.createSQLQuery(sql).list();
+		List<Dictionary> contractList = new ArrayList<Dictionary>();
+		Dictionary dictEnety = null;
+		for (Object[] o : tempList) {
+			dictEnety = new Dictionary();
+			dictEnety.setDictionaryId(Integer.parseInt(o[0].toString()));
+			dictEnety.setDictionaryName(o[1].toString());
+			dictEnety.setLevel(Integer.parseInt(o[2].toString()));
+			dictEnety.setParentId(Integer.parseInt(o[3].toString()));
+			String tempChildId = o[4].toString();
+			tempChildId = tempChildId.replace("(", "");
+			tempChildId = tempChildId.replace(")", "");
+			dictEnety.setChildId(tempChildId);
+			dictEnety.setTopId(Integer.parseInt(o[5].toString()));
+			contractList.add(dictEnety);
+		}
+		return contractList;
+	}
+
+	/**
+	 * @功能描述：更新合同表
+	 */
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void updateContract(Contract oldContract) throws FinanceServiceException {
+		if (oldContract != null) {
+			if (!isExistContract(oldContract.getCId())) {
+				throw new FinanceServiceException("更新合同失败，该合同不存在！");
+			} else {
+				try {
+					Contract upConEneity = super.get(Contract.class, oldContract.getCId());
+					upConEneity.setCGradeInfo(oldContract.getCGradeInfo());
+					// 付款项目，及金额
+					upConEneity.setCPaymentInfo(oldContract.getCPaymentInfo());
+					// 成交价格
+					upConEneity.setCDealPrice(oldContract.getCDealPrice());
+					// 训练周期
+					upConEneity.setCTrainCycle(oldContract.getCTrainCycle());
+					// 节点描述
+					upConEneity.setCPnameInfo(oldContract.getCPnameInfo());
+					// 是否生成过 年级 以及初始化付款表
+					upConEneity.setCInitFlg(1);
+					super.update(upConEneity);
+				} catch (HibernateException e) {
+					throw new FinanceServiceException("更新合同失败", e);
+				}
+			}
+		} else {
+			throw new FinanceServiceException("更新合同失败！");
+		}
+	}
+
+	/**
+	 * @功能描述：更新付款表
+	 */
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void updatePayment(Payment oldPayment) throws FinanceServiceException {
+		if (oldPayment != null) {
+			if (!isExistPayment(oldPayment.getPId())) {
+				throw new FinanceServiceException("更新付款表记录失败，该记录不存在！");
+			} else {
+				try {
+					Payment upPayEneity = super.get(Payment.class, oldPayment.getPId());
+					// 更新预收日期
+					upPayEneity.setPReceiveDate(oldPayment.getPReceiveDate());
+					super.update(upPayEneity);
+				} catch (HibernateException e) {
+					throw new FinanceServiceException("更新付款表记录失败", e);
+				}
+			}
+		} else {
+			throw new FinanceServiceException("更新付款表记录失败！");
+		}
+	}
+
+	/**
+	 * @功能描述：获得付款表
+	 */
+	// @Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	// public List<Payment> selPayment(Contract oldContract) throws
+	// FinanceServiceException {
+	// if (oldContract != null) {
+	// if (!isExistContract(oldContract.getCId())) {
+	// throw new FinanceServiceException("更新合同失败，该合同不存在！");
+	// } else {
+	// String hql = " from Payment where PContractKey=?";
+	// List<Payment> contractList = super.find(hql, oldContract.getCId());
+	// return contractList;
+	// }
+	// } else {
+	// throw new FinanceServiceException("更新合同失败！");
+	// }
+	// }
+	/**
+	 * @功能描述：根据合同表CId删除付款表记录
+	 */
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public boolean del(Contract oldContract) throws FinanceServiceException {
+		if (!isExistContract(oldContract.getCId())) {
+			throw new FinanceServiceException("删除合同记录失败，该记录不存在！");
+		} else {
+			String hql = " delete Payment  where PContractKey = " + oldContract.getCId();
+			Query query = this.getSession().createQuery(hql);
+			query.executeUpdate();
+			return true;
+		}
+	}
+
+	/**
+	 * @功能描述：根据CID查询合同表内容
+	 */
+	public Contract selContract(int CID) throws FinanceServiceException {
+		return super.get(Contract.class, CID);
+	}
+
+	/**
+	 * @功能描述：根据PId查询付款表内容
+	 */
+	public Payment selPayment(int PId) throws FinanceServiceException {
+		return super.get(Payment.class, PId);
+	}
+
+	/**
+	 * @功能描述：插入付款表
+	 */
+	@SuppressWarnings("unchecked")
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void savePayMent(Contract oldConEneity, String gradeInfo, String payMentData)
+			throws FinanceServiceException {
+		// 合同表年级的json数据
+		List<ContractGradeInfo> gradeInfoJsonList = JsonToBean.makeJavaBean(gradeInfo, ContractGradeInfo.class);
+		// 合同表的json数据
+		List<ContractCPnameInfo> payMentJsonList = JsonToBean.makeJavaBean(payMentData, ContractCPnameInfo.class);
+
+		if (gradeInfoJsonList != null && gradeInfoJsonList.size() > 0) {
+			try {
+				Contract dbConEneity = super.get(Contract.class, oldConEneity.getCId());
+				// 成交价
+				int dealPrice = dbConEneity.getCDealPrice();
+				// 循环每个年级
+				for (int i = 0; i < gradeInfoJsonList.size(); i++) {
+
+					// 循环每个节点
+					for (int j = 0; j < payMentJsonList.size(); j++) {
+
+						Payment addPayMent = new Payment();
+						addPayMent.setPNoticeStatus(1);//默认付款状态1 未通知未付款
+						addPayMent.setPName(payMentJsonList.get(j).getPName());
+						addPayMent.setPFundBudgetType(payMentJsonList.get(j).getPFundBudgetType());
+						addPayMent.setPProcessState(payMentJsonList.get(j).getPProcessState());
+						addPayMent.setPBuildFeeStandardPrice(payMentJsonList.get(j).getPBuildFeeStandardPrice());
+						addPayMent.setPTrainFeeStandardPrice(payMentJsonList.get(j).getPTrainFeeStandardPrice());
+						addPayMent.setPPaymentPercent(payMentJsonList.get(j).getPPaymentPercent());
+						addPayMent.setPContractId(dbConEneity.getCContractId());
+						addPayMent.setPContractKey(dbConEneity.getCId());
+						addPayMent.setPContractGrade(Integer.parseInt(gradeInfoJsonList.get(i).getGradeYear()));
+						addPayMent.setPGradeStudentCount(Integer.parseInt(gradeInfoJsonList.get(i).getStudentCount()));
+						// 学生人数
+						int stuCount = Integer.parseInt(gradeInfoJsonList.get(i).getStudentCount());
+						// 共建经费
+						float pbuildFee = payMentJsonList.get(j).getPBuildFeeStandardPrice();
+						// 分成培训费
+						float ptrainFee = payMentJsonList.get(j).getPTrainFeeStandardPrice();
+						// 百分比
+						double percent = payMentJsonList.get(j).getPPaymentPercent();
+						// 预收金额
+						double tempRecMoney = (stuCount * percent * dealPrice) / 100;
+						addPayMent.setPReceiveMoney(tempRecMoney);
+						// 设置日期格式
+						SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+						// String转为Date类型
+						Date d = sdf.parse(gradeInfoJsonList.get(i).getSchoolTime());
+						Calendar cal = Calendar.getInstance();
+						cal.setTime(d);
+						int proStatus = payMentJsonList.get(j).getPProStatusYM();
+						// 收款进程
+						int processState = payMentJsonList.get(j).getPProcessState();
+						if (proStatus == 1) {// 1表示月 2表示年
+							cal.add(Calendar.MONTH, processState);
+							Date now = cal.getTime();
+							//System.out.println(now);
+							// 预收日期
+							addPayMent.setPReceiveDate(now);
+						} else {
+							cal.add(Calendar.YEAR, processState);
+							Date now = cal.getTime();
+							addPayMent.setPReceiveDate(now);
+						}
+						// 收费小计
+						float ptotalPrice = (pbuildFee + ptrainFee) * stuCount;
+						addPayMent.setPTotalPrice(ptotalPrice);
+						addPayMent.setCCompy(dbConEneity.getCCompy());
+						super.save(addPayMent);
+						if (addPayMent.getPFundBudgetType() > 0) {
+							Account account = new Account();
+							AccountServiceImpl accountServiceImpl = new AccountServiceImpl();
+							account.setCContractId(dbConEneity.getCContractId());
+							account.setPId(addPayMent.getPId());
+							account.setAFundsType(addPayMent.getPFundBudgetType());
+							account.setPBuildFeeStandardPrice(addPayMent.getPBuildFeeStandardPrice());
+							account.setPTrainFeeStandardPrice(addPayMent.getPTrainFeeStandardPrice());
+							account.setPGradeStudentCount(addPayMent.getPGradeStudentCount());
+							super.save(account);
+						}
+					}
+				}
+			} catch (Exception e) {
+				log.error("新增付款表失败", e);
+				throw new FinanceServiceException("新增付款失败", e);
+			}
+		} else {
+			log.error("新增付款失败");
+			throw new FinanceServiceException("新增合同失败！");
+		}
+	}
+	/**
+	 * @功能描述：模糊搜索ContractId-
+	 */
+	@SuppressWarnings("unchecked")
+	public List<Contract> copyContract(String contractId) throws FinanceServiceException {
+		List<Contract> list = new ArrayList<Contract>();
+		String sql = "from Contract  where  CContractId like '"+contractId+"-%' "
+				    + "order by CContractId   desc";
+		list = super.find(sql);
+		return list;
+	}
+	/**
+	 * @功能描述：根据ContractId查询全部内容
+	 */
+	public List<Contract> ConContractId(Contract con) throws FinanceServiceException {
+		List<Contract>  list = new ArrayList<Contract>();
+		String sql = "from Contract  where  CContractId = ?";
+		Object[] ob=new Object[]{
+				con.getCContractId()
+		};
+		list = super.find(sql, ob);
+		System.out.println(list.get(0).getCContractId());
+		return list;
+//		String sql = " select C_ID,C_NAME,C_CONTRACT_ID, C_TYPE,C_STU_TYPE,C_STATUS,C_NATURE,"
+//			     + "C_COMPY,C_SIGN_TIME,C_PRIVATE_NAME from Contract  where  C_CONTRACT_ID = "+con.getCContractId();
+	}
+	
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void copyContractSave(Contract Contract) throws FinanceServiceException {
+		if (Contract != null) {
+			try {
+				super.save(Contract);
+			} catch (HibernateException e) {
+				log.error("复制合同失败", e);
+				throw new FinanceServiceException("复制合同失败", e);
+			}
+		} else {
+			log.error("新增合同失败");
+			throw new FinanceServiceException("复制合同失败！");
+		}
+	}
+	//根据年级查询学生信息
+	@SuppressWarnings("unused")
+	@Override
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public String searchStudent(int gradeyear) throws FinanceServiceException {
+		List<StudentExtend> stuList = new ArrayList<StudentExtend>();
+		String sql="  select No, StudentName from Student where Grade = "+gradeyear+""
+				  + " order by No" ;
+		List<Object[]> list = super.createSQLQuery(sql).list();
+		for(Object[] s: list){
+			StudentExtend extend = new StudentExtend();
+			extend.setNo(CommonUtils.ObjecttoString(s[0]));
+			extend.setStudentName(CommonUtils.ObjecttoString(s[1]));
+			stuList.add(extend);
+		}
+		if(list!=null){
+			JSONObject jsonObj = new JSONObject();			
+			JSONArray jsonArr = new JSONArray();
+			for(StudentExtend stu:stuList){
+				JSONObject	dicJson = new JSONObject();
+				dicJson.put("studentNo", stu.getNo());
+				dicJson.put("studentName",stu.getStudentName());
+				jsonArr.add(dicJson);
+			}
+			jsonObj.put("dics", jsonArr);
+			//System.out.println(jsonObj.toString());
+			return jsonObj.toString();
+		}else{
+			return null;
+		}
+	}
+
+}
+

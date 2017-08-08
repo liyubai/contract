@@ -1,0 +1,358 @@
+package com.cauc.training.business;
+
+import java.util.List;
+import java.util.Map;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.pojos.PlaneCheckCycle;
+import com.cauc.training.pojos.Planecheck;
+import com.cauc.training.pojos.Planeform;
+import com.cauc.training.pojos.Planeinfo;
+import com.cauc.training.pojos.TRepairrecord;
+import com.cauc.training.pojos.TeacherBaseInfo;
+import com.cauc.training.vo.VOperateBean;
+import com.cauc.training.vo.VPlaneCheckCycle;
+import com.cauc.training.vo.VPlanecheck;
+import com.cauc.training.vo.VPlaneform;
+import com.cauc.training.vo.VPlaneinfo;
+import com.cauc.training.vo.VRepairrecord;
+
+/***
+ * @功能说明：用于管理飞机接口
+ * @author lijianLong
+ */
+public interface IPlaneService {
+	
+	//不是飞机的状态只有可用与不可用,机务放行0、签派放行1、签派回收2、机务回收3、正在维修4、定检中5
+	
+	/**
+	 * 朝阳飞行学院
+	 */
+	public static final String PLANE_BASE_CHAOYANG="4028816a470e3d6601470e47174b0003";
+	
+	/**
+	 * 内蒙古飞行学院
+	 */
+	public static final String PLANE_BASE_NEIMENGGU="4028816a470e3d6601470e473afa0004";
+	
+	/**
+	 * 登录人id
+	 */
+	public static final String QUERY_LOGIN_USER_ID = "userid";
+	
+	/**
+	 * 未审核状态
+	 */
+	public static final int PLANE_AUDIT_STATUS_NO = 0;
+	/**
+	 * 已审核状态
+	 */
+	public static final int PLANE_AUDIT_STATUS_YES = 1;
+	/**
+	 * 飞机状态
+	 */
+	public static final String PLANE_STATUS = "IStatus";
+	
+	/**
+	 * 定检
+	 */
+	public static final int PLANE_STATUS_CHECK = 5;
+	
+	/**
+	 * 故障、待修中
+	 */
+	public static final int PLANE_STATUS_REPAIR=6;
+	
+	/**
+	 * 飞机状态正在修改或故障，状态：故障，维修中
+	 */
+	public static final int PLANE_STATUS_NO_USE = 4;
+	
+	/**
+	 * 机务回收 改成 适航，可用
+	 */
+	public static final int PLANE_STATUS_USE = 3;
+	
+	/**
+	 * 签派回收
+	 */
+	public static final int PLANE_STATUS_PATCH_USE = 2;
+	
+	/**
+	 * 签派放行
+	 */
+	public static final int PLANE_STATUS_PATCH_RELEASE = 1;
+	
+	/**
+	 * 机务放行
+	 */
+	public static final int PLANE_STATUS_RELEASE = 0;
+	
+	/**
+	 * 航空器类型 0:飞机；1：训练器；2：模拟机
+	 */
+	public static final String  QUERY_KEY_DEVICETYPE="IDeviceType";
+	/**
+	 * 飞机
+	 */
+	public static final int QUERY_DEVICE_TYPE_PLANE =0;
+	
+	/**
+	 * 训练器
+	 */
+	public static final int QUERY_DEVICE_TYPE_TRAINING =1;
+	
+	/**
+	 * 模拟机
+	 */
+	public static final int QUERY_DEVICE_TYPE_MONI =2;
+	
+	/**
+	 * 飞机型号
+	 */
+	public static final String  QUERY_KEY_FORMID="formid";
+	
+	/**
+	 * 所属基地
+	 */
+	public static final String  QUERY_KEY_BASEID="baseid";
+	
+	
+	/**
+	 * 名称
+	 */
+	public static final String  QUERY_KEY_NAME="VName";
+	
+	/**
+	 * 机号
+	 */
+	public static final String  QUERY_KEY_PLANECODE="VPlanecode";
+	
+	/**
+	 * 编号
+	 */
+	public static final String  QUERY_KEY_TRAININGDEVICECODE="VPlaneform";
+	
+	/**
+	 * 基地节点id
+	 */
+	public static final String  QUERY_KEY_BASE_ID="4028816a470e3d6601470e4576460001";
+	
+	/**
+	 * 国外航校节点id
+	 */
+	public static final String  QUERY_KEY_HANGXIAO_ID="4028816a470e3d6601470e475b880005";
+	
+	/**
+	 * 创建飞机型号
+	 * @param pform
+	 * @throws FinanceServiceException
+	 */
+	public void createPlaneform(Planeform pform) throws FinanceServiceException;
+	
+	
+	/**
+	 * 更新飞机型号
+	 * @param pform
+	 * @throws FinanceServiceException
+	 */
+	public void updatePlaneform(Planeform pform) throws FinanceServiceException;
+	
+	/**
+	 * 删除飞机型号
+	 * @param ids
+	 * @throws FinanceServiceException
+	 */
+	public void deletePlaneform(String... ids) throws FinanceServiceException;
+
+	/**
+	 * 获取型号对象
+	 * @param id
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public VPlaneform readVPlaneform(String id) throws FinanceServiceException;
+	
+	/**
+	 * 获取型号列表
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<VPlaneform> readPlaneformList(Map<String,Object> params) throws FinanceServiceException;
+	 
+	public List<VRepairrecord> readPlaneRepairListById(String id) throws FinanceServiceException;
+	
+	public List<VPlanecheck> readPlaneCheckListById(String id) throws FinanceServiceException;
+	/**
+	 * 创建飞机基础信息
+	 * @param pinfo
+	 * @throws FinanceServiceException
+	 */
+	public void createPlaneBaseInfo(Planeinfo pinfo) throws FinanceServiceException;
+	
+	/**
+	 * 更新飞机基础信息
+	 * @param pinfo
+	 * @throws FinanceServiceException
+	 */
+	public void updatePlaneBaseInfo(Planeinfo pinfo) throws FinanceServiceException;
+	
+	/**
+	 * 删除飞机基础信息
+	 * @param ids
+	 * @throws FinanceServiceException
+	 */
+	public void deletePlaneBaseInfo(String... ids) throws FinanceServiceException;
+
+	/**
+	 * 获取飞机对象
+	 * @param id
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public VPlaneinfo readVPlaneinfo(String id) throws FinanceServiceException;
+	
+	/**
+	 * 获取飞机列表
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<Planeinfo> readPlaneBaseInfoList(Map<String,Object> params) throws FinanceServiceException;
+	/**
+	 * 获取训练器与模拟机列表
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<Planeinfo> readXqlAndMnjInfoList(Map<String,Object> params) throws FinanceServiceException;
+	
+	public List<VPlaneinfo> readPlaneReleaseInfoList(Map<String,Object> params) throws FinanceServiceException;
+	
+	public List<Planeinfo> readMaintenanceRecycleInfoList(Map<String,Object> params) throws FinanceServiceException;
+	
+	//异常飞机回收列表
+	public List<Planeinfo> readBugMaintenanceRecycleInfoList() throws FinanceServiceException;
+	
+	public List<Planeinfo> readPlaneRecycleInfoList(Map<String,Object> params) throws FinanceServiceException;
+	
+	/**
+	 * 飞机维修
+	 * @param params
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<Planeinfo> readPlaneRepairInfoList(Map<String,Object> params) throws FinanceServiceException;
+	
+	public List<VPlaneinfo> readPlaneDispatchInfoList(Map<String,Object> params) throws FinanceServiceException;
+	
+	/**
+	 * check
+	 * @param params
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<VPlaneinfo> readPlaneCheckInfoList(Map<String,Object> params) throws FinanceServiceException;
+	
+	/**
+	 * 飞机调换
+	 * @param p
+	 * @throws FinanceServiceException
+	 */
+	public void changePlaneBase(Planeinfo p) throws FinanceServiceException;
+	
+	/**
+	 * 改变飞机状态
+	 * @param p
+	 * @throws FinanceServiceException
+	 */
+	public void changePlaneStatus(Planeinfo p) throws FinanceServiceException;
+	/**
+	 * 飞机维修
+	 * @param repair
+	 * @throws FinanceServiceException
+	 */
+	public void createplaneRepairRecord(TRepairrecord repair) throws FinanceServiceException;
+	
+	/**
+	 * 保存维修结果
+	 * 
+	 * @param p
+	 * @throws FinanceServiceException
+	 */
+	public void createRepairReault(Planeinfo p) throws FinanceServiceException;
+	
+	/**
+	 * 机务放行
+	 * @param ids
+	 * @throws FinanceServiceException
+	 */
+	public void saveMaintenanceRelease(VOperateBean bean) throws FinanceServiceException;
+	
+	/**
+	 * 根据基地或大队读取教员列表
+	 * @param params
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<TeacherBaseInfo> readTeacherBaseInfoList(Map<String,Object> params)throws FinanceServiceException;
+	
+	/**
+	 * 签派放行
+	 * @param ids
+	 * @throws FinanceServiceException
+	 */
+	public void savePlaneDispatch(VOperateBean bean) throws FinanceServiceException;
+	
+	/**
+	 * 签派回收
+	 * @param bean
+	 * @throws FinanceServiceException
+	 */
+	public void savePlaneRecycle(VOperateBean bean) throws FinanceServiceException;
+	
+	/**
+	 * 机务回收
+	 * @param bean
+	 * @throws FinanceServiceException
+	 */
+	public void saveMaintenanceRecycle(VOperateBean bean) throws FinanceServiceException;
+	
+	/**
+	 * 机务异常回收
+	 * @param bean
+	 * @throws FinanceServiceException
+	 */
+	public void saveBugMaintenanceRecycle(VOperateBean bean) throws FinanceServiceException;
+	
+	
+	/**
+	 * 回收直接签派教员
+	 * @param bean
+	 * @throws FinanceServiceException
+	 */
+	public void savePlaneRecycleToTeacher(VOperateBean bean) throws FinanceServiceException;
+	
+	/**
+	 * 保存定检信息
+	 * @param check
+	 * @throws FinanceServiceException
+	 */
+	public void savePlaneCheck(Planecheck check) throws  FinanceServiceException ;
+	
+	/**
+	 * 保存设置定检类型
+	 * @param chcekForm
+	 * @throws FinanceServiceException
+	 */
+	public void saveSetPlaneCheckForm(PlaneCheckCycle chcekForm)throws FinanceServiceException;
+	public void updateSetPlaneCheckForm(PlaneCheckCycle chcekForm)throws FinanceServiceException;
+	public void deleteSetPlaneCheckForm(String id)throws FinanceServiceException;
+	
+	/**
+	 * 获取飞机定检类型
+	 * @param id
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<VPlaneCheckCycle> readPlaneCheckFormList(String id)throws FinanceServiceException;
+	
+}

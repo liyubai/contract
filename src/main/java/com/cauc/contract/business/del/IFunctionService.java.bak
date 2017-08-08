@@ -1,0 +1,84 @@
+package com.cauc.training.business;
+
+import java.util.List;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.pojos.TFunction;
+import com.cauc.training.vo.VFunction;
+import com.cauc.training.vo.VOrg;
+import com.cauc.training.vo.VRoleFunction;
+
+
+public interface IFunctionService {
+	/**
+	 * 排序默认值
+	 */
+	public static final int  QUERY_KEY_ORDER=100;
+	
+	/**
+	 * 树形根标识
+	 */
+	public static final String QUERY_KEY_ROOT ="0" ;
+	
+	/**
+	 * 创建模块
+	 * @param function
+	 * @throws FinanceServiceException
+	 */
+	public void saveFunction(TFunction function) throws FinanceServiceException;
+	
+	/**
+	 * 更新模块
+	 * @param function
+	 * @throws FinanceServiceException
+	 */
+	public void updateFunction(TFunction function) throws FinanceServiceException;
+	
+	/**删除模块
+	 * 
+	 * @param id
+	 * @throws FinanceServiceException
+	 */
+	public void deleteFunctionById(String id) throws FinanceServiceException;
+	
+	/**
+	 * 获取模块列表
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<VFunction> readFunctionList(String parentid) throws FinanceServiceException;
+	
+	/**
+	 * 获取功能模块对象
+	 * @param id
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public VOrg readFunctionById(String id) throws FinanceServiceException;
+	
+	/**
+	 * 获取功能模块对象为角色-功能模块绑定时使用
+	 * @param id
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public TFunction readFunctionByIdForRole(String id) throws FinanceServiceException;
+	
+	/**
+	 * 获取功能模块对象的VId属性
+	 * @param url：功能模块的访问路径，即访问该功能模块的action的name值
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public String getVid(String url) throws FinanceServiceException;
+
+	
+	/**
+	 * 获取所有功能模块，用于采用非延时加载生成权限树
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<VFunction> readAllFunctionList() throws FinanceServiceException;
+
+
+}

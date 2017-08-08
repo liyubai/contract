@@ -1,0 +1,677 @@
+package com.cauc.training.ui.core.del;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.text.ParseException;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.business.ITFileManager;
+import com.cauc.training.pojos.TFile;
+import com.cauc.training.pojos.TUser;
+import com.cauc.training.ui.common.BaseActionSupport;
+import com.cauc.training.util.del.ReadExcel;
+import com.cauc.training.vo.VOrg;
+import com.cauc.training.vo.VStudentBaseInfo;
+
+public class FileManagerAction extends BaseActionSupport {
+	
+
+	private static final long serialVersionUID = -4611178942233117984L;
+
+	//局方文件
+	private TFile fileInfo;
+	
+	//用于存储主键值
+	private String id;
+		
+	//查询关键字
+	private String key;
+
+	//存储要删除的局方文件的id，各个局方文件的id使用逗号（,）分隔
+	private String fileids;
+	
+	//存储附件文件名称，用于单独删除附件使用
+	private String attachmentFileName;
+	//附件删除成功标志位,0:表示失败；1：表示成功
+	private int flag = 0;
+	
+	private VStudentBaseInfo student;
+	private List<VStudentBaseInfo> viewStudentBaseInfoList;
+	
+	/**
+	 * 用于判断当根据主键进行单一查询时，表示的编辑是查询还是查看时查询
+	 *  ediOrViewFlag = "view" 表示查看
+	 *  ediOrViewFlag = "edit" 表示编辑
+	*/
+	private String ediOrViewFlag;
+	
+	private VOrg viewOrg;
+	
+	//获取日志生成器
+	private static Log log = LogFactory.getLog(RoleAction.class);
+	
+	//传照片
+	public String uploadStudentImg(){
+		
+		//viewOrg = new VOrg();
+		
+		//String path = super.getRealPath("/WEB-INF/attachment");
+		String path = super.getRealPath("/attachment");
+		List<File> attachementList = this.getUpload();
+		//客户端上传的文件
+		File srcFile = null;
+		//代表目标文件，即代表服务器磁盘上的文件
+		//File targetFile = null;
+		String srcFileName = "";
+		String newFileName = "";
+		try {
+			if (attachementList != null && attachementList.size() > 0) {
+				srcFile = attachementList.get(0);
+				srcFileName = getUploadFileName().get(0); 
+				newFileName = UUID.randomUUID().toString();
+				newFileName += getExtName(srcFileName);
+				boolean flag = uploadFileForApache(srcFile, path, newFileName);
+				//viewOrg.setFlag(flag);
+				/*
+				if(flag){
+					setStatusMsg("局方文件保存成功！");
+				}else{
+					setStatusMsg("附件文档上传失败，局方文件无法保存！");
+				}
+				*/
+				if(flag){
+					setStatusMsg(newFileName);
+					
+				}else{
+					setStatusMsg("");
+				}
+				
+			}else{
+				setStatusMsg("");
+				//viewOrg.setFlag(false);
+				//viewOrg.setMessage("上传照片失败，请重试。");
+			}
+		}catch (Exception e) {
+			e.printStackTrace();
+			//viewOrg.setFlag(false);
+			setStatusMsg("");
+		}
+		return SUCCESS;
+	}
+	
+	//传Excel
+	public String uploadStudentExcel(){
+
+		//viewOrg = new VOrg();
+		
+		//String path = super.getRealPath("/WEB-INF/attachment");
+		String path = super.getRealPath("/WEB-INF/attachment");
+		List<File> attachementList = this.getUpload();
+		//客户端上传的文件
+		File srcFile = null;
+		//代表目标文件，即代表服务器磁盘上的文件
+		//File targetFile = null;
+		String srcFileName = "";
+		String newFileName = "";
+		try {
+			if (attachementList != null && attachementList.size() > 0) {
+				srcFile = attachementList.get(0);
+				srcFileName = getUploadFileName().get(0); 
+				newFileName = UUID.randomUUID().toString();
+				newFileName += getExtName(srcFileName);
+				boolean flag = uploadFileForApache(srcFile, path, newFileName);
+
+				if(flag){
+					//setStatusMsg(newFileName);
+					student.setUserid(getLoginContext().getUserId());
+					Map<String, VStudentBaseInfo> map = ReadExcel.readExcelInfo(path+File.separator + newFileName);
+					
+					File file = new File(path+File.separator + newFileName);
+					if(file.exists()){
+						file.delete();
+					}
+					/*
+					Iterator iter = map.entrySet().iterator();
+					Map.Entry entry;
+					VStudentBaseInfo t;
+					while (iter.hasNext()){
+						entry = (Map.Entry) iter.next();
+						t = (VStudentBaseInfo)entry.getValue();
+						System.out.println("|" + StringUtils.isNotBlank(t.getCreateTime()) +"|");
+					}
+					System.out.println(map.size());
+					*/
+					getFactory().getFinanceProviderInstance().getStudentService().importStudentBaseInfo(student, map);
+					
+				}else{
+					setStatusMsg("学生信息导入失败。");
+					setStatusMsg("1");
+				}
+				
+			}else{
+				setStatusMsg("学生信息导入失败。");
+				setStatusMsg("1");
+			}
+		}catch (Exception e) {
+			e.printStackTrace();
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("学生信息导入成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	
+	//传成绩Excel
+	public String uploadStudentScoreExcel(){
+
+		//viewOrg = new VOrg();
+		//System.out.println(333);
+		//String path = super.getRealPath("/WEB-INF/attachment");
+		String path = super.getRealPath("/WEB-INF/attachment");
+		List<File> attachementList = this.getUpload();
+		//客户端上传的文件
+		File srcFile = null;
+		//代表目标文件，即代表服务器磁盘上的文件
+		//File targetFile = null;
+		String srcFileName = "";
+		String newFileName = "";
+		try {
+			if (attachementList != null && attachementList.size() > 0) {
+				srcFile = attachementList.get(0);
+				srcFileName = getUploadFileName().get(0); 
+				newFileName = UUID.randomUUID().toString();
+				newFileName += getExtName(srcFileName);
+				
+				if(StringUtils.isBlank(student.getStuTypeName())){
+					setStatusMsg("导入失败，请选择成绩类型。");
+					setStatusMsg("1");
+					return SUCCESS;
+				}
+				//System.out.println(2222);
+				boolean flag = uploadFileForApache(srcFile, path, newFileName);
+
+				if(flag){
+					//setStatusMsg(newFileName);
+					student.setUserid(getLoginContext().getUserId());//登录人的id
+					List<VStudentBaseInfo> list = ReadExcel.readScoreExcelInfo(path+File.separator + newFileName);
+					//System.out.println(1111);
+					File file = new File(path+File.separator + newFileName);
+					if(file.exists()){
+						file.delete();
+					}
+					//for(VStudentBaseInfo t:list){
+					//	System.out.println("|" + t.getVCode() +"|" + t.getSyd() + "|" + t.getCreateTime());
+					//}
+					//System.out.println(list.size());
+				
+					viewStudentBaseInfoList = getFactory()
+							.getFinanceProviderInstance().getStudentService()
+							.importStudentScore(student, list);
+					String cond = "学生成绩导入失败，有问题的学号：<br/>";
+					
+					for(VStudentBaseInfo t:viewStudentBaseInfoList){
+
+						cond+=t.getVCode()+" ";
+					}
+					if(viewStudentBaseInfoList.size()>0){
+						setStatusMsg(cond);
+						return SUCCESS;
+					}
+				} else {
+					setStatusMsg("学生成绩导入失败。");
+					setStatusMsg("1");
+				}
+				
+			}else{
+				setStatusMsg("学生成绩导入失败。");
+				setStatusMsg("1");
+			}
+		}catch (Exception e) {
+			e.printStackTrace();
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("学生成绩导入成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	//保存局方文件信息
+	public String saveFileInfo(){
+		//System.out.println("title: " + fileInfo.getVTitle());
+		//System.out.println("Introduction: " + fileInfo.getVIntroduction());
+		if(StringUtils.isBlank(fileInfo.getVTitle())) {
+			setStatusMsg("文件标题名称不能为空！");
+			setStatusMsg("1");
+		}//else if(StringUtils.isBlank(fileInfo.getVIntroduction())){
+		//	setStatusMsg("文件描述不能为空！");
+		//}
+		else{
+            String path = super.getRealPath("/WEB-INF/attachment");
+			
+//			File foder = new File(path);
+//			if(!foder.exists()){
+//			    foder.mkdirs();
+//			}
+			List<File> attachementList = this.getUpload();
+			//客户端上传的文件
+			File srcFile = null;
+			//代表目标文件，即代表服务器磁盘上的文件
+			//File targetFile = null;
+			String srcFileName = "";
+			String newFileName = "";
+
+			try {
+				if (attachementList != null && attachementList.size() > 0) {
+					srcFile = attachementList.get(0);
+					srcFileName = getUploadFileName().get(0); //获取源文件的文件名
+					newFileName = UUID.randomUUID().toString();
+					//保存名称，即重命名后文件名
+					newFileName += getExtName(srcFileName);
+					//targetFile = new File(path + File.separator + newFileName);
+					//将服务器内存中的文件移至服务器指定的磁盘上
+					//srcFile.renameTo(targetFile);
+					boolean flag = uploadFileForApache(srcFile, path, newFileName);
+					
+					if(flag){
+						//保存文件信息
+						// 获取用户对象,取得登录者，即创建该角色的人
+						TUser tuser = getFactory()
+								.getFinanceProviderInstance()
+								.getSysUserService()
+								.readSysUserByLoginID(
+										this.getLoginContext().getLoginId());
+						this.fileInfo.setTUser(tuser);
+						
+						//设置附件文件名称
+						this.fileInfo.setVFilename(newFileName);
+						
+						this.fileInfo.setDCreateDate(new Date());
+						
+						
+						getFactory().getFinanceProviderInstance().getTFileManagerService().saveTFile(this.fileInfo);
+						setStatusMsg("局方文件保存成功！");
+						setStatusMsg("0");
+					}else{
+						setStatusMsg("附件文档上传失败，局方文件无法保存！");
+						setStatusMsg("1");
+					}
+					
+				}else{
+					setStatusMsg("局方文件保存失败！");
+					setStatusMsg("1");
+				}
+			}catch (FinanceServiceException e) {
+				//throw new FinanceServiceException("保存数据错误："+e.getMessage());
+				e.printStackTrace();
+				setStatusMsg(e.getMessage());
+				setStatusMsg("1");
+				File file = new File(path + File.separator + this.fileInfo.getVFilename());
+				if(file.exists()){
+					file.delete();
+				}
+			}
+			
+		}
+		return SUCCESS;
+	}
+
+	//修改局方文件信息
+	public String updateFileInfo(){
+
+		if(StringUtils.isBlank(fileInfo.getVTitle())) {
+			setStatusMsg("文件标题名称不能为空！");
+			setStatusMsg("1");
+		}
+		else{
+            String path = super.getRealPath("/WEB-INF/attachment");
+
+			List<File> attachementList = this.getUpload();
+			//客户端上传的文件
+			File srcFile = null;
+			//代表目标文件，即代表服务器磁盘上的文件
+			//File targetFile = null;
+			String srcFileName = "";
+			String newFileName = "";
+
+			try {
+				if (attachementList != null && attachementList.size() > 0) {
+					
+					srcFile = attachementList.get(0);
+					srcFileName = getUploadFileName().get(0); //获取源文件的文件名
+					newFileName = UUID.randomUUID().toString();
+					//保存名称，即重命名后文件名
+					newFileName += getExtName(srcFileName);
+					//targetFile = new File(path + File.separator + newFileName);
+					//将服务器内存中的文件移至服务器指定的磁盘上
+					//srcFile.renameTo(targetFile);
+					boolean flag = uploadFileForApache(srcFile, path, newFileName);
+					
+					if(flag){
+						//因为有新附件了，所以将原附件删除
+						
+						ITFileManager itm = getFactory().getFinanceProviderInstance().getTFileManagerService();
+						TFile tf = itm.searchTFileById(this.fileInfo.getVId());
+						
+						File oldAtt = new File(path + File.separator + tf.getVFilename());
+						if(oldAtt.exists()){
+							oldAtt.delete();
+						}
+//						tf.setVTitle(this.fileInfo.getVTitle());
+//						tf.setVIntroduction(this.fileInfo.getVIntroduction());
+						//设置附件文件名称
+						this.fileInfo.setVFilename(newFileName);
+						
+						
+
+						getFactory().getFinanceProviderInstance().getTFileManagerService().updateTFile(this.fileInfo);
+						setStatusMsg("局方文件更新成功！");
+						setStatusMsg("0");
+					}else{
+						setStatusMsg("局方文件更新失败！");
+						setStatusMsg("1");
+					}
+					
+				}else{//表示本次修改没有上传新附件
+					//System.out.println("fname: " + this.fileInfo.getVFilename());
+					ITFileManager itm = getFactory().getFinanceProviderInstance().getTFileManagerService();
+					
+					TFile tf = itm.searchTFileById(this.fileInfo.getVId());
+					tf.setVTitle(this.fileInfo.getVTitle());
+					tf.setVIntroduction(this.fileInfo.getVIntroduction());
+					getFactory().getFinanceProviderInstance().getTFileManagerService().updateTFile(tf);
+					setStatusMsg("局方文件更新成功！");
+					setStatusMsg("0");
+				}
+			}catch (FinanceServiceException e) {
+				e.printStackTrace();
+				setStatusMsg("局方文件更新失败！");
+				setStatusMsg("1");
+			}
+			
+		}
+		return SUCCESS;
+	}
+	
+	/**
+	 * 删除局方文件
+	 * 
+	 * @return
+	 */
+	public String deleteTFiles(){
+		String result = SUCCESS;
+		if(StringUtils.isBlank(getFileids())){
+			setStatusMsg("请选择要删除的局方文件！");
+			setStatusMsg("1");
+		}else{
+			String[] ids = this.fileids.split(",");
+			if(ids != null && ids.length > 0){
+				try {
+					String path = super.getRealPath("/WEB-INF/attachment");
+					//删除局方文件
+					getFactory().getFinanceProviderInstance().getTFileManagerService().deleteTFileByIds(path, ids);							
+					setStatusMsg("删除局方文件成功！");
+					setStatusMsg("0");
+				} catch (FinanceServiceException e) {
+					//输出日志信息
+					log.error("删除局方文件出错：" + e.getMessage());
+					setStatusMsg("删除局方文件出错");
+					setStatusMsg("1");
+				}
+			}
+	
+		}
+
+		return result;
+	}	
+	
+	/**
+	 * 功能：根据关键字分页查询局方文件
+	 */
+	public String searchTFiles()throws ParseException{
+
+		ITFileManager tfileService = getFactory().getFinanceProviderInstance().getTFileManagerService();
+		//构造查询参数
+		Map<String,Object> queryMap=new HashMap<String,Object>();
+		queryMap.put(ITFileManager.QUERY_KEY_NAME, this.key);
+	
+		try {
+			setPage(tfileService.searchTFiles(queryMap, getPageIndex()));
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+			setStatusMsg("查询局方文件列表失败");
+			setStatusMsg("1");
+		}
+		return SUCCESS;
+	}
+	
+	/**
+	 * 功能：根据主键查询局方文件
+	 * @return
+	 */
+	public String searchTFileById(){
+		//System.out.println("id: " + this.id);
+		String result = "successForView";
+		//String result = ERROR;
+		if (StringUtils.isBlank(this.getId())) {
+			setStatusMsg("局方文件主键不能为空");
+			setStatusMsg("1");
+		}else{
+			try {
+				
+				
+				if(this.ediOrViewFlag!= null && this.ediOrViewFlag.equals("edit")){
+					fileInfo = getFactory().getFinanceProviderInstance().getTFileManagerService().searchTFileById(this.id);
+					result = "successForEdit";
+				}else if(this.ediOrViewFlag!= null && this.ediOrViewFlag.equals("view")){//查看局方文件
+					fileInfo = getFactory().getFinanceProviderInstance().getTFileManagerService().searchTFileById(this.id);
+					//查看时，更新点击量
+					Integer idoit = fileInfo.getIDoit() ;
+					if(idoit == null){
+						idoit = new Integer(0);
+					}
+					fileInfo.setIDoit(idoit + 1);
+					getFactory().getFinanceProviderInstance().getTFileManagerService().updateTFile(fileInfo);
+				}
+				
+				//System.out.println(this.vrole.getVName());
+				//result = SUCCESS;
+			} catch (FinanceServiceException e) {
+				setStatusMsg("获取局方文件对象信息失败。");
+				setStatusMsg("1");
+				e.printStackTrace();
+			}
+		}
+
+		return result;
+	}
+
+	
+	
+	/**
+	 * 功能：采用Apache提供的工具类完成文件上传 
+	 * 
+	*/
+	private static boolean uploadFileForApache(File file,String savePath,String fileName){
+		boolean flag = false;
+   	    FileInputStream fis = null;
+        FileOutputStream fos = null;
+        
+
+        try {
+			fis = new FileInputStream(file);
+			//File.separator：表示路径分隔符
+			fos = new FileOutputStream(savePath + File.separator + fileName);
+			//将数据拷贝到 上传目录，这里没有必要使用缓冲流，因为IOUtils工具类已经使用了缓存，
+			//copy()方法如果正确执行完毕后，返回的值为int类型，返回的这个值就是上传文件的大小，单位为字节
+		   	//int i = IOUtils.copy(fis, fos);
+		   	IOUtils.copy(fis, fos);
+		   	flag = true;
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally{
+			try {
+				if(fis != null){
+					fis.close();
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			} finally{
+				try {
+					if(fos != null){
+						fos.close();
+					}
+				} catch (IOException e) {				
+					e.printStackTrace();
+				}
+			}
+
+		}
+		return flag;
+	}
+	
+
+	
+
+	// 根据文件名获取扩展名
+	private String getExtName(String fileName) {
+		String fileExt = fileName.substring(fileName.lastIndexOf("."), fileName.length());
+		return fileExt;
+	}
+	
+	//删除附件
+	public String delAttachment(){
+		
+	   if(this.attachmentFileName != null && !this.attachmentFileName.trim().equals("")){
+		   //System.out.println("attachmentFileName: " + this.attachmentFileName);
+		   String path = super.getRealPath("/WEB-INF/attachment");
+		   File file = new File(path + File.separator + this.attachmentFileName);
+		   if(file.exists()){
+			   if(file.delete()){
+				   
+					try {
+						//设置附件成功删除成功标志位
+						   this.flag = 1;
+						   ITFileManager itm = getFactory().getFinanceProviderInstance().getTFileManagerService();
+						TFile tf = itm.searchTFileById(id);
+						tf.setVFilename(null);
+						itm.updateTFile(tf);
+					} catch (FinanceServiceException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				   
+			   }
+		   }
+	   }
+	   
+	   return SUCCESS;
+	}
+	
+	public TFile getFileInfo() {
+		return fileInfo;
+	}
+
+	public void setFileInfo(TFile fileInfo) {
+		this.fileInfo = fileInfo;
+	}
+
+	public String getId() {
+		return id;
+	}
+
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
+
+	public String getKey() {
+		return key;
+	}
+
+
+	public void setKey(String key) {
+		this.key = key;
+	}
+
+
+	public String getFileids() {
+		return fileids;
+	}
+
+
+	public void setFileids(String fileids) {
+		this.fileids = fileids;
+	}
+
+
+	public String getAttachmentFileName() {
+		return attachmentFileName;
+	}
+
+
+	public void setAttachmentFileName(String attachmentFileName) {
+		this.attachmentFileName = attachmentFileName;
+	}
+
+	public String getEdiOrViewFlag() {
+		return ediOrViewFlag;
+	}
+
+	public void setEdiOrViewFlag(String ediOrViewFlag) {
+		this.ediOrViewFlag = ediOrViewFlag;
+	}
+
+	public int getFlag() {
+		return flag;
+	}
+
+	public void setFlag(int flag) {
+		this.flag = flag;
+	}
+
+	public VOrg getViewOrg() {
+		return viewOrg;
+	}
+
+	public void setViewOrg(VOrg viewOrg) {
+		this.viewOrg = viewOrg;
+	}
+
+	public VStudentBaseInfo getStudent() {
+		return student;
+	}
+
+	public void setStudent(VStudentBaseInfo student) {
+		this.student = student;
+	}
+
+	public List<VStudentBaseInfo> getViewStudentBaseInfoList() {
+		return viewStudentBaseInfoList;
+	}
+
+	public void setViewStudentBaseInfoList(
+			List<VStudentBaseInfo> viewStudentBaseInfoList) {
+		this.viewStudentBaseInfoList = viewStudentBaseInfoList;
+	}
+	
+	
+}

@@ -1,0 +1,57 @@
+package com.cauc.training.business;
+
+import java.util.List;
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.pojos.TOrg;
+import com.cauc.training.vo.VOrg;
+
+
+public interface IOrgService {
+
+	/**
+	 * 状态有效
+	 */
+	public static final int  QUERY_KEY_STATUS_EFFECT=0;
+	
+	
+	/**
+	 * 状态无效
+	 */
+	public static final int  QUERY_KEY_STATUS_NO_EFFECT=1;
+	
+	/**
+	 * 创建机构
+	 * @param org
+	 * @throws FinanceServiceException
+	 */
+	public void saveOrg(TOrg org) throws FinanceServiceException;
+	
+	/**
+	 * 更新机构
+	 * @param org
+	 * @throws FinanceServiceException
+	 */
+	public void updateOrg(TOrg org) throws FinanceServiceException;
+	
+	/**删除机构
+	 * 
+	 * @param id
+	 * @throws FinanceServiceException
+	 */
+	public void deleteOrgById(String id) throws FinanceServiceException;
+	
+	/**
+	 * 获取机构列表
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<VOrg> readOrgList(String id) throws FinanceServiceException;
+	
+	/**
+	 * 获取基地列表
+	 * @param parentid
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<TOrg> readBaseList(String parentid,String id) throws FinanceServiceException;
+}

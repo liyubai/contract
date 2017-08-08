@@ -1,0 +1,178 @@
+package com.cauc.training.business.hibernate;
+
+import java.util.List;
+import java.util.Map;
+
+import org.hibernate.Criteria;
+import org.hibernate.HibernateException;
+import org.hibernate.criterion.Order;
+import org.hibernate.criterion.Restrictions;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.business.IDictionaryInfomation;
+import com.cauc.training.business.dao.GenericHibernateDAO;
+import com.cauc.training.business.dao.support.Page;
+import com.cauc.training.pojos.TDiction;
+
+@Service("tDictionaryInfomationImpl")
+public class TDictionaryInfomationImpl extends GenericHibernateDAO implements IDictionaryInfomation {
+
+	/**
+	 * 功能：根据字典信息名称，判断该字典信息是否已存在 
+	 * @param name：字典信息
+	 * @param typeId：该字典信息的类型，不同类型可能会有相同的字典信息
+	*/
+
+	@SuppressWarnings("unchecked")
+	private boolean isExistTDicInfo(String name, String typeId) throws FinanceServiceException {
+		//该标志位用于表示字典信息是否已存在，false:表示不存在
+		boolean flag = false;
+		String hql = "from TDiction where VName=? and TDictype.VId=?";
+		List<TDiction> tdicList = super.find(hql, name, typeId);
+		if (tdicList != null && tdicList.size() > 0){
+			flag = true;
+			System.out.println(tdicList.size());
+			TDiction t = tdicList.get(0);
+			System.out.println(t.getVName());
+		}
+		return flag;
+			
+	}
+	
+	/**
+	 * 功能：根据字典信息和主键，判断该字典信息是否已存在 ，主要用于编辑时判断
+	 * @param vid：要修改的字典信息主键
+	 * @param name：字典信息
+	 * @param typeId：该字典信息的类型，不同类型可能会有相同的字典信息
+	 * 
+	*/
+	@SuppressWarnings("unchecked")
+	private boolean isExistTDicInfo(String vid, String name, String typeId) throws FinanceServiceException {
+		//该标志位用于表示文件是否已存在，false:表示不存在
+		boolean flag = false;
+		String hql = "from TDiction where VId<>? and VName=?  and TDictype.VId=?";
+		List<TDiction> tdicList = super.find(hql, vid, name,typeId);
+		if (tdicList != null && tdicList.size() > 0){
+			flag = true;
+		}
+		return flag;
+			
+	}	
+	
+	/**
+	 * 保存字典信息
+	 * @param dic
+	 * @throws FinanceServiceException
+	 */
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void saveDicInfo(TDiction dic) throws FinanceServiceException {
+		
+		if(dic != null){
+			if(isExistTDicInfo(dic.getVName(), dic.getTDictype().getVId())){
+				throw new FinanceServiceException("保存字典信息失败，该字典信息已经存在！");
+			}else{
+				try{
+					super.save(dic);
+				}catch(HibernateException e){
+					throw new FinanceServiceException("保存字典信息失败！", e);
+				}
+			}
+
+		}else{
+			throw new FinanceServiceException("保存字典信息失败！");
+		}
+	}
+
+	
+	/**
+	 * 功能：根据关键字分页查询字典信息 
+	 * @param params：Map结构，key为TDiction中的VName，value为用户输入的关键字
+	 * @param pageNo：当前页号
+	*/
+	public Page searchDicInfos(Map<String, Object> params, String pageNo) throws FinanceServiceException {
+		Page page = null;
+		//使用Criteria查询TDiction对象
+		Criteria criteria = this.createCriteria(TDiction.class);
+		//如果查询条件不为空，则添加查询条件
+		if (params.get(QUERY_KEY_NAME) != null && !params.get(QUERY_KEY_NAME).equals("")){
+			
+			criteria.add(Restrictions.like(QUERY_KEY_NAME, "%" + params.get(QUERY_KEY_NAME) + "%"));
+		}
+		criteria.addOrder(Order.desc(QUERY_KEY_DATE));
+		//System.out.println("key: " + params.get(QUERY_KEY_NAME));
+		Integer pageIndex = Integer.parseInt(pageNo);
+		try {
+			page = this.pagedQuery(criteria, pageIndex);
+		} catch (HibernateException e) {
+			e.printStackTrace();
+			throw new FinanceServiceException("查询字典信息列表失败", e);
+		}
+		return page;
+	}
+
+	/**
+	 * 功能：根据主键查询字典信息
+	 * @return
+	 */
+	public TDiction searchDicInfoById(String id) throws FinanceServiceException {
+		return super.get(TDiction.class, id);
+	}
+
+
+	/**
+	 * 更新字典信息
+	 * @param dic
+	 * @throws FinanceServiceException
+	 */
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void updateDicInfo(TDiction dic) throws FinanceServiceException {
+		if(dic != null){
+			//System.out.println("dic_name: " + dic.getVName());
+			if(isExistTDicInfo(dic.getVId(), dic.getVName(), dic.getTDictype().getVId())){
+				throw new FinanceServiceException("更新字典信息失败，该字典信息已经存在！");
+			}else{
+				try {
+					TDiction old = super.get(TDiction.class, dic.getVId());
+					old.setVName(dic.getVName());
+					old.setTDictype(dic.getTDictype());
+					super.update(old);
+				}catch (HibernateException e) {
+					throw new FinanceServiceException("更新字典信息对象失败", e);
+				}
+			}
+		}else{
+			throw new FinanceServiceException("更新字典信息失败！");
+		}
+
+	}
+
+	/**
+	 * 功能：删除字典信息（可单一删除，也可批量删除）
+	 * @param ids
+	 * @throws FinanceServiceException
+	 * 说明：String... ids 表示定义一个可变变量，即Ids就是一个字符串数组，等价于String[] ids
+	 */
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void deleteDicInfoByIds(String... ids) throws FinanceServiceException {
+			if(ids != null && ids.length >0){
+				try {
+					for (String id : ids) {
+						System.out.println(id);
+//						if(super.findBy(TDiction.class, "TDictype.VId", id).size()>0){
+//							throw new FinanceServiceException("该字典类型已经被引用，不能删除！");
+//						}
+						super.removeById(TDiction.class, id);
+					}
+				}catch (HibernateException e) {
+					e.printStackTrace();
+					throw new FinanceServiceException("删除字典信息失败", e);
+				}
+			}
+
+	}
+	
+	
+}

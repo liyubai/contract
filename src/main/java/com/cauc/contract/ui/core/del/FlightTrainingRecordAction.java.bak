@@ -1,0 +1,1981 @@
+package com.cauc.training.ui.core.del;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import jxl.Workbook;
+import jxl.write.WritableSheet;
+import jxl.write.WritableWorkbook;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.struts2.ServletActionContext;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.business.IFlightTrainingRecordService;
+import com.cauc.training.business.IOutLineService;
+import com.cauc.training.business.IPlaneService;
+import com.cauc.training.business.IStudentService;
+import com.cauc.training.business.ISystemUserManagerService;
+import com.cauc.training.business.IToDoingService;
+import com.cauc.training.pojos.AddHoursAndAddLesson;
+import com.cauc.training.pojos.Planeinfo;
+import com.cauc.training.pojos.PracticeAsk;
+import com.cauc.training.pojos.PracticeTest;
+import com.cauc.training.pojos.Station;
+import com.cauc.training.pojos.TDiction;
+import com.cauc.training.pojos.TFlightTrainingrecord;
+import com.cauc.training.pojos.TOrg;
+import com.cauc.training.pojos.TOtherflyrecord;
+import com.cauc.training.pojos.TOutline;
+import com.cauc.training.pojos.TSetClass;
+import com.cauc.training.pojos.TeacherBaseInfo;
+import com.cauc.training.pojos.TraininglessonRelation;
+import com.cauc.training.pojos.Trainlessonunit;
+import com.cauc.training.ui.common.BaseActionSupport;
+import com.cauc.training.util.Utilities;
+import com.cauc.training.vo.VChangedbaseflyline;
+import com.cauc.training.vo.VFlightTrainingrecord;
+import com.cauc.training.vo.VFlightTrainingrecordDetail;
+import com.cauc.training.vo.VOrg;
+import com.cauc.training.vo.VOutline;
+import com.cauc.training.vo.VTeacherBaseInfo;
+import com.cauc.training.vo.VTotalSummary;
+import com.cauc.training.vo.VTrainingRecordCompletion;
+import com.cauc.training.vo.VTrainsubject;
+
+/**
+ * 飞行训练管理
+ * @author FuChaoHui
+ * 
+ */
+public class FlightTrainingRecordAction extends BaseActionSupport{
+
+	private static final long serialVersionUID = 8693434974245084054L;
+
+	private List<Planeinfo> planeinfoList;
+	private List<Station> stationList;
+	private List<Trainlessonunit> unitList;
+	private List<VOutline> vunitList;//单元，历史记录使用
+	private List<VOutline> phaseList;//阶段列表
+	private List<VOutline> phaseLessonList;//课程列表
+	private List<TDiction> flyTypeList;//飞行种类
+	private List<VTeacherBaseInfo> teacherBaseInfoList;//教员列表
+	private List<TeacherBaseInfo> jianshiTeacherBaseInfoList;//监视教员列表
+	private List<TOutline> outlineList;//大纲列表
+	private List<TOutline> olist;//大纲列表
+	private String outlineid;//大纲id
+	private String unitid;//单元id
+	private String phaseid;//阶段id
+	private String baseName;//基地名称，拼配默认站
+	private String teacherid;//教员id
+	private String lessonid;//课程id
+	private String lessonType;//课程类型
+	private String planeid;//航空器id
+	private String studentid;//学生id
+	private String studentCode;//学号
+	private String id;//记录id
+	private String selIds;//连续选择记录id
+	private String status;//状态
+	private VFlightTrainingrecord viewFlightTrainingrecord;
+	private List<VFlightTrainingrecordDetail> recordList;
+	private VFlightTrainingrecordDetail viewRecord;
+	private String flyMoment;//出发时刻
+	private String endMoment;//到达时刻
+	private String flyDate;//飞行日期
+	private String flyStation;//起飞站
+	private String endStation;//到达站
+	private String jtStation;//经停达站
+	private String name;//查询关键字
+	private String code;//学号
+	private String tuijian;//推荐
+	private PracticeAsk ask;//实践考试申请
+	private TFlightTrainingrecord trainingRecord;//训练记录
+	private List<VTrainsubject> lessonSubjectList;//课程科目得分列表
+	private List<VTrainingRecordCompletion> viewCompletionList; //显示大纲单元
+	private TOtherflyrecord otherRecord;//其它飞行记录
+	private AddHoursAndAddLesson add;//加时加课
+	private VOutline viewOutline;//大纲对象
+	private PracticeTest test;//实践考试
+	private VChangedbaseflyline line;//转场航线
+	private VOrg viewOrg;//jSon返回值
+	private List<PracticeAsk> askList;
+	private VTotalSummary totalSummary;
+	private int isOpen;//是否开放历史记录
+	private String year;//年
+	private String classNo;//班级
+	private String xcompanyid;//所属公司
+	private List<TOrg> dictionCompanyList;
+	private List<Integer> yearList;
+	private List<TSetClass> classList;
+	private List<TeacherBaseInfo> teacherList;
+	private InputStream inputStream;// 输入流
+	private String attachmentName;// 附件名称
+	
+	public String readOtherFlightTrainingRecordList() throws ParseException{
+		try {
+			setPage(getFactory().getFinanceProviderInstance()
+					.getFlightTrainingRecordService()
+					.readOtherTrainingHistoryRecordList(searchGetValue(), getPageIndex()));
+		} catch (FinanceServiceException e) {
+			setStatusMsg("获取训练记录列表失败。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		return SUCCESS;
+	}
+	public String checkStudentOutlineIsRight(){
+		try {
+			viewOrg = getFactory().getFinanceProviderInstance()
+					.getFlightTrainingRecordService()
+					.checkStudentOutlineIsRight(studentid, outlineid);
+		} catch (FinanceServiceException e) {
+			viewOrg = new VOrg();
+			viewOrg.setFlag(false);
+		}
+		
+		return SUCCESS;
+	}
+	
+	public String readStudentNameByCode(){
+		viewOrg = new VOrg();
+		if(StringUtils.isBlank(code)){
+			viewOrg.setVId("");
+			viewOrg.setMessage("");
+			return SUCCESS;
+		}
+		try {
+			viewOrg = getFactory().getFinanceProviderInstance().getFlightTrainingRecordService().readStudentNameByCode(code);
+		} catch (FinanceServiceException e) {
+			viewOrg.setVId("");
+			viewOrg.setMessage("");
+		}
+		return SUCCESS;
+	}
+	//删除训练记录
+	public String deleteHistoryFlightTrainingRecord(){
+		if(StringUtils.isBlank(id)){
+			setStatusMsg("请选择要删除的记录。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		if(this.getLoginContext().getLoginUserType()!=3){
+			setStatusMsg("您的身份不是管理员，不能删除记录。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		try {
+			isOpen = getFactory().getFinanceProviderInstance().getToDoingService().readAddHistorySetUp(IToDoingService.HISTORY_SETUP);
+			getFactory().getFinanceProviderInstance().getFlightTrainingRecordService().deleteHistoryFlightTrainingRecord(id,isOpen);
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+			setStatusMsg(e.getMessage());
+			
+			return SUCCESS;
+		}
+		setStatusMsg("删除成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	
+	//学生训练历史记录录入页面
+	public String openCreateHistoryFlightTrainingRecordPage(){
+		
+		//时间界线控制，在设定的时间之前可以打开页面录入，读取数据字典。
+		//1.显示大纲
+		//2.显示单元
+		//3.显示阶段
+		//4.显示课程
+		//5.显示教员
+		//6.监视教员
+		//7.显示飞机
+		//8.显示站
+		//9.飞行种类
+		try {
+			isOpen = getFactory().getFinanceProviderInstance().getToDoingService().readAddHistorySetUp(IToDoingService.HISTORY_SETUP);
+			if(isOpen==0){
+				setStatusMsg("历史记录录入已经关闭。");
+				setStatusMsg("1");
+				return INPUT;
+			}else if(isOpen==1 && (getLoginContext().getLoginUserType()!=3 && getLoginContext().getLoginUserType()!=1)) {//包含学生
+				setStatusMsg("历史记录录入已经关闭。");
+				setStatusMsg("1");
+				return INPUT;
+			}else if(isOpen==2 && getLoginContext().getLoginUserType()!=3){//不包含学生
+				setStatusMsg("历史记录录入已经关闭。");
+				setStatusMsg("1");
+				return INPUT;
+			}else{
+				
+			}
+			setViewDate(Utilities.format(new Date()));
+			Map<String, Object> queryMap = new HashMap<String, Object>();
+			queryMap.put("type", "1");
+			IOutLineService ioutline = getFactory().getFinanceProviderInstance().getOutLineService();
+			planeinfoList = getFactory().getFinanceProviderInstance().getPlaneService().readPlaneBaseInfoList(queryMap);
+			stationList = ioutline.readStationList(queryMap);
+			outlineList = ioutline.readOutlineList();
+			if(StringUtils.isBlank(this.getOutlineid())){
+				if(outlineList.size()>0){
+					setOutlineid(outlineList.get(0).getVId());
+				}else{
+					setOutlineid("");
+				}
+			}
+			
+			olist= new ArrayList<TOutline>();
+			for(TOutline t:outlineList){
+				
+				if(this.getOutlineid().equals(t.getVId())){
+					olist.add(t);
+				}				
+			}	
+			
+			IFlightTrainingRecordService  fservice =  getFactory().getFinanceProviderInstance().getFlightTrainingRecordService();
+			flyTypeList = fservice.readFlyTypeList(IFlightTrainingRecordService.QUERY_KEY_FLY_TYPE);
+			jianshiTeacherBaseInfoList = fservice.readJianShiTeacherBaseInfoByBaseid(queryMap);//监视教员与教员列表相同
+			this.setStudentid(fservice.readStudentIdByUserid(this.getLoginContext().getUserName()));
+			
+			
+			//根据大纲id，获得单元、阶段
+			if(StringUtils.isBlank(this.getLessonid())){
+				
+				TraininglessonRelation relation = ioutline.readTraininglessonRelationByOutlineId(outlineid);
+				if(relation!=null){
+					this.setUnitid(relation.getTPhase().getTrainlessonunit().getVId());
+					this.setPhaseid(relation.getTPhase().getVId());
+					this.setLessonid(relation.getTTrainingLesson().getVId());
+					this.setLessonType(String.valueOf(relation.getTTrainingLesson().getIFxxz()));
+					if(relation.getTTrainingLesson().getIType()!=0){
+						this.setStatus("朝阳");
+					}else{
+						this.setStatus("");
+					}
+				}else{
+					this.setUnitid("");
+					this.setPhaseid("");
+					this.setLessonid("");
+					this.setLessonType("");
+					this.setStatus("");
+				}
+			}
+			
+			
+			//所有大纲的所有单元
+			vunitList = ioutline.readLessonObjectList(olist,"unit");
+			
+			//所有单元的所有阶段
+			phaseList = ioutline.readLessonObjectList(olist,"phase");
+			
+			//所有阶段的所有课程
+			phaseLessonList = ioutline.readLessonObjectList(olist,"lesson");
+			
+			if(!StringUtils.isBlank(this.getId())){
+				queryMap.put(IFlightTrainingRecordService.TRAINING_RECORD_ID, this.getId());
+				recordList = fservice.readDayFlightTrainingRecordList(queryMap);
+			}
+			
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return INPUT;
+		}
+		
+		return SUCCESS;
+	}
+	
+	public String readStartPosAndEndPosByLessonid(){
+		try {
+			line = getFactory().getFinanceProviderInstance().getFlightTrainingRecordService().readStartPosAndEndPosByLessonid(lessonid);
+		} catch (FinanceServiceException e) {
+		}
+		return SUCCESS;
+	}
+	
+	public String readOutlineInfoByStudentId() {
+		try {
+			viewOutline = getFactory().getFinanceProviderInstance()
+					.getFlightTrainingRecordService()
+					.readOutlineInfoByStudentId(studentid);
+		} catch (FinanceServiceException e) {
+		}
+		return SUCCESS;
+	}
+	
+	//保存学生申请
+	public String savePracticeAsk() {
+
+		if(ask.getDAskTime()==null){
+			setStatusMsg("申请时间不能为空。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		if(StringUtils.isBlank(ask.getVBz())){
+			setStatusMsg("请选择学员申请考试。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		if(StringUtils.isBlank(ask.getVContent()) && StringUtils.isBlank(ask.getVId())){
+			setStatusMsg("考试内容不能为空。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		try {
+			ask.setTUserByVCreateuserid(getFactory()
+					.getFinanceProviderInstance().getSysUserService()
+					.readSysUserByLoginID(getLoginContext().getLoginId()));
+			getFactory().getFinanceProviderInstance()
+					.getFlightTrainingRecordService()
+					.savePracticeAsk(ask);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("申请考试成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	//保存取消学生推荐
+	public String escPracticeTest() {
+		if(StringUtils.isBlank(test.getStudentBaseInfo().getVId())){
+			setStatusMsg("请选择学生。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		
+		try {
+			test.setTUser(getFactory()
+					.getFinanceProviderInstance().getSysUserService()
+					.readSysUserByLoginID(getLoginContext().getLoginId()));
+			getFactory().getFinanceProviderInstance()
+					.getFlightTrainingRecordService()
+					.escPracticeTest(test);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			return SUCCESS;
+		}
+		setStatusMsg("取消推荐成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	//保存学生推荐
+	public String savePracticeTest() {
+		if(StringUtils.isBlank(test.getStudentBaseInfo().getVId())){
+			setStatusMsg("请选择学生。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+
+		if(test.getDCreatedate()==null){
+			setStatusMsg("推荐时间不能为空。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		
+		try {
+			test.setTUser(getFactory()
+					.getFinanceProviderInstance().getSysUserService()
+					.readSysUserByLoginID(getLoginContext().getLoginId()));
+			getFactory().getFinanceProviderInstance()
+					.getFlightTrainingRecordService()
+					.savePracticeTest(test);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("推荐学生成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	//保存加时加课申请
+	public String saveAddHoursAndAddLesson() {
+		if(StringUtils.isBlank(add.getStudentBaseInfo().getVId())){
+			setStatusMsg("请选择学生。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+
+		if(add.getDCreatedate()==null){
+			setStatusMsg("申请时间不能为空。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		if(add.getIType()==0){
+			add.setTTrainingLesson(null);
+		}
+
+		if(add.getIType()==1 && add.getTTrainingLesson()==null){
+			setStatusMsg("请选择课程。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		
+		try {
+			add.setTUserByVCreateuserid(getFactory()
+					.getFinanceProviderInstance().getSysUserService()
+					.readSysUserByLoginID(getLoginContext().getLoginId()));
+			getFactory().getFinanceProviderInstance()
+					.getFlightTrainingRecordService()
+					.saveAddHoursAndAddLesson(add);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			return SUCCESS;
+		}
+		setStatusMsg("申请保存成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	
+	//加时加课
+	public String addHoursAndAddLesson(){
+		try {
+			
+			setViewDate(Utilities.format(new Date(), "yyyy-MM-dd HH:mm:ss"));
+			
+			Map<String, Object> queryMap = new HashMap<String, Object>();
+			if (StringUtils.isNotBlank(this.getName()))
+				queryMap.put(IFlightTrainingRecordService.QUERY_KEY, getName());
+			
+			setPage(getFactory().getFinanceProviderInstance()
+					.getFlightTrainingRecordService()
+					.readStudentAddHoursAndAddLessonList(queryMap, getPageIndex()));
+		} catch (FinanceServiceException e) {
+			setStatusMsg("获取学员列表失败。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}	
+		return SUCCESS;
+	}
+	
+	//加时加课实践考试页面
+	public String openPracticeTestPage(){
+		try {
+			setViewDate(Utilities.format(new Date(), "yyyy-MM-dd HH:mm:ss"));
+			
+			Map<String, Object> queryMap = new HashMap<String, Object>();
+			if (StringUtils.isNotBlank(this.getName()))
+				queryMap.put(IFlightTrainingRecordService.QUERY_KEY, getName());
+			if (StringUtils.isNotBlank(this.getTuijian()))
+				queryMap.put(IFlightTrainingRecordService.QUERY_KEY_TUIJIAN, getTuijian());
+			askList =getFactory().getFinanceProviderInstance().getFlightTrainingRecordService().readPracticeAskList();
+			setPage(getFactory().getFinanceProviderInstance()
+					.getFlightTrainingRecordService()
+					.readPracticeExamStudentList(queryMap, getPageIndex()));
+
+		} catch (FinanceServiceException e) {
+			setStatusMsg("获取学员列表失败。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}	
+		return SUCCESS;
+	}
+	
+	//课程飞行情况
+	public String readTrainingRecordCompletionDetailByLessonId() {
+		try {
+
+			viewRecord = getFactory()
+					.getFinanceProviderInstance()
+					.getFlightTrainingRecordService()
+					.readTrainingRecordCompletionDetailByLessonId(lessonid,
+							studentCode);
+		} catch (FinanceServiceException e) {
+			viewRecord=null;
+		}
+		return SUCCESS;
+	}
+	
+	//显示已选择推荐且未申请考试的学生
+	public String readRecommendExamAllNoAskStudentList() {
+		try {
+			
+			viewCompletionList = getFactory().getFinanceProviderInstance()
+					.getFlightTrainingRecordService()
+					.readRecommendExamAllNoAskStudentList();
+		} catch (FinanceServiceException e) {
+			viewCompletionList = null;
+		}
+		return SUCCESS;
+	}
+		
+	//推荐学生列表
+	public String readRecommendExamStudentList() {
+		if(StringUtils.isBlank(this.getStudentid())){
+			setStatusMsg("请选择要推荐的学生。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		try {
+			
+			viewCompletionList = getFactory().getFinanceProviderInstance()
+					.getFlightTrainingRecordService()
+					.readRecommendExamStudentList(this.getStudentid());
+		} catch (FinanceServiceException e) {
+			viewCompletionList = null;
+		}
+		return SUCCESS;
+	}
+	
+	//课程列表
+	public String readAddHoursAndAddLessonLessonListByPhaseId() {
+		try {
+			viewCompletionList = getFactory().getFinanceProviderInstance()
+					.getFlightTrainingRecordService()
+					.readAddHoursAndAddLessonLessonListByPhaseId(phaseid,studentCode);
+		} catch (FinanceServiceException e) {
+			viewCompletionList = null;
+		}
+		return SUCCESS;
+	}
+	
+	public String readLessonTrainingRecordCompletionListByPhaseId() {
+		try {
+			viewCompletionList = getFactory().getFinanceProviderInstance()
+					.getFlightTrainingRecordService()
+					.readLessonTrainingRecordCompletionListByPhaseId(phaseid,studentCode);
+		} catch (FinanceServiceException e) {
+			viewCompletionList = null;
+		}
+		return SUCCESS;
+	}
+	//阶段列表
+	public String readAddHoursAndAddLessonPhaseListByUnitId() {
+		try {
+			viewCompletionList = getFactory().getFinanceProviderInstance()
+					.getFlightTrainingRecordService()
+					.readAddHoursAndAddLessonPhaseListByUnitId(unitid,studentCode);
+		} catch (FinanceServiceException e) {
+			viewCompletionList = null;
+		}
+		return SUCCESS;
+	}
+	
+	public String readOutlineCheckListPhaseListByUnitId() {
+		try {
+			viewCompletionList = getFactory().getFinanceProviderInstance()
+					.getFlightTrainingRecordService()
+					.readOutlineCheckListPhaseListByUnitId(unitid,studentCode);
+		} catch (FinanceServiceException e) {
+			viewCompletionList = null;
+		}
+		return SUCCESS;
+	}
+	public String readPhaseTrainingRecordCompletionListByOutlineId() {
+		try {
+			viewCompletionList = getFactory().getFinanceProviderInstance()
+					.getFlightTrainingRecordService()
+					.readPhaseTrainingRecordCompletionListByOutlineId(unitid,studentCode);
+		} catch (FinanceServiceException e) {
+			viewCompletionList = null;
+		}
+		return SUCCESS;
+	}
+	//单元列表
+	public String readUnitTrainingRecordCompletionListByOutlineId() {
+		try {
+			viewCompletionList = getFactory().getFinanceProviderInstance()
+					.getFlightTrainingRecordService()
+					.readUnitTrainingRecordCompletionListByOutlineId(outlineid,studentCode);
+
+		} catch (FinanceServiceException e) {
+			viewCompletionList = null;
+			e.printStackTrace();
+		}
+		return SUCCESS;
+	}
+	
+	public String readAddHoursAndAddLessonUnitListByOutlineId() {
+		try {
+			viewCompletionList = getFactory().getFinanceProviderInstance()
+					.getFlightTrainingRecordService()
+					.readAddHoursAndAddLessonUnitListByOutlineId(outlineid,studentCode);
+		} catch (FinanceServiceException e) {
+			viewCompletionList = null;
+			e.printStackTrace();
+		}
+		return SUCCESS;
+	}
+	
+	public String readOutlineCheckListUnitListByOutlineId() {
+		try {
+			viewCompletionList = getFactory().getFinanceProviderInstance()
+					.getFlightTrainingRecordService()
+					.readOutlineCheckListUnitListByOutlineId(outlineid,studentCode);
+		} catch (FinanceServiceException e) {
+			viewCompletionList = null;
+			e.printStackTrace();
+		}
+		return SUCCESS;
+	}
+	
+	//课程得分列表
+	public String readStudentSubjectScoreByTrainingId() {
+		try {
+			lessonSubjectList = getFactory().getFinanceProviderInstance()
+					.getFlightTrainingRecordService()
+					.readStudentSubjectScoreByTrainingId(id);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			return SUCCESS;
+		}
+		return SUCCESS;
+	}
+	//显示教员评语
+	public String  readStudentCommentByTrainingId(){
+		try {
+			viewOrg = getFactory().getFinanceProviderInstance().getFlightTrainingRecordService().readStudentCommentByTrainingId(id);
+		} catch (FinanceServiceException e) {
+			
+		}
+		return SUCCESS;
+	}
+	//判断起飞站与到达站是否合法
+	public String readStationIfRightByLessonid(){
+		Map<String, Object> queryMap = new HashMap<String, Object>();
+		try {
+			if(StringUtils.isBlank(getJtStation()) || StringUtils.isBlank(getFlyStation()) || StringUtils.isBlank(getEndStation())){
+				VOrg org = new VOrg();
+				org.setFlag(false);
+				org.setMessage("三点转场的课程，三站不能相同。");
+				return SUCCESS;
+			}
+
+			queryMap.put(IFlightTrainingRecordService.QUERY_JT_STATION, this
+					.getJtStation());
+			queryMap.put(IFlightTrainingRecordService.QUERY_BEGIN_STATION, this
+					.getFlyStation());
+			queryMap.put(IFlightTrainingRecordService.QUERY_END_STATION, this
+					.getEndStation());
+			viewOrg = getFactory().getFinanceProviderInstance()
+					.getFlightTrainingRecordService()
+					.readStationIfRightByLessonid(queryMap);
+		} catch (FinanceServiceException e) {
+		}
+		return SUCCESS;
+	}
+	//获取驾驶员飞行时间
+	public String readFlightTimeByBeginTimeAndEndTime(){
+		viewOrg = new VOrg();
+		try {
+			Date d1 = Utilities.parse(getFlyDate() + " " + this.getFlyMoment() + ":00", "yyyy-MM-dd HH:mm:ss");
+			Date d2 = Utilities.parse(getFlyDate() + " " + this.getEndMoment() + ":00", "yyyy-MM-dd HH:mm:ss");
+			if(d2.getTime()<=d1.getTime()){
+				viewOrg.setMessage("出发时刻晚于到达时刻，请重新输入。");
+				viewOrg.setFlag(false);
+				return SUCCESS;
+			}
+	
+			long l1 = d1.getTime();
+			long l2 = d2.getTime();
+			double dd = (l2-l1)/1000.0/60.0;
+			viewOrg.setMessage(Utilities.formatTime(dd));
+			viewOrg.setIStatus((int)dd);
+			viewOrg.setFlag(true);
+
+			try {
+				
+				String userid = getLoginContext().getUserId();
+				IFlightTrainingRecordService  fservice =  getFactory().getFinanceProviderInstance().getFlightTrainingRecordService();
+				//4获取学员所属基地
+				TOrg org = fservice.readOrgByUserid(userid);
+				String baseid = "";
+				if(org!=null && org.getVId()!=null && org.getVName()!=null){
+					baseid = org.getVId();
+				}
+				
+				Map<String, Object> queryMap = new HashMap<String, Object>();
+				
+				//管理员暂时借用baseid，流程测试时取消
+				//baseid = "4028816a470e3d6601470e47174b0003";
+				
+				queryMap.put(IFlightTrainingRecordService.QUERY_KEY_BASE, baseid);
+				queryMap.put(IFlightTrainingRecordService.QUERY_KEY_BEGIN_DATE, d1);
+				queryMap.put(IFlightTrainingRecordService.QUERY_KEY_EDN_DATE, d2);
+				
+				//根据出发时刻、到达时刻、飞行日期、基地等获取教员列表
+				//System.out.println(baseid+"|");
+				viewOrg.setTeacherBaseInfoList(fservice.readTeacherBaseInfoByBaseid(queryMap));
+				
+				
+			} catch (FinanceServiceException e) {
+				viewOrg.setMessage("数据库错误，请重试。");
+				viewOrg.setFlag(false);
+			}
+			
+		} catch (ParseException e1) {
+			viewOrg.setMessage("出发时刻或到达时刻格式错误，请重新输入。");
+			viewOrg.setFlag(false);
+		}
+		
+		return SUCCESS;
+	}
+	
+	//获取其它飞行记录飞行时间
+	public String readOtherFlightTimeByBeginTimeAndEndTime(){
+		viewOrg = new VOrg();
+		try {
+			Date d1 = Utilities.parse(getFlyDate() + " " + this.getFlyMoment() + ":00", "yyyy-MM-dd HH:mm:ss");
+			Date d2 = Utilities.parse(getFlyDate() + " " + this.getEndMoment() + ":00", "yyyy-MM-dd HH:mm:ss");
+			if(d2.getTime()<=d1.getTime()){
+				viewOrg.setMessage("出发时刻晚于到达时刻，请重新输入。");
+				viewOrg.setFlag(false);
+				return SUCCESS;
+			}
+			long l1 = d1.getTime();
+			long l2 = d2.getTime();
+			double dd = (l2-l1)/1000.0/60.0;
+	
+			viewOrg.setMessage(Utilities.formatTime(dd));
+			viewOrg.setFlag(true);
+			
+		} catch (ParseException e1) {
+			viewOrg.setMessage("出发时刻或到达时刻格式错误，请重新输入。");
+			viewOrg.setFlag(false);
+		}
+		
+		return SUCCESS;
+	}
+	public String openCreateFlightTrainingRecordPage(){
+		Map<String, Object> queryMap = new HashMap<String, Object>();
+		try {
+			
+			if(this.getLoginContext().getLoginUserType()!=ISystemUserManagerService.USERTYPE_STUDENT
+				&& this.getLoginContext().getLoginUserType()!=ISystemUserManagerService.USERTYPE_TEACHER){
+				setStatusMsg("您当前的身份不符合录入飞行训练记录。");
+				//setStatusMsg("1");
+				return SUCCESS;
+			}
+
+			IFlightTrainingRecordService  fservice =  getFactory().getFinanceProviderInstance().getFlightTrainingRecordService();
+			
+			//是否有未审核、未确认的
+			int status = fservice.readRecordStatusByStudentCode(getLoginContext().getUserName());
+
+			if(status==IFlightTrainingRecordService.FLIGHT_RECORD_STATUS_NO_AUDIT){
+				setStatusMsg("您之前的训练记录教员尚未审核，暂时不能录入新记录。");
+				//setStatusMsg("2");
+				return SUCCESS;
+			}
+			if(status==IFlightTrainingRecordService.FLIGHT_RECORD_STATUS_YES_AUDIT){
+				setStatusMsg("请先确认教员审核通过的记录，暂时不能录入新记录。");
+				//setStatusMsg("3");
+				return SUCCESS;
+			}
+			if(status==IFlightTrainingRecordService.FLIGHT_RECORD_STATUS_BACK_AUDIT){
+				setStatusMsg("请先处理教员审核打回的记录，暂时不能录入新记录。");
+				//setStatusMsg("4");
+				return SUCCESS;
+			}
+			
+			String userid = getLoginContext().getUserId();
+			//0.根据登录人id获取学生id
+			this.setStudentid(fservice.readStudentIdByUserid(getLoginContext().getUserName()));
+			
+			//1.从登录学员或教员分配的大纲表中获取大纲
+			outlineList= fservice.readOutlineByUserId(userid);
+			if(outlineList==null || outlineList.size()==0){
+				setStatusMsg("您目前尚未分配大纲，不能添加飞行记录。");
+				//setStatusMsg("5");
+				return SUCCESS;
+			}
+			
+			/*
+			TDgdistribution o;
+			if(o!=null){
+				this.setStudentid(o.getStudentBaseInfo().getVId());
+				if(o.getStudentBaseInfo().getTDictionByVStuStatusid()!=null && !o.getStudentBaseInfo().getTDictionByVStuStatusid().getVId().
+						equals(IFlightTrainingRecordService.STUDENT_STATUS_GUO_NEI_TRAINING)){//学生状态是国内训练，才能录入记录。
+					setStatusMsg("您目前的学生状态不是国内训练，不能添加飞行记录。");
+					return SUCCESS;
+				}
+			}
+			*/
+			//2.根据登录学生的id  根据课程已飞id，获取默认单元id，默认阶段id，默认教员id，大纲id
+			TFlightTrainingrecord record = fservice.readFlightLessonByUserid(userid);
+			if(record==null){
+				this.setLessonType("");
+				this.setLessonid("");
+				this.setTeacherid("");
+				this.setFlyStation("");
+				this.setEndStation("");
+				this.setOutlineid("");
+				
+				this.setUnitid("");
+				this.setPhaseid("");
+				this.setStatus("");
+				
+				
+			}else{
+				this.setOutlineid(record.getTOutline().getVId());
+				if(StringUtils.isBlank(getLessonid())){
+					this.setLessonid(record.getTTrainingLesson().getVId());
+				}
+				this.setLessonType(String.valueOf(record.getTTrainingLesson().getIFxxz()));
+
+				if(record.getTTrainingLesson().getIType()!=0){
+					this.setStatus("朝阳");
+				}else{
+					this.setStatus("");
+				}
+				
+				
+				if(record.getTTrainingLesson().getStationByVStartpos()!=null){
+					this.setFlyStation(record.getTTrainingLesson().getStationByVStartpos().getVName());
+				}else{
+					this.setFlyStation("");
+				}
+					
+				if(record.getTTrainingLesson().getStationByVEndpos()!=null){
+					this.setEndStation(record.getTTrainingLesson().getStationByVEndpos().getVName());
+				}else{
+					this.setEndStation("");
+				}
+
+				
+				if(record.getTeacherBaseInfoByVTeacherid()!=null){
+					
+					this.setTeacherid(record.getTeacherBaseInfoByVTeacherid().getVId());
+				}
+			}
+			
+			if(getTeacherid()==null ||getTeacherid().equals("")){//第一次飞，获取学生分配的教员
+			
+				if(fservice.readStuAssignTeacher(userid)!=null){
+					setTeacherid(fservice.readStuAssignTeacher(userid).getTeacherBaseInfo().getVId());
+				}
+			}
+			if(StringUtils.isBlank(this.getOutlineid())){
+				setOutlineid(outlineList.get(0).getVId());
+			}
+
+			if(getTeacherid().equals("")){
+				setTeacherid("-1");
+			}
+
+			//如果第一次飞行，默认单元为第一单元、默认阶段为第一阶段，课程为序号是1的课程。依据是2中获得的lessonId
+			TraininglessonRelation  relation= fservice.readPhaseidByTrainingLessonid(outlineid, lessonid);
+			if(relation!=null){
+
+				//默认单元
+				this.setUnitid(relation.getTPhase().getTrainlessonunit().getVId());
+				//默认阶段
+				this.setPhaseid(relation.getTPhase().getVId());
+				
+			}
+			//获取分配大纲单元，大纲所有单元
+			IOutLineService ioutline = getFactory().getFinanceProviderInstance().getOutLineService();
+			
+			/*
+			unitList = ioutline.readOutlineUnitListById(outlineid);
+			//大纲所有的阶段
+			phaseList = ioutline.readOutlinePhaseListById(outlineid);
+			//所有阶段的课程
+			phaseLessonList = ioutline.readOutlineAllLessonList(outlineid);
+			*/
+			
+			//所有大纲的所有单元
+			vunitList = ioutline.readLessonObjectList(outlineList,"unit");
+			
+			//所有单元的所有阶段
+			phaseList = ioutline.readLessonObjectList(outlineList,"phase");
+			
+			//所有阶段的所有课程
+			phaseLessonList = ioutline.readLessonObjectList(outlineList,"lesson");
+			
+			//3.默认日日期
+			if(StringUtils.isBlank(this.getFlyDate())){
+				setViewDate(Utilities.format(new Date()));
+			}
+
+			if(!StringUtils.isBlank(this.getId())){
+				queryMap.put(IFlightTrainingRecordService.TRAINING_RECORD_ID, this.getId());
+				recordList = fservice.readDayFlightTrainingRecordList(queryMap);
+			}
+			//4获取学员所属基地
+			TOrg org = fservice.readOrgByUserid(userid);
+			String baseid = "";
+			setBaseName("");
+			if(org!=null && org.getVId()!=null && org.getVName()!=null){
+				baseid = org.getVId();
+				this.setBaseName(org.getVName());//前台匹配站，作为默认站，非转场的课程
+				if(getFlyStation().equals("")){
+					setFlyStation(org.getVName());
+				}
+				if(getEndStation().equals("")){
+					setEndStation(org.getVName());
+				}
+			}
+
+			//转场的课程获取转场的起点、终点。
+			
+			//5.学生所在基地教员列表，第一次飞行默认教员就是分配的教员，非第一次飞行，将上一次飞行时的教员作为默认。
+			
+			//管理员暂时借用baseid，流程测试时取消
+			//baseid = "4028816a470e3d6601470e47174b0003";
+			
+			queryMap.put(IFlightTrainingRecordService.QUERY_KEY_BASE, baseid);
+			jianshiTeacherBaseInfoList = fservice.readJianShiTeacherBaseInfoByBaseid(queryMap);
+			queryMap.put(IFlightTrainingRecordService.QUERY_DISPATCH_TEACHER, this.getTeacherid());
+			//显示基地内所有的教员
+			//teacherBaseInfoList = fservice.readTeacherBaseInfoByBaseid(queryMap);
+			
+			//6.航空器列表，学员所在基地
+			queryMap.put(IPlaneService.QUERY_KEY_BASEID, baseid);//学生基地put进去
+			queryMap.put(IPlaneService.QUERY_KEY_DEVICETYPE, IPlaneService.QUERY_DEVICE_TYPE_TRAINING);//训练器与模拟机
+			planeinfoList = getFactory().getFinanceProviderInstance().getPlaneService().readXqlAndMnjInfoList(queryMap);
+			
+			//7.学员属于哪个基地，获取站默认值（在前台用baseName.indexOf(stationName)实现），同时获取站列表
+			stationList = ioutline.readStationList(queryMap);
+
+			//8.飞行种类
+			this.setFlyTypeList(fservice.readFlyTypeList(IFlightTrainingRecordService.QUERY_KEY_FLY_TYPE));
+			
+			//9.航空器最近一次飞行记录。
+			viewFlightTrainingrecord = fservice.readBestNewFlightRecordByPlaneid(getPlaneid(),"");
+			
+		} catch (FinanceServiceException e) {
+		}
+		
+		return SUCCESS;
+	}
+	//其它飞行经历录入
+	public String openCreateOtherFlightTrainingRecordPage(){
+		
+		try {
+			Map<String, Object> queryMap = new HashMap<String, Object>();
+			setViewDate(Utilities.format(new Date()));
+			IOutLineService ioutline = getFactory().getFinanceProviderInstance().getOutLineService();
+			IFlightTrainingRecordService  fservice =  getFactory().getFinanceProviderInstance().getFlightTrainingRecordService();
+			
+			planeinfoList = getFactory().getFinanceProviderInstance().getPlaneService().readPlaneBaseInfoList(queryMap);
+			
+			this.setFlyTypeList(fservice.readFlyTypeList(IFlightTrainingRecordService.QUERY_KEY_FLY_TYPE));
+			
+			if(!StringUtils.isBlank(this.getId())){
+				viewRecord = fservice.readOtherFlightTrainingRecordById(this.getId());
+			}
+			stationList = ioutline.readStationList(queryMap);
+		} catch (FinanceServiceException e) {
+			
+		}
+		return SUCCESS;
+	}
+	public String readBestNewFlightRecordByPlaneid(){
+		IFlightTrainingRecordService  fservice =  getFactory().getFinanceProviderInstance().getFlightTrainingRecordService();
+		try {
+			viewFlightTrainingrecord = fservice.readBestNewFlightRecordByPlaneid(getPlaneid(),getId());
+		} catch (FinanceServiceException e) {
+		}
+		return SUCCESS;
+	}
+	
+	public String readChongTuFlightRecordByPlaneid(){
+		viewOrg = new VOrg();
+		IFlightTrainingRecordService  fservice =  getFactory().getFinanceProviderInstance().getFlightTrainingRecordService();
+		try {
+			Date d1= Utilities.parse(getFlyDate() + " " + this.getFlyMoment() + ":00", "yyyy-MM-dd HH:mm:ss");
+			Date d2 = Utilities.parse(getFlyDate() + " " + this.getEndMoment() + ":00", "yyyy-MM-dd HH:mm:ss");
+			if(d2.getTime()<=d1.getTime()){
+				viewOrg.setMessage("出发时刻晚于到达时刻，请重新输入。");
+				viewOrg.setFlag(false);
+				return SUCCESS;
+			}
+			Map<String, Object> queryMap = new HashMap<String, Object>();
+			
+			queryMap.put(IFlightTrainingRecordService.QUERY_KEY_BEGIN_DATE, d1);
+			queryMap.put(IFlightTrainingRecordService.QUERY_KEY_EDN_DATE, d2);
+			queryMap.put(IFlightTrainingRecordService.QUERY_KEY_PLANE_ID, this.getPlaneid());
+			queryMap.put(IFlightTrainingRecordService.TRAINING_RECORD_ID, this.getId());
+			viewFlightTrainingrecord = fservice.readChongTuFlightRecordByPlaneid(queryMap);
+		} catch (FinanceServiceException e) {
+			viewOrg.setMessage("数据库错误，请重试。");
+			viewOrg.setFlag(false);
+		}catch(ParseException e){
+			viewOrg.setMessage("出发时刻或到达时刻格式错误，请重新输入。");
+			viewOrg.setFlag(false);
+		}
+		return SUCCESS;
+	}
+	public String readPlaneidByTeacherid() {
+		
+		try {
+
+			viewOrg = new VOrg();
+			
+			Map<String, Object> queryMap = new HashMap<String, Object>();
+			Date d1 = Utilities.parse(getFlyDate() + " " + this.getFlyMoment() + ":00", "yyyy-MM-dd HH:mm:ss");
+			Date d2 = Utilities.parse(getFlyDate() + " " + this.getEndMoment() + ":00", "yyyy-MM-dd HH:mm:ss");
+			if(d2.getTime()<=d1.getTime()){
+				viewOrg.setMessage("出发时刻晚于到达时刻，请重新输入。");
+				viewOrg.setFlag(false);
+				return SUCCESS;
+			}
+			queryMap.put(IFlightTrainingRecordService.QUERY_DISPATCH_TEACHER, this.getTeacherid());
+			queryMap.put(IFlightTrainingRecordService.QUERY_KEY_BEGIN_DATE, d1);
+			queryMap.put(IFlightTrainingRecordService.QUERY_KEY_EDN_DATE, d2);
+			viewOrg=getFactory().getFinanceProviderInstance()
+					.getFlightTrainingRecordService().readPlaneidByTeacherid(queryMap);
+		} catch (FinanceServiceException e) {
+			viewOrg.setMessage("数据库错误，请重试。");
+			viewOrg.setFlag(false);
+		}catch(ParseException e){
+			viewOrg.setMessage("出发时刻或到达时刻格式错误，请重新输入。");
+			viewOrg.setFlag(false);
+		}
+		return SUCCESS;
+	}
+	
+	//保存学生训练记录录入
+	public String saveCreateFlightTrainingRecord(){
+		
+		//1.飞行出发时刻与当前时间差是否小于48或24小时，从数据字典中获取
+		long d1= trainingRecord.getDFlymoment().getTime();
+		long d2= trainingRecord.getDEndmoment().getTime();
+		long now = new Date().getTime();
+		
+		if(d1>now){
+			setStatusMsg("出发时刻不能晚于系统当前时刻。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		
+		if(d2>now){
+			setStatusMsg("到达时刻不能晚于系统当前时刻。");
+			setStatusMsg("2");
+			return SUCCESS;
+		}
+				
+		if(this.getLoginContext().getLoginUserType()!=IFlightTrainingRecordService.USERTYPE_STUDENT
+			&& this.getLoginContext().getLoginUserType()!=IFlightTrainingRecordService.USERTYPE_TEACHER){
+			setStatusMsg("您当前的身份不是学员，不能添加飞行记录。");
+			setStatusMsg("3");
+			return SUCCESS;
+		}
+		//限制跨域提交
+		
+		//其它域是否有内容
+		if(trainingRecord.getVSecondstudent()==null){
+			setStatusMsg("参数传递错误，请勿非法操作。");
+			setStatusMsg("4");
+			return SUCCESS;
+		}
+		
+		//课程
+		if(StringUtils.isBlank(trainingRecord.getTTrainingLesson().getVId())){
+			setStatusMsg("课目不能为空。");
+			setStatusMsg("5");
+			return SUCCESS;
+		}
+		//前台学生id
+		if(trainingRecord.getStudentBaseInfo().getVId()==null || trainingRecord.getStudentBaseInfo().equals("")){
+			setStatusMsg("登录学生不能为空。");
+			setStatusMsg("6");
+			return SUCCESS;
+		}
+		if(StringUtils.isBlank(trainingRecord.getTeacherBaseInfoByVMonitorteacherid().getVId())){
+			trainingRecord.setTeacherBaseInfoByVMonitorteacherid(null);
+		}
+		if(StringUtils.isBlank(trainingRecord.getStationByVJtpos().getVId())){
+			trainingRecord.setStationByVJtpos(null);
+		}
+		String userid = getLoginContext().getUserId();
+		if(userid==null || userid.equals("")){
+			setStatusMsg("登录学生不能为空。");
+			setStatusMsg("6");
+			return SUCCESS;
+		}
+		
+		/*
+		if(userid!=trainingRecord.getStudentBaseInfo().getVId()){
+			setStatusMsg("登录学生与保存学生身份不一致，请重新登录。");
+			return SUCCESS;
+		}
+		*/
+		
+		try {
+			//生成屏幕截图
+			String imgName = "";
+			IFlightTrainingRecordService fservice =  getFactory().getFinanceProviderInstance().getFlightTrainingRecordService();
+			
+			int maxHour = fservice.readPrescription(IFlightTrainingRecordService.QUERY_KEY_FLY_TYPE_EFFECTIVE);
+			
+			if((now-d1)/1000/60/60>maxHour){
+			//	setStatusMsg("训练记录的录入不能超过"+maxHour+"小时。");
+			//	return SUCCESS;
+			}
+			trainingRecord.setVImgname(imgName);//保存图片路径
+			trainingRecord.setTUserByVCreateuserid(getFactory().
+					getFinanceProviderInstance().getSysUserService().
+					readSysUserByLoginID(getLoginContext().getLoginId()));
+			fservice.saveCreateFlightTrainingRecord(trainingRecord);
+			setId(trainingRecord.getVId());
+		} catch (FinanceServiceException e) {
+			//setStatusMsg(e.getMessage());
+			setStatusMsg("7");
+			return SUCCESS;
+		}
+		setStatusMsg("训练记录保存成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	
+	//保存学生历史训练记录录入
+	public String saveCreateHistoryFlightTrainingRecord(){
+		
+		//1.飞行出发时刻与当前时间差是否小于48或24小时，从数据字典中获取
+		/*
+		long d1= trainingRecord.getDFlymoment().getTime();
+		long d2= trainingRecord.getDEndmoment().getTime();
+		long now = new Date().getTime();
+		
+		if(d1>now){
+			setStatusMsg("出发时刻不能晚于系统当前时刻。");
+			return SUCCESS;
+		}
+		
+		if(d2>now){
+			setStatusMsg("到达时刻不能晚于系统当前时刻。");
+			return SUCCESS;
+		}
+		*/
+				
+		//if(this.getLoginContext().getLoginUserType()!=IFlightTrainingRecordService.USERTYPE_STUDENT){
+			//setStatusMsg("您当前的身份不是学员，不能添加飞行记录。");
+			//return SUCCESS;
+		//}
+		//限制跨域提交
+		
+		//其它域是否有内容
+		if(trainingRecord.getVSecondstudent()==null){
+			setStatusMsg("参数传递错误，请勿非法操作。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		
+		//课程
+		if(StringUtils.isBlank(trainingRecord.getTTrainingLesson().getVId())){
+			setStatusMsg("课目不能为空。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		//前台学生id
+		if(trainingRecord.getStudentBaseInfo().getVId()==null || trainingRecord.getStudentBaseInfo().equals("")){
+			setStatusMsg("登录学生不能为空。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		if(StringUtils.isBlank(trainingRecord.getTeacherBaseInfoByVMonitorteacherid().getVId())){
+			trainingRecord.setTeacherBaseInfoByVMonitorteacherid(null);
+		}
+		if(StringUtils.isBlank(trainingRecord.getStationByVJtpos().getVId())){
+			trainingRecord.setStationByVJtpos(null);
+		}
+		
+		String userid = getLoginContext().getUserId();
+		if(userid==null || userid.equals("")){
+			setStatusMsg("登录学生不能为空。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		
+		/*
+		if(userid!=trainingRecord.getStudentBaseInfo().getVId()){
+			setStatusMsg("登录学生与保存学生身份不一致，请重新登录。");
+			return SUCCESS;
+		}
+		*/
+		try {
+			isOpen = getFactory().getFinanceProviderInstance().getToDoingService().readAddHistorySetUp(IToDoingService.HISTORY_SETUP);
+			if(isOpen==0){
+				setStatusMsg("历史记录录入已经关闭。");
+				setStatusMsg("1");
+				return INPUT;
+			}else if(isOpen==1 && (getLoginContext().getLoginUserType()!=3 && getLoginContext().getLoginUserType()!=1)) {//包含学生
+				setStatusMsg("历史记录录入已经关闭。");
+				setStatusMsg("1");
+				return INPUT;
+			}else if(isOpen==2 && getLoginContext().getLoginUserType()!=3){//不包含学生
+				setStatusMsg("历史记录录入已经关闭。");
+				setStatusMsg("1");
+				return INPUT;
+			}else{
+				
+			}
+			//生成屏幕截图
+			String imgName = "";
+			IFlightTrainingRecordService fservice =  getFactory().getFinanceProviderInstance().getFlightTrainingRecordService();
+			
+		//	int maxHour = fservice.readPrescription(IFlightTrainingRecordService.QUERY_KEY_FLY_TYPE_EFFECTIVE);
+			
+			//if((now-d1)/1000/60/60>maxHour){
+			//	setStatusMsg("训练记录的录入不能超过"+maxHour+"小时。");
+			//	return SUCCESS;
+			//}
+			trainingRecord.setVImgname(imgName);//保存图片路径
+			trainingRecord.setTUserByVCreateuserid(getFactory().
+					getFinanceProviderInstance().getSysUserService().
+					readSysUserByLoginID(getLoginContext().getLoginId()));
+			fservice.saveCreateHistoryFlightTrainingRecord(trainingRecord);
+			setId(trainingRecord.getVId());
+		} catch (FinanceServiceException e) {
+			//setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("历史记录保存成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	
+	//保存其它训练记录录入
+	public String saveOtherFlightTrainingRecord(){
+		
+		long d1= otherRecord.getDStarttime().getTime();
+		long d2= otherRecord.getDEndtime().getTime();
+		long now = new Date().getTime();
+		
+		if(d1>now){
+			setStatusMsg("出发时刻不能晚于当前系统当前时刻。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		
+		if(d2>now){
+			setStatusMsg("到达时刻不能晚于当前系统当前时刻。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		
+		//其它域是否有内容
+		if(StringUtils.isBlank(otherRecord.getVBz())){
+			setStatusMsg("参数传递错误，请勿非法操作。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		
+		try {
+
+			IFlightTrainingRecordService fservice =  getFactory().getFinanceProviderInstance().getFlightTrainingRecordService();
+			
+			otherRecord.setTUserByVCreateUserId(getFactory().
+					getFinanceProviderInstance().getSysUserService().
+					readSysUserByLoginID(getLoginContext().getLoginId()));
+			fservice.saveOtherFlightTrainingRecord(otherRecord);
+			setId(otherRecord.getVId());
+		} catch (FinanceServiceException e) {
+			//setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("训练记录保存成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	
+	//历史记录查询
+	public String openHistoryFlightTrainingRecordPage()throws ParseException{
+		setViewDate(Utilities.format(new Date()));
+		Map<String, Object> queryMap = new HashMap<String, Object>();
+		
+		
+		//queryMap.put(IFlightTrainingRecordService.QUERY_KEY, this.getName());
+		//queryMap.put(IFlightTrainingRecordService.QUERY_CODE, this.getCode());
+		//1.学生查看自己记录
+		//if(getLoginContext().getLoginUserType()==IFlightTrainingRecordService.USERTYPE_STUDENT){//学生
+		//	queryMap.put(IFlightTrainingRecordService.QUERY_STUDENT, getLoginContext().getUserName());//学号
+		//}
+		//2.教员查看分派学生记录
+		//if(getLoginContext().getLoginUserType()==IFlightTrainingRecordService.USERTYPE_TEACHER){//教师
+		//	queryMap.put(IFlightTrainingRecordService.QUERY_DISPATCH_TEACHER, getLoginContext().getUserName());//教员编号
+		//}
+		
+		try {
+			isOpen = getFactory().getFinanceProviderInstance().getToDoingService().readAddHistorySetUp(IToDoingService.HISTORY_SETUP);
+			planeinfoList = getFactory().getFinanceProviderInstance().getPlaneService().readPlaneBaseInfoList(queryMap);
+			
+			this.setTotalSummary(getFactory().getFinanceProviderInstance()
+					.getFlightTrainingRecordService()
+					.readTrainingHistoryRecordTotalSummary(searchGetValue()));
+			setPage(getFactory().getFinanceProviderInstance()
+					.getFlightTrainingRecordService()
+					.readTrainingHistoryRecordList(searchGetValue(), getPageIndex()));
+		} catch (FinanceServiceException e) {
+			setStatusMsg("获取训练记录列表失败。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		return SUCCESS;
+	}
+	//统计历史记录查询
+	public String openStatisticsHistoryFlightTrainingRecordPage()throws ParseException{
+		setViewDate(Utilities.format(new Date()));
+		Map<String, Object> queryMap = new HashMap<String, Object>();
+		
+		
+		//queryMap.put(IFlightTrainingRecordService.QUERY_KEY, this.getName());
+		//queryMap.put(IFlightTrainingRecordService.QUERY_CODE, this.getCode());
+		//1.学生查看自己记录
+		//if(getLoginContext().getLoginUserType()==IFlightTrainingRecordService.USERTYPE_STUDENT){//学生
+		//	queryMap.put(IFlightTrainingRecordService.QUERY_STUDENT, getLoginContext().getUserName());//学号
+		//}
+		//2.教员查看分派学生记录
+		//if(getLoginContext().getLoginUserType()==IFlightTrainingRecordService.USERTYPE_TEACHER){//教师
+		//	queryMap.put(IFlightTrainingRecordService.QUERY_DISPATCH_TEACHER, getLoginContext().getUserName());//教员编号
+		//}
+		
+		try {
+			isOpen = getFactory().getFinanceProviderInstance().getToDoingService().readAddHistorySetUp(IToDoingService.HISTORY_SETUP);
+			planeinfoList = getFactory().getFinanceProviderInstance().getPlaneService().readPlaneBaseInfoList(queryMap);
+			this.setTotalSummary(getFactory().getFinanceProviderInstance()
+					.getFlightTrainingRecordService()
+					.readTrainingHistoryRecordTotalSummary(searchGetValue()));
+			setPage(getFactory().getFinanceProviderInstance()
+					.getFlightTrainingRecordService()
+					.readStatisticsTrainingHistoryRecordList(searchGetValue(), getPageIndex()));
+		} catch (FinanceServiceException e) {
+			setStatusMsg("获取训练记录列表失败。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		return SUCCESS;
+	}
+	//完成情况
+	public String openFlightTrainingRecordCompletionPage()throws ParseException{
+		setViewDate(Utilities.format(new Date()));
+		//Map<String, Object> queryMap = new HashMap<String, Object>();
+		//queryMap.put(IFlightTrainingRecordService.QUERY_KEY, this.getName());
+		//queryMap.put(IFlightTrainingRecordService.QUERY_AUDIT_STATUS, IFlightTrainingRecordService.FLIGHT_RECORD_STATUS_YES_AUDIT);
+		//1.学生查看自己记录
+		/*
+		if(getLoginContext().getLoginUserType()==IFlightTrainingRecordService.USERTYPE_STUDENT){//学生
+			queryMap.put(IFlightTrainingRecordService.QUERY_STUDENT, getLoginContext().getUserName());//学号
+		}
+		//2.教员查看分派学生记录
+		if(getLoginContext().getLoginUserType()==IFlightTrainingRecordService.USERTYPE_TEACHER){//教师
+			queryMap.put(IFlightTrainingRecordService.QUERY_DISPATCH_TEACHER, getLoginContext().getUserName());//教员编号
+		}
+		*/
+		try {
+			
+			setPage(getFactory().getFinanceProviderInstance()
+					.getFlightTrainingRecordService()
+					.readFlightTrainingRecordCompletionList(searchGetValue(), getPageIndex()));
+		} catch (FinanceServiceException e) {
+			setStatusMsg("获取训练记录列表失败。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		return SUCCESS;
+	}
+	//统计完成情况
+	public String openStatisticsFlightTrainingRecordCompletionPage()throws ParseException{
+
+		setViewDate(Utilities.format(new Date()));
+		try {
+			
+			setPage(getFactory().getFinanceProviderInstance()
+					.getFlightTrainingRecordService()
+					.readStatisticsFlightTrainingRecordCompletionList(searchGetValue(), getPageIndex()));
+		} catch (FinanceServiceException e) {
+			setStatusMsg("获取训练记录列表失败。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		return SUCCESS;
+	}
+	//导出完成情况
+	public String downloadFile(){
+		String dname = "学生训练进度表.xls"; 
+		File foder= writeExcel();
+		
+		if (!foder.exists()) {
+				addActionError("文件不存在");
+				return ERROR;
+			}
+			try {
+				this.attachmentName = new String(dname.getBytes(),
+						"ISO8859-1");
+			} catch (UnsupportedEncodingException e) {
+				return ERROR;
+			}
+			try {
+				InputStream in = new FileInputStream(foder);
+				this.inputStream = in;
+			} catch (FileNotFoundException e) {
+				return ERROR;
+			}
+		return SUCCESS;
+	}
+	
+	private File writeExcel()
+	{
+		
+		File foder=null;
+		try{
+			String path = ServletActionContext.getServletContext().getRealPath("/");
+			path+= "WEB-INF";
+			foder = new File(path);
+			
+			if(!foder.exists()){
+				foder.mkdirs();
+			}
+			
+			foder = new File(path + File.separator + "attachment" + File.separator +"completion.xls");
+			if(!foder.exists())
+			{
+				foder.createNewFile();
+			}
+
+			//打开文件
+			WritableWorkbook book = Workbook.createWorkbook(foder);
+            WritableSheet sheet = book.createSheet("学生训练进度表", 0);
+            
+            //表头行高
+            sheet.setRowView(0, 400);
+           
+            //设置列宽度
+            sheet.setColumnView(0, 10); //序号
+            sheet.setColumnView(1, 15);//姓名
+            sheet.setColumnView(2, 15);//性别
+            sheet.setColumnView(3, 15);//学号
+            sheet.setColumnView(4, 15);//所属公司
+            sheet.setColumnView(5, 15);//进去训练日期
+            sheet.setColumnView(6, 15);//单元
+            sheet.setColumnView(7, 30);//科目
+            sheet.setColumnView(8, 15);//已完成时长
+            
+            sheet.addCell(new jxl.write.Label(0, 0, "序号"));
+            sheet.addCell(new jxl.write.Label(1, 0, "姓名"));
+            sheet.addCell(new jxl.write.Label(2, 0, "性别"));
+            sheet.addCell(new jxl.write.Label(3, 0, "学号"));
+            sheet.addCell(new jxl.write.Label(4, 0, "所属公司"));
+            sheet.addCell(new jxl.write.Label(5, 0, "进入训练日期"));
+            sheet.addCell(new jxl.write.Label(6, 0, "单元"));
+            sheet.addCell(new jxl.write.Label(7, 0, "科目"));
+            sheet.addCell(new jxl.write.Label(8, 0, "已完成时长"));
+     
+            List<VFlightTrainingrecord> list = getFactory()
+			.getFinanceProviderInstance()
+			.getFlightTrainingRecordService()
+			.exportDataFlightTrainingRecordCompletion(searchGetValue());
+    		
+    		int p=0;
+    		for(VFlightTrainingrecord s:list){
+
+    			p++;
+    			sheet.addCell(new jxl.write.Label(0, p, String.valueOf(p)));
+    			sheet.addCell(new jxl.write.Label(1, p, s.getVName()));             
+                sheet.addCell(new jxl.write.Label(2, p, s.getSex()));
+                sheet.addCell(new jxl.write.Label(3, p, s.getVCode()));
+                sheet.addCell(new jxl.write.Label(4, p, s.getTeaName()));
+                sheet.addCell(new jxl.write.Label(5, p, s.getDFlymoment()));
+                sheet.addCell(new jxl.write.Label(6, p, s.getDEndmoment()));
+                sheet.addCell(new jxl.write.Label(7, p, s.getVPlanecode()));
+                sheet.addCell(new jxl.write.Label(8, p, s.getDTrantime()));
+    		}
+
+            book.write();
+            book.close();
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+			setStatusMsg("获取学生训练列表信息失败。");
+			setStatusMsg("1");
+		}
+		return foder;
+	}
+
+	
+	private Map<String, Object> searchGetValue() throws ParseException{
+		Map<String, Object> queryMap = new HashMap<String, Object>();
+		if(StringUtils.isNotBlank(getFlyMoment())){
+			queryMap.put(IFlightTrainingRecordService.QUERY_KEY_BEGIN_DATE,  Utilities
+				.parse(getFlyMoment() + " 00:00:00", "yyyy-MM-dd HH:mm:ss"));
+			queryMap.put("bdate",getFlyMoment()+" 00:00:00");
+		}
+		if(StringUtils.isNotBlank(getEndMoment())){
+			queryMap.put(IFlightTrainingRecordService.QUERY_KEY_EDN_DATE, Utilities
+				.parse(getEndMoment() + " 23:59:59", "yyyy-MM-dd HH:mm:ss"));
+			queryMap.put("edate",getEndMoment()+" 23:59:59");
+		}
+		queryMap.put(IFlightTrainingRecordService.QUERY_AUDIT_STATUS, this.getStatus());
+		if(getLoginContext().getLoginUserType()==IFlightTrainingRecordService.USERTYPE_STUDENT){//学生
+			queryMap.put(IFlightTrainingRecordService.QUERY_STUDENT, getLoginContext().getUserName());//学号
+		}
+		if(getLoginContext().getLoginUserType()==IFlightTrainingRecordService.USERTYPE_OTHER){//其他人员
+			queryMap.put(IFlightTrainingRecordService.QUERY_OTHER, getLoginContext().getUserName());//编号
+		}
+		//2.教员查看分派学生记录
+		if(getLoginContext().getLoginUserType()==IFlightTrainingRecordService.USERTYPE_TEACHER){//教师
+			queryMap.put(IFlightTrainingRecordService.QUERY_DISPATCH_TEACHER, getLoginContext().getUserName());//教员编号
+		}
+		queryMap.put("planeid", planeid);
+		//按航空器查询
+		
+		/*
+		String  sname= this.getName();
+		try {
+			if(sname!=null){
+				sname = new String(sname.getBytes("ISO-8859-1"),"utf-8");
+			}
+		} catch (UnsupportedEncodingException e1) {
+		}
+	*/
+		queryMap.put(IFlightTrainingRecordService.QUERY_KEY, this.getName());
+		queryMap.put(IFlightTrainingRecordService.QUERY_CODE, this.getCode());
+		queryMap.put(IFlightTrainingRecordService.QUERY_SELECT_TEACHER, this.getTeacherid());
+		
+		if(StringUtils.isNotBlank(this.getXcompanyid()))
+			queryMap.put(IStudentService.QUERY_KEY_COMPANY, getXcompanyid());
+
+		if(StringUtils.isNotBlank(this.getYear()))
+			queryMap.put(IStudentService.QUERY_KEY_YEAR, getYear());
+		if(StringUtils.isNotBlank(this.getClassNo()))
+			queryMap.put(IStudentService.QUERY_KEY_CLASS,getClassNo());
+			
+
+		try{
+			
+			teacherList = getFactory().getFinanceProviderInstance().getStudentService().readTeacherByUserId(getLoginContext().getUserId());
+			dictionCompanyList = getFactory().getFinanceProviderInstance().getOutLineService().readCompanyList();
+			//年份列表
+			yearList = new ArrayList<Integer>();
+			for(int i=2008;i<=2020;i++){
+				
+				yearList.add(i);
+			}
+			classList = getFactory().getFinanceProviderInstance().getOutLineService().readSetClass(year);
+			
+		}catch(FinanceServiceException e){
+			
+		}
+		return queryMap;
+	}
+	//九天数据导入
+	public String importNIneSkyData(){
+		
+		return SUCCESS;
+	}
+	//---------------------------------------setter and getter--------------------------
+	public List<Planeinfo> getPlaneinfoList() {
+		return planeinfoList;
+	}
+
+	public void setPlaneinfoList(List<Planeinfo> planeinfoList) {
+		this.planeinfoList = planeinfoList;
+	}
+
+	public List<Station> getStationList() {
+		return stationList;
+	}
+
+	public void setStationList(List<Station> stationList) {
+		this.stationList = stationList;
+	}
+
+	public List<Trainlessonunit> getUnitList() {
+		return unitList;
+	}
+
+	public void setUnitList(List<Trainlessonunit> unitList) {
+		this.unitList = unitList;
+	}
+
+	public List<VOutline> getPhaseList() {
+		return phaseList;
+	}
+
+	public void setPhaseList(List<VOutline> phaseList) {
+		this.phaseList = phaseList;
+	}
+
+	public String getUnitid() {
+		return unitid;
+	}
+
+	public void setUnitid(String unitid) {
+		this.unitid = unitid;
+	}
+
+	public String getPhaseid() {
+		return phaseid;
+	}
+
+	public void setPhaseid(String phaseid) {
+		this.phaseid = phaseid;
+	}
+
+	public List<VOutline> getPhaseLessonList() {
+		return phaseLessonList;
+	}
+
+	public void setPhaseLessonList(List<VOutline> phaseLessonList) {
+		this.phaseLessonList = phaseLessonList;
+	}
+
+	public List<TDiction> getFlyTypeList() {
+		return flyTypeList;
+	}
+
+	public void setFlyTypeList(List<TDiction> flyTypeList) {
+		this.flyTypeList = flyTypeList;
+	}
+
+	public VOrg getViewOrg() {
+		return viewOrg;
+	}
+
+	public void setViewOrg(VOrg viewOrg) {
+		this.viewOrg = viewOrg;
+	}
+
+	public String getBaseName() {
+		return baseName;
+	}
+
+	public void setBaseName(String baseName) {
+		this.baseName = baseName;
+	}
+
+
+
+	public List<VTeacherBaseInfo> getTeacherBaseInfoList() {
+		return teacherBaseInfoList;
+	}
+	public void setTeacherBaseInfoList(List<VTeacherBaseInfo> teacherBaseInfoList) {
+		this.teacherBaseInfoList = teacherBaseInfoList;
+	}
+	public String getTeacherid() {
+		return teacherid;
+	}
+
+	public void setTeacherid(String teacherid) {
+		this.teacherid = teacherid;
+	}
+
+	public String getLessonid() {
+		return lessonid;
+	}
+
+	public void setLessonid(String lessonid) {
+		this.lessonid = lessonid;
+	}
+
+	public String getPlaneid() {
+		return planeid;
+	}
+
+	public void setPlaneid(String planeid) {
+		this.planeid = planeid;
+	}
+
+	public VFlightTrainingrecord getViewFlightTrainingrecord() {
+		return viewFlightTrainingrecord;
+	}
+
+	public void setViewFlightTrainingrecord(
+			VFlightTrainingrecord viewFlightTrainingrecord) {
+		this.viewFlightTrainingrecord = viewFlightTrainingrecord;
+	}
+	public String getFlyMoment() {
+		return flyMoment;
+	}
+	public void setFlyMoment(String flyMoment) {
+		this.flyMoment = flyMoment;
+	}
+	public String getEndMoment() {
+		return endMoment;
+	}
+	public void setEndMoment(String endMoment) {
+		this.endMoment = endMoment;
+	}
+	public String getFlyDate() {
+		return flyDate;
+	}
+	public void setFlyDate(String flyDate) {
+		this.flyDate = flyDate;
+	}
+	public List<TeacherBaseInfo> getJianshiTeacherBaseInfoList() {
+		return jianshiTeacherBaseInfoList;
+	}
+	public void setJianshiTeacherBaseInfoList(
+			List<TeacherBaseInfo> jianshiTeacherBaseInfoList) {
+		this.jianshiTeacherBaseInfoList = jianshiTeacherBaseInfoList;
+	}
+	public TFlightTrainingrecord getTrainingRecord() {
+		return trainingRecord;
+	}
+	public void setTrainingRecord(TFlightTrainingrecord trainingRecord) {
+		this.trainingRecord = trainingRecord;
+	}
+	public String getOutlineid() {
+		return outlineid;
+	}
+	public void setOutlineid(String outlineid) {
+		this.outlineid = outlineid;
+	}
+
+	public List<VFlightTrainingrecordDetail> getRecordList() {
+		return recordList;
+	}
+	public void setRecordList(List<VFlightTrainingrecordDetail> recordList) {
+		this.recordList = recordList;
+	}
+	public String getFlyStation() {
+		return flyStation;
+	}
+	public void setFlyStation(String flyStation) {
+		this.flyStation = flyStation;
+	}
+	public String getEndStation() {
+		return endStation;
+	}
+	public void setEndStation(String endStation) {
+		this.endStation = endStation;
+	}
+	public String getStudentid() {
+		return studentid;
+	}
+	public void setStudentid(String studentid) {
+		this.studentid = studentid;
+	}
+	public String getId() {
+		return id;
+	}
+	public void setId(String id) {
+		this.id = id;
+	}
+	public String getStatus() {
+		return status;
+	}
+	public void setStatus(String status) {
+		this.status = status;
+	}
+	public List<VTrainsubject> getLessonSubjectList() {
+		return lessonSubjectList;
+	}
+	public void setLessonSubjectList(List<VTrainsubject> lessonSubjectList) {
+		this.lessonSubjectList = lessonSubjectList;
+	}
+	public String getName() {
+		return name;
+	}
+	public void setName(String name) {
+		this.name = name;
+	}
+	public List<VTrainingRecordCompletion> getViewCompletionList() {
+		return viewCompletionList;
+	}
+	public void setViewCompletionList(
+			List<VTrainingRecordCompletion> viewCompletionList) {
+		this.viewCompletionList = viewCompletionList;
+	}
+
+	public String getStudentCode() {
+		return studentCode;
+	}
+
+	public void setStudentCode(String studentCode) {
+		this.studentCode = studentCode;
+	}
+
+	public VFlightTrainingrecordDetail getViewRecord() {
+		return viewRecord;
+	}
+
+	public void setViewRecord(VFlightTrainingrecordDetail viewRecord) {
+		this.viewRecord = viewRecord;
+	}
+	public TOtherflyrecord getOtherRecord() {
+		return otherRecord;
+	}
+	public void setOtherRecord(TOtherflyrecord otherRecord) {
+		this.otherRecord = otherRecord;
+	}
+
+	public AddHoursAndAddLesson getAdd() {
+		return add;
+	}
+
+	public void setAdd(AddHoursAndAddLesson add) {
+		this.add = add;
+	}
+
+	public VOutline getViewOutline() {
+		return viewOutline;
+	}
+
+	public void setViewOutline(VOutline viewOutline) {
+		this.viewOutline = viewOutline;
+	}
+	public String getSelIds() {
+		return selIds;
+	}
+	public void setSelIds(String selIds) {
+		this.selIds = selIds;
+	}
+	public PracticeTest getTest() {
+		return test;
+	}
+	public void setTest(PracticeTest test) {
+		this.test = test;
+	}
+
+	public String getTuijian() {
+		return tuijian;
+	}
+
+	public void setTuijian(String tuijian) {
+		this.tuijian = tuijian;
+	}
+	public PracticeAsk getAsk() {
+		return ask;
+	}
+	public void setAsk(PracticeAsk ask) {
+		this.ask = ask;
+	}
+
+	public VChangedbaseflyline getLine() {
+		return line;
+	}
+	public void setLine(VChangedbaseflyline line) {
+		this.line = line;
+	}
+
+	public List<PracticeAsk> getAskList() {
+		return askList;
+	}
+
+	public void setAskList(List<PracticeAsk> askList) {
+		this.askList = askList;
+	}
+
+	public String getCode() {
+		return code;
+	}
+
+	public void setCode(String code) {
+		this.code = code;
+	}
+
+	public String getLessonType() {
+		return lessonType;
+	}
+
+	public void setLessonType(String lessonType) {
+		this.lessonType = lessonType;
+	}
+
+	public List<TOutline> getOutlineList() {
+		return outlineList;
+	}
+
+	public void setOutlineList(List<TOutline> outlineList) {
+		this.outlineList = outlineList;
+	}
+
+	public List<VOutline> getVunitList() {
+		return vunitList;
+	}
+
+	public void setVunitList(List<VOutline> vunitList) {
+		this.vunitList = vunitList;
+	}
+
+	public List<TOutline> getOlist() {
+		return olist;
+	}
+
+	public void setOlist(List<TOutline> olist) {
+		this.olist = olist;
+	}
+
+	public VTotalSummary getTotalSummary() {
+		return totalSummary;
+	}
+
+	public void setTotalSummary(VTotalSummary totalSummary) {
+		this.totalSummary = totalSummary;
+	}
+
+	public int getIsOpen() {
+		return isOpen;
+	}
+
+	public void setIsOpen(int isOpen) {
+		this.isOpen = isOpen;
+	}
+	public String getJtStation() {
+		return jtStation;
+	}
+	public void setJtStation(String jtStation) {
+		this.jtStation = jtStation;
+	}
+	public String getYear() {
+		return year;
+	}
+	public void setYear(String year) {
+		this.year = year;
+	}
+	public String getClassNo() {
+		return classNo;
+	}
+	public void setClassNo(String classNo) {
+		this.classNo = classNo;
+	}
+	public String getXcompanyid() {
+		return xcompanyid;
+	}
+	public void setXcompanyid(String xcompanyid) {
+		this.xcompanyid = xcompanyid;
+	}
+	public List<TOrg> getDictionCompanyList() {
+		return dictionCompanyList;
+	}
+	public void setDictionCompanyList(List<TOrg> dictionCompanyList) {
+		this.dictionCompanyList = dictionCompanyList;
+	}
+	public List<Integer> getYearList() {
+		return yearList;
+	}
+	public void setYearList(List<Integer> yearList) {
+		this.yearList = yearList;
+	}
+	public List<TSetClass> getClassList() {
+		return classList;
+	}
+	public void setClassList(List<TSetClass> classList) {
+		this.classList = classList;
+	}
+	public List<TeacherBaseInfo> getTeacherList() {
+		return teacherList;
+	}
+	public void setTeacherList(List<TeacherBaseInfo> teacherList) {
+		this.teacherList = teacherList;
+	}
+
+	public InputStream getInputStream() {
+		return inputStream;
+	}
+	public void setInputStream(InputStream inputStream) {
+		this.inputStream = inputStream;
+	}
+	public String getAttachmentName() {
+		return attachmentName;
+	}
+	public void setAttachmentName(String attachmentName) {
+		this.attachmentName = attachmentName;
+	}
+
+}

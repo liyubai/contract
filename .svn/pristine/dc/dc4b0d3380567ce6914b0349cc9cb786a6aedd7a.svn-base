@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts PUBLIC
+    "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN"
+    "http://struts.apache.org/dtds/struts-2.0.dtd">
+<struts>
+	<package name="dataDictionary" extends="ErsDefault" namespace="/contract">	
+		<action name="dataDictionary_list" class="com.cauc.contract.ui.core.dataDictionaryListAction"	method="getDataDictionary_list">
+			<result name="success">/pages/dataDictionary/cDataDictionary.jsp</result>
+		   </action>
+			<action name="saveDataDictionary" class="com.cauc.contract.ui.core.dataDictionaryListAction"	method="saveDataDictionary">
+		
+		<result name="success" type="redirectAction">	
+				<param name="namespace">/contract</param>
+				<param name="actionName">dataDictionary_list</param>
+			</result>
+		</action>
+	</package>
+	
+	
+</struts> 

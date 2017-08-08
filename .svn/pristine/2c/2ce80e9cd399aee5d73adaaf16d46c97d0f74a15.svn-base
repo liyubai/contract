@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>人员管理</title>
+
+<link rel="stylesheet" href="themes/cupertino/jquery.ui.all.css">
+<script src="scripts/jquery.min.js"></script>
+<script src="scripts/jquery-ui.min.js"></script>
+<script src="scripts/ui/jquery.ui.position.min.js"></script>
+<script src="scripts/ui/jquery.ui.core.min.js"></script>
+<script src="scripts/ui/jquery.ui.widget.min.js"></script>
+<script src="scripts/ui/jquery.ui.button.min.js"></script>
+<script src="scripts/ui/jquery.ui.tabs.min.js"></script>
+<script src="scripts/ui/jquery.ui.dialog.min.js"></script>
+<script src="scripts/ui/jquery.ui.menu.min.js"></script>
+<script src="scripts/function.min.js"></script>
+
+<style>
+#setupMenu { right: 50px; } /*因为页面调整了很多，所以这个值必须有所变化*/
+#setupMenu #setupSubMenu1 { width: 120px; }
+#Panel1, .buttonBox { width: auto; margin-left: 50px; margin-right: 50px; padding-top: 0; }
+.Panel, .panelContent, .panelTable, td { background-color: transparent; box-shadow: none; filter: none; }
+</style>
+<script>
+B_WIDTH=200; //设置这个值即可触发修改页面布局宽度的函数，如果不设置，则会走默认数值200。注意，不要写成var B_WIDTH，这个值已经在function.js中定义好了，只需要重新赋值
+
+$(function() {
+	//显隐菜单代码：
+	var $setupMenu = $("#setupMenu"), $setupSubMenu1=$("#setupSubMenu1");
+	$("#setupButton").click(function(e){
+		e.stopPropagation();
+		$setupMenu.fadeToggle(150);
+	});
+	
+	$setupMenu.menu({ position: { my: "right top", at: "left-2 top+2" } });
+	$(".menuButtonSpan").buttonset().find("input[type='checkbox']").change(function(){
+		$(this).siblings("label").children().html(this.checked?"已开启":"已关闭");
+	});
+
+	$setupSubMenu1.delegate( "a", "click", function() {
+		$(this).find("span.ui-icon-bullet").remove().end().parent().siblings().find("span.ui-icon-bullet").remove();
+		$(this).prepend($("<span class='ui-icon ui-icon-bullet'></span>"));
+		$setupMenu.fadeToggle(150);
+	});
+
+	//隐藏右侧内容的代码：
+	$("#hideRightButton").click(function(){
+		var $icon=$(this).find(".ui-icon");
+		if($icon.hasClass("ui-icon-arrowthickstop-1-e")) {$("#rightPartB").hide(); modWidthB(0); $(this).attr("title","显示导航");}
+		else {$("#rightPartB").show(); modWidthB(B_WIDTH); $(this).attr("title","隐藏导航");} //这个页有B_WIDTH，则用B_WIDTH，否则应该用默认的数值200
+		$icon.toggleClass("ui-icon-arrowthickstop-1-e").toggleClass("ui-icon-arrowthickstop-1-w");
+	});
+
+	//显示/隐藏抄送密送
+	$("#chaosong,#misong").click(function(){
+		if($(this).html().indexOf("删除")>-1){$(this).html($(this).html().replace("删除",""));$("#"+$(this).attr("id")+"Tr").hide();}
+		else{$(this).html("删除"+$(this).html());$("#"+$(this).attr("id")+"Tr").show();}
+	});
+	 onClick="this.innerHTML='删除抄送'"
+});
+</script>
+<!-- 此js务必放在所有页面自带的js后面加载 -->
+<script src="scripts/base.min.js"></script>
+</head>
+<body class="hide">
+
+
+
+
+
+<div id="topPartB">
+<div class="panelBox buttonBox">
+<!-- panelBox计划用于布局横向的简单一行 -->
+<button class="green" primary="ui-icon-button-message">发送</button>
+<button class="normal">预&nbsp;&nbsp;览</button>
+<button class="normal">存草稿</button>
+<button class="normal">取&nbsp;&nbsp;消</button>
+
+
+
+	<div class="right">
+	<a href="#N" class="blue" id="chaosong">抄送</a>&nbsp;&nbsp;<a href="#N" class="blue" id="misong">密送</a>&nbsp;&nbsp;&nbsp;&nbsp;
+	<!-- 用&nbsp;占位就可以 -->
+	
+		<button id="setupButton" class="icon" icon="ui-icon-gear"></button>
+		<ul id="setupMenu">
+			<li><a href="#N">正文工具栏</a><span class="menuButtonSpan">
+				<input type="checkbox" id="toolBoxCheck1" name="toolBoxCheck" checked="checked" /><label for="toolBoxCheck1">已开启</label>
+			</span></li>
+			<li class="ui-menu-divider"></li>
+			<li><a href="#N">读信窗口</a><span class="menuButtonSpan">
+				<!-- 注意，这些按钮一定要紧挨着摆放，不要换行，否则会出现空格 -->
+				<input type="radio" id="readWinRadio1" name="readWinRadio" /><label for="readWinRadio1">关闭</label><input type="radio" id="readWinRadio2" name="readWinRadio" /><label for="readWinRadio2">底部</label><input type="radio" id="readWinRadio3" name="readWinRadio" checked="checked" /><label for="readWinRadio3">右侧</label>
+			</span></li>
+			<li class="ui-menu-divider"></li>
+			<li><a href="#N">发/收件人姓名显示</a><span class="menuButtonSpan">
+				<input type="radio" id="nameDispRadio1" name="nameDispRadio" /><label for="nameDispRadio1">发件人姓名</label><input type="radio" id="nameDispRadio2" name="nameDispRadio" checked="checked" /><label for="nameDispRadio2">通讯录昵称</label>
+			</span></li>
+			<li class="ui-menu-divider"></li>
+			<li><a href="#N">附件上传方式</a>
+				<ul id="setupSubMenu1">
+					<li><a href="#N"><span class="ui-icon ui-icon-bullet"></span>直接上传</a></li>
+					<li class="ui-menu-divider"></li>
+					<li><a href="#N">上传到百度网盘</a></li>
+				</ul>
+			</li>
+			<li class="ui-menu-divider"></li>
+			<li><a href="#N">回复时添加签名</a><span class="menuButtonSpan">
+				<input type="checkbox" id="reSignCheck1" name="reSignCheck" checked="checked" /><label for="reSignCheck1">已开启</label>
+			</span></li>
+			<li class="ui-menu-divider"></li>
+			<li><a href="#N">转发时添加签名</a><span class="menuButtonSpan">
+				<input type="checkbox" id="fwSignCheck1" name="fwSignCheck" /><label for="fwSignCheck1">已关闭</label>
+			</span></li>
+			<li class="ui-menu-divider"></li>
+			<li><a href="#N">回复转发时签名位置</a><span class="menuButtonSpan">
+				<input type="radio" id="signPosRadio1" name="signPosRadio" checked="checked" /><label for="signPosRadio1">原文上方</label><input type="radio" id="signPosRadio2" name="signPosRadio" /><label for="signPosRadio2">原文下方</label>
+			</span></li>
+			<li class="ui-menu-divider"></li>
+			<li><a href="#N">签名设置</a></li>
+		</ul>
+		
+		<button id="hideRightButton" class="icon" icon="ui-icon-arrowthickstop-1-e" title="隐藏导航"></button>
+	</div>
+
+
+
+
+</div></div>
+
+
+
+
+
+<div id="leftPartB"><div>
+
+<div class="Panel" id="Panel1" style="margin-top: 5px;">
+
+	<div class="panelContent">
+		<table class="panelTable" border="0" cellspacing="0" cellpadding="3">
+			<thead>
+			  <tr class="trSpliter">
+				<th width="70"></th>
+				<th></th>
+			  </tr>
+			</thead>
+			<tbody>
+			  <tr class="normal">
+				<td><a href="#N" class="blue">收件人</a>：</td>
+				<td><input name="" type="text" class="full" /></td>
+			  </tr>
+			  <tr class="normal hide" id="chaosongTr">
+				<td><a href="#N" class="blue">抄送人</a>：</td>
+				<td><input name="" type="text" class="full" /></td>
+			  </tr>
+			  <tr class="normal hide" id="misongTr">
+				<td><a href="#N" class="blue">密送人</a>：</td>
+				<td><input name="" type="text" class="full" /></td>
+			  </tr>
+			  <tr class="normal">
+				<td><span class="aText">主　题</span>：</td>
+				<td><input name="" type="text" class="full bold" /></td>
+			  </tr>
+			  <tr class="normal">
+				<td colspan="2"><a href="#N" class="blue">添加附件</a>&nbsp;(最大2G)</td>
+			  </tr>
+			  <tr class="normal">
+				<td colspan="2" style="padding: 20px; height: 200px; background-color: #FFFFFF;" valign="top">这里放入一个编辑框控件吧</td>
+			  </tr>
+			</tbody>
+		</table>
+
+	</div>
+</div>
+
+
+
+<span class="panelSpacer10"></span>
+
+
+<div class="panelBox buttonBox">
+<!-- panelBox计划用于布局横向的简单一行 -->
+<button class="green" primary="ui-icon-button-message">发送</button>
+<button class="normal">取&nbsp;&nbsp;消</button>
+</div>
+
+<span class="panelSpacer10"></span>
+
+</div></div>
+
+<div id="rightPartB"><div>
+
+<ul class="itemList">
+	<li><a class="navLink" href="main1.html" id="navLink0" title="我的首页">我的首页</a><!-- (10) --></li>
+	<li class="active"><a class="navLink" href="peopleManage.html" id="navLink1" title="人员管理">人员管理</a></li>
+	<li><a class="navLink" href="trainingManage.html" id="navLink2" title="飞行训练管理">飞行训练管理</a></li>
+	<li><a class="navLink" href="aircraftManage.html" id="navLink3" title="航空器管理">航空器管理</a></li>
+	<li><a class="navLink" href="summaryManage.html" id="navLink4" title="飞行训练大纲管理">飞行训练大纲管理</a></li>
+	<li><a class="navLink" href="systemManage.html" id="navLink5" title="系统管理">系统管理</a></li>
+	<li><a class="navLink" href="marksManage.html" id="navLink6" title="成绩管理">成绩管理</a>
+</ul>
+<span class="panelLine"></span>
+<ul class="itemList">
+	<li><a class="navLink" href="Func1.html" id="navLink101" title="功能展示1">功能展示1</a></li>
+	<li><a class="navLink" href="Func2.html" id="navLink102" title="功能展示2">功能展示2</a></li>
+	<li><a class="navLink" href="Func3.html" id="navLink103" title="功能展示3">功能展示3</a></li>
+	<li><a class="navLink" href="Func4.html" id="navLink104" title="功能展示4">功能展示4</a></li>
+	<li><a class="navLink" href="Func5.html" id="navLink105" title="功能展示5">功能展示5</a></li>
+	<li><a class="navLink" href="Func6.html" id="navLink106" title="功能展示6">功能展示6</a></li>
+	<li><a class="navLink" href="Func7.html" id="navLink107" title="功能展示7">功能展示7</a></li>
+	<li><a class="navLink" href="Func8.html" id="navLink108" title="功能展示8">功能展示8</a></li>
+	<li><a class="navLink" href="Func9.html" id="navLink109" title="功能展示9">功能展示9</a></li>
+	<li><a class="navLink" href="Func10.html" id="navLink110" title="功能展示10">功能展示10</a></li>
+</ul>
+<ul class="foldList">
+	<li><span class="ui-icon ui-icon-carat-1-e"></span>功能展示11</li>
+	<ul class="itemList hide">
+		<li><a class="navLink" href="Func11.html" id="navLink111" title="功能展示11" tabTitle="功能展示11[HTML]">HTML版本</a></li>
+		<li><a class="navLink" href="Func11_1.html" id="navLink11101" title="功能展示11" tabTitle="功能展示11[JS]">JS版本</a></li>
+	</ul>
+</ul>
+<ul class="itemList">
+	<li><a class="navLink" href="Func12.html" id="navLink112" title="功能展示12">功能展示12</a></li>
+	<li><a class="navLink" href="Func13.html" id="navLink113" title="功能展示13">功能展示13</a></li>
+	<li><a class="navLink" href="Func14.html" id="navLink114" title="功能展示14">功能展示14</a></li>
+</ul>
+
+</div></div>
+
+<!--<div id="bottomPartB"><div>
+
+<button class="green" style="position: absolute; left: 10px;">保存</button>
+<button class="normal" style="position: absolute; left: 70px;">取消</button>
+<button class="normal" style="position: absolute; right: 30px;">还原为默认</button>
+
+</div></div> -->
+</body>
+</html>

@@ -1,0 +1,112 @@
+package com.cauc.training.business.hibernate;
+
+import java.util.List;
+import java.util.Map;
+
+import org.hibernate.HibernateException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.business.IOnlineCounterService;
+import com.cauc.training.business.dao.GenericHibernateDAO;
+import com.cauc.training.business.dao.support.Page;
+import com.cauc.training.pojos.TUser;
+import com.cauc.training.pojos.TUserOnline;
+
+@Service("onlineCounterServiceImpl")
+public class OnlineCounterServiceImpl extends GenericHibernateDAO implements IOnlineCounterService{
+	/**
+	 * @功能描述：用于保存用户在线时长统计信息
+	 * @return
+	 */
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public boolean save(TUserOnline tuser) throws FinanceServiceException {
+		boolean flag = false;
+		try{
+			String userId = getUserId(tuser);
+			TUser t = new TUser();
+			t.setVId(userId);
+			t.setVUsername(tuser.getTUser().getVUsername());
+			tuser.setTUser(t);
+			super.save(tuser);
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		flag = true;
+		return flag;
+	}
+	@SuppressWarnings("unchecked")
+	public String getUserId(TUserOnline tuser){
+		String userId = "";
+		String hql = "from TUser where VUsername='"+tuser.getTUser().getVId()+"'";
+		List<TUser> list = super.find(hql);
+		if(list != null && list.size()>0){
+			TUser t = list.get(0);
+			userId = t.getVId();
+		}
+		return userId;
+	}
+	/**
+	 * @功能描述：用于更新用户在线时长统计信息
+	 * @return
+	 */
+	@SuppressWarnings("unchecked")
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public boolean update(TUserOnline tuser) throws FinanceServiceException {
+		boolean flag=false;
+		String userId = getUserId(tuser);
+		String hql="from TUserOnline where TUser.VId=? order by DLoginDate desc";
+		List<TUserOnline> list = super.find(hql, userId);
+		if(list != null && list.size()>0){
+			TUserOnline t = list.get(0);
+			t.setDOffDate(tuser.getDOffDate());
+			super.update(t);
+			flag = true;
+		}
+		return flag;
+	}
+	/**
+	 * @功能描述：分页查询在线时间统计
+	 */
+	public Page searchPageList(Map<String, Object> params, String pageNo)
+			throws FinanceServiceException {
+		Page page = null;
+		String hql = "";
+		String u = "";
+		if(params.get("userId")!=null)
+			u=params.get("userId").toString();
+
+//		Criteria criteria = this.createCriteria(TUserOnline.class);
+		//if (params.get("userId") != null && !params.get("userId").equals("")){
+			hql = "from TUserOnline where TUser.VUsername like ? order by DLoginDate desc ";
+//			System.out.println(params.get("userId"));
+//			criteria.add(Restrictions.like("TUser.VUsername", "%" + params.get("userId") + "%"));
+		//}
+		/*
+		else{
+			hql = "from TUserOnline";
+		}
+		*/
+		Integer pageIndex = Integer.parseInt(pageNo);
+		try {
+			page = this.pagedQuery(hql, pageIndex,Page.DEFAULT_PAGE_SIZE,"%" + u + "%");
+		} catch (HibernateException e) {
+			e.printStackTrace();
+			throw new FinanceServiceException("查询在线时间统计信息列表失败！", e);
+		}
+		return page;
+	} 
+	
+	@SuppressWarnings("unchecked")
+	public int searchCount() throws FinanceServiceException {
+		int count = 0;
+		String hql="from TUserOnline ";
+		List<TUserOnline> list = super.find(hql);
+		if(list != null && list.size()>0){
+			count = list.size();
+		}
+		return count;
+	}
+}

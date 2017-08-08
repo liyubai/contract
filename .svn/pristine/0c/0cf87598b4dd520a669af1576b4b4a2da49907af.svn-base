@@ -1,0 +1,156 @@
+package com.cauc.contract.business.hibernate;
+
+
+import java.text.SimpleDateFormat;
+import java.util.List;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.hibernate.HibernateException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.cauc.contract.FinanceServiceException;
+import com.cauc.contract.business.IStudentManagementService;
+import com.cauc.contract.business.dao.*;
+import com.cauc.contract.pojos.Student;
+
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+
+
+
+
+@Service
+public class StudentManagementServiceImpl extends GenericHibernateDAO implements IStudentManagementService{
+	private static Log log = LogFactory.getLog(StudentManagementServiceImpl.class);
+
+	public List<Student> readAllStudent(Student student) {
+		String hql="";
+		String strWhere="";
+		hql = "from " + Student.class.getSimpleName() + " t ";
+		if(!student.getStudentName().equals(""))
+		{
+			if(strWhere=="")
+				strWhere =" where t.studentName like '"+student .getStudentName()+"%'";
+			else {
+				strWhere +=" and t.studentName like '"+student .getStudentName()+"%'";
+			}
+		}
+		if(!student.getNo().equals(""))
+		{
+			if(strWhere=="")
+				strWhere =" where t.no='"+student.getNo()+"'";
+			else {
+				strWhere +=" and t.no='"+student .getNo()+"'";
+			}
+		}
+		if(!student.getGrade().equals(0))
+		{
+			if(strWhere=="")
+				strWhere =" where t.grade="+student .getGrade();
+			else {
+				strWhere +=" and t.grade="+student .getGrade();
+			}
+		}
+		if(!student.getState().equals(0))
+		{
+			if(strWhere=="")
+				strWhere =" where t.state="+student .getState();
+			else {
+				strWhere +=" and t.state="+student .getState();
+			}
+		}
+		if(!student.getContractNo().equals(""))
+		{
+			if(strWhere=="")
+				strWhere =" where t.contractNo like '"+student .getContractNo()+"%'";
+			else {
+				strWhere +=" and t.contractNo like '"+student .getContractNo()+"%'";
+			}
+		}
+		if(!student.getCompany().equals("0"))
+		{
+			if(strWhere=="")
+				strWhere =" where t.company='"+student .getCompany()+"'";
+			else {
+				strWhere +=" and t.company='"+student .getCompany()+"'";
+			}
+		}
+		hql=hql+strWhere;
+		List<Student> list = find(hql);
+		
+		return list;
+	}
+	
+	@Override
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void saveStudent(Student student) throws FinanceServiceException {
+		try {
+			if (student.getStudentId()==0) {
+				try {
+					super.save(student);
+				} catch (HibernateException e) {
+					log.error("录入学生失败", e);
+					throw new FinanceServiceException("录入学生失败", e);
+				}
+				
+			} else 
+			{
+				// 更新
+				Student currentStudent = get(Student.class, student.getStudentId());
+			    currentStudent.setState(student.getState());
+			    if(student .getJoinTime()!=null)
+			    	currentStudent .setJoinTime(student.getJoinTime());
+			    if(student .getStopTime()!=null)
+			    	currentStudent .setStopTime(student.getStopTime());
+			    if(student.getStopReason()!=null)
+			    	currentStudent .setStopReason(student.getStopReason());
+			    if(student.getLastModifyTime()!=null)
+			    	currentStudent .setLastModifyTime(student.getLastModifyTime());
+				update(currentStudent);
+			}
+		} catch (HibernateException e) {
+			log.error("保持学生信息时失败", e);
+			throw new FinanceServiceException("保持学生信息时失败。", e);
+		}
+	}
+	@Override
+	public String getInfoById(int studentId)
+	{
+		JSONObject jsonObj = null;
+		JSONArray jsonArr = null;
+		JSONObject dicJson = null;
+		// 取得对象
+		Student currentStudent = get(Student.class,studentId);
+				
+				if(currentStudent!=null){
+					jsonObj = new JSONObject();
+					dicJson = new JSONObject();
+					jsonArr = new JSONArray();
+					SimpleDateFormat sdf=new SimpleDateFormat("yyyy-MM-dd");  
+					String jointime="";
+					String stoptime="";
+					if(null!=currentStudent.getJoinTime())
+					{
+					  jointime=sdf.format(currentStudent.getJoinTime()); 
+					}
+					if(null!=currentStudent.getStopTime())
+					{
+					  stoptime=sdf.format(currentStudent.getStopTime()); 
+					}
+					dicJson.put("studentId", currentStudent.getStudentId());
+					dicJson.put("state", currentStudent.getState());
+					dicJson.put("joinTime", jointime);
+					dicJson.put("stopTime", stoptime);
+					dicJson.put("stopReason", currentStudent.getStopReason());
+					jsonArr.add(dicJson);
+				}else{
+					return null;
+				}
+				
+				jsonObj.put("dics", jsonArr);
+				return jsonObj.toString();
+	}
+}

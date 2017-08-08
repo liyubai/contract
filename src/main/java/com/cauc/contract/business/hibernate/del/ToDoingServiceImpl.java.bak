@@ -1,0 +1,2307 @@
+package com.cauc.training.business.hibernate;
+
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.lang.StringUtils;
+import org.hibernate.HibernateException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.business.IFlightTrainingRecordService;
+import com.cauc.training.business.IStudentService;
+import com.cauc.training.business.IToDoingService;
+import com.cauc.training.business.dao.GenericHibernateDAO;
+import com.cauc.training.pojos.AddHoursAndAddLesson;
+import com.cauc.training.pojos.AssignExamTeacher;
+import com.cauc.training.pojos.PracticeAsk;
+import com.cauc.training.pojos.PracticeTest;
+import com.cauc.training.pojos.StudentBaseInfo;
+import com.cauc.training.pojos.StudentLicense;
+import com.cauc.training.pojos.StudentLicenseskilledcheck;
+import com.cauc.training.pojos.Studentsubjectscore;
+import com.cauc.training.pojos.TAppeal;
+import com.cauc.training.pojos.TBackrecord;
+import com.cauc.training.pojos.TComment;
+import com.cauc.training.pojos.TDiction;
+import com.cauc.training.pojos.TExperiencerecordEdit;
+import com.cauc.training.pojos.TFlightTrainingrecord;
+import com.cauc.training.pojos.TFlightexperiencerecord;
+import com.cauc.training.pojos.TFlyteachrecord;
+import com.cauc.training.pojos.THistoryrecord;
+import com.cauc.training.pojos.TOrg;
+import com.cauc.training.pojos.TOtherflyrecord;
+import com.cauc.training.pojos.TOtheruser;
+import com.cauc.training.pojos.TReplaceapproval;
+import com.cauc.training.pojos.TScore;
+import com.cauc.training.pojos.TScoreAuditRecord;
+import com.cauc.training.pojos.TSendqualificationreview;
+import com.cauc.training.pojos.TStuStatus;
+import com.cauc.training.pojos.TTeacherflightexperiencerecord;
+import com.cauc.training.pojos.TTeacherpaytime;
+import com.cauc.training.pojos.TTrainingLesson;
+import com.cauc.training.pojos.TTrainsubject;
+import com.cauc.training.pojos.TUser;
+import com.cauc.training.pojos.TeacherBaseInfo;
+import com.cauc.training.util.Utilities;
+import com.cauc.training.vo.VFlightTrainingrecordDetail;
+import com.cauc.training.vo.VToDoing;
+
+@Service
+public class ToDoingServiceImpl extends GenericHibernateDAO implements IToDoingService{
+
+	@SuppressWarnings("unchecked")
+	public List<VToDoing> readTeacherToDoingList(Map<String,Object> params)
+			throws FinanceServiceException {
+		try{
+			String cond = "";
+			String condValue ="";
+			List<VToDoing> blist = new ArrayList<VToDoing>();
+			if(params.get(QUERY_DISPATCH_TEACHER) != null
+					&& !params.get(QUERY_DISPATCH_TEACHER).equals("")){
+				
+				
+				//通过编号获取教员身份，是否为主任教员或者是助理主任教员，
+				//主任教员也可代替审核(4028aa494765f33d014765f4c13b0001:主任教员，4028aa494765f33d014765f508b40002:助理主任教员)
+				String thql = " from TeacherBaseInfo where VCode=?";
+				List<TeacherBaseInfo> tlist = super.find(thql,  params.get(QUERY_DISPATCH_TEACHER));
+				if(tlist.size()>0){
+					TeacherBaseInfo t = tlist.get(0);
+					
+					if(t.getTDictionByVFlytype()==null){
+						return blist;
+					}
+					
+					if(t.getTDictionByVFlytype().getVId().equals("4028aa494765f33d014765f4c13b0001") 
+							|| t.getTDictionByVFlytype().getVId().equals("4028aa494765f33d014765f508b40002")){
+						cond+=" and (IAuditstatus=4 or IAuditstatus=0)";
+						condValue+= ""; 
+					}else{
+						cond+=" and IAuditstatus=0 and teacherBaseInfoByVTeacherid.VCode=? ";
+						condValue+=  params.get(QUERY_DISPATCH_TEACHER) + ","; 
+					}
+				}else{
+					cond+=" and 1=2";//有问题的访问
+					condValue+= "";  
+				}
+				
+			}
+			//"IAuditstatus=4"; //申诉，主任教员处理
+			if(params.get(QUERY_VNAME) != null
+					&& !params.get(QUERY_VNAME).equals("")){
+				cond+=" and (studentBaseInfo.VCode like ? or studentBaseInfo.VName like ?)";
+				condValue+= "%" + params.get(QUERY_VNAME)+"%" +"," + "%" + params.get(QUERY_VNAME)+"%" + ",";
+			}
+			String hql = " from TFlightTrainingrecord where 1=1" + cond + " order by DFlydate desc";
+
+			List<TFlightTrainingrecord> list;
+			if(condValue.equals("")){
+				 list =super.find(hql);
+			}else{
+				list =super.find(hql,(Object[])condValue.split(","));
+			}
+			
+			VToDoing td ;
+			int num= 0;
+			for(TFlightTrainingrecord t:list){
+				num++;
+				if(num>20)break;
+				td = new VToDoing();
+				td.setInfoId(t.getVId());
+				td.setSubmitUserId(t.getStudentBaseInfo().getVId());
+				td.setSubmitUserName(t.getStudentBaseInfo().getVName());
+				td.setSubmitTime(Utilities.format(t.getDCreatedate(), "yyyy-MM-dd HH:mm:ss"));
+				td.setType(String.valueOf(t.getIAuditstatus()));
+				if(t.getIAuditstatus()==IFlightTrainingRecordService.FLIGHT_RECORD_STATUS_NO_AUDIT){
+					td.setTitle(IFlightTrainingRecordService.FLIGHT_RECORD_TO_DOING);
+				}else{
+					td.setTitle("待处理的学生申诉教员的评语");
+				}
+				
+				blist.add(td);
+			}
+			
+			return blist;
+		}catch(HibernateException e){
+			throw new FinanceServiceException("读取信息列表失败："+e.getMessage());
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	public List<VToDoing> readStudentToDoingList(Map<String,Object> params)
+			throws FinanceServiceException {
+		try{
+			String cond = "";
+			String condValue ="";
+
+			if(params.get(QUERY_STUDENT) != null
+					&& !params.get(QUERY_STUDENT).equals("")){
+				cond+=" and studentBaseInfo.VCode=? ";
+				condValue+=  params.get(QUERY_STUDENT); 
+
+			}
+
+			String hql = " from TFlightTrainingrecord where (IAuditstatus=2 or IAuditstatus=1)" + cond +" order by DFlydate desc";
+			
+			String auditHql =" from TeacherBaseInfo where VCode=?";
+			
+			List<TeacherBaseInfo> tea;
+
+			List<TFlightTrainingrecord> list;
+			if(condValue.equals("")){
+				 list =super.find(hql);
+			}else{
+				list =super.find(hql,condValue);
+			}
+			List<VToDoing> blist = new ArrayList<VToDoing>();
+			VToDoing td ;
+			int num= 0;
+			for(TFlightTrainingrecord t:list){
+				num++;
+				if(num>20)break;
+				td = new VToDoing();
+				td.setInfoId(t.getVId());
+				//获取审核人
+				tea = super.find(auditHql, t.getTUserByVAudituserid().getVUsername());
+				if(tea.size()>0){
+					td.setSubmitUserId(tea.get(0).getVId());
+					td.setSubmitUserName(tea.get(0).getVName());
+				}
+				td.setSubmitTime(Utilities.format(t.getDAudittime(), "yyyy-MM-dd HH:mm:ss"));
+				td.setType(String.valueOf(t.getIAuditstatus()));
+				if(t.getIAuditstatus()==IFlightTrainingRecordService.FLIGHT_RECORD_STATUS_YES_AUDIT){
+					td.setTitle("待确认的飞行训练");
+				}else{
+					td.setTitle("待改正的被打回飞行训练");
+				}
+				blist.add(td);
+			}
+			
+			return blist;
+		}catch(HibernateException e){
+			throw new FinanceServiceException("读取信息列表失败："+e.getMessage());
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	public List<VToDoing> readOtherToDoingList(Map<String,Object> params)
+			throws FinanceServiceException {
+		try{
+			String cond = "";
+			String condValue ="";
+			
+			if(params.get(QUERY_LOGIN_USER_ID) != null
+					&& !params.get(QUERY_LOGIN_USER_ID).equals("")){
+				cond+=" and TUserByVUserid.VId<>? ";
+				condValue+=  params.get(QUERY_LOGIN_USER_ID); 
+
+			}
+			String hql = " from TOtherflyrecord where IAuditStatus=0" + cond +" order by DFlydate desc";
+			
+			String auditHql =" from TeacherBaseInfo where VCode=?";
+			
+			String stuHql = " from StudentBaseInfo where VCode=?";
+			
+			String otherHql = " from TOtheruser where VCode=?";
+			
+			List<TeacherBaseInfo> tea;
+			
+			List<StudentBaseInfo> stu;
+			
+			List<TOtheruser> other;
+
+			List<TOtherflyrecord> list;
+			
+			if(condValue.equals("")){
+				 list =super.find(hql);
+			}else{
+				list =super.find(hql,condValue);
+			}
+			
+			List<VToDoing> blist = new ArrayList<VToDoing>();
+			VToDoing td ;
+			for(TOtherflyrecord t:list){
+				td = new VToDoing();
+				td.setInfoId(t.getVId());
+				//提交人
+				if(t.getTUserByVUserid().getIUserType()==USERTYPE_STUDENT){
+					
+					stu = super.find(stuHql, t.getTUserByVUserid().getVUsername());
+					if(stu.size()>0){
+						td.setSubmitUserId(stu.get(0).getVId());
+						td.setSubmitUserName(stu.get(0).getVName());
+					}else{
+						td.setSubmitUserName("管理员");
+					}
+					
+				}else if(t.getTUserByVUserid().getIUserType()==USERTYPE_TEACHER){
+					
+					tea = super.find(auditHql, t.getTUserByVUserid().getVUsername());
+					if(tea.size()>0){
+						td.setSubmitUserId(tea.get(0).getVId());
+						td.setSubmitUserName(tea.get(0).getVName());
+					}else{
+						td.setSubmitUserName("管理员");
+					}
+					
+				}else if(t.getTUserByVUserid().getIUserType()==USERTYPE_OTHER){
+					
+					other = super.find(otherHql, t.getTUserByVUserid().getVUsername());
+					if(other.size()>0){
+						td.setSubmitUserId(other.get(0).getVId());
+						td.setSubmitUserName(other.get(0).getVName());
+					}else{
+						td.setSubmitUserName("管理员");
+					}
+					
+				}else{
+					td.setSubmitUserName("管理员");
+				}
+				
+				td.setSubmitTime(Utilities.format(t.getDCreateDate(), "yyyy-MM-dd HH:mm:ss"));
+				td.setTitle("待审核的其它飞行经历记录。");
+				blist.add(td);
+			}
+			
+			return blist;
+		}catch(HibernateException e){
+			throw new FinanceServiceException("读取信息列表失败："+e.getMessage());
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	public VFlightTrainingrecordDetail readFlightTrainingRecordDetailById(
+			Map<String,Object> param) throws FinanceServiceException {
+		try{
+		
+			String hql =" from TFlightTrainingrecord where VId=? and IAuditstatus=?";
+			List<TFlightTrainingrecord> list = 
+				super.find(hql,param.get(QUERY_TRAINING_ID),
+						param.get(IFlightTrainingRecordService.QUERY_AUDIT_STATUS));
+
+			if(list.size()==0){
+				throw new FinanceServiceException("处理信息不存在。");
+			}
+			TFlightTrainingrecord t = list.get(0);
+			
+			String expHql =" from TFlightexperiencerecord where TFlightTrainingrecord.VId=?";
+			
+			VFlightTrainingrecordDetail vf=new VFlightTrainingrecordDetail();;
+			TFlightexperiencerecord exp;
+			List<TFlightexperiencerecord> elist;
+			vf.setVId(t.getVId());
+			vf.setVFlytype(t.getTDiction().getVName());
+			vf.setVFlytypeid(t.getTDiction().getVId());
+			vf.setOutlineName(t.getTOutline().getVName());
+			vf.setStudentName(t.getStudentBaseInfo().getVName());
+			vf.setStudentVCode(t.getStudentBaseInfo().getVCode());
+			vf.setVFpos(t.getStationByVFpos().getVCode());
+			vf.setVLpos(t.getStationByVLpos().getVCode());
+			if(t.getStationByVJtpos()!=null){
+				vf.setVJtpos(t.getStationByVJtpos().getVCode());
+			}else{
+				vf.setVJtpos("");
+			}
+			if(t.getISeat()==null || t.getISeat()==0){
+				vf.setISeat(0);
+			}else{
+				vf.setISeat(1);
+			}
+			if(t.getTeacherBaseInfoByVTeacherid()!=null){
+				vf.setTeacherid(t.getTeacherBaseInfoByVTeacherid().getVId());
+				vf.setTeacherVcode(t.getTeacherBaseInfoByVTeacherid().getVCode());
+				vf.setTeacherName(t.getTeacherBaseInfoByVTeacherid().getVName());
+			}else{
+				vf.setTeacherid("");
+				vf.setTeacherName("");
+				vf.setTeacherVcode("");
+			}
+			
+			if(t.getTeacherBaseInfoByVMonitorteacherid()!=null){
+				vf.setMonitorteacherName(t.getTeacherBaseInfoByVMonitorteacherid().getVName());
+				vf.setMonitorteacherid(t.getTeacherBaseInfoByVMonitorteacherid().getVId());
+			}else{
+				vf.setMonitorteacherName("无");
+				vf.setMonitorteacherid("0");
+			}
+			
+			vf.setVNo(t.getTTrainingLesson().getVNo());
+			vf.setLessonName(t.getTTrainingLesson().getVName());
+			vf.setLessonId(t.getTTrainingLesson().getVId());
+			vf.setKxzx(t.getTTrainingLesson().getIKcxz());
+			vf.setPlaneCode(t.getPlaneinfo().getVPlanecode());
+			vf.setPlaneForm(t.getPlaneinfo().getPlaneform().getVName());
+			vf.setDFlydate(Utilities.format(t.getDFlydate()));
+			vf.setDFlymoment(Utilities.format(t.getDFlymoment(), "HH:mm"));
+			vf.setDEndmoment(Utilities.format(t.getDEndmoment(), "HH:mm"));
+			vf.setDStartmoment(Utilities.format(t.getDStartmoment(), "HH:mm"));
+			vf.setDLandmoment(Utilities.format(t.getDLandmoment(), "HH:mm"));
+
+			vf.setDEngineStart(Utilities.formatDecimal(t.getDEngineStart()));
+			vf.setDEngineEnd(Utilities.formatDecimal(t.getDEngineEnd()));
+			vf.setDTrantime(Utilities.formatTime(t.getDTrantime()));
+			vf.setILanddaytimes(t.getILanddaytimes());
+			vf.setILangnighttimes(t.getILangnighttimes());
+			if(StringUtils.isNotBlank(t.getVSecondstudent())){
+				vf.setVSecondstudent(t.getVSecondstudent());
+			}else{
+				vf.setVSecondstudent("无");
+			}
+			
+			elist = super.find(expHql, t.getVId());
+			if(elist.size()>0){
+				exp = elist.get(0);
+				vf.setDJizhangtime(Utilities.formatTime(exp.getDJizhangtime()));
+				vf.setDDanfeitime(Utilities.formatTime(exp.getDDanfeitime()));
+				vf.setDZhuanchangtime(Utilities.formatTime(exp.getDZhuanchangtime()));
+				vf.setDYejiantime(Utilities.formatTime(exp.getDYejiantime()));
+				vf.setDJiashiyuantime(Utilities.formatTime(exp.getDJiashiyuantime()));
+				vf.setDFujiashitime(Utilities.formatTime(exp.getDFujiashitime()));
+				vf.setDDaifeitime(Utilities.formatTime(exp.getDDaifeitime()));
+				vf.setDFjszhuanchangtime(Utilities.formatTime(exp.getDFjszhuanchangtime()));
+				vf.setDFjszcyjtime(Utilities.formatTime(exp.getDFjszcyjtime()));
+				vf.setDMoniyibiaotime(Utilities.formatTime(exp.getDMoniyibiaotime()));
+				vf.setDZhenshiyibiao(Utilities.formatTime(exp.getDZhenshiyibiao()));
+				if(exp.getVTranpos().equals("0")){
+					vf.setVTranpos("");
+				}else{
+					vf.setVTranpos(exp.getVTranpos());
+				}
+				vf.setDMnjsj(Utilities.formatTime(exp.getDMnjsj()));
+				vf.setDXlqsj(Utilities.formatTime(exp.getDXlqsj()));
+				
+				if(exp.getVBz().equals("0")){
+					vf.setVBz("");
+				}else{
+					vf.setVBz(exp.getVBz());
+				}
+				
+			}
+			return vf;
+			
+		}catch(HibernateException e){
+			throw new FinanceServiceException("读取信息失败，数据库错误，请重试。");
+		}
+
+	}
+	@SuppressWarnings("unchecked")
+	public VFlightTrainingrecordDetail readFlightTrainingRecordEditDetailById(
+			Map<String,Object> param) throws FinanceServiceException {
+		try{
+
+			String hql =" from TFlightTrainingrecord where VId=? and IAuditstatus=?";
+			List<TFlightTrainingrecord> list = 
+				super.find(hql,param.get(QUERY_TRAINING_ID),
+						param.get(IFlightTrainingRecordService.QUERY_AUDIT_STATUS));
+
+			if(list.size()==0){
+				throw new FinanceServiceException("处理信息不存在。");
+			}
+			TFlightTrainingrecord t = list.get(0);
+			
+			String expHql =" from TFlightexperiencerecord where TFlightTrainingrecord.VId=?";
+			
+			VFlightTrainingrecordDetail vf=new VFlightTrainingrecordDetail();;
+			TFlightexperiencerecord exp;
+			List<TFlightexperiencerecord> elist;
+			vf.setVId(t.getVId());
+			vf.setOutlineid(t.getTOutline().getVId());
+			vf.setOutlineName(t.getTOutline().getVName());
+			vf.setVFlytype(t.getTDiction().getVName());
+			vf.setVFlytypeid(t.getTDiction().getVId());
+			vf.setStudentName(t.getStudentBaseInfo().getVName());
+			vf.setStudentVCode(t.getStudentBaseInfo().getVCode());
+			vf.setVFpos(t.getStationByVFpos().getVId());
+			vf.setVLpos(t.getStationByVLpos().getVId());
+			vf.setStudentid(t.getStudentBaseInfo().getVId());
+			if(t.getStationByVJtpos()!=null){
+				vf.setVJtpos(t.getStationByVJtpos().getVId());
+			}else{
+				vf.setVJtpos("");
+			}
+			if(t.getISeat()==null){
+				vf.setISeat(0);
+			}else{
+				vf.setISeat(t.getISeat());
+			}
+			if(t.getTeacherBaseInfoByVTeacherid()!=null){
+				vf.setTeacherid(t.getTeacherBaseInfoByVTeacherid().getVId());
+				vf.setTeacherVcode(t.getTeacherBaseInfoByVTeacherid().getVCode());
+				vf.setTeacherName(t.getTeacherBaseInfoByVTeacherid().getVName());
+			}else{
+				vf.setTeacherid("");
+				vf.setTeacherName("");
+				vf.setTeacherVcode("");
+			}
+			
+			if(t.getTeacherBaseInfoByVMonitorteacherid()!=null){
+				vf.setMonitorteacherName(t.getTeacherBaseInfoByVMonitorteacherid().getVName());
+				vf.setMonitorteacherid(t.getTeacherBaseInfoByVMonitorteacherid().getVId());
+			}else{
+				vf.setMonitorteacherName("");
+				vf.setMonitorteacherid("0");
+			}
+			
+			vf.setVNo(t.getTTrainingLesson().getVNo());
+			vf.setLessonName(t.getTTrainingLesson().getVName());
+			vf.setLessonId(t.getTTrainingLesson().getVId());
+			vf.setPlaneid(t.getPlaneinfo().getVId());
+			vf.setPlaneCode(t.getPlaneinfo().getVPlanecode());
+			vf.setPlaneForm(t.getPlaneinfo().getPlaneform().getVName());
+			vf.setDFlydate(Utilities.format(t.getDFlydate()));
+			vf.setDFlymoment(Utilities.format(t.getDFlymoment(), "HH:mm"));
+			vf.setDEndmoment(Utilities.format(t.getDEndmoment(), "HH:mm"));
+			vf.setDStartmoment(Utilities.format(t.getDStartmoment(), "HH:mm"));
+			vf.setDLandmoment(Utilities.format(t.getDLandmoment(), "HH:mm"));
+
+			vf.setDEngineStart(Utilities.formatTime(t.getDEngineStart()));
+			vf.setDEngineEnd(Utilities.formatTime(t.getDEngineEnd()));
+			vf.setDTrantime(Utilities.formatTime(t.getDTrantime()));
+			vf.setTime((int)t.getDTrantime());
+			vf.setILanddaytimes(t.getILanddaytimes());
+			vf.setILangnighttimes(t.getILangnighttimes());
+			vf.setVSecondstudent(t.getVSecondstudent());
+			elist = super.find(expHql, t.getVId());
+			if(elist.size()>0){
+				exp = elist.get(0);
+				vf.setDJizhangtime(Utilities.formatTime(exp.getDJizhangtime()));
+				vf.setDDanfeitime(Utilities.formatTime(exp.getDDanfeitime()));
+				vf.setDZhuanchangtime(Utilities.formatTime(exp.getDZhuanchangtime()));
+				vf.setDYejiantime(Utilities.formatTime(exp.getDYejiantime()));
+				vf.setDJiashiyuantime(Utilities.formatTime(exp.getDJiashiyuantime()));
+				vf.setDFujiashitime(Utilities.formatTime(exp.getDFujiashitime()));
+				vf.setDDaifeitime(Utilities.formatTime(exp.getDDaifeitime()));
+				vf.setDFjszhuanchangtime(Utilities.formatTime(exp.getDFjszhuanchangtime()));
+				vf.setDFjszcyjtime(Utilities.formatTime(exp.getDFjszcyjtime()));
+				vf.setDMoniyibiaotime(Utilities.formatTime(exp.getDMoniyibiaotime()));
+				vf.setDZhenshiyibiao(Utilities.formatTime(exp.getDZhenshiyibiao()));
+				if(exp.getVTranpos().equals("0")){
+					vf.setVTranpos("");
+				}else{
+					vf.setVTranpos(exp.getVTranpos());
+				}
+				vf.setDMnjsj(Utilities.formatTime(exp.getDMnjsj()));
+				vf.setDXlqsj(Utilities.formatTime(exp.getDXlqsj()));
+				
+				if(exp.getVBz().equals("0")){
+					vf.setVBz("");
+				}else{
+					vf.setVBz(exp.getVBz());
+				}
+				
+			}
+			return vf;
+			
+		}catch(HibernateException e){
+			throw new FinanceServiceException("读取信息失败，数据库错误，请重试。");
+		}
+
+	}
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void saveBackTrainingRecord(TBackrecord back)
+			throws FinanceServiceException {
+		try{
+			TFlightTrainingrecord record = super.get(TFlightTrainingrecord.class, back.getTFlightTrainingrecord().getVId());
+			
+			if(record.getIAuditstatus()!=IFlightTrainingRecordService.FLIGHT_RECORD_STATUS_NO_AUDIT){
+				throw new FinanceServiceException("打回失败，该记录不符合打回条件。");
+			}
+			record.setDAudittime(new Date());
+			record.setTUserByVAudituserid(back.getTUser());
+			record.setIAuditstatus(IFlightTrainingRecordService.FLIGHT_RECORD_STATUS_BACK_AUDIT);
+			super.update(record);
+			
+			back.setDCreatedate(new Date());
+			super.save(back);
+			
+			
+		}catch(HibernateException e){
+			throw new RuntimeException("打回失败，数据库错误，请重试。");
+		}
+	}
+	
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void saveReplaceTeacherConfirm(VToDoing toDoing)
+			throws FinanceServiceException {
+		try{
+			TFlightTrainingrecord record = super.get(TFlightTrainingrecord.class, toDoing.getInfoId());
+			
+			if(record.getIAuditstatus()!=IFlightTrainingRecordService.FLIGHT_RECORD_STATUS_NO_AUDIT){
+				throw new FinanceServiceException("代替审核失败，该记录不符合审核条件。");
+			}
+			
+			String submitTime = toDoing.getSubmitTime();
+			
+			Date d = new Date();
+			if(!StringUtils.isBlank(submitTime)){
+				d= Utilities.parse(submitTime, "yyyy-MM-dd HH:mm:ss");
+			}
+			String submitUserId = toDoing.getSubmitUserId();//审核人id;
+			TUser user = super.get(TUser.class, submitUserId);
+			
+			//1.审核
+			record.setIAuditstatus(IFlightTrainingRecordService.FLIGHT_RECORD_STATUS_YES_AUDIT);
+			record.setDAudittime(d);
+			record.setTUserByVAudituserid(user);
+			
+			//2.数字签名开始-----------
+			
+			
+			//数字签名结束-----------
+			
+			super.update(record);
+
+			if(!StringUtils.isBlank(submitTime)){
+				d= Utilities.parse(submitTime, "yyyy-MM-dd HH:mm:ss");
+			}
+			//3.打分
+			String subjectids = toDoing.getTitle();//借用属性 格式为id;score,id;score
+			if(!StringUtils.isBlank(subjectids)){
+				String[] subs = subjectids.split(",");
+				
+				List<Studentsubjectscore> list = new ArrayList<Studentsubjectscore>();
+				Studentsubjectscore score;
+				
+				for(int i=0;i<subs.length;i++){	
+					score = new Studentsubjectscore();
+					score.setTFlightTrainingrecord(record);
+					score.setDCreatedate(d);
+					score.setTUser(user);
+					score.setIIsused(Integer.parseInt(subs[i].split(";")[2]));
+					score.setDActscore(getDoubleValue(subs[i].split(";")[1]));
+					score.setTTrainsubject(super.get(TTrainsubject.class, subs[i].split(";")[0]));
+					list.add(score);
+				}
+				super.saveOrUpdateALL(list);
+			}
+			//4.评语
+			TComment comment = new TComment();
+			comment.setTFlightTrainingrecord(record);
+			comment.setTUser(user);
+			comment.setDCreatedate(d);
+			comment.setIStatus(IToDoingService.COMMENT_STATUS_NO_CONFIRM);
+			comment.setVComment(toDoing.getType());
+			comment.setIPass(toDoing.getIPass());
+			comment.setVCheckcomment(toDoing.getVCheckcomment());
+			comment.setVJishu(toDoing.getVJishu());
+			comment.setVZongjie(toDoing.getVZongjie());
+			comment.setIZp(toDoing.getIZp());
+			comment.setIZpjs(toDoing.getIZpjs());
+			comment.setIZpzb(toDoing.getIZpzb());
+			super.save(comment);
+			
+			//5.代替审核
+			TReplaceapproval replace = new TReplaceapproval();
+			replace.setTFlightTrainingrecord(record);
+			replace.setDCreatedate(d);
+			replace.setTUser(user);
+			replace.setVReason(toDoing.getSubmitUserName());//借用属性
+			super.save(replace);
+			
+			//生成教员经历
+			madeTeacherRecord(record);
+			
+		}catch(HibernateException e){
+			throw new RuntimeException("代替审核失败，数据库错误，请重试。");
+		}catch (ParseException e) {
+			throw new RuntimeException("代替审核失败，评语时间格式错误。");
+		}
+	}
+	
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void saveTeacherConfirm(VToDoing toDoing)
+			throws FinanceServiceException {
+		try{
+			TFlightTrainingrecord record = super.get(TFlightTrainingrecord.class, toDoing.getInfoId());
+			
+			if(record.getIAuditstatus()!=IFlightTrainingRecordService.FLIGHT_RECORD_STATUS_NO_AUDIT){
+				throw new FinanceServiceException("审核失败，该记录不符合审核条件。");
+			}
+			
+			String submitTime = toDoing.getSubmitTime();
+			
+			Date d = new Date();
+			if(!StringUtils.isBlank(submitTime)){
+				d= Utilities.parse(submitTime, "yyyy-MM-dd HH:mm:ss");
+			}
+			String submitUserId = toDoing.getSubmitUserId();//审核人id;
+			TUser user = super.get(TUser.class, submitUserId);
+			
+			//1.审核
+			record.setIAuditstatus(IFlightTrainingRecordService.FLIGHT_RECORD_STATUS_YES_AUDIT);
+			record.setDAudittime(d);
+			record.setTUserByVAudituserid(user);
+			
+			
+			//2.数字签名开始-----------
+			
+			
+			//数字签名结束-----------
+			
+			super.update(record);
+
+			//3.打分
+			String subjectids = toDoing.getTitle();//借用属性 格式为id;score,id;score
+			if(!StringUtils.isBlank(subjectids)){
+				
+				String[] subs = subjectids.split(",");
+				
+				List<Studentsubjectscore> list = new ArrayList<Studentsubjectscore>();
+				Studentsubjectscore score;
+				
+				for(int i=0;i<subs.length;i++){	
+					
+					score = new Studentsubjectscore();
+					score.setTFlightTrainingrecord(record);
+					score.setDCreatedate(d);
+					score.setTUser(user);
+					score.setIIsused(Integer.parseInt(subs[i].split(";")[2]));
+					score.setDActscore(getDoubleValue(subs[i].split(";")[1]));
+					score.setTTrainsubject(super.get(TTrainsubject.class, subs[i].split(";")[0]));
+
+					list.add(score);
+				}
+				super.saveOrUpdateALL(list);
+			}
+			//4.评语
+			TComment comment = new TComment();
+			comment.setTFlightTrainingrecord(record);
+			comment.setTUser(user);
+			comment.setDCreatedate(d);
+			comment.setIStatus(IToDoingService.COMMENT_STATUS_NO_CONFIRM);
+			comment.setVComment(toDoing.getType());
+			comment.setIPass(toDoing.getIPass());
+			comment.setVCheckcomment(toDoing.getVCheckcomment());
+			comment.setVJishu(toDoing.getVJishu());
+			comment.setVZongjie(toDoing.getVZongjie());
+			comment.setIZp(toDoing.getIZp());
+			comment.setIZpjs(toDoing.getIZpjs());
+			comment.setIZpzb(toDoing.getIZpzb());
+			super.save(comment);
+			
+			madeTeacherRecord(record);
+			
+		}catch(HibernateException e){
+			throw new RuntimeException("审核失败，数据库错误，请重试。");
+		}catch (ParseException e) {
+			throw new RuntimeException("审核失败，评语时间格式错误。");
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	private void madeTeacherRecord(TFlightTrainingrecord record){
+		String hql =" from TFlightexperiencerecord where TFlightTrainingrecord.VId=?";
+		List<TFlightexperiencerecord> ts= super.find(hql, record.getVId());
+		TFlightexperiencerecord jl = ts.get(0);
+		//一、教员教学记录
+		if(record.getTTrainingLesson().getIFxxz()==IFlightTrainingRecordService.LESSON_PROPERTY_DAIFEI){
+			TFlyteachrecord jx = new TFlyteachrecord(); 
+			//赋值开始
+			jx.setTeacherBaseInfo(record.getTeacherBaseInfoByVTeacherid());
+			jx.setTDiction(record.getTDiction());//飞行种类
+			jx.setTTrainingLesson(record.getTTrainingLesson());
+			jx.setDFlydate(record.getDFlydate());
+			jx.setPlaneinfo(record.getPlaneinfo());
+			jx.setStationByVFlypos(record.getStationByVFpos());
+			jx.setStationByVLandpos(record.getStationByVLpos());
+			jx.setDStarttime(record.getDFlymoment());
+			jx.setDEndtime(record.getDEndmoment());
+			jx.setIDaytimes(record.getILanddaytimes());
+			jx.setINeighttimes(record.getILangnighttimes());
+			jx.setDJiashiyuantime(record.getDTrantime());
+			jx.setTFlightTrainingrecord(record);
+			
+			jx.setDJizhangtime(jl.getDJizhangtime());
+			jx.setDDanfeitime(jl.getDDanfeitime());
+			jx.setDZhuanchangtime(jl.getDZhuanchangtime());
+			jx.setDYejiantime(jl.getDYejiantime());
+			jx.setDFujiashitime(jl.getDFujiashitime());
+			jx.setDDaifeitime(jl.getDDaifeitime());
+			jx.setDFjszhuanchangtime(jl.getDFjszhuanchangtime());
+			jx.setDFjszcyjtime(jl.getDFjszcyjtime());
+			jx.setDMoniyibiaotime(jl.getDMoniyibiaotime());
+			jx.setDZhenshiyibiao(jl.getDZhenshiyibiao());
+			jx.setVTranpos(jl.getVTranpos());//训练地点
+			jx.setDMnjsj(jl.getDMnjsj());
+			jx.setDXlqsj(jl.getDXlqsj());
+			
+			jx.setVBz(jl.getVBz());
+			
+			//赋值结束
+			super.save(jx);
+		}
+		
+		//二、教员飞行经历记录
+		if(record.getTTrainingLesson().getIFxxz()==IFlightTrainingRecordService.LESSON_PROPERTY_DAIFEI){
+			TTeacherflightexperiencerecord tjl = new TTeacherflightexperiencerecord();
+			tjl.setTeacherBaseInfo(record.getTeacherBaseInfoByVTeacherid());
+			tjl.setTDiction(record.getTDiction());//飞行种类
+			tjl.setTTrainingLesson(record.getTTrainingLesson());
+			tjl.setDFlydate(record.getDFlydate());
+			tjl.setPlaneinfo(record.getPlaneinfo());
+			tjl.setStationByVFlypos(record.getStationByVFpos());
+			tjl.setStationByVLandpos(record.getStationByVLpos());
+			tjl.setDStarttime(record.getDFlymoment());
+			tjl.setDEndtime(record.getDEndmoment());
+			tjl.setIDaytimes(record.getILanddaytimes());
+			tjl.setINeighttimes(record.getILangnighttimes());
+			tjl.setDJiashiyuantime(record.getDTrantime());
+			tjl.setTFlightTrainingrecord(record);
+			//tjl.setVImgname(record.getVImgname());
+
+			tjl.setDJizhangtime(jl.getDJizhangtime());
+			tjl.setDDanfeitime(jl.getDDanfeitime());
+			tjl.setDZhuanchangtime(jl.getDZhuanchangtime());
+			tjl.setDYejiantime(jl.getDYejiantime());
+			tjl.setDFujiashitime(jl.getDFujiashitime());
+			tjl.setDDaifeitime(jl.getDDaifeitime());
+			tjl.setDFjszhuanchangtime(jl.getDFjszhuanchangtime());
+			tjl.setDFjszcyjtime(jl.getDFjszcyjtime());
+			tjl.setDMoniyibiaotime(jl.getDMoniyibiaotime());
+			tjl.setDZhenshiyibiao(jl.getDZhenshiyibiao());
+			tjl.setVTranpos(jl.getVTranpos());//训练地点
+			tjl.setDMnjsj(jl.getDMnjsj());
+			tjl.setDXlqsj(jl.getDXlqsj());
+		
+			tjl.setVBz(jl.getVBz());
+			
+			super.save(tjl);
+		}
+		//三、教员计酬时间
+		TTeacherpaytime jc = new TTeacherpaytime();
+		jc.setTeacherBaseInfo(record.getTeacherBaseInfoByVTeacherid());
+		jc.setTDiction(record.getTDiction());//飞行种类
+		jc.setTTrainingLesson(record.getTTrainingLesson());
+		jc.setDFlydate(record.getDFlydate());
+		jc.setPlaneinfo(record.getPlaneinfo());
+		jc.setStationByVFlypos(record.getStationByVFpos());
+		jc.setStationByVLandpos(record.getStationByVLpos());
+		jc.setDStarttime(record.getDFlymoment());
+		jc.setDEndtime(record.getDEndmoment());
+		jc.setIDaytimes(record.getILanddaytimes());
+		jc.setINeighttimes(record.getILangnighttimes());
+		jc.setDJiashiyuantime(record.getDTrantime());
+		jc.setTFlightTrainingrecord(record);
+		//jc.setVImgname(record.getVImgname());
+		
+		jc.setDJizhangtime(jl.getDJizhangtime());
+		jc.setDDanfeitime(jl.getDDanfeitime());
+		jc.setDZhuanchangtime(jl.getDZhuanchangtime());
+		jc.setDYejiantime(jl.getDYejiantime());
+		jc.setDFujiashitime(jl.getDFujiashitime());
+		jc.setDDaifeitime(jl.getDDaifeitime());
+		jc.setDFjszhuanchangtime(jl.getDFjszhuanchangtime());
+		jc.setDFjszcyjtime(jl.getDFjszcyjtime());
+		jc.setDMoniyibiaotime(jl.getDMoniyibiaotime());
+		jc.setDZhenshiyibiao(jl.getDZhenshiyibiao());
+		jc.setVTranpos(jl.getVTranpos());//训练地点
+		jc.setDMnjsj(jl.getDMnjsj());
+		jc.setDXlqsj(jl.getDXlqsj());
+		jc.setVBz(jl.getVBz());
+		super.save(jc);
+		
+		//四、监视教员
+		if(record.getTeacherBaseInfoByVMonitorteacherid()!=null){
+
+			TTeacherpaytime jsjc = new TTeacherpaytime();
+			jsjc.setTeacherBaseInfo(record.getTeacherBaseInfoByVMonitorteacherid());
+			jsjc.setTDiction(record.getTDiction());//飞行种类
+			jsjc.setTTrainingLesson(record.getTTrainingLesson());
+			jsjc.setDFlydate(record.getDFlydate());
+			jsjc.setPlaneinfo(record.getPlaneinfo());
+			jsjc.setStationByVFlypos(record.getStationByVFpos());
+			jsjc.setStationByVLandpos(record.getStationByVLpos());
+			jsjc.setDStarttime(record.getDFlymoment());
+			jsjc.setDEndtime(record.getDEndmoment());
+			jsjc.setIDaytimes(record.getILanddaytimes());
+			jsjc.setINeighttimes(record.getILangnighttimes());
+			jsjc.setDJiashiyuantime(record.getDTrantime());
+			jsjc.setTFlightTrainingrecord(record);
+			//jsjc.setVImgname(record.getVImgname());
+			jsjc.setDJizhangtime(jl.getDJizhangtime());
+			jsjc.setDDanfeitime(jl.getDDanfeitime());
+			jsjc.setDZhuanchangtime(jl.getDZhuanchangtime());
+			jsjc.setDYejiantime(jl.getDYejiantime());
+			jsjc.setDFujiashitime(jl.getDFujiashitime());
+			jsjc.setDDaifeitime(jl.getDDaifeitime());
+			jsjc.setDFjszhuanchangtime(jl.getDFjszhuanchangtime());
+			jsjc.setDFjszcyjtime(jl.getDFjszcyjtime());
+			jsjc.setDMoniyibiaotime(jl.getDMoniyibiaotime());
+			jsjc.setDZhenshiyibiao(jl.getDZhenshiyibiao());
+			jsjc.setVTranpos(jl.getVTranpos());//训练地点
+			jsjc.setDMnjsj(jl.getDMnjsj());
+			jsjc.setDXlqsj(jl.getDXlqsj());
+			jsjc.setVBz(jl.getVBz());
+			super.save(jsjc);
+		}
+		//五、根据飞行种类，生成熟练检查信息。
+		/**
+		0：熟练检查  有效期=检查日期+365天
+		1：定检检查 有效期=检查日期+365*2天
+		2：实践考试 有效期=新执照有效期  考试之后生成新的执照，新执照的有效期。
+		*/
+		//5.1 熟练检查
+		if(record.getTDiction().getVId().equals(IFlightTrainingRecordService.SHULIANJIANCHA)){
+			
+			Calendar rightNow = Calendar.getInstance();
+			rightNow.setTime(record.getDFlydate());
+			rightNow.add(Calendar.YEAR, 1);
+			
+			StudentLicenseskilledcheck  check = new StudentLicenseskilledcheck();
+			String chql =" from StudentLicense where studentBaseInfo.VId=?";//获取执照有效期（作为实践考试有效期）、执照对象
+			
+			List<StudentLicense> licenseList = super.find(chql, record.getStudentBaseInfo().getVId());
+			if(licenseList.size()>0){
+				//获得教员
+				TeacherBaseInfo teacher = record.getTeacherBaseInfoByVTeacherid();
+				check.setStudentLicense(licenseList.get(0));
+				check.setIChecktype(0);
+				check.setVCheckcontent(record.getTDiction().getVName());
+				check.setDEffectdate(rightNow.getTime());//有效期)
+				check.setDCheckdate(record.getDFlydate());
+				check.setVBz(jl.getVBz());
+				check.setVFlyform(record.getPlaneinfo().getVPlanecode());
+				check.setVCheckteacher(teacher.getVName());
+				check.setDCreatedate(new Date());
+				check.setTUser(record.getTUserByVCreateuserid());
+				super.save(check);
+			}
+			
+		}		
+		
+		//5.2定期检查
+		if(record.getTDiction().getVId().equals(IFlightTrainingRecordService.DINGQIJIANCHA)){
+			
+			Calendar rightNow = Calendar.getInstance();
+			rightNow.setTime(record.getDFlydate());
+			rightNow.add(Calendar.YEAR, 2);
+			
+			StudentLicenseskilledcheck  check = new StudentLicenseskilledcheck();
+			String chql =" from StudentLicense where studentBaseInfo.VId=?";//获取执照有效期（作为实践考试有效期，待确定）、执照对象
+			
+			List<StudentLicense> licenseList = super.find(chql, record.getStudentBaseInfo().getVId());
+			if(licenseList.size()>0){
+				//获得教员
+				TeacherBaseInfo teacher = record.getTeacherBaseInfoByVTeacherid();
+				check.setStudentLicense(licenseList.get(0));
+				check.setIChecktype(1);
+				check.setVCheckcontent(record.getTDiction().getVName());
+				check.setDEffectdate(rightNow.getTime());//有效期)
+				check.setDCheckdate(record.getDFlydate());
+				check.setVBz(jl.getVBz());
+				check.setVFlyform(record.getPlaneinfo().getVPlanecode());
+				check.setVCheckteacher(teacher.getVName());
+				check.setDCreatedate(new Date());
+				check.setTUser(record.getTUserByVCreateuserid());
+				super.save(check);
+			}
+		}
+		
+		//5.3实践考试
+		if(record.getTDiction().getVId().equals(IFlightTrainingRecordService.SHIJIANKAOSHI)){
+			Calendar rightNow = Calendar.getInstance();
+			rightNow.setTime(record.getDFlydate());
+			rightNow.add(Calendar.YEAR, 2);
+			
+			StudentLicenseskilledcheck  check = new StudentLicenseskilledcheck();
+			String chql =" from StudentLicense where studentBaseInfo.VId=?";//获取执照有效期（作为实践考试有效期）、执照对象
+			
+			List<StudentLicense> licenseList = super.find(chql, record.getStudentBaseInfo().getVId());
+			if(licenseList.size()>0){
+				//获得教员
+				TeacherBaseInfo teacher = record.getTeacherBaseInfoByVTeacherid();
+				check.setStudentLicense(licenseList.get(0));
+				check.setIChecktype(2);
+				check.setVCheckcontent(record.getTDiction().getVName());
+				check.setDEffectdate(rightNow.getTime());//有效期)
+				check.setDCheckdate(record.getDFlydate());
+				check.setVBz(jl.getVBz());
+				check.setVFlyform(record.getPlaneinfo().getVPlanecode());
+				check.setVCheckteacher(teacher.getVName());
+				check.setDCreatedate(new Date());
+				check.setTUser(record.getTUserByVCreateuserid());
+				super.save(check);
+			}
+		}
+	}
+	
+	private double getDoubleValue(String dd){
+		if(StringUtils.isBlank(dd)){
+			return 0;
+		}else{
+			return Double.parseDouble(dd);
+		}
+		
+	}
+
+	@SuppressWarnings("unchecked")
+	public VToDoing readAppealTrainingRecord(String recordid)
+			throws FinanceServiceException {
+		try{
+			VToDoing to = new VToDoing();
+			
+			String hql =" from TComment where TFlightTrainingrecord.VId=?";
+			TComment c = new TComment();
+			List<TComment> list = super.find(hql, recordid);
+			if(list.size()==0){
+				return null;
+			}
+			c = list.get(0);			
+			String auditHql =" from TeacherBaseInfo where VCode=?";
+			List<TeacherBaseInfo> tlist = super.find(auditHql, c.getTUser().getVUsername());
+			to.setSubmitUserName(tlist.get(0).getVName());// 被申诉教员
+			to.setTitle(c.getVComment());//评语内容
+			
+			//获取申诉内容
+			hql =" from TAppeal where TComment.VId=?";
+			List<TAppeal> alist = super.find(hql, c.getVId());
+			if(alist.size()>0){
+				to.setSubmitUserId(alist.get(0).getVReason());//申诉理由
+				to.setSubmitTime(Utilities.format(alist.get(0).getDCreatedate(), "yyyy-MM-dd HH:mm:ss"));//申诉时间
+				to.setInfoId(alist.get(0).getVId());
+			}
+			return to;
+		}catch(HibernateException e){
+			throw new FinanceServiceException("获取申诉对象失败，数据库错误。");
+		}
+		
+	}
+	@SuppressWarnings("unchecked")
+	public VToDoing readCommentTrainingRecord(String recordid)
+			throws FinanceServiceException {
+		try{
+			VToDoing to = new VToDoing();
+			
+			String hql =" from TComment where TFlightTrainingrecord.VId=?";
+			TComment c = new TComment();
+			List<TComment> list = super.find(hql, recordid);
+			if(list.size()==0){
+				return null;
+			}
+			c = list.get(0);
+			to.setSubmitTime(Utilities.format(list.get(0).getDCreatedate(), "yyyy-MM-dd HH:mm:ss"));//评语时间
+			
+			String auditHql =" from TeacherBaseInfo where VCode=?";
+
+			List<TeacherBaseInfo> tlist = super.find(auditHql, c.getTUser().getVUsername());
+			to.setSubmitUserName(tlist.get(0).getVName());
+			to.setSubmitUserId(tlist.get(0).getVId());
+			to.setTitle(c.getVComment());
+			to.setInfoId(c.getVId());
+			return to;
+		}catch(HibernateException e){
+			throw new FinanceServiceException("获取评语对象失败，数据库错误。");
+		}
+		
+	}
+	
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void saveStudentConfirmRecord(VToDoing toDoing)
+			throws FinanceServiceException {
+		try{
+			TFlightTrainingrecord record = super.get(TFlightTrainingrecord.class, toDoing.getInfoId());
+			
+			if(record.getIAuditstatus()!=IFlightTrainingRecordService.FLIGHT_RECORD_STATUS_YES_AUDIT){
+				throw new FinanceServiceException("确认评语失败，该记录不符合审核条件。");
+			}
+			
+			String submitUserId = toDoing.getSubmitUserId();//审核人;
+				
+			if(!submitUserId.equals(record.getStudentBaseInfo().getVCode())){
+				throw new FinanceServiceException("确认评语失败，该评语不属于登录者本人。");
+			}
+				
+			//1.确认评语
+			record.setIAuditstatus(IFlightTrainingRecordService.FLIGHT_RECORD_STATUS_YES_CONFIRM);
+			super.update(record);
+
+			//2.评语
+			
+			TComment comment = super.get(TComment.class, toDoing.getType());
+			
+			comment.setIStatus(IToDoingService.COMMENT_STATUS_YES_CONFIRM);
+
+			super.update(comment);
+			
+			
+		}catch(HibernateException e){
+			throw new RuntimeException("确认评语失败，数据库错误，请重试。");
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void saveAddHoursAndAddLessonConfirm(VToDoing toDoing)
+			throws FinanceServiceException {
+		try{
+			
+			String submitUserId = toDoing.getSubmitUserId();//审核人;
+			TUser user = super.get(TUser.class, submitUserId);
+			
+			String ids = toDoing.getInfoId();
+			String os[] = ids.split(",");
+			String hql =" from AddHoursAndAddLesson where IAuditstatus<>1 and VId=?";
+			
+			List<AddHoursAndAddLesson> savelist = new ArrayList<AddHoursAndAddLesson>();
+			List<AddHoursAndAddLesson> list;
+			AddHoursAndAddLesson old;
+			
+			for(int i=0;i<os.length;i++){
+				list = super.find(hql, os[i]);
+				if(list.size()>0){
+					
+					old = list.get(0);
+					old.setDAudittime(new Date());
+					old.setTUserByVAudituserid(user);
+					old.setIAuditstatus(Integer.parseInt(toDoing.getType()));
+					savelist.add(old);
+					
+				}
+			}
+			
+			if(savelist.size()==0){
+				throw new FinanceServiceException("审核加时加课失败，该记录不符合审核条件。");
+			}
+
+			super.saveOrUpdateALL(savelist);
+
+			
+		}catch(HibernateException e){
+			throw new FinanceServiceException("确认记录失败，数据库错误，请重试。");
+		}
+	}
+	
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void saveOtherRecordConfirm(VToDoing toDoing)
+			throws FinanceServiceException {
+		try{
+			TOtherflyrecord record = super.get(TOtherflyrecord.class, toDoing.getInfoId());
+			
+			if(record.getIAuditStatus()!=IFlightTrainingRecordService.FLIGHT_RECORD_STATUS_NO_AUDIT){
+				throw new FinanceServiceException("审核记录失败，该记录不符合审核条件。");
+			}
+			
+			String submitUserId = toDoing.getSubmitUserId();//审核人;
+			TUser user = super.get(TUser.class, submitUserId);
+			record.setDAuditTime(new Date());
+			record.setTUserByVAuditUserid(user);
+			record.setIAuditStatus(Integer.parseInt(toDoing.getType()));
+			super.update(record);	
+			
+		}catch(HibernateException e){
+			throw new FinanceServiceException("审核记录失败，数据库错误，请重试。");
+		}
+	}
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void saveStudentShenSu(TAppeal appeal)
+			throws FinanceServiceException {
+		try{
+			
+			TComment comment = super.get(TComment.class, appeal.getTComment().getVId());
+					
+			TFlightTrainingrecord record = comment.getTFlightTrainingrecord();
+			
+			if(record.getIAuditstatus()!=IFlightTrainingRecordService.FLIGHT_RECORD_STATUS_YES_AUDIT){
+				throw new FinanceServiceException("申诉失败，该记录不符合申诉条件。");
+			}
+
+			if(!appeal.getTUserByVCreateuserid().getVUsername().equals(record.getStudentBaseInfo().getVCode())){
+				throw new FinanceServiceException("申诉评语失败，该评语不属于登录者本人。");
+			}
+				
+			//1.记录申诉
+			record.setIAuditstatus(IFlightTrainingRecordService.FLIGHT_RECORD_STATUS_APPEAL);
+			super.update(record);
+			
+			appeal.setDCreatedate(new Date());
+			appeal.setIStatus(APPEAL_DOWITH_STATUS_NO);//等待处理
+			
+			super.save(appeal);
+
+			//2.评语
+			
+			comment.setIStatus(IToDoingService.COMMENT_STATUS_APPEAL);
+
+			super.update(comment);
+			
+			
+		}catch(HibernateException e){
+			throw new RuntimeException("确认评语失败，数据库错误，请重试。");
+		}
+	}
+	
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void saveDoWithAppeal(TAppeal appeal)
+			throws FinanceServiceException {
+		try{
+			TAppeal old =super.get(TAppeal.class, appeal.getVId());
+			
+			TComment comment = old.getTComment();
+			
+			if(old.getIStatus()!=APPEAL_DOWITH_STATUS_NO){
+				throw new FinanceServiceException("处理评语申诉失败，该评语已经处理过。");
+			}		
+			TFlightTrainingrecord record = comment.getTFlightTrainingrecord();
+			
+			if(record.getIAuditstatus()!=IFlightTrainingRecordService.FLIGHT_RECORD_STATUS_APPEAL){
+				throw new FinanceServiceException("处理申诉失败，该记录不符合处理申诉条件。");
+			}
+			
+			record.setIAuditstatus(IFlightTrainingRecordService.FLIGHT_RECORD_STATUS_APPEAL_DO_WITH);
+			super.update(record);
+			
+			
+			
+			old.setDDowithtime(new Date());
+			old.setTUserByVDowithuserid(appeal.getTUserByVDowithuserid());
+			old.setVResult(appeal.getVResult());
+			old.setIStatus(APPEAL_DOWITH_STATUS_YES);//已处理
+			
+			super.update(old);
+
+			
+		}catch(HibernateException e){
+			throw new RuntimeException("处理评语申诉失败，数据库错误，请重试。");
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	public VToDoing readBackrecordByRecordId(String recordid)
+			throws FinanceServiceException {
+		String hql =" from TBackrecord where TFlightTrainingrecord.VId=? order by DCreatedate desc";
+		List<TBackrecord> list  = super.find(hql, recordid);
+		if(list.size()==0)
+			return null;
+		VToDoing to = new VToDoing();
+		to.setTitle(list.get(0).getVReason());
+		to.setSubmitTime(Utilities.format(list.get(0).getDCreatedate(), "yyyy-MM-dd HH:mm:ss"));
+		hql = " from TeacherBaseInfo where VCode=?";
+		List<TeacherBaseInfo> tlist = super.find(hql, list.get(0).getTUser().getVUsername());
+		if(tlist.size()>0){
+			to.setSubmitUserName(tlist.get(0).getVName());
+		}
+		return to;
+	}
+
+	@SuppressWarnings("unchecked")
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void updateFlightTrainingRecord(TFlightTrainingrecord record)
+			throws FinanceServiceException {
+		try{
+			
+			String hql ="";
+			//获取课程对象
+			TTrainingLesson lesson = super.get(TTrainingLesson.class, record.getTTrainingLesson().getVId());
+			
+			if(lesson==null){
+				throw new FinanceServiceException("修改训练记录失败：所选课目不存在。");
+			}
+			
+			//0.学员冲突记录
+			String sthql =" from TFlightTrainingrecord where VId<>? and studentBaseInfo.VId=? and" +
+					" ((DFlymoment>? and DFlymoment<?) or (DEndmoment>? and DEndmoment<?))";
+			List<TFlightTrainingrecord> slist = super.find(sthql, record.getVId(),
+					record.getStudentBaseInfo().getVId(),record.getDFlymoment(),record.getDEndmoment(),
+					record.getDFlymoment(),record.getDEndmoment());
+			if(slist.size()>0){
+				throw new FinanceServiceException("修改训练记录失败：您选择的时间段内，已经有记录存在。");
+			}
+			
+			//4.本场课程，起飞站与到达站相同。
+			//if(lesson.getITrainType()==0 && !record.getStationByVFpos().getVId().equals(record.getStationByVLpos().getVId())){
+			//	throw new FinanceServiceException("修改训练记录失败：本场课程，起飞站与到达站应该相同。");
+			//}
+			
+			//5.转场课程,起飞站与到达站不同。
+			//if(lesson.getITrainType()==1 && record.getStationByVFpos().getVId().equals(record.getStationByVLpos().getVId())){
+			//	throw new FinanceServiceException("修改训练记录失败：转场课程，起飞站与到达站不能相同。");
+			//}
+			
+			//6.冲突记录
+			String cthql =" from TFlightTrainingrecord where VId<>? and planeinfo.VId=? and" +
+					" ((DFlymoment>? and DFlymoment<?) or (DEndmoment>? and DEndmoment<?))";
+			List<TFlightTrainingrecord> list = super.find(cthql,record.getVId(),
+					record.getPlaneinfo().getVId(),record.getDFlymoment(),record.getDEndmoment(),
+					record.getDFlymoment(),record.getDEndmoment());
+			if(list.size()>0){
+				throw new FinanceServiceException("修改训练记录失败：您选择的时间段内，有训练记录冲突。");
+			}
+
+			String yazuo = record.getVSecondstudent().split(";")[0];//压座学生
+			String other = record.getVSecondstudent().split(";")[1];//飞行经历内容	
+			
+			TFlightTrainingrecord rold = super.get(TFlightTrainingrecord.class, record.getVId());
+			//一、保存旧的训练记录
+			THistoryrecord history = new THistoryrecord();
+			history.setTeacherBaseInfoByVFlyTeaId(rold.getTeacherBaseInfoByVFlyTeaId());
+			history.setStudentBaseInfo(rold.getStudentBaseInfo());
+			history.setTeacherBaseInfoByVTeacherid(rold.getTeacherBaseInfoByVTeacherid());
+			history.setTUserByVAudituserid(rold.getTUserByVAudituserid());
+			history.setStationByVFpos(rold.getStationByVFpos());
+			history.setTTrainingLesson(rold.getTTrainingLesson());
+			history.setTDiction(rold.getTDiction());
+			history.setTOutline(rold.getTOutline());
+			history.setStationByVLpos(rold.getStationByVLpos());
+			history.setTFlightTrainingrecord(record);
+			history.setTeacherBaseInfoByVMonitorteacherid(rold.getTeacherBaseInfoByVMonitorteacherid());
+			history.setTUserByVCreateuserid(rold.getTUserByVCreateuserid());
+			history.setPlaneinfo(rold.getPlaneinfo());
+			history.setIFlyUserType(rold.getIFlyUserType());
+			history.setDFlydate(rold.getDFlydate());
+			history.setDStartmoment(rold.getDStartmoment());
+			history.setDFlymoment(rold.getDFlymoment());
+			history.setDEndmoment(rold.getDEndmoment());
+			history.setDLandmoment(rold.getDLandmoment());
+			history.setDCloseDate(rold.getDCloseDate());
+			history.setDTrantime(rold.getDTrantime());
+			history.setILanddaytimes(rold.getILanddaytimes());
+			history.setILangnighttimes(rold.getILangnighttimes());
+			history.setDCreatedate(rold.getDCreatedate());
+			history.setIStustatus(rold.getIStustatus());
+			history.setDAudittime(rold.getDAudittime());
+			history.setIAuditstatus(rold.getIAuditstatus());
+			history.setVImgname(rold.getVImgname());
+			history.setTSigncontent(rold.getTSigncontent());
+			history.setVSecondstudent(rold.getVSecondstudent());
+			super.save(history);
+			
+			//二、更新飞行训练记录
+					
+			rold.setTTrainingLesson(record.getTTrainingLesson());//课目 
+			rold.setTeacherBaseInfoByVTeacherid(record.getTeacherBaseInfoByVTeacherid());//教员
+			rold.setTeacherBaseInfoByVMonitorteacherid(record.getTeacherBaseInfoByVMonitorteacherid());//监控教员
+			rold.setPlaneinfo(record.getPlaneinfo());//航空器
+			rold.setTDiction(record.getTDiction());//飞行种类			
+			rold.setDTrantime(record.getDTrantime());
+			rold.setDFlydate(record.getDFlydate());
+			rold.setDFlymoment(record.getDFlymoment());
+			rold.setDEndmoment(record.getDEndmoment());
+			rold.setDStartmoment(record.getDStartmoment());
+			rold.setDLandmoment(record.getDLandmoment());
+			rold.setDEngineStart(record.getDEngineStart());
+			rold.setDEngineEnd(record.getDEngineEnd());
+			rold.setStationByVFpos(record.getStationByVFpos());//起飞站
+			rold.setStationByVLpos(record.getStationByVLpos());//到达站
+			rold.setStationByVJtpos(record.getStationByVJtpos());//经停站
+			rold.setVSecondstudent(yazuo);//压座学生
+			rold.setDCreatedate(new Date());//创建时间
+			rold.setISeat(record.getISeat());//教员在座
+			rold.setILangnighttimes(record.getILangnighttimes());
+			rold.setILanddaytimes(record.getILanddaytimes());
+			rold.setIAuditstatus(IFlightTrainingRecordService.FLIGHT_RECORD_STATUS_NO_AUDIT);//状态
+			super.update(rold);
+			
+
+			//三、更新学员飞行经历记录
+			String[] os;
+			hql =" from TFlightexperiencerecord where TFlightTrainingrecord.VId=?";
+			List<TFlightexperiencerecord> ts= super.find(hql, record.getVId());
+			TFlightexperiencerecord jl = ts.get(0);
+			
+			//保存旧记录
+			TExperiencerecordEdit old = new TExperiencerecordEdit();
+			old.setStationByVLandpos(jl.getStationByVLandpos());
+			old.setTDiction(jl.getTDiction());
+			old.setStationByVFlypos(jl.getStationByVFlypos());
+			old.setTTrainingLesson(jl.getTTrainingLesson());
+			old.setTFlightexperiencerecord(jl);
+			old.setPlaneinfo(jl.getPlaneinfo());
+			old.setDFlydate(jl.getDFlydate());
+			old.setDStarttime(jl.getDStarttime());
+			old.setDEndtime(jl.getDEndtime());
+			old.setIDaytimes(jl.getIDaytimes());
+			old.setINeighttimes(jl.getINeighttimes());
+			old.setDJiashiyuantime(jl.getDJiashiyuantime());
+			old.setDJizhangtime(jl.getDJizhangtime());
+			old.setDDanfeitime(jl.getDDanfeitime());
+			old.setDZhuanchangtime(jl.getDZhuanchangtime());
+			old.setDYejiantime(jl.getDYejiantime());
+			old.setDFujiashitime(jl.getDFujiashitime());
+			old.setDDaifeitime(jl.getDDaifeitime());
+			old.setDFjszhuanchangtime(jl.getDFjszhuanchangtime());
+			old.setDFjszcyjtime(jl.getDFjszcyjtime());
+			old.setDMoniyibiaotime(jl.getDMoniyibiaotime());
+			old.setDZhenshiyibiao(jl.getDZhenshiyibiao());
+			old.setVTranpos(jl.getVTranpos());
+			old.setDMnjsj(jl.getDMnjsj());
+			old.setDXlqsj(jl.getDXlqsj());
+			old.setVBz(jl.getVBz());
+			old.setVImgname(jl.getVImgname());
+			super.save(old);
+			
+			jl.setTDiction(record.getTDiction());//飞行种类
+			jl.setTTrainingLesson(record.getTTrainingLesson());
+			jl.setDFlydate(record.getDFlydate());
+			jl.setPlaneinfo(record.getPlaneinfo());
+			jl.setStationByVFlypos(record.getStationByVFpos());
+			jl.setStationByVLandpos(record.getStationByVLpos());
+			jl.setDStarttime(record.getDFlymoment());
+			jl.setDEndtime(record.getDEndmoment());
+			jl.setIDaytimes(record.getILanddaytimes());
+			jl.setINeighttimes(record.getILangnighttimes());
+			jl.setDJiashiyuantime(record.getDTrantime());
+			jl.setTFlightTrainingrecord(record);
+
+			//jl.setVImgname(record.getVImgname());
+			if(other.length()>0){
+				os = other.split(",");
+				jl.setDJizhangtime(Utilities.getMinitue(os[0]));
+				jl.setDDanfeitime(Utilities.getMinitue(os[1]));
+				jl.setDZhuanchangtime(Utilities.getMinitue(os[2]));
+				jl.setDYejiantime(Utilities.getMinitue(os[3]));
+				jl.setDFujiashitime(Utilities.getMinitue(os[4]));
+				jl.setDDaifeitime(Utilities.getMinitue(os[5]));
+				jl.setDFjszhuanchangtime(Utilities.getMinitue(os[6]));
+				jl.setDFjszcyjtime(Utilities.getMinitue(os[7]));
+				jl.setDMoniyibiaotime(Utilities.getMinitue(os[8]));
+				jl.setDZhenshiyibiao(Utilities.getMinitue(os[9]));
+				jl.setVTranpos(os[10]);//训练地点
+				jl.setDMnjsj(Utilities.getMinitue(os[11]));
+				jl.setDXlqsj(Utilities.getMinitue(os[12]));
+				jl.setVBz(os[13]);
+			}
+			super.update(jl);			
+			
+		}catch(HibernateException e){
+			e.printStackTrace();
+			throw new RuntimeException("修改训练记录失败：数据库错误。");
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	public List<VToDoing> readAddHoursAndAddLessonToDoingList(
+			Map<String, Object> params) throws FinanceServiceException {
+		try{
+			
+			String hql = " from AddHoursAndAddLesson where IAuditstatus=0 order by DCreatedate desc";			
+			String otherHql = " from TOtheruser where VCode=?";
+			
+			List<TOtheruser> other;
+
+			List<AddHoursAndAddLesson> list;
+
+			list =super.find(hql);
+			
+			List<VToDoing> blist = new ArrayList<VToDoing>();
+			VToDoing td ;
+			for(AddHoursAndAddLesson t:list){
+				td = new VToDoing();
+				td.setInfoId(t.getVId());
+				//提交人
+					
+				if(t.getTUserByVCreateuserid().getIUserType()==USERTYPE_OTHER){
+					
+					other = super.find(otherHql, t.getTUserByVCreateuserid().getVUsername());
+					if(other.size()>0){
+						td.setSubmitUserId(other.get(0).getVId());
+						td.setSubmitUserName(other.get(0).getVName());
+					}else{
+						td.setSubmitUserName("管理员");
+					}
+					
+				}else{
+					td.setSubmitUserName("管理员");
+				}
+				
+				td.setSubmitTime(Utilities.format(t.getDCreatedate(), "yyyy-MM-dd HH:mm:ss"));
+				td.setTitle("待审核的加时加课申请。");
+				blist.add(td);
+			}
+			
+			return blist;
+		}catch(HibernateException e){
+			throw new FinanceServiceException("读取信息列表失败："+e.getMessage());
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	public List<VToDoing> readAssignTeacherToDoingList(
+			Map<String, Object> params) throws FinanceServiceException {
+		try{
+
+			if(params.get(QUERY_LOGIN_USER_ID) == null
+					|| params.get(QUERY_LOGIN_USER_ID).equals("")){
+				return null;
+			}
+
+			String ohql = " from TOtheruser where VCode=? and TOrg.VId=?";
+			List<TOtheruser> tlist = super.find(ohql,  params.get(QUERY_LOGIN_USER_ID),"fbd3253b48cb0a620148cb367f4e000c");
+			if(tlist.size()==0){
+				return null;
+			}
+
+			String otherHql = " from TOtheruser where VCode=?";
+			
+			List<TOtheruser> other;
+			
+			List<VToDoing> blist = new ArrayList<VToDoing>();
+			VToDoing td ;
+	
+			//获取考试申请打回的列表
+			String hql =" from PracticeAsk where IAuditStauts=1"; //审核通过 飞标部分配考试员
+			
+			String thql =" from PracticeTest where teacherBaseInfo is null and TOtheruser is null and  practiceAsk.VId=?";
+			
+			List<PracticeTest> testList;
+			
+			List<PracticeAsk> askList = super.find(hql);
+			for(PracticeAsk p:askList){
+				td = new VToDoing();
+				td.setInfoId(p.getVId());
+				//提交人
+					
+				if(p.getTUserByVAuditUserid().getIUserType()==USERTYPE_OTHER){
+					
+					other = super.find(otherHql, p.getTUserByVAuditUserid().getVUsername());
+					if(other.size()>0){
+						td.setSubmitUserId(other.get(0).getVId());
+						td.setSubmitUserName(other.get(0).getVName());
+					}else{
+						td.setSubmitUserName("管理员");
+					}
+					
+				}else{
+					td.setSubmitUserName("管理员");
+				}
+				
+				td.setSubmitTime(Utilities.format(p.getDAuditTime(), "yyyy-MM-dd HH:mm:ss"));
+				td.setSubmitUserName(td.getSubmitUserName()+",2");
+				td.setTitle("待分配考试员。");
+				testList = super.find(thql, p.getVId());
+				if(testList.size()>0){
+					blist.add(td);
+
+				}
+
+				
+			}
+			
+			return blist;
+		}catch(HibernateException e){
+			throw new FinanceServiceException("读取信息列表失败："+e.getMessage());
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	public List<VToDoing> readAddHoursAndAddLessonToDoingListGroupByUser(
+			Map<String, Object> params) throws FinanceServiceException {
+		try{
+			
+			if(params.get(QUERY_LOGIN_USER_ID) != null
+					&& !params.get(QUERY_LOGIN_USER_ID).equals("")){
+				//获取飞行训练管理处下所有节点id
+				String ids = FLY_TRAINING_MANAGEMENT;
+				List<TOrg> olist = super.find(" from TOrg where VParentid=?", FLY_TRAINING_MANAGEMENT);
+				List<TOrg> clist;
+				for(TOrg o:olist){
+					ids+=o.getVId();
+					clist= super.find(" from TOrg where VParentid=?", o.getVId());
+					for(TOrg c:clist){
+						ids+=c.getVId();
+					}
+				}
+				String thql = " from TOtheruser where VCode=?";
+				List<TOtheruser> tlist = super.find(thql,  params.get(QUERY_LOGIN_USER_ID));
+				if(tlist.size()==0){
+					return null;
+				}
+				if(ids.indexOf(tlist.get(0).getTOrg().getVId())==-1){
+					return null;
+				}
+				
+			}
+			String hql = "select TUserByVCreateuserid.VId,TUserByVCreateuserid.VUsername," +
+					"TUserByVCreateuserid.IUserType from AddHoursAndAddLesson where" +
+					" IAuditstatus<>1 group by TUserByVCreateuserid.VId,TUserByVCreateuserid.VUsername," +
+					" TUserByVCreateuserid.IUserType";			
+			String otherHql = " from TOtheruser where VCode=?";
+			
+			String timeHql  = " from AddHoursAndAddLesson where IAuditstatus=0 and TUserByVCreateuserid.VId=? order by DCreatedate asc";
+			
+			List<AddHoursAndAddLesson> addlist;
+			
+			List<TOtheruser> other;
+
+			List<Object[]> list;
+
+			list =super.find(hql);
+			
+			List<VToDoing> blist = new ArrayList<VToDoing>();
+			VToDoing td ;
+			for(Object[] t:list){
+				td = new VToDoing();
+				td.setInfoId(t[0].toString());
+				//提交人
+					
+				if(Integer.parseInt(t[2].toString())==USERTYPE_OTHER){
+					
+					other = super.find(otherHql, t[1]);
+					if(other.size()>0){
+						td.setSubmitUserId(other.get(0).getVId());
+						td.setSubmitUserName(other.get(0).getVName());
+					}else{
+						td.setSubmitUserName("管理员");
+					}
+					
+				}else{
+					td.setSubmitUserName("管理员");
+				}
+				addlist = super.find(timeHql, t[0]);
+				
+				td.setSubmitTime(Utilities.format(addlist.get(0).getDCreatedate(), "yyyy-MM-dd HH:mm:ss"));//最早提交，未审核的时间
+				td.setTitle("待审核的加时加课申请。");
+				td.setSubmitUserName(td.getSubmitUserName()+",0");
+				blist.add(td);
+			}
+			
+			//获取考试申请打回的列表
+			hql =" from PracticeAsk where IAuditStauts=2"; //审核通过与不通过，审核通过 飞标部
+			
+			String thql =" from PracticeTest where teacherBaseInfo is null and TOtheruser is null and  practiceAsk.VId=?";
+			
+			List<PracticeTest> testList;
+			
+			List<PracticeAsk> askList = super.find(hql);
+			for(PracticeAsk p:askList){
+				td = new VToDoing();
+				td.setInfoId(p.getVId());
+				//提交人
+					
+				if(p.getTUserByVAuditUserid().getIUserType()==USERTYPE_OTHER){
+					
+					other = super.find(otherHql, p.getTUserByVAuditUserid().getVUsername());
+					if(other.size()>0){
+						td.setSubmitUserId(other.get(0).getVId());
+						td.setSubmitUserName(other.get(0).getVName());
+					}else{
+						td.setSubmitUserName("管理员");
+					}
+					
+				}else{
+					td.setSubmitUserName("管理员");
+				}
+				
+				td.setSubmitTime(Utilities.format(p.getDAuditTime(), "yyyy-MM-dd HH:mm:ss"));
+				
+				if(p.getIAuditStauts()==2){
+					td.setSubmitUserName(td.getSubmitUserName()+",1");
+					td.setTitle("待改正的被打回实践考试申请。");
+					blist.add(td);
+				}else{
+					td.setSubmitUserName(td.getSubmitUserName()+",2");
+					td.setTitle("待分配考试员。");
+					testList = super.find(thql, p.getVId());
+					if(testList.size()>0){
+						blist.add(td);
+					}
+
+				}
+
+				
+			}
+			
+			return blist;
+		}catch(HibernateException e){
+			throw new FinanceServiceException("读取信息列表失败："+e.getMessage());
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	public List<VToDoing> readExamAskToDoingList(
+			Map<String, Object> params) throws FinanceServiceException {
+		try{
+			
+			if(params.get(QUERY_LOGIN_USER_ID) != null
+					&& !params.get(QUERY_LOGIN_USER_ID).equals("")){
+				//获取局方节点id
+				String ids = "JUFANG_MANAGEMENT";
+				List<TOrg> olist = super.find(" from TOrg where VParentid=?", JUFANG_MANAGEMENT);
+				List<TOrg> clist;
+				for(TOrg o:olist){
+					ids+=o.getVId();
+					clist= super.find(" from TOrg where VParentid=?", o.getVId());
+					for(TOrg c:clist){
+						ids+=c.getVId();
+					}
+				}
+				String thql = " from TOtheruser where VCode=?";
+				List<TOtheruser> tlist = super.find(thql,  params.get(QUERY_LOGIN_USER_ID));
+				if(tlist.size()==0){
+					return null;
+				}
+				if(ids.indexOf(tlist.get(0).getTOrg().getVId())==-1){
+					return null;
+				}
+				
+			}
+			String hql = " from PracticeAsk where IAuditStauts=0";		
+			
+			String otherHql = " from TOtheruser where VCode=?";
+			
+			List<PracticeAsk> list = super.find(hql);
+			
+			List<TOtheruser> other;
+
+			List<VToDoing> blist = new ArrayList<VToDoing>();
+			VToDoing td ;
+			
+			for(PracticeAsk p:list){
+				
+				td = new VToDoing();
+				
+				if(p.getTUserByVCreateuserid().getIUserType()==USERTYPE_OTHER){
+					
+					other = super.find(otherHql, p.getTUserByVCreateuserid().getVUsername());
+					
+					if(other.size()>0){
+						td.setSubmitUserId(other.get(0).getVId());
+						td.setSubmitUserName(other.get(0).getVName());
+					}else{
+						td.setSubmitUserName("管理员");
+					}
+					
+				}else{
+					td.setSubmitUserName("管理员");
+				}
+				td.setInfoId(p.getVId());
+				td.setTitle("待审核的实践考试申请。");
+				td.setSubmitTime(Utilities.format(p.getDAskTime(), "yyyy-MM-dd HH:mm:ss"));
+				blist.add(td);
+				
+			}
+			
+			return blist;
+		}catch(HibernateException e){
+			throw new FinanceServiceException("读取信息列表失败："+e.getMessage());
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	public List<TOtheruser> readJuFangExamor(String id)
+			throws FinanceServiceException {
+		String hql=" from TOtheruser where TOrg.VId=?";
+		return super.find(hql, JUFANG_EXAMOR);
+	}
+
+	@SuppressWarnings("unchecked")
+	public List<TeacherBaseInfo> readWeiRenDaiBiao(String id)
+			throws FinanceServiceException {
+		String hql =" from TeacherBaseInfo where TDictionByVFlytype.VId=?";
+		return super.find(hql, TEACHER_WEIRENDAIBIAO);
+	}
+	
+	@SuppressWarnings("unchecked")
+	public List<TOtheruser> readJuFangAssignedExamor(String id)
+			throws FinanceServiceException {
+		String hql=" from TOtheruser where TOrg.VId=? and VId in (select TOtheruser.VId from AssignExamTeacher where practiceAsk.VId=?)";
+		return super.find(hql, JUFANG_EXAMOR,id);
+	}
+
+	@SuppressWarnings("unchecked")
+	public List<TeacherBaseInfo> readAssignedWeiRenDaiBiao(String id)
+			throws FinanceServiceException {
+		String hql =" from TeacherBaseInfo where TDictionByVFlytype.VId=? " +
+				"and VId in (select teacherBaseInfo.VId from AssignExamTeacher where practiceAsk.VId=?)";
+		return super.find(hql, TEACHER_WEIRENDAIBIAO,id);
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void savePracticeExamAskConfirm(VToDoing toDoing)
+			throws FinanceServiceException {
+		try{
+			
+			String submitUserId = toDoing.getSubmitUserId();
+			TUser user = super.get(TUser.class, submitUserId);//审核人;
+			if(user==null){
+				throw new FinanceServiceException("审核考试申请失败，该记录不 存在。");
+			}
+			
+			//获取PracticeAsk对象
+			List<PracticeAsk> plist = super.find(" from PracticeAsk where IAuditStauts=0 and VId=?" , toDoing.getInfoId());
+			if(plist.size()==0){
+				throw new FinanceServiceException("审核考试申请失败，该记录不 存在。");
+			}
+			PracticeAsk ask = plist.get(0);
+			
+			//考试时间
+			Date d = Utilities.parse(toDoing.getSubmitTime(), "yyyy-MM-dd HH:mm:ss");
+			
+			//考试员
+			List<AssignExamTeacher> savelist = new ArrayList<AssignExamTeacher>();
+			AssignExamTeacher assign;
+			TeacherBaseInfo teacher;
+			TOtheruser other;
+			
+			String ids = toDoing.getType();
+			String os[] = ids.split(",");
+			for(int i=0;i<os.length;i++){
+				
+				assign = new AssignExamTeacher();
+				
+				if(os[i].split(";")[1].equals("0")){//other
+					other = super.get(TOtheruser.class, os[i].split(";")[0]);
+					assign.setTOtheruser(other);
+					assign.setIType(0);
+				}else{//teacher
+					teacher = super.get(TeacherBaseInfo.class, os[i].split(";")[0]);
+					assign.setTeacherBaseInfo(teacher);
+					assign.setIType(1);
+				}
+				
+				assign.setPracticeAsk(ask);
+				assign.setTUser(user);
+				assign.setDCreatedate(new Date());
+				savelist.add(assign);
+			}
+			
+			if(savelist.size()==0){
+				throw new FinanceServiceException("审核考试申请失败，该记录不符合审核条件。");
+			}
+			super.saveOrUpdateALL(savelist);
+			
+			ask.setDAuditTime(new Date());
+			ask.setIAuditStauts(1);
+			ask.setTUserByVAuditUserid(user);
+			ask.setDExamTime(d);
+			super.update(ask);
+			
+		}catch(HibernateException e){
+			throw new RuntimeException("审核考试申请失败，数据库错误，请重试。");
+		}catch (ParseException e) {
+			throw new RuntimeException("审核考试申请失败，考试时间格式错误。");
+		}
+	}
+	
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void saveBackPracticeExamAsk(PracticeAsk ask)
+			throws FinanceServiceException {
+		try{
+			
+			PracticeAsk old = super.get(PracticeAsk.class, ask.getVId());
+			if(old==null){
+				throw new FinanceServiceException("审核考试申请失败，该记录不存在。");
+			}
+			if(old.getIAuditStauts()!=0){
+				throw new FinanceServiceException("审核考试申请失败，该记录不符合审核条件。");
+			}
+	
+			old.setDAuditTime(new Date());
+			old.setIAuditStauts(2);
+			old.setTUserByVAuditUserid(ask.getTUserByVAuditUserid());
+			old.setVBz(ask.getVBz());
+			super.update(old);
+		}catch(HibernateException e){
+			throw new FinanceServiceException("审核考试申请失败，数据库错误，请重试。");
+		}
+	}
+	
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void savePracticeBackExamAskConfirmToAsk(PracticeAsk ask)
+			throws FinanceServiceException {
+		try{
+			
+			PracticeAsk old = super.get(PracticeAsk.class, ask.getVId());
+			if(old==null){
+				throw new FinanceServiceException("考试申请失败，该记录不存在。");
+			}
+			if(old.getIAuditStauts()!=2){
+				throw new FinanceServiceException("考试申请失败，该记录不符合审核条件。");
+			}
+	
+			old.setDAskTime(ask.getDAskTime());
+			old.setIAuditStauts(0);
+			old.setTUserByVCreateuserid(ask.getTUserByVCreateuserid());
+
+			super.update(old);
+		}catch(HibernateException e){
+			throw new FinanceServiceException("考试申请失败，数据库错误，请重试。");
+		}
+	}
+	
+	//分配考试员
+	@SuppressWarnings("unchecked")
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void savePracticeExamAskStudentAssignTeacher(VToDoing toDoing)
+			throws FinanceServiceException {
+		try{
+			
+			String submitUserId = toDoing.getSubmitUserId();
+			TUser user = super.get(TUser.class, submitUserId);//审核人;
+			if(user==null){
+				throw new FinanceServiceException("分配考试员失败，该记录不 存在。");
+			}
+			
+			//获取PracticeAsk对象
+			List<PracticeAsk> plist = super.find(" from PracticeAsk where IAuditStauts=1 and VId=?" , toDoing.getInfoId());
+			if(plist.size()==0){
+				throw new FinanceServiceException("分配考试员失败，该记录不 存在。");
+			}
+			
+			TeacherBaseInfo teacher;
+			TOtheruser other;
+			
+			List<PracticeTest> saveList = new ArrayList<PracticeTest>();
+			
+			List<PracticeTest> teatList = super.find(" from PracticeTest where practiceAsk.VId=?", toDoing.getInfoId());
+			
+			for(PracticeTest p:teatList){
+				if(toDoing.getType().indexOf(p.getStudentBaseInfo().getVId())!=-1){
+					if(toDoing.getTitle().split(";")[1].equals("0")){
+						other = super.get(TOtheruser.class, toDoing.getTitle().split(";")[0]);
+						p.setTOtheruser(other);
+						p.setIType(0);
+					}else{
+						teacher = super.get(TeacherBaseInfo.class, toDoing.getTitle().split(";")[0]);
+						p.setTeacherBaseInfo(teacher);
+						p.setIType(1);
+					}
+					saveList.add(p);
+				}
+			}
+			
+			if(saveList.size()==0){
+				throw new FinanceServiceException("分配考试员失败，记录不符合条件。");
+			}
+			super.saveOrUpdateALL(saveList);
+			
+			
+		}catch(HibernateException e){
+			throw new RuntimeException("分配考试员失败，数据库错误，请重试。");
+		}
+	}
+
+	
+	@SuppressWarnings("unchecked")
+	public List<VToDoing> readScoreAuditToDoingList(Map<String, Object> params)
+			throws FinanceServiceException {
+		try{
+			//成绩、身体、在线表现 都合格不再显示，
+			//读取学生状态是：送赔（4028aa494765f33d014765f7b9ab0010）与 国内（4028aa494765f33d014765f7df820011）
+			if(params.get(QUERY_LOGIN_USER_ID) == null
+					|| params.get(QUERY_LOGIN_USER_ID).equals("")){
+				return null;
+			}	
+			String thql = " from TOtheruser where VCode=?";
+			List<TOtheruser> tlist = super.find(thql,  params.get(QUERY_LOGIN_USER_ID));
+			if(tlist.size()==0){
+				return null;
+			}
+			//部门id：教务科\招飞办\学生队
+			String  orgid = tlist.get(0).getTOrg().getVId();
+			
+			if(!orgid.equals("fbd3253b48cb0a620148cb2e007d0003") && 
+					!orgid.equals("fbd3253b48cb0a620148cb2e25430004") && 
+					!orgid.equals("fbd3253b48cb0a620148cb2e42430005")){
+				return null;
+			}
+			/*
+			审查类型
+			0：成绩审查
+			1：身体审查
+			2：在校表现审查
+			*/
+			int type=0;
+			String typeName = "";
+			if(orgid.equals("fbd3253b48cb0a620148cb2e007d0003")){
+				type=0;
+				typeName = "成绩审查";
+			}
+			else if(orgid.equals("fbd3253b48cb0a620148cb2e25430004")){
+				type=1;
+				typeName = "身体审查";
+			}
+			else if(orgid.equals("fbd3253b48cb0a620148cb2e42430005")){
+				type=2;
+				typeName = "在校表现审查";
+			}else{
+				type=-1;
+				typeName = "";
+			}
+	
+			
+			String hql = " from StudentBaseInfo where TDictionByVStuStatusid.VId=? or TDictionByVStuStatusid.VId=?" +
+					" and VId not in (select studentBaseInfo.VId from TSendqualificationreview where " +
+					"(IResult=0 or IResult=1) and IType=?)";
+			
+			
+			List<VToDoing> blist = new ArrayList<VToDoing>();
+			VToDoing td ;
+			
+			String timeHql = " from TStuStatus where TDictionByVNewstatusid.VId=? or TDictionByVNewstatusid.VId=? order by DCreatedate asc";
+			
+			//获取送培时间、提交人。
+			List<TStuStatus> timeList;
+			
+			String otherHql = " from TOtheruser where VCode=?";
+			
+			List<StudentBaseInfo> list = super.find(hql,IStudentService.QUERY_KEY_STUDENT_STATUS_GN_SONGPEI,IStudentService.QUERY_KEY_STUDENT_STATUS_GW_SONGPEI,type);
+
+			if(list.size()==0){
+				return null;
+			}
+			int count = list.size();
+			//StudentBaseInfo student = list.get(0);//使用一名学生的信息，获取送培时间、提交人。
+			timeList = super.find(timeHql, IStudentService.QUERY_KEY_STUDENT_STATUS_GN_SONGPEI,IStudentService.QUERY_KEY_STUDENT_STATUS_GW_SONGPEI);
+			if(timeList.size()==0){
+				return null;
+			}
+			
+			TStuStatus time = timeList.get(0);
+			
+			List<TOtheruser> other;
+
+			td = new VToDoing();
+			
+			if(time.getTUser().getIUserType()==USERTYPE_OTHER){
+				
+				other = super.find(otherHql, time.getTUser().getVUsername());
+				
+				if(other.size()>0){
+					td.setSubmitUserId(other.get(0).getVId());
+					td.setSubmitUserName(other.get(0).getVName());
+				}else{
+					td.setSubmitUserName("管理员");
+				}
+				
+			}else{
+				td.setSubmitUserName("管理员");
+			}
+			td.setInfoId(String.valueOf(type));
+			td.setTitle("送培资格审查 - "+typeName+"（合计"+count+"条记录）");
+			td.setType(String.valueOf(type));
+			td.setSubmitTime(Utilities.format(time.getDChangestatustime(), "yyyy-MM-dd HH:mm:ss"));
+			blist.add(td);
+			return blist;
+		}catch(HibernateException e){
+			throw new FinanceServiceException("读取信息列表失败："+e.getMessage());
+		}
+	}
+	@SuppressWarnings("unchecked")
+	public List<VToDoing> readLessonScoreAuditToDoingList(Map<String, Object> params)
+			throws FinanceServiceException {
+		try{
+			//获取执照考试的成绩审核列表，成绩状态是
+			//新成绩状态    0:未提交审核1:提交审核2:审核通过 3:审核未通过
+			if(params.get(QUERY_LOGIN_USER_ID) == null
+					|| params.get(QUERY_LOGIN_USER_ID).equals("")){
+				return null;
+			}	
+			String thql = " from TOtheruser where VCode=?";
+			List<TOtheruser> tlist = super.find(thql,  params.get(QUERY_LOGIN_USER_ID));
+			if(tlist.size()==0){
+				return null;
+			}
+			//部门id：综合业务办公室
+			String  orgid = tlist.get(0).getTOrg().getVId();
+			
+			if(!orgid.equals("fbd3253b48cb0a620148cb3221d8000b")){
+				return null;
+			}
+
+			String hql =" from TScore where IAudit=1 order by DCreateDate asc";
+			
+			List<TScore> list = super.find(hql);
+			
+
+			List<VToDoing> blist = new ArrayList<VToDoing>();
+			VToDoing td ;
+			
+			
+			String otherHql = " from TOtheruser where VCode=?";
+			
+
+			if(list.size()==0){
+				return null;
+			}
+			int count = list.size();
+
+			List<TOtheruser> other;
+
+			td = new VToDoing();
+			
+			TScore score = list.get(0);
+			
+			if(score.getTUserByVCreateUserId().getIUserType()==USERTYPE_OTHER){
+				
+				other = super.find(otherHql, score.getTUserByVCreateUserId().getVUsername());
+				
+				if(other.size()>0){
+					td.setSubmitUserId(other.get(0).getVId());
+					td.setSubmitUserName(other.get(0).getVName());
+				}else{
+					td.setSubmitUserName("管理员");
+				}
+				
+			}else{
+				td.setSubmitUserName("管理员");
+			}
+			td.setTitle("成绩审核 （合计"+count+"条记录）");
+			td.setSubmitTime(Utilities.format(score.getDCreateDate(), "yyyy-MM-dd HH:mm:ss"));
+			blist.add(td);
+			return blist;
+		}catch(HibernateException e){
+			throw new FinanceServiceException("读取信息列表失败："+e.getMessage());
+		}
+	}
+	@SuppressWarnings("unchecked")
+	public List<TScore> readLessonScoreAuditList(Map<String, Object> params)
+			throws FinanceServiceException {
+		try{
+			//获取执照考试的成绩审核列表，成绩状态是
+			//新成绩状态    0:未提交审核1:提交审核2:审核通过 3:审核未通过
+			if(params.get(QUERY_LOGIN_USER_ID) == null
+					|| params.get(QUERY_LOGIN_USER_ID).equals("")){
+				return null;
+			}	
+			String thql = " from TOtheruser where VCode=?";
+			List<TOtheruser> tlist = super.find(thql,  params.get(QUERY_LOGIN_USER_ID));
+			if(tlist.size()==0){
+				return null;
+			}
+			//部门id：教务科\招飞办\学生队
+			String  orgid = tlist.get(0).getTOrg().getVId();
+			
+			if(!orgid.equals("fbd3253b48cb0a620148cb3221d8000b")){
+				return null;
+			}
+			String hql =" from TScore where IAudit=1 order by TLesson.VId,TLesson.IOrder,studentBaseInfo.VCode,DExamTime";
+			
+			List<TScore> blist = super.find(hql);
+
+			return blist;
+		}catch(HibernateException e){
+			throw new FinanceServiceException("读取信息列表失败："+e.getMessage());
+		}
+	}
+	@SuppressWarnings("unchecked")
+	public List<StudentBaseInfo> readSongPeiZiGeAuditStudentList(String userName)
+			throws FinanceServiceException {
+		try{
+			//成绩、身体、在线表现 都合格不再显示，
+			//读取学生状态是：送赔（4028aa494765f33d014765f7b9ab0010）与国内（4028aa494765f33d014765f7df820011）
+
+			String thql = " from TOtheruser where VCode=?";
+			List<TOtheruser> tlist = super.find(thql,  userName);
+			if(tlist.size()==0){
+				return null;
+			}
+			//部门id 教务科\招飞办\学生队
+			String  orgid = tlist.get(0).getTOrg().getVId();
+			
+			if(!orgid.equals("fbd3253b48cb0a620148cb2e007d0003") && 
+					!orgid.equals("fbd3253b48cb0a620148cb2e25430004") && 
+					!orgid.equals("fbd3253b48cb0a620148cb2e42430005")){
+				return null;
+			}
+			/*
+			审查类型
+			0：成绩审查
+			1：身体审查
+			2：在校表现审查
+			*/
+			int type=0;
+			if(orgid.equals("fbd3253b48cb0a620148cb2e007d0003")){
+				type=0;
+			}
+			else if(orgid.equals("fbd3253b48cb0a620148cb2e25430004")){
+				type=1;
+			}
+			else if(orgid.equals("fbd3253b48cb0a620148cb2e42430005")){
+				type=2;
+			}else{
+				type=-1;
+			}
+			List<StudentBaseInfo> blist = new ArrayList<StudentBaseInfo>();
+			
+			String hql = " from StudentBaseInfo where TDictionByVStuStatusid.VId=? or TDictionByVStuStatusid.VId=?" +
+					" and VId not in (select studentBaseInfo.VId from TSendqualificationreview where " +
+					"(IResult=0 or IResult=1) and IType=?) order by VCode";
+
+			String zhql =" from TSendqualificationreview where studentBaseInfo.VId=? and IType=? and IResult=2 order by DCreatedate desc";
+			
+			List<TSendqualificationreview> tslist;
+			
+			List<StudentBaseInfo> list = super.find(hql,IStudentService.QUERY_KEY_STUDENT_STATUS_GN_SONGPEI,IStudentService.QUERY_KEY_STUDENT_STATUS_GW_SONGPEI,type);
+			for(StudentBaseInfo s:list){
+				tslist = super.find(zhql, s.getVId(),type);
+				if(tslist.size()>0){
+					s.setVXxlx("暂不合格");//审查结果
+					s.setVLxfs(Utilities.format(tslist.get(0).getDChecktime()));//审查日期
+					s.setVZy(Utilities.format(tslist.get(0).getDNextchecktime()));//下次审查日期
+					s.setVJg(tslist.get(0).getVReason());//原因
+				}else{
+					s.setVXxlx("");//审查结果
+					s.setVLxfs("");//审查日期
+					s.setVZy("");//下次审查日期
+					s.setVJg("");//原因
+				}
+				blist.add(s);
+			}
+			
+			return blist;
+			
+			
+		
+		}catch(HibernateException e){
+			throw new FinanceServiceException("读取信息列表失败："+e.getMessage());
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void saveSongPeiZiGeAudit(VToDoing doing)
+			throws FinanceServiceException {
+		try{
+			String userid = doing.getSubmitUserId();
+			TUser user = super.get(TUser.class, userid);
+			String thql = " from TOtheruser where VCode=?";
+			List<TOtheruser> tlist = super.find(thql,  user.getVUsername());
+			if(tlist.size()==0){
+				throw new FinanceServiceException("送培资格审查失败：审核人身份不对。");
+			}
+			//部门id 教务科\招飞办\学生队
+			String  orgid = tlist.get(0).getTOrg().getVId();
+			
+			if(!orgid.equals("fbd3253b48cb0a620148cb2e007d0003") && 
+					!orgid.equals("fbd3253b48cb0a620148cb2e25430004") && 
+					!orgid.equals("fbd3253b48cb0a620148cb2e42430005")){
+				throw new FinanceServiceException("送培资格审查失败：审核人身份不对。");
+			}
+			/*
+			审查类型
+			0：成绩审查
+			1：身体审查
+			2：在校表现审查
+			*/
+			int type=0;
+			if(orgid.equals("fbd3253b48cb0a620148cb2e007d0003")){
+				type=0;
+			}
+			else if(orgid.equals("fbd3253b48cb0a620148cb2e25430004")){
+				type=1;
+			}
+			else if(orgid.equals("fbd3253b48cb0a620148cb2e42430005")){
+				type=2;
+			}else{
+				type=-1;
+			}
+			String[] os = doing.getInfoId().split(",");
+			int result = Integer.parseInt(doing.getType());
+			String VReason = doing.getTitle();
+			String DChecktime = doing.getSubmitTime();
+			String DNextchecktime = doing.getSubmitUserName();
+			
+			List<TSendqualificationreview> slist = new ArrayList<TSendqualificationreview>();
+			List<TSendqualificationreview> clist;
+			TSendqualificationreview view;
+			StudentBaseInfo student;
+			String hql =" from TSendqualificationreview where studentBaseInfo.VId=? and IType=?";
+			for(int i=0;i<os.length;i++){
+				
+				student = super.get(StudentBaseInfo.class, os[i]);
+				
+				clist = super.find(hql, os[i],type);
+				if(clist.size()>0 && clist.get(0).getIResult()!=2){
+					throw new FinanceServiceException("送培资格审查失败：所选学生不适合审查。");
+				}
+				view = new TSendqualificationreview();
+				view.setStudentBaseInfo(student);
+				view.setIType(type);
+				view.setIResult(result);
+				if(DChecktime!=null && DChecktime.length()==10){
+					view.setDChecktime(Utilities.parse(DChecktime));
+				}
+				if(DNextchecktime!=null && DNextchecktime.length()==10){
+					view.setDNextchecktime(Utilities.parse(DNextchecktime));
+				}
+				if(StringUtils.isNotBlank(VReason)){
+					view.setVReason(VReason);
+				}
+				view.setTUser(user);
+				view.setDCreatedate(new Date());
+				slist.add(view);
+			}
+			if(slist.size()>0)
+				super.saveOrUpdateALL(slist);
+			
+		}catch(ParseException p){
+			throw new FinanceServiceException("送培资格审查失败：日期格式错误。");
+		}catch(HibernateException e){
+			throw new FinanceServiceException("送培资格审查失败：数据库错误。");
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void saveLessonScoreAudit(VToDoing doing)
+			throws FinanceServiceException {
+		try{
+			String userid = doing.getSubmitUserId();
+			TUser user = super.get(TUser.class, userid);
+			String thql = " from TOtheruser where VCode=?";
+			List<TOtheruser> tlist = super.find(thql,  user.getVUsername());
+			if(tlist.size()==0){
+				throw new FinanceServiceException("成绩审查失败：审核人身份不对。");
+			}
+			List<TScore> scoreList = new ArrayList<TScore>();
+			TScore score;
+			
+			List<TScoreAuditRecord> recordList = new ArrayList<TScoreAuditRecord>();
+			TScoreAuditRecord record;
+			
+			String[] os = doing.getInfoId().split(",");
+			for(int i=0;i<os.length;i++){
+				
+				score = super.get(TScore.class, os[i]);
+				if(score!=null){
+					score.setTUserByVAuditUserId(user);
+					score.setDAuditDate(Utilities.parse(doing.getSubmitTime()));
+					score.setIAudit(Integer.parseInt(doing.getType()));
+					scoreList.add(score);
+					
+					record = new TScoreAuditRecord();
+					record.setDAuditDate(Utilities.parse(doing.getSubmitTime()));
+					record.setTUser(user);
+					record.setTScore(score);
+					record.setVReason(doing.getTitle());
+					record.setIAudit(Integer.parseInt(doing.getType()));
+					recordList.add(record);
+					
+				}
+				
+			}
+			if(scoreList.size()>0){
+				super.saveOrUpdateALL(scoreList);
+			}
+			if(recordList.size()>0){
+				super.saveOrUpdateALL(recordList);
+			}
+		}catch(ParseException p){
+			throw new FinanceServiceException("成绩审核失败：日期格式错误。");
+		}catch(HibernateException e){
+			throw new RuntimeException("成绩审核失败：数据库错误。");
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	public Integer readAddHistorySetUp(String type) throws FinanceServiceException {
+		String hql =" from TDiction where TDictype.VId=? order by DCreatedate desc";
+		List<TDiction> list = super.find(hql, type);
+		if(list.size()==0)
+			return 0;
+		if(list.get(0).getVName().equals("学生开放")){
+			return 1;
+		}else if(list.get(0).getVName().equals("开放")){
+			return 2;
+		}
+		return 0;
+	}
+
+}

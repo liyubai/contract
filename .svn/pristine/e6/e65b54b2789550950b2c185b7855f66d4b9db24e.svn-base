@@ -1,0 +1,175 @@
+package com.cauc.training.business.hibernate;
+
+import java.io.File;
+import java.util.List;
+import java.util.Map;
+
+import org.hibernate.Criteria;
+import org.hibernate.HibernateException;
+import org.hibernate.criterion.Order;
+import org.hibernate.criterion.Restrictions;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.business.ITFileManager;
+import com.cauc.training.business.dao.GenericHibernateDAO;
+import com.cauc.training.business.dao.support.Page;
+import com.cauc.training.pojos.TFile;
+import com.cauc.training.pojos.TRole;
+import com.cauc.training.pojos.TRoleFunction;
+
+@Service("tFileManagerServiceImpl")
+public class TFileManagerServiceImpl extends GenericHibernateDAO implements ITFileManager {
+
+	
+	/**
+	 * 功能：根据文件标题，判断该文件是否已存在 
+	 * @param vid：主键
+	 * @param name：局方文件标题
+	*/
+	@SuppressWarnings("unchecked")
+	private boolean isExistTFile(String name) throws FinanceServiceException {
+		//该标志位用于表示文件是否已存在，false:表示不存在
+		boolean flag = false;
+		String hql = "from TFile where VTitle=?";
+		List<TRole> roleList = super.find(hql, name);
+		if (roleList != null && roleList.size() > 0){
+			flag = true;
+		}
+		return flag;
+			
+	}
+
+	
+	/**
+	 * 功能：根据文件标题和主键，判断该文件是否已存在 ，主要用于编辑时判断
+	 * @param name：局方文件标题
+	*/
+	@SuppressWarnings("unchecked")
+	private boolean isExistTFile(String vid, String name) throws FinanceServiceException {
+		//该标志位用于表示文件是否已存在，false:表示不存在
+		boolean flag = false;
+		String hql = "from TFile where VId!=? and VTitle=?";
+		List<TFile> tFileList = super.find(hql, new Object[]{vid, name});
+		if (tFileList != null && tFileList.size() > 0){
+			flag = true;
+		}
+		return flag;
+			
+	}
+	/**
+	 * 功能：保存局方文件信息 
+	 * @param tFile：局方文件对象
+	*/
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void saveTFile(TFile tFile) throws FinanceServiceException {
+		if(tFile != null){
+			if(isExistTFile(tFile.getVTitle())){
+				throw new FinanceServiceException("保存局方文件失败，该文件已经存在！");
+			}else{
+				try{
+					tFile.setIDoit(0);
+					super.save(tFile);
+				}catch(HibernateException e){
+					throw new FinanceServiceException("保存局方文件失败！", e);
+				}
+			}
+
+		}else{
+			throw new FinanceServiceException("保存局方文件失败！");
+		}
+	}
+
+	/**
+	 * 功能：根据关键字分页查询局方文件信息 
+	 * @param params：Map结构，key为TFile中的VTitle，value为用户输入的关键字
+	 * @param pageNo：当前页号
+	*/
+	public Page searchTFiles(Map<String,Object> params, String pageNo) throws FinanceServiceException {
+		Page page = null;
+		//使用Criteria查询TFile对象
+		Criteria criteria = this.createCriteria(TFile.class);
+		//如果查询条件不为空，则添加查询条件
+		if (params.get(QUERY_KEY_NAME) != null && !params.get(QUERY_KEY_NAME).equals("")){
+			
+			criteria.add(Restrictions.like(QUERY_KEY_NAME, "%" + params.get(QUERY_KEY_NAME) + "%"));
+		}
+		criteria.addOrder(Order.desc(QUERY_KEY_DATE));
+		//System.out.println("key: " + params.get(QUERY_KEY_NAME));
+		Integer pageIndex = Integer.parseInt(pageNo);
+		try {
+			page = this.pagedQuery(criteria, pageIndex);
+		} catch (HibernateException e) {
+			e.printStackTrace();
+			throw new FinanceServiceException("查询局方文件信息列表失败", e);
+		}
+		return page;
+	}
+	/**
+	 * 功能：根据主键查询局方文件
+	 * @return
+	 */
+	public TFile searchTFileById(String id) throws FinanceServiceException {
+		
+		return super.get(TFile.class, id);
+	}
+
+
+	/**
+	 * 更新局方文件
+	 * @param role
+	 * @throws FinanceServiceException
+	 */
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void updateTFile(TFile tFile) throws FinanceServiceException {
+		if(tFile != null){
+			if(isExistTFile(tFile.getVId(), tFile.getVTitle())){
+				throw new FinanceServiceException("更新局方文件失败，该局方文件已经存在！");
+			}else{
+				try {
+					TFile old = super.get(TFile.class, tFile.getVId());
+					old.setVTitle(tFile.getVTitle());
+					old.setVIntroduction(tFile.getVIntroduction());
+					old.setVFilename(tFile.getVFilename());
+					super.update(old);
+				}catch (HibernateException e) {
+					throw new FinanceServiceException("更新局方文件对象失败", e);
+				}
+			}
+		}else{
+			throw new FinanceServiceException("更局方文件色失败！");
+		}
+		
+		
+	}
+
+	/**
+	 * 功能：删除局方文件（可单一删除，也可批量删除）
+	 * @param ids
+	 * @throws FinanceServiceException
+	 * 说明：String... ids 表示定义一个可变变量，即Ids就是一个字符串数组，等价于String[] ids
+	 */
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void deleteTFileByIds(String path, String... ids) throws FinanceServiceException {
+		if(ids != null && ids.length >0){
+			try {
+				for (String id : ids) {
+					System.out.println(id);
+					TFile tf = super.get(TFile.class, id);
+					File file = new File(path + File.separator + tf.getVFilename());
+					if(file.exists()){
+						file.delete();
+					}
+					super.removeById(TFile.class, id);					
+				}
+			}catch (HibernateException e) {
+				e.printStackTrace();
+				throw new FinanceServiceException("删除局方文件信息失败", e);
+			}
+		}
+	}
+
+	
+}

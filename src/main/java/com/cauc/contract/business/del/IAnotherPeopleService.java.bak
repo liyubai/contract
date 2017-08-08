@@ -1,0 +1,72 @@
+package com.cauc.training.business;
+
+import java.util.List;
+import java.util.Map;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.business.dao.support.Page;
+import com.cauc.training.pojos.TOtheruser;
+import com.cauc.training.vo.VAnotherPeople;
+
+/***
+ * @功能说明：用于管理其他人员的接口
+ * @author gfm
+ */
+public interface IAnotherPeopleService {
+	/**
+	 * 名称
+	 */
+	public static final String  QUERY_KEY_NAME="VName";
+	/**
+	 * 时间
+	 */
+	public static final String  QUERY_KEY_DATE="DCreatedate";
+	/**
+	 * @功能描述:分页查询其他人员
+	 * @param params
+	 * @param pageNo
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page searchAnotherPeople(Map<String,Object> params, String pageNo) throws FinanceServiceException;
+	/**
+	 * @功能描述：通过关键字查询其他人员列表
+	 * @param key
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<TOtheruser> searchPeopleList(String key) throws FinanceServiceException;
+	/**
+	 * @功能描述：利用Ajax通过关键字查询其他人员列表
+	 * @param key
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<VAnotherPeople> searchPeopleListAjax(String id,String key) throws FinanceServiceException;
+	/**
+	 * @功能描述：通过ID查询其他人员
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public VAnotherPeople searchPeopleById(String id) throws FinanceServiceException;
+	/**
+	 * @功能描述：删除其他人员
+	 * @param ids
+	 * @throws FinanceServiceException
+	 */
+	public void deletePeopleByIds(String... ids) throws FinanceServiceException;
+	
+	public String searchPeopleNameByIds(String... ids) throws FinanceServiceException;
+	/**
+	 * @功能描述：保存其他人员
+	 * @param department
+	 * @throws FinanceServiceException
+	 */
+	public void savePeople(TOtheruser otheruser) throws FinanceServiceException;
+	/**
+	 * @功能描述：更新其他人员
+	 * @param department
+	 * @throws FinanceServiceException
+	 */
+	public void updatePeople(TOtheruser otheruser) throws FinanceServiceException;
+}

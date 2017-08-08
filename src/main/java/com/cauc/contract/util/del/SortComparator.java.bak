@@ -1,0 +1,29 @@
+package com.cauc.training.util.del;
+
+
+import java.util.Comparator;
+
+import com.cauc.training.vo.VStudentBaseInfo;
+
+@SuppressWarnings("unchecked")
+public class SortComparator implements Comparator {
+
+	public int compare(Object o1, Object o2) {
+		VStudentBaseInfo s1= (VStudentBaseInfo)o1;
+		VStudentBaseInfo s2= (VStudentBaseInfo)o2;
+		
+		//先排英语
+        if(s1.getEnScore()!=s2.getEnScore()){
+            return s2.getEnScore()-s1.getEnScore();
+        }
+        else{//其次排考试日期
+            if(s1.getRxsj()!=s2.getRxsj()){
+            	return s1.getLtime()-s2.getLtime();
+            }
+            else{//最后排平均成绩
+            	return s2.getAvgScore()-s1.getAvgScore();
+            }
+        }
+	}
+
+}

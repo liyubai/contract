@@ -1,0 +1,200 @@
+﻿package com.cauc.training.ui.core.del;
+
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.Map;
+
+import org.hyperic.sigar.CpuPerc;
+import org.hyperic.sigar.Mem;
+import org.hyperic.sigar.NetFlags;
+import org.hyperic.sigar.NetInterfaceConfig;
+import org.hyperic.sigar.NetInterfaceStat;
+import org.hyperic.sigar.Sigar;
+import org.hyperic.sigar.SigarException;
+
+import com.cauc.training.util.NetStatBean;
+
+public class ServerMonitorAction {
+	private static Sigar sigar;
+	private static ServerMonitorAction serverMonitor;
+	public static Hashtable<String, NetStatBean> map = new Hashtable<String, NetStatBean>();
+	private String info;//内存使用率
+	private List<String> cpulv;//cpu利用率数组
+	private List<Map<String,String>> wllv;//网络利用率数组
+	
+	private ServerMonitorAction() {
+
+	}
+
+	public static ServerMonitorAction newInstance() {
+		synchronized (ServerMonitorAction.class) {
+			if (serverMonitor == null) {
+				init();
+			}
+		}
+		return serverMonitor;
+	}
+
+	private static void init() {
+		serverMonitor = new ServerMonitorAction();
+		initSigar();
+	}
+
+	private static void initSigar() {
+		synchronized (ServerMonitorAction.class) {
+			if (sigar == null) {
+				sigar = new Sigar();
+			}
+		}
+	}
+
+	/**
+	 * 或者CPU数量
+	 */
+	public int getCpuCount() throws SigarException {
+		return sigar.getCpuInfoList().length;
+	}
+
+	/**
+	 * 或者cpu列表
+	 */
+	public CpuPerc[] getCpuList() {
+		try {
+			return sigar.getCpuPercList();
+		} catch (SigarException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	/**
+	 * 获得内存使用率
+	 */
+	public double getMemoryRatio() {
+
+		try {
+			Mem mem = sigar.getMem();
+			return mem.getUsedPercent();
+		} catch (SigarException e) {
+			return 0;
+		}
+	}
+
+	/**
+	 * 获取网络流量等信息
+	 */
+	public String[] getNetIfList() {
+		Sigar sigar = new Sigar();
+		try {
+			return sigar.getNetInterfaceList();
+		} catch (SigarException e1) {
+			return null;
+		}
+	}
+
+	/**
+	 * 打印信息
+	 * 
+	 * @param msg
+	 */
+	public String write() {
+		String result = "hqcg";
+		cpulv = new ArrayList<String>();
+		wllv = new ArrayList<Map<String,String>>();
+//		StringBuffer infoBuffer = new StringBuffer("{时间：" + DateUtil.getString(new Date(), "yyyy-MM-dd HH:mm:ss, "));
+		if(serverMonitor == null){
+			init();
+		}
+		CpuPerc[] cpuList = serverMonitor.getCpuList();
+		for (int i = 0; i < cpuList.length; i++) {
+			CpuPerc cpu = cpuList[i];
+			cpulv.add(CpuPerc.format(cpu.getCombined()));
+//			infoBuffer.append("cpu" + (i + 1) + "使用率：" + CpuPerc.format(cpu.getCombined()) + ", ");
+		}
+		 DecimalFormat df = new DecimalFormat("0.00");
+//		infoBuffer.append("内存使用率:" + df.format(serverMonitor.getMemoryRatio()) + "%, ");
+		info=df.format(serverMonitor.getMemoryRatio());
+		
+		String[] ifNames = serverMonitor.getNetIfList();
+		try {
+			for (int i = 0; i < ifNames.length; i++) {
+				String name = ifNames[i];
+				NetInterfaceConfig ifconfig = null;
+				ifconfig = sigar.getNetInterfaceConfig(name);
+				if ((ifconfig.getFlags() & 1L) <= 0L || NetFlags.LOOPBACK_ADDRESS.equals(ifconfig.getAddress())) {
+					continue;
+				}
+
+				NetInterfaceStat ifstat = sigar.getNetInterfaceStat(name);
+				long rxBytesEnd = ifstat.getRxBytes();   
+				long txBytesEnd = ifstat.getTxBytes(); 
+				long end = System.currentTimeMillis();
+				NetStatBean netBean = new NetStatBean();
+				if (map.containsKey(name)) {
+					
+					netBean = map.get(name);
+					 long rxBytesStart = netBean.getRxBytes();   
+					 long txBytesStart = netBean.getTxBytes(); 
+					 long rxbps = 0;   
+					 long txbps = 0;
+					 if(end-netBean.getTime()!=0){
+						 rxbps = (rxBytesEnd - rxBytesStart)*8/(end-netBean.getTime())*1000;   
+						 txbps = (txBytesEnd - txBytesStart)*8/(end-netBean.getTime())*1000;
+					 }
+					 long bps = ifstat.getSpeed();
+					 Map<String, String> wlmap = new HashMap<String, String>();
+					 wlmap.put("name1", "网络" + name + "使用率：");
+					 wlmap.put("name2", this.myPercent((rxbps + txbps), bps));
+					 wllv.add(wlmap);
+//					 infoBuffer.append("网络" + name + "使用率：" + this.myPercent((rxbps + txbps), bps) + ", ");
+				} else {
+					Map<String, String> wlmap = new HashMap<String, String>();
+					 wlmap.put("name1", "网络" + name + "使用率：");
+					 wlmap.put("name2", "0%");
+					 wllv.add(wlmap);
+//					 infoBuffer.append("网络" + name + "使用率：0%, ");
+				}
+				 netBean.setRxBytes(rxBytesEnd);
+				 netBean.setTxBytes(txBytesEnd);
+				 netBean.setTime(end);
+				 map.put(name, netBean);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+//		info = infoBuffer.toString();
+		return result;
+	}
+	
+	private String myPercent(long y,long z){
+		   String baifenbi="";
+		   double baiy=y*1.0;
+		   double baiz=z*1.0;
+		   double fen=baiy/baiz;
+		   DecimalFormat df1 = new DecimalFormat("0.00%");
+		   baifenbi= df1.format(fen);  
+		    return baifenbi;
+	}
+
+	public String getInfo() {
+		return info;
+	}
+	public void setInfo(String info) {
+		this.info = info;
+	}
+	public List<String> getCpulv() {
+		return cpulv;
+	}
+	public void setCpulv(List<String> cpulv) {
+		this.cpulv = cpulv;
+	}
+	public List<Map<String, String>> getWllv() {
+		return wllv;
+	}
+	public void setWllv(List<Map<String, String>> wllv) {
+		this.wllv = wllv;
+	}
+}

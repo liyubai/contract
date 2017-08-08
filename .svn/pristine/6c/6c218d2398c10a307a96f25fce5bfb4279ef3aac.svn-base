@@ -1,0 +1,172 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>修改编号</title>
+    <link href="<%=request.getContextPath()%>/contract/themes/cupertino/jquery.ui.all.css" rel="stylesheet" type="text/css" />
+    <link href="<%=request.getContextPath()%>/contract/themes/cupertino/selfStyle.css" rel="stylesheet" type="text/css" />
+    <link href="<%=request.getContextPath()%>/contract/themes/cupertino/date.css" rel="stylesheet" type="text/css" />
+    <script src="<%=request.getContextPath()%>/contract/scripts/jquery.min.js"></script>
+    <script src="<%=request.getContextPath()%>/contract/scripts/jquery-ui.min.js"></script>
+    <script src="<%=request.getContextPath()%>/contract/scripts/ui/jquery.ui.position.min.js"></script>
+    <script src="<%=request.getContextPath()%>/contract/scripts/ui/jquery.ui.core.min.js"></script>
+    <script src="<%=request.getContextPath()%>/contract/scripts/ui/jquery.ui.widget.min.js"></script>
+    <script src="<%=request.getContextPath()%>/contract/scripts/ui/jquery.ui.button.min.js"></script>
+    <script src="<%=request.getContextPath()%>/contract/scripts/ui/jquery.ui.tabs.min.js"></script>
+    <script src="<%=request.getContextPath()%>/contract/scripts/ui/jquery.ui.dialog.min.js"></script>
+    <script src="<%=request.getContextPath()%>/contract/scripts/ui/jquery.ui.menu.min.js"></script>
+    <script src="<%=request.getContextPath()%>/contract/scripts/function.min.js"></script>
+    <script src="<%=request.getContextPath()%>/contract/scripts/datepicker4.8/WdatePicker.js" type="text/javascript"></script>
+    <script src="<%=request.getContextPath()%>/contract/scripts/time.js"></script>
+    <script>
+    $(function() {
+        new $.dropDownList(0, true, 243);
+        new $.dropDownList(1, true, 243);
+        new $.dropDownList(2, true, 243);
+        new $.dropDownList(3, true, 243);
+        new $.dropDownList(4, true, 243);
+        new $.dropDownList(5, true, 160);
+    });
+</script>
+    <!-- 此js务必放在所有页面自带的js后面加载 -->
+    <script src="<%=request.getContextPath()%>/contract/scripts/base.min.js"></script>
+</head>
+<body>
+<jsp:include page="/pages/common/topPart.jsp"/>
+<jsp:include page="/pages/common/leftPart.jsp"/>
+<div id="rightPartA" style="overflow-x:hidden;">
+    <div>
+    <div class="Panel" style="min-height:300px;">
+        <div class="panelHead">
+            <span>修改结算</span>
+        </div>
+        <div class="panelContent" class=>
+            <table class="modifyTable">
+                <tr>
+                    <td class="col40_ textR">结算编号</td>
+                    <td><input id="excelName" name="excelName" type="text" class="tableinput" value="${account.AAccountId }" /></td>
+                     <td><input id="aidhidden" type="hidden" class="tableinput" value="${account.AId }" /></td>
+                </tr>
+                <tr>
+                    <td class="col40_ textR">结算状态</td>
+                    <td>
+                    <div class="dropDownList" id="Div3">
+	<button class="tableselect">结算状态</button>
+	<ul id="State">
+		<%-- <c:if test="${account.AAccountState==1 }"> --%>
+	   <!--  <li><a href="javascript:getState(1);" val="1"><span class="ui-icon ui-icon-bullet"></span>结算状态</a></li> -->
+
+		<li><a href="javascript:getState(2);" val="2"><span class="ui-icon ui-icon-bullet"></span>已结算</a></li>
+
+		<li><a href="javascript:getState(3);" val="3">未结算</a></li>
+	</ul>
+	<input type="hidden" id="statehidden" name="结算状态" value="${account.AAccountState}" />
+</div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="col40_ textR">结算通知</td>
+                    <td>
+                        <div class="fjWrap" style="margin-left:0;">
+                            
+                           <%--  <a href="javascript:downloadExcel('${account.ANoticeUrl}')">
+                                <img src="<%=request.getContextPath()%>/contract/themes/cupertino/images/pdfimg.png" />
+                            </a> --%>
+                          <%--   <a href="#" onclick="javascript:downloadtest('${account.ANoticeUrl}')"  id="pluginurl"  style="color: #83AFE2;text-decoration:underline;">下载</a> --%>
+                            <!-- <div class="fj_descript">Excel附件</div> -->
+                            <a href="javascript:downloadExcel('${account.ANoticeUrl}')">
+                                <img width="60px" src="<%=request.getContextPath()%>/contract/themes/cupertino/images/excel_icon.png" />
+                            </a>
+                            <form action="<%=request.getContextPath()%>/UpdateAccount/downloadExcel.do" name="downloadExcel" id="downloadExcel">
+                                <input type="hidden" name="excelName" id="downloadExcelName">
+                                <input type="hidden" name="downloadExcelStr" id="ExcelStr">
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="4" class="tCenter">
+                        <input id="Button1" type="button" class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-icon-primary ml10" value="确定" />
+                    </td>
+                </tr>
+            </table>
+            
+            <form action="<%=request.getContextPath()%>/UpdateAccount/updateAccountById.do" name="updateAccount" id="updateAccount">
+               <input type="hidden" name="aid" id="aid" value="">
+               <input type="hidden" name="accountId" id="accountId" value="">
+               <input type="hidden" name="accountState" id="accountState" value="">
+            </form>
+        </div>
+    </div>
+    </div>
+</div>
+<script>
+    $(function() {
+    $('#Button1').click(function() {
+    var accountNo = $("#excelName").val();
+   // var accountState = $("#State").children("li").children("a").attr("val");
+    var accountState = $("#statehidden").val();
+    var aid = $("#aidhidden").val();
+    $("#aid").val(aid);
+    $("#accountId").val(accountNo);
+    $("#accountState").val(accountState);
+    $("#updateAccount").submit();
+     });
+
+    });
+    
+    function getState(state){
+    	if(state==2){
+    		$("#statehidden").val(2);		
+    	}
+    	else {
+    		$("#statehidden").val(3);
+    	}
+    }
+    
+    function downloadExcel(downloadExcelStr){
+    	if(downloadExcelStr!=""){
+    		var excelName = $("#excelName").val();
+        	$("#downloadExcelName").val(excelName);
+        	$("#ExcelStr").val(downloadExcelStr);
+        	$("#downloadExcel").submit();
+    	}
+    	else{
+    		alert("文件不存在，请先生成在下载。");
+    	}
+    	//下载Excel的ajax提交方法
+	<%-- 	$.ajax({
+			type:"post",
+			//async:false, 
+			url:"<%=request.getContextPath()%>/UpdateAccount/downloadExcel.do",
+			data:{
+				downloadExcelStr:downloadExcelStr,
+				excelName:excelName
+			},
+			dataType:'text',
+			success:function(data){
+				if (data == "OK") {
+		           	alert("名字为"+excelName+".xls的Excel已成功保存在D盘的根目录下");
+				}
+				else {
+					alert("下载失败");	
+				}
+			}, 
+			error:function(XMLHttpRequest, textStatus, errorThrown){
+				alert(errorThrown);
+			}
+		});	 --%>
+		
+    	
+    }
+    
+<%--     function downloadtest(id){
+    	var url = "<%=request.getContextPath()%>/UpdateAccount/downloadExcel.do";
+    	$("#pluginurl").attr("href",url);
+    	} --%>
+</script>
+</body>
+</html>

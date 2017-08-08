@@ -1,0 +1,842 @@
+package com.cauc.training.business;
+
+import java.util.List;
+import java.util.Map;
+
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.business.dao.support.Page;
+import com.cauc.training.pojos.GraduationDesign;
+import com.cauc.training.pojos.GraduationStudentAssign;
+import com.cauc.training.pojos.Newworkerandchangetrain;
+import com.cauc.training.pojos.RecommendStudentLicenseExam;
+import com.cauc.training.pojos.StudentBaseInfo;
+import com.cauc.training.pojos.StudentDistributionClass;
+import com.cauc.training.pojos.StudentLicense;
+import com.cauc.training.pojos.Studentassignschool;
+import com.cauc.training.pojos.Studentstatuschange;
+import com.cauc.training.pojos.TAbroadtrain;
+import com.cauc.training.pojos.TChangedbase;
+import com.cauc.training.pojos.TChangedgroup;
+import com.cauc.training.pojos.TDiction;
+import com.cauc.training.pojos.TForeignaviationschoolinterview;
+import com.cauc.training.pojos.TGntrainbackschool;
+import com.cauc.training.pojos.TOffschool;
+import com.cauc.training.pojos.TOrg;
+import com.cauc.training.pojos.TOtheruser;
+import com.cauc.training.pojos.TPointLine;
+import com.cauc.training.pojos.TScore;
+import com.cauc.training.pojos.TSetClass;
+import com.cauc.training.pojos.TStuassignbase;
+import com.cauc.training.pojos.TStuassigngroup;
+import com.cauc.training.pojos.TStuassignteacher;
+import com.cauc.training.pojos.TStuchangedteacher;
+import com.cauc.training.pojos.TStustopfly;
+import com.cauc.training.pojos.TeacherBaseInfo;
+import com.cauc.training.vo.VScore;
+import com.cauc.training.vo.VSetClassContent;
+import com.cauc.training.vo.VStudentBaseInfo;
+import com.cauc.training.vo.VStudentLicense;
+
+/**
+ * 学员管理服务接口
+ * 
+ * @author Long.li
+ *
+ */
+public interface IStudentService {
+
+	/**
+	 * 雅思成绩
+	 */
+	public static final String QUERY_KEY_SONGPEI_SY="ysipass";
+	
+	/**
+	 * 校考成绩、国外航校面试
+	 */
+	public static final String QUERY_KEY_SONGPEI_XK="xkipass";
+	
+	/**
+	 * 局方成绩
+	 */
+	
+	public static final String QUERY_KEY_SONGPEI_JF="jfipass";
+	
+	/**
+	 * 成绩审查
+	 */
+	public static final String QUERY_KEY_SONGPEI_CJ="cjaudit";
+	
+	/**
+	 * 身体审查
+	 */
+	public static final String QUERY_KEY_SONGPEI_ST="staudit";
+	
+	/**
+	 * 在校表现
+	 */
+	public static final String QUERY_KEY_SONGPEI_BX="bxaudit";
+	
+	/**
+	 * 所有项
+	 */
+	public static final String QUERY_KEY_SONGPEI_ALL="allpass";
+	
+	//新成绩状态    0:未提交审核1:提交审核2:审核通过 3:审核未通过
+	
+	/**
+	 * 课程类型
+	 */
+	public static final String QUERY_KEY_LESSON_TYPE="itype";
+	
+	/**
+	 * 课程id
+	 */
+	public static final String QUERY_KEY_LESSON_ID="lessonid";
+	
+	/**
+	 * 成绩是否合格
+	 */
+	public static final String QUERY_KEY_PASS = "ipass";
+	
+	/**
+	 * 登录人
+	 */
+	public static final String QUERY_KEY_LOGIN_USER = "userName";
+
+	/**
+	 * 理论在学
+	 */
+	public static final String QUERY_KEY_STUDENT_STATUS_STUDY = "4028aa494765f33d014765f78e55000f";
+	
+	/**
+	 * 国内送培阶段
+	 */
+	public static final String QUERY_KEY_STUDENT_STATUS_GN_SONGPEI = "4028aa494765f33d014765f7b9ab0010";
+	
+	/**
+	 * 国外送培阶段
+	 */
+	public static final String QUERY_KEY_STUDENT_STATUS_GW_SONGPEI = "4028816a4b0f0b3d014b1025385a0003";
+	
+	/**
+	 * 国内训练
+	 */
+	public static final String QUERY_KEY_STUDENT_STATUS_GUONEI = "4028aa494765f33d014765f7df820011";
+	
+	/**
+	 * 国外训练
+	 */
+	
+	public static final String QUERY_KEY_STUDENT_STATUS_GUOWAI = "4028aa494765f33d014765f808570012";
+	
+	/**
+	 * 训练后在学
+	 */
+	public static final String QUERY_KEY_STUDENT_STATUS_FINISH = "4028aa494765f33d014765f8ac870016";
+	
+	/**
+	 * 离校
+	 */
+	public static final String QUERY_KEY_STUDENT_STATUS_OFF_SCHOOL = "4028aa494765f33d014765f881120015";
+	
+
+	/**
+	 * 名称
+	 */
+	public static final String  QUERY_KEY_NAME="VName";
+	
+	/**
+	 * 高级搜索对象
+	 * 
+	 */
+	public static final String QUERY_KEY_ADVANCED_SEARCH_OBJ = "searchobj";
+	
+	/**
+	 * 是否分配
+	 */
+	public static final String  QUERY_KEY_IF_ASSIGN="assign";
+	
+	/**
+	 * 年
+	 */
+	public static final String QUERY_KEY_YEAR = "year";
+	
+	/**
+	 * 班级
+	 */
+	public static final String QUERY_KEY_CLASS = "class";
+	
+	/**
+	 * 学员类型
+	 */
+	public static final String  QUERY_KEY_STUDENT_TYPE="stuType";
+	
+	/**
+	 * 是否分配大纲
+	 */
+	public static final String QUERY_KEY_ASSIGN_YES = "assignyes";
+	
+	/**
+	 * 公司
+	 */
+	public static final String QUERY_KEY_COMPANY = "company";
+	
+	/**
+	 * 学生状态
+	 */
+	public static final String QUERY_KEY_STUDENT_STATUS = "stustatus";
+	
+	/**学籍状态
+	 * 
+	 */
+	public static final String QUERY_KEY_XJ_STUDENT_STATUS = "xjstatus";
+	
+	/**招生形式
+	 * 
+	 */
+	public static final String QUERY_KEY_FORM = "vform";
+	
+	/**费用形式
+	 * 
+	 */
+	public static final String QUERY_KEY_FREE_FORM = "freeform";
+	
+	/**
+	 * 学生状态
+	 */
+	public static final String QUERY_STUDENT_STATUS="4028aa494765ea52014765eee6640008";
+	
+	/**
+	 * 学籍状态
+	 */
+	public static final String QUERY_XUEJI_STATUS="4028aa494765ea52014765eeca310007";
+
+	/**
+	 * 招生形式
+	 */
+	public static final String QUERY_ZHAOSHENG_FORM="fbd32591478bf5d101478c14a5a80023";
+	
+	/**
+	 * 学员类型
+	 */
+	public static final String QUERY_STUDENT_TYPE="4028aa494765f33d01476601416d003d";
+	
+	/**
+	 * 费用形式
+	 */
+	public static final String QUERY_FREE_TYPE="fbd32591478bf5d101478c139e080022";
+	
+	/**
+	 * 航空公司
+	 */
+	public static final String QUERY_COMPANY="fbd32591478bf5d101478c0372390002";
+	
+	/**
+	 * 文化程度
+	 */
+	public static final String QUERY_WHCD="4028aa494765ea52014765eeacd50006";
+	
+	/**
+	 * 民族
+	 */
+	public static final String QUERY_NATION="4028aa494765ea52014765ee8d760005";
+	
+	/**
+	 * 籍贯
+	 */
+	public static final String QUERY_JIGUAN="fbd316e24992a340014992a469d10002";
+	/**
+	 * 仪表等级
+	 */
+	public static final String QUERY_YIBIAODENGJI="297ea69a483310cd0148332421ee0007";
+	/**
+	 * 航空器类别
+	 */
+	public static final String QUERY_HANGKONGQILEIBIE="297ea69a483310cd01483325ccdc000a";
+	/**
+	 * 旋翼机级别等级
+	 */
+	public static final String QUERY_XUANYIJIJIBIEDENDJI="297ea69a483310cd01483325e7cb000b";
+	/**
+	 * 飞机级别等级
+	 */
+	public static final String QUERY_FEIJIJIBIEDENGJI="297ea69a483310cd014833220d190002";
+	/**
+	 * 航空器型别等级
+	 */
+	public static final String QUERY_HANGKONGQIXINGBIEDENGJI="297ea69a483310cd014833260686000c";
+	
+	
+	/**
+	 * 学员列表
+	 * @param params
+	 * @param pageNo
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page readStudentList(Map<String,Object> params,String pageNo) throws FinanceServiceException;
+	
+	/**
+	 * 学员列表
+	 * @param params
+	 * @param pageNo
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page readMoreSeacrhStudentBaseInfoList(StudentBaseInfo stu,String pageNo) throws FinanceServiceException;
+	
+	/**
+	 * 导出学生信息
+	 * @param stu
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<StudentBaseInfo> exportStudentBaseInfo(StudentBaseInfo stu) throws FinanceServiceException;
+	
+	/**
+	 * 学员分配班级列表
+	 * @param params
+	 * @param pageNo
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page readStudentDistributionClassList(Map<String,Object> params,String pageNo) throws FinanceServiceException;
+	
+	/**
+	 * 学员状态列表
+	 * @param params
+	 * @param pageNo
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page readStudentStatusInfoList(Map<String,Object> params,String pageNo) throws FinanceServiceException;
+	
+	/**
+	 * 国内送培列表
+	 * @param params
+	 * @param pageNo
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page readStudentInternalSendPeiList(Map<String,Object> params,String pageNo) throws FinanceServiceException;
+	
+	/**
+	 * 完全符合国内送陪的学生列表
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<VStudentBaseInfo> readAccordAllCondtionList(Map<String,Object> params) throws FinanceServiceException;
+	
+	/**
+	 * 国外送培列表
+	 * @param params
+	 * @param pageNo
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page readStudentAbroadSendPeiList(Map<String,Object> params,String pageNo) throws FinanceServiceException;
+	
+	/**
+	 * 学员执照列表
+	 * @param params
+	 * @param pageNo
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page readStudentLicenseList(Map<String,Object> params,String pageNo) throws FinanceServiceException;
+	
+	/**
+	 * 学员基地列表
+	 * @param params
+	 * @param pageNo
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page readStudentBaseList(Map<String,Object> params,String pageNo) throws FinanceServiceException;
+	
+	/**
+	 * 学员大队列表
+	 * @param params
+	 * @param pageNo
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page readStudentGroupList(Map<String,Object> params,String pageNo) throws FinanceServiceException;
+	
+	/**
+	 * 学员教员列表
+	 * @param params
+	 * @param pageNo
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page readStudentTeacherList(Map<String,Object> params,String pageNo) throws FinanceServiceException;
+	
+	/**
+	 * 学员航校列表
+	 * @param params
+	 * @param pageNo
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page readStudentInterviewList(Map<String,Object> params,String pageNo) throws FinanceServiceException;
+	
+	/**
+	 * 学员体检合格证列表
+	 * @param params
+	 * @param pageNo
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page readStudentMedicalList(Map<String,Object> params,String pageNo) throws FinanceServiceException;
+	
+	/**
+	 * 获取字典列表
+	 * @param typeid
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<TDiction> readDictionList(String typeid) throws FinanceServiceException;
+	
+	/**
+	 * 班级列表
+	 * @param params
+	 * @param pageNo
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page readClassInfoList(Map<String,Object> params,String pageNo) throws FinanceServiceException;
+	
+	/**
+	 * 课程设置列表
+	 * @param params
+	 * @param pageNo
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page readSetLessonList(Map<String,Object> params,String pageNo) throws FinanceServiceException;
+	
+	/**
+	 * 完成训练列表
+	 * @param params
+	 * @param pageNo
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page readFinishTrainingStudentList(Map<String,Object> params,String pageNo) throws FinanceServiceException;
+	
+	/**
+	 * 毕业列表
+	 * @param params
+	 * @param pageNo
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page readStudentGraduationList(Map<String,Object> params,String pageNo) throws FinanceServiceException;
+	
+	/**
+	 * 成绩列表
+	 * @param params
+	 * @param pageNo
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page readStudentScoreList(Map<String,Object> params,String pageNo) throws FinanceServiceException;
+	
+	/**
+	 * 执照成绩列表
+	 * @param params
+	 * @param pageNo
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page readStudentLicenseScoreList(Map<String,Object> params,String pageNo) throws FinanceServiceException;
+	
+	/**
+	 * 已推荐学生列表
+	 * @param params
+	 * @param pageNo
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page readRecommendedList(Map<String,Object> params,String pageNo) throws FinanceServiceException;
+	
+	/**
+	 * 创建学生
+	 * @param student
+	 * @throws FinanceServiceException
+	 */
+	public void saveStudentBaseInfo(StudentBaseInfo student) throws FinanceServiceException;
+	public void updateStudentBaseInfo(StudentBaseInfo student) throws FinanceServiceException;
+	/**
+	 * 保存改变学生状态
+	 * @param student
+	 * @throws FinanceServiceException
+	 */
+	public void saveChangeStudentStatus(VStudentBaseInfo student)throws FinanceServiceException;
+	
+	/**
+	 * 保存学生分配到基地
+	 * @param student
+	 * @throws FinanceServiceException
+	 */
+	public void saveStudentAssignBase(TStuassignbase base)throws FinanceServiceException;
+	
+	public void saveStudentAssignGroup(TStuassigngroup base)throws FinanceServiceException;
+	
+	public void saveStudentAssignTeacher(TStuassignteacher base)throws FinanceServiceException;
+	
+	/**
+	 * 取消学生分配到基地
+	 * @param student
+	 * @throws FinanceServiceException
+	 */
+	public void escStudentAssignBase(String id,String userid)throws FinanceServiceException;
+	public void escStudentAssignGroup(String id,String userid)throws FinanceServiceException;
+	public void escStudentAssignTeacher(String id,String userid)throws FinanceServiceException;
+	/**
+	 * 保存学生调换基地
+	 * @param student
+	 * @throws FinanceServiceException
+	 */
+	public void saveStudentChangeBase(TChangedbase base)throws FinanceServiceException;
+	public void saveStudentChangeGroup(TChangedgroup base)throws FinanceServiceException;
+	public void saveStudentChangeTeacher(TStuchangedteacher base)throws FinanceServiceException;
+	
+	/**
+	 * 获取登录人所在基地的大队列表
+	 * @param userid
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<TOrg> readOrgByUserId(String userid)throws FinanceServiceException;
+	
+	/**
+	 * 获取登录人所在大队教员列表
+	 * @param userid
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<TeacherBaseInfo> readTeacherByUserId(String userid)throws FinanceServiceException;
+	
+	/**
+	 * 获取理论教员列表
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<TOtheruser> readNormalTeacher()throws FinanceServiceException;
+	
+	/**
+	 * 获取理论教员列表
+	 * @param type
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<TeacherBaseInfo> readTheoryTeacher()throws FinanceServiceException;
+	
+	/**
+	 * 班级添加课程
+	 * @param line
+	 * @throws FinanceServiceException
+	 */
+	public void saveAddClassLesson(TPointLine line)throws FinanceServiceException;
+	
+	/**
+	 * 保存分配航校面试
+	 * @param school
+	 * @throws FinanceServiceException
+	 */
+	public void saveAssignAbroadSchool(Studentassignschool school) throws FinanceServiceException;
+	
+	/**
+	 * 调换航校
+	 * @param school
+	 * @throws FinanceServiceException
+	 */
+	public void saveChangeAssignAbroadSchool(Studentassignschool school) throws FinanceServiceException;
+	
+	/**
+	 * 保存航校面试
+	 * @param id
+	 * @throws FinanceServiceException
+	 */
+	public void saveAddInterview(String id,String userid)throws FinanceServiceException;
+	
+	/**
+	 * 保存体检合格证信息
+	 * @param id
+	 * @throws FinanceServiceException
+	 */
+	public void saveAddSutdentMedical(String id,String userid)throws FinanceServiceException;
+	
+	/**
+	 * 保存新增班级
+	 * @param tclass
+	 * @throws FinanceServiceException
+	 */
+	public void saveSetClass(TSetClass tclass) throws FinanceServiceException;
+	
+	/**
+	 * 完成训练
+	 * @param finish
+	 * @throws FinanceServiceException
+	 */
+	public void saveStudentFinishTraining(TGntrainbackschool finish)throws FinanceServiceException;
+	
+	/**
+	 * 停飞
+	 * @param stop
+	 * @throws FinanceServiceException
+	 */
+	public void saveStudentStopFly(TStustopfly stop) throws FinanceServiceException;
+	
+	/**
+	 * 停飞派回学校
+	 * @param finish
+	 * @throws FinanceServiceException
+	 */
+	public void saveStudentBackSchool(TGntrainbackschool finish)throws FinanceServiceException;
+	
+	/**
+	 * 停飞离校
+	 * @param off
+	 * @throws FinanceServiceException
+	 */
+	public void saveStudentStopFlyOffSchool(TOffschool off) throws FinanceServiceException;
+	
+	/**
+	 * 停飞学籍管理
+	 * @param xueJi
+	 * @throws FinanceServiceException
+	 */
+	public void saveStopFlyXjManage(Studentstatuschange xueJi)throws FinanceServiceException;
+	
+	/**
+	 * 确认毕设、领毕业证
+	 * @param design
+	 * @throws FinanceServiceException
+	 */
+	public void saveConfirmGraduationDesign(GraduationDesign design)throws FinanceServiceException;
+	
+	/**
+	 * 毕业生分配
+	 * @param assign
+	 * @throws FinanceServiceException
+	 */
+	public void saveGraduationStudentAssign(GraduationStudentAssign assign) throws FinanceServiceException;
+	
+	/**
+	 * 正常毕业离校
+	 * @param off
+	 * @throws FinanceServiceException
+	 */
+	public void saveStudentGraduationOffSchool(TOffschool off) throws FinanceServiceException;
+	
+	/**
+	 * 新雇员培训成绩与改装训练成绩
+	 * @param score
+	 * @throws FinanceServiceException
+	 */
+	public void saveNewWorkerAndChangeTrain(Newworkerandchangetrain score)throws FinanceServiceException;
+	
+	/**
+	 * 保存课程成绩
+	 * @param lessonScore
+	 * @throws FinanceServiceException
+	 */
+	public void saveAddLessonScore(TScore lessonScore) throws FinanceServiceException;
+	
+	/**
+	 * 保存成绩审核
+	 * @param id
+	 * @throws FinanceServiceException
+	 */
+	public void saveAuditLessonScore(String id)throws FinanceServiceException;
+	
+	/**
+	 * 保存推荐局方证照考试
+	 * @param stu
+	 * @throws FinanceServiceException
+	 */
+	public void saveSutdentLicenseExam(RecommendStudentLicenseExam stu) throws FinanceServiceException;
+	
+	/**
+	 * 保存学生执照
+	 * @param license
+	 * @throws FinanceServiceException
+	 */
+	public void saveStudentLicense(StudentLicense license) throws FinanceServiceException;
+	
+	/**
+	 * 获取执照对象
+	 * @param studentid
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public StudentLicense readStudentLicense(String studentid)throws FinanceServiceException;
+	
+	/**
+	 * 保存执照升级或编辑
+	 * @param license
+	 * @throws FinanceServiceException
+	 */
+	public void updateStudentLicense(StudentLicense license)throws FinanceServiceException;
+	
+	/**
+	 * 单一学生执照列表
+	 * @param id
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<VStudentLicense> readLicenseStudentById(String id) throws FinanceServiceException;
+	
+	/**
+	 * 获取学生对象
+	 * @param id
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public StudentBaseInfo readStudentBaseInfo(String id) throws FinanceServiceException;
+	
+	/**
+	 * 获取学生执照内容根据执照id
+	 * @param id
+	 * @param type
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public VStudentLicense readVStudentLicense(String id,String type) throws FinanceServiceException;
+	
+	/**
+	 * 导入学生信息
+	 * @param student
+	 * @param map
+	 * @throws FinanceServiceException
+	 */
+	public void importStudentBaseInfo(VStudentBaseInfo student,Map<String, VStudentBaseInfo> map)throws FinanceServiceException;
+	
+	/**
+	 * 导入学生成绩信息
+	 * @param student
+	 * @param map
+	 * @throws FinanceServiceException
+	 */
+	public List<VStudentBaseInfo> importStudentScore(VStudentBaseInfo student,List<VStudentBaseInfo> map)throws FinanceServiceException;
+	
+	/**
+	 * 根据学生id，获取学生成绩
+	 * @param id
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<VScore> readStudentScoreById(String id,String type)throws FinanceServiceException;
+	
+	/**
+	 * 编辑成绩
+	 * @param id
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public void editLessonScore(String id,String score)throws FinanceServiceException;
+	
+	/**
+	 * 删除成绩
+	 * @param id
+	 * @throws FinanceServiceException
+	 */
+	public void deleteLessonScore(String id)throws FinanceServiceException;
+	
+	/**
+	 * 显示班级信息
+	 * @param id
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public VSetClassContent readVSetClassContent(String id) throws FinanceServiceException;
+	
+	/**
+	 * 删除班级信息
+	 * @param id
+	 * @throws FinanceServiceException
+	 */
+	public void deleteClassInfoById(String id)throws FinanceServiceException;
+	
+	/**
+	 * 编辑班级信息
+	 * @param sclass
+	 * @throws FinanceServiceException
+	 */
+	public void updateSetClass(TSetClass sclass)throws FinanceServiceException;
+	
+	/**
+	 * 编辑科目设置
+	 * @param line
+	 * @throws FinanceServiceException
+	 */
+	public void updatePointLine(TPointLine line) throws FinanceServiceException;
+	
+	public void updateStudentAssignClass(StudentDistributionClass stuClass) throws FinanceServiceException;
+	
+	/**
+	 * 删除科目设置
+	 * @param id
+	 */
+	public void deletePointLineById(String id)throws FinanceServiceException;
+	
+	/**
+	 * 分配班级
+	 * @param stuClass
+	 * @throws FinanceServiceException
+	 */
+	public void saveStudentAssignClass(StudentDistributionClass stuClass) throws FinanceServiceException;
+	
+	/**
+	 * 删除分配班级
+	 * @param id
+	 * @throws FinanceServiceException
+	 */
+	public void deleteStudentAssignClassById(String id)throws FinanceServiceException;
+	
+	/**
+	 * 根据班级的id获取学生列表
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<StudentBaseInfo> readStudentBaseInfoByClassid(String classid,String isView,String lessonid)throws FinanceServiceException;
+	
+	/**
+	 * 改变学生基础信息相关属性
+	 * @param ids
+	 * @param newid
+	 * @param opt
+	 * @param changeDate
+	 * @param changeReason
+	 * @throws FinanceServiceException
+	 */
+	public void saveChangeStudentCommpany(String ids,String newid,String opt,String changeDate,String changeReason)
+	throws FinanceServiceException;
+	
+	public void deleteForeignaviationschoolinterview(String id)throws FinanceServiceException;
+	
+	public void updateForeignaviationschoolinterview(TForeignaviationschoolinterview view)throws FinanceServiceException;
+	
+	public void deleteAbroadtrain(String id)throws FinanceServiceException;
+	
+	public void updateAbroadtrain(TAbroadtrain abroadtrain)throws FinanceServiceException;
+	
+	/**
+	 * 获取其他人员的对象，根据登录用户名
+	 * @param code
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public TOtheruser readOtherUserByCode(String code)throws FinanceServiceException;
+	
+	/**
+	 * 导入历史成绩
+	 * @throws FinanceServiceException
+	 */
+	public void importHistoryScore() throws FinanceServiceException;
+	
+}

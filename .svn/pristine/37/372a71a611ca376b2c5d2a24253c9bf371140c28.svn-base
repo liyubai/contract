@@ -1,0 +1,303 @@
+package com.cauc.training.business;
+
+import java.util.List;
+import java.util.Map;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.business.dao.support.Page;
+import com.cauc.training.pojos.TDiction;
+import com.cauc.training.pojos.TTeaLicense;
+import com.cauc.training.pojos.TTeaLicenseskilledcheck;
+import com.cauc.training.pojos.TTeaMedical;
+import com.cauc.training.pojos.TTeaMedicalhistory;
+import com.cauc.training.pojos.TUser;
+import com.cauc.training.pojos.TeacherBaseInfo;
+import com.cauc.training.pojos.TeacherLicenseupdate;
+import com.cauc.training.vo.VHistorySearch;
+import com.cauc.training.vo.VOTTeaLicenseskilledcheck;
+import com.cauc.training.vo.VOutline;
+import com.cauc.training.vo.VSearchTeacherZz;
+import com.cauc.training.vo.VTTeaLicense;
+import com.cauc.training.vo.VTTeaLicenseskilledcheck;
+import com.cauc.training.vo.VTTeaMedical;
+import com.cauc.training.vo.VTTeaMedicalhistory;
+import com.cauc.training.vo.VTeacherBaseInfo;
+import com.cauc.training.vo.VTeacherLicenseupdate;
+import com.cauc.training.vo.WarningInfo;
+
+public interface ITeacherManagentService {
+	/**
+	 * 名称
+	 */
+	public static final String  QUERY_KEY_NAME="VName";
+	/**
+	 * 时间
+	 */
+	public static final String  QUERY_KEY_DATE="DCreatedate";
+	
+	/**
+	 * 学生id
+	 */
+	public static final String  QUERY_KEY_STUDENTID="studentid";
+	
+	/**
+	 * 创建教员基础信息
+	 * @param teacher
+	 * @throws FinanceServiceException
+	 */
+	public void saveTeacherBaseInfo(TeacherBaseInfo teacher) throws FinanceServiceException;
+	/**
+	 * @功能描述：通过部门ID、教员姓名查询教员列表
+	 * @param deptId
+	 * @param key
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<VTeacherBaseInfo> searchTeacherList(String deptId,String key) throws FinanceServiceException;
+	public List<VTeacherBaseInfo> searchTeacherTjList(String deptId,String key) throws FinanceServiceException;
+	public List<VTeacherBaseInfo> searchTeacherZzList(String deptId,String key) throws FinanceServiceException;
+	/**
+	 * @功能描述：更新教员基础信息
+	 * @param teacher
+	 * @throws FinanceServiceException
+	 */
+	public void updateTeacher(TeacherBaseInfo teacher) throws FinanceServiceException;
+	/**
+	 * @功能描述:分页查询教员基本信息
+	 * @param params
+	 * @param pageNo
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page searchTeacherPageList(Map<String,Object> params, String pageNo) throws FinanceServiceException;
+	
+	public List<VTeacherBaseInfo> canAssignTeacherList(Map<String,Object> params, String pageNo) throws FinanceServiceException;
+	/**
+	 * 功能描述:分页查询教员执照信息
+	 * @param params
+	 * @param pageNo
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page searchTeacherZzPageList(Map<String,Object> params, String pageNo) throws FinanceServiceException;
+	/**
+	 * 
+	 * @param params
+	 * @param pageNo
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page searchTeacherTjPageList(Map<String,Object> params, String pageNo) throws FinanceServiceException;
+	/**
+	 * @功能描述：通过教员ID查询教员基本信息
+	 * @param id
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public TeacherBaseInfo searchTeacherById(String id) throws FinanceServiceException;
+	public VTeacherBaseInfo searchVTeacherById(String id) throws FinanceServiceException;
+	
+	
+	public VTeacherBaseInfo readTeacherBaseInfoByName(String userName) throws FinanceServiceException;
+	/**
+	 * @功能描述：通过字典类型查询字典数据集
+	 * @param typeName
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<TDiction> searchTDictionByType(String typeName) throws FinanceServiceException;
+	/**
+	 * @功能描述：通过部门ID查询部门名称
+	 * @param deptId
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public String searchOrgName(String deptId) throws FinanceServiceException;
+	/**
+	 * @功能描述：通过教员ID删除教员
+	 * @param ids
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public boolean deleteTeacher(String... ids) throws FinanceServiceException;
+	/**
+	 * @功能描述：添加或修改教员体检信息
+	 * @param teachertj
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public boolean addOrUpTj(TTeaMedical teachertj,TUser tuser) throws FinanceServiceException;
+	/**
+	 * @功能描述：添加或修改教员执照信息
+	 * @param teacherzz
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public boolean addOrUpZz(TTeaLicense teacherzz,TUser tuser) throws FinanceServiceException;
+	/**
+	 * @功能描述：升级教员执照信息
+	 * @param teacherzz
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public boolean upZz(TTeaLicense teacherzz,TUser tuser) throws FinanceServiceException;
+	/**
+	 * @功能描述：通过教员ID查询该教员体检信息
+	 * @param teacherid
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public TTeaMedical searchTj(String teacherid) throws FinanceServiceException;
+	/**
+	 * @功能描述：用于查看教员体检信息Ajax返回值
+	 * @param teacherid
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public VTTeaMedical searchShowTj(String teacherid) throws FinanceServiceException;
+	
+	public VTTeaMedical readTeacherTjByName(String userName) throws FinanceServiceException;
+	/**
+	 * @功能描述：通过教员ID查询该教员执照信息
+	 * @param teacherid
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public TTeaLicense searchZz(String teacherid) throws FinanceServiceException;
+	/**
+	 * @功能描述：用于Ajax返回查看教员执照信息
+	 * @param teacherid
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public VTTeaLicense searchShowZz(String teacherid) throws FinanceServiceException;
+	
+	public VTTeaLicense readTeacherZzByName(String userName) throws FinanceServiceException;
+	
+	public VTTeaLicense searchShowZzHisory(String teacherid,String type) throws FinanceServiceException;
+	/**
+	 * @功能描述：分页查询教员体检历史信息
+	 * @param hist
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page searchTjHistory(VHistorySearch hist, String pageNo) throws FinanceServiceException;
+	/**
+	 * @功能描述：分页查询教员执照升级历史信息
+	 * @param hist
+	 * @param pageNo
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page searchZzHistory(VSearchTeacherZz vteacherZz, String pageNo) throws FinanceServiceException;
+	/**
+	 * @功能描述：分页查询教员执照检查历史信息
+	 * @param hist
+	 * @param pageNo
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page searchZzJcHistory(VHistorySearch hist, String pageNo) throws FinanceServiceException;
+	/**
+	 * @功能描述：通过ID查询体检历史信息
+	 * @param id
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public TTeaMedicalhistory searchHistoryTj(String id) throws FinanceServiceException;
+	/**
+	 * @功能描述：用于Ajax返回查看教员体检历史信息
+	 * @param id
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public VTTeaMedicalhistory searchHistoryShowTj(String id) throws FinanceServiceException;
+	/**
+	 * @功能描述：通过ID查询教员执照升级历史信息
+	 * @param id
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public TeacherLicenseupdate searchHistoryZzSj(String id) throws FinanceServiceException;
+	/**
+	 * @功能描述：用于Ajax返回查看教员执照升级历史信息
+	 * @param id
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public VTeacherLicenseupdate searchHistoryShowZzSj(String id) throws FinanceServiceException;
+	/**
+	 * @功能描述：通过ID查询执照检查信息
+	 * @param id
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public TTeaLicenseskilledcheck searchHistoryZzJc(String id) throws FinanceServiceException;
+	
+	public VOTTeaLicenseskilledcheck searchHistoryShowZzJc(String id) throws FinanceServiceException;
+	/**
+	 * @功能描述：添加或修改执照检查信息
+	 * @param teaZzJc
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public boolean addOrUpZzJc(VTTeaLicenseskilledcheck teaZzJc) throws FinanceServiceException;
+	
+	/**
+	 * 教员执照检查信息列表
+	 * @param teaid
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<VOTTeaLicenseskilledcheck> readTeaLicenseCheckList(String teaid)throws FinanceServiceException;
+	
+	/**
+	 * 单一教员所有执照列表
+	 * @param teaid
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<VTeacherBaseInfo> readTeacherLicenseListById(String teaid) throws FinanceServiceException;
+	
+	/**
+	 * 获取教员警告信息
+	 * @param code
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public WarningInfo readTeacherWarningInfoById(String code) throws FinanceServiceException;
+	
+	/**
+	 * 依据登录人员的id获取告警信息列表
+	 * @param code
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<WarningInfo> readUserWarningInfoListById(String userid,String opt)throws FinanceServiceException;
+	
+	/**
+	 * 保存分配教员
+	 * @param id
+	 * @param teacher
+	 * @throws FinanceServiceException
+	 */
+	public void saveTeacherAssignTeacher(String id,String teacher,String userid)throws FinanceServiceException;
+	
+	/**
+	 * 保存教员分配大纲
+	 * @param id
+	 * @param outlineid
+	 * @throws FinanceServiceException
+	 */
+	public void saveTeacherAssignOutline(String id,String outlineid,String userid)throws FinanceServiceException;
+	
+	/**
+	 * 大纲列表
+	 * @param params
+	 * @param pageNo
+	 * @param pageSize
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<VOutline>  readCanUsedOutlineList(Map<String, Object> params) throws FinanceServiceException;
+}

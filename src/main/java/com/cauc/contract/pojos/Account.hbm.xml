@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping>
+	 <class name="com.cauc.contract.pojos.Account" table="Account" schema="dbo" catalog="trainingRecord">
+        <id name="AId" type="int">
+            <column name="A_ID" />
+            <generator class="native" />
+        </id>
+        <property name="AAccountId" type="string">
+            <column name="A_ACCOUNT_ID" length="10"  />
+        </property>
+        <property name="CContractId" type="string">
+            <column name="C_CONTRACT_ID" length="20" not-null="true" />
+        </property>
+        <property name="PBuildFeeStandardPrice" type="java.lang.Float">
+            <column name="P_BUILD_FEE_STANDARD_PRICE" />
+        </property>
+        <property name="PTrainFeeStandardPrice" type="java.lang.Float">
+            <column name="P_TRAIN_FEE_STANDARD_PRICE" />
+        </property>
+        <property name="AAccountState" type="java.lang.Integer">
+            <column name="A_ACCOUNT_STATE" length="4" not-null="true"/>
+        </property>
+        <property name="APaymentState" type="java.lang.Integer">
+            <column name="A_PAYMENT_STATE" length="4" not-null="true" />
+        </property>
+        <property name="ALastModifyTime" type="timestamp">
+            <column name="A_LAST_MODIFY_TIME" />
+        </property>
+        <property name="ALastModifyPerson" type="string">
+            <column name="A_LAST_MODIFY_PERSON" length="60" />
+        </property>
+        <property name="PGradeStudentCount" type="java.lang.Integer">
+            <column name="P_GRADE_STUDENT_COUNT" />
+        </property>
+        <property name="ANoticeUrl" type="string">
+            <column name="A_NOTICE_URL" length="100" />
+        </property>
+        <property name="AAccountTime" type="timestamp">
+            <column name="A_ACCOUNT_TIME" />
+        </property>
+        <property name="PId" type="java.lang.Integer">
+            <column name="P_ID" not-null="true"/>
+        </property>
+        <property name="AFundsType" type="java.lang.Integer">
+            <column name="A_FUNDS_TYPE" />
+        </property>
+    </class>
+</hibernate-mapping>

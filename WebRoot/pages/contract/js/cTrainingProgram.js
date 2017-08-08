@@ -1,0 +1,830 @@
+
+var btnAddcount=1;
+//var clickAddGrade = 1;
+$(function() {
+	
+	//四级经费列表
+	initTree(getAllDics(516));
+	initTree(getAllDics(517));
+	initTree(getAllDics(518));
+	// $("#treeView0").empty();
+	// $("#treeView0").append(); /* 原数据getDics(516) */
+	// $("#treeView0").append(initTree(data)); 
+	
+	$('.fourLevel').hide();
+	$('body').delegate(".ddlJF","click",function() {
+	    $(this).parent().siblings('.fourLevel').show();
+	    $(this).siblings('.ui-icon').attr('class', 'ui-icon ui-icon-circlesmall-plus');
+	});
+
+	//初始化加载节点描述
+	initPaymentDiv();
+	new $.treeView(0);
+	//初始化循环生成年级信息
+	initGradeDiv();
+	//学号绑定--------------------------------------------
+	$('body').delegate(".bindStuBtn","click",function(){
+			var gradeyear =$(this).parent().find('div').find('button').find('span').text();
+			var NameNoobj=$(this).next();
+			var stujson = eval(NameNoobj.val()); 
+		    if(gradeyear=="学生年级"){
+		    	alert("请选择学生年级");
+		    }else{
+		    	var strhtml="";
+		    	var everystudent = '';
+		    	var params = {};
+		    	 $.ajax({
+		     		type:"post",
+		     		url:"/contract/contract/searchStudent.do?gradeyear="+gradeyear+"&contractNo="+$('#contractId').val(),
+		     		data:params,
+		     		dataType:"json",
+		     		async:false,
+		     		success:function(data){
+		     			var data = data;
+		     			//alert(data);
+		     			if(data!=null){
+		     				for(var i=0;i<data.dics.length;i++){
+		     					strhtml +="<li class='stuItem'><input id='Checkbox"+(2+i)+"' type='checkbox' class='stuCheck' /> " +
+		     							"<label>"+data.dics[i].studentNo+"</label> <span>"+data.dics[i].studentName+"</span></li>";		     					
+		     				}
+		     				$(".dialogForm1").find('ul').html("");
+		     				$(".dialogForm1").find('ul').append(strhtml);
+		     				var stuitemcount=0;
+		     				var checkcount=0;
+		     				$(".stuItem").each(function(){
+		     					stuitemcount++;
+		     					for(var i=0;i<stujson.length;i++){
+		     						//alert(stujson[i].studentNo+"--"+$(this).find("label").html()+"--");
+		     						if(stujson[i].studentNo==$(this).find("label").html())
+		     							{
+		     							$(this).find('.stuCheck').prop('checked', true);
+		     							checkcount++;
+		     						//	everystudent+=""+$(this).find('label').html()+",";
+		     							}
+		     					}
+		     				})
+		     				if(stuitemcount==checkcount)
+		     					{
+		     						$("#Checkbox1").prop('checked', true);
+		     					}		
+		     			}		     			
+		     		},
+		    	    error: function(XMLHttpRequest, textStatus, errorThrown) {
+//		    		 alert(XMLHttpRequest.status);
+//		    		 alert(XMLHttpRequest.readyState);
+//		    		 alert(textStatus);
+		    	    },
+		    	 });
+		    	 
+		    	var obj=$(this).prev();
+		     	//$(".dialogForm1").dialog("open");
+		    	 $(".dialogForm1").dialog({
+		    	       // autoOpen: false,
+		    	        height: 300,
+		    	        width: 700,
+		    	        background: '#FF0000',
+		    	        opacity: 0.27,
+		    	        modal: true,
+		    	        resizable: false,
+		    	        buttons: {
+		    	            "确 定": function() {
+		    	            	var stuchkcount = 0;
+		    	            	var str='';
+		    	            	//var everystudent = '';
+		    	            	$('.stuCheck').each(function(){
+		    	            		if($(this).prop('checked') == true){
+		    	            			stuchkcount++;
+		    	            			str +='{';
+		    	            		    str +='"studentNo":"'+$(this).parent().find('label').html()+'"';
+		    	            			str +=',"studentName":"'+$(this).parent().find('span').html()+'"';
+		    							str +='},';
+		    							everystudent+=""+$(this).parent().find('label').html()+",";
+		    	            		}
+		    	            		
+		    	            				    	            		
+		    	            	})	
+		    	            	$('#everystudent').val(everystudent);
+		    	            	//alert(everystudent);
+		    	            	if(str.length>0)
+		    	            	{
+		    	            		str= str.substring(0,str.length-1);
+		    	            		str='['+str+']';
+		    	            	}
+		    	            	obj.val(stuchkcount);
+		    	            	NameNoobj.val(str);
+		    	                $(this).dialog("close");
+		    	            }
+		    	        },
+		    	        close: function() {
+
+		    	        }
+		    	    });
+		    }
+    });           
+    $('.bindStuWrap .checkAll').prop('checked', false);
+    $('.bindStuWrap .checkAll').click(function() {
+        if ($(this).prop('checked')) {
+            $(this).parent().siblings().find('.stuCheck').prop('checked', true);
+        }
+        else {
+            $(this).parent().siblings().find('.stuCheck').prop('checked', false);
+        }
+    });
+    
+    //时间弹出框--------------------------------------
+	tips = $(".validateTips");
+    function updateTips(t) {
+        tips.html(t).addClass("ui-state-highlight");
+        setTimeout(function() {
+            tips.removeClass("ui-state-highlight", 1500);
+        }, 2000);
+    }
+	$('#dia').dialog({
+		autoOpen: false,
+        height: 200,
+        width: 500,
+        background: '#FF0000', // 背景色
+        opacity: 0.27,     // 透明度
+        modal: true,
+        resizable: false,
+        buttons: {
+       	 "确 定": function() {
+       		 //提交请求
+			  checkForm();
+       	 },
+       	 "取 消": function() {
+              $(this).dialog("close");
+              window.history.back();
+              //history.go(-1);
+            }
+        }
+	});	
+	//加载学生信息
+	
+    $("#addStudentInfoBtn").click(function() {allgrade()
+    	var str = '';
+		str+=' <div class="dropDownList ml10"> ';						
+		str+='  <button class="tableselect1 ui-button ui-widget ui-state-default ui-corner-all ui-button-text-icon-secondary" role="button" aria-disabled="false"><span class="ui-button-text">学生年级</span><span class="ui-button-icon-secondary ui-icon ui-icon-carat-1-s"></span></button> ';
+		str+='  <ul id="ui-id-52" class="ui-menu ui-widget ui-widget-content ui-corner-all ui-menu-icons" role="menu" tabindex="0" style="width: 160px; z-index: 995; position: absolute;"> ';
+		str+=''+allgrade()+'';
+		str+='  </ul> ';
+		str+=' <input type="hidden"  name="gradeYear" value="1" /> ';
+		str+='</div> ';
+		str+='<button id="addStudentInfoBtn" class="greenBtn" style="margin-left: 10px;">+</button> ';
+		str+='<span class="ml20">学员人数</span> ';
+		str+='<input  name="studentCount" type="text" class="tableinput3 ml10" /> ';
+		
+		str+='<button  class="greenBtn bindStuBtn" style="margin-left: 10px;">绑定学号</button>';
+		str+='<input type="hidden"  name="NameNo" value="1" />'
+		str+='<span class="ml20">入校时间</span> ';
+		str+='<input  name="schoolTime" type="text" class="tableinput2 ml10 date" onmouseup="WdatePicker()" /> ';
+		
+		if(str.length>0)
+			{
+			var Node = $('<div class="paybatch pb1 gradeclass"><span class="batchfont">所在年级</span>'+ str + '</div>');
+		    //$('#treeView0').next().prepend(Node);
+			var index=$('.payCon').children('.pb1').length-2;
+			$('.payCon').children().eq(index).after(Node);
+			var gradecount=countgrade();
+			//alert(gradecount);
+		    new $.dropDownList(gradecount-1, true, 160);
+			$(this).parent().siblings('.pb1').find('#addStudentInfoBtn').css('visibility','hidden');
+			//clickAddGrade ++;
+			}
+	});
+
+ // 动态生成控件ID
+    var clickIndex = 1;
+    	// 增加节点
+    	$('#btnAddBatch').click(  
+    			function() {
+    						var _div = $('.payCon');
+    						var _div2 = $('<div class="paybatch pb2"></div>');
+    						var _span2 = $('<span class="batchfont mt20">节点描述</span>');
+    						var _text2 = $('<input>');
+    						_text2.attr('id', "pName_" + clickIndex);
+    						_text2.attr('name', "pName_" + clickIndex);
+    						_text2.attr('type', 'text');
+    						_text2.attr('class', 'tableinput3 ml10 mt20 left');
+    						var _span7 = $('<span class="batchUnit1"></span>');
+    						var _span5 = $('<span class="batchfont1 mt20">飞行技术学院经费类型</span>');
+    						var _strDDL = '<div class="dropDownList left ml10  mt20">'
+    								+ '<button class="tableselect2">飞行技术学院经费类型</button>'
+    								+ '<ul >'
+    								+ '<li><a href="#N" val="1"><span class="ui-icon ui-icon-bullet"></span>飞行技术学院经费类型</a></li>'
+    								+ '<li><a href="#N" val="2">HPA理论</a></li>'
+    								+ '<li><a href="#N" val="3">飞行基础理论</a></li>'
+    								+ '<li><a href="#N" val="4">高性能理论培训费</a></li>'
+    								+ '<li><a href="#N" val="5">合作共建+执照理论</a></li>'
+    								+ '<li><a href="#N" val="6">合作共建费</a></li>'
+    								+ '<li><a href="#N" val="7">基础理论</a></li>'
+    								+ '<li><a href="#N" val="8">基础理论+执照理论</a></li>'
+    								+ '<li><a href="#N" val="9">招飞经费</a></li>'
+    								+ '<li><a href="#N" val="10">执照理论</a></li>'
+    								+ '</ul>'
+    								+ '<input type="hidden"  name="pType_'+ clickIndex+ '" id="pType_'+ clickIndex+ '" value="1" />'
+    						'</div>';
+    						_div2.append(_span2);
+    						_div2.append(_text2);
+    						_div2.append(_span7);
+    						_div2.append(_span5);
+    						_div2.append(_strDDL);
+
+    						var _div3 = $('<div class="paybatch"></div>');
+    						var _span3 = $('<span class="batchfont">收款进程</span>');
+    						var _text3 = $('<input>');
+    						_text3.attr('id', "pProStatus_" + clickIndex);
+    						_text3.attr('name', "pProStatus_" + clickIndex);
+    						_text3.attr('type', 'text');
+    						_text3.attr('class', 'tableinput3 ml10 left');
+    						var _span9 = $('<span class="batchUnit">'
+    								+ '<div class="dropDownList barMiddle" id="Div3">'
+    								+ '<button>月</button>'
+    								+ '<ul>'
+    								+ '<li><a href="#N" val="1"><span class="ui-icon ui-icon-bullet"></span>月</a></li>'
+    								+ '<li><a href="#N" val="2">年</a></li>'
+    								+ '</ul>'
+    								+ '<input type="hidden" name="pProStatusYM_'+clickIndex + '" id="pProStatusYM_'+ clickIndex + '" value="1" />' + '</div>'
+    								+ '</span>');
+    						var _span6 = $('<span class="batchfont1">飞行学院合作共建费收费标准</span>');
+    						var _text5 = $('<input>');
+    						_text5.attr('id', "pBuildPrice_" + clickIndex);
+    						_text5.attr('name', "pBuildPrice_" + clickIndex);
+    						_text5.attr('type', 'text');
+    						_text5.attr('class', 'tableinput3 ml10 left');
+    						var _span8 = $('<span class="batchUnit">元</span>');
+
+    						_div3.append(_span3);
+    						_div3.append(_text3);
+    						_div3.append(_span9);
+    						_div3.append(_span6);
+    						_div3.append(_text5);
+    						_div3.append(_span8);
+
+    						var _div4 = $('<div class="paybatch"></div>');
+    						var _span4 = $('<span class="batchfont">百分比</span>');
+    						var _text4 = $('<input>');
+    						_text4.attr('id', "pPercent_" + clickIndex);
+    						_text4.attr('name', "pPercent_" + clickIndex);
+    						_text4.attr('type', 'text');
+    						_text4.attr('class', 'tableinput3 ml10 left');
+    						var _span11 = $('<span class="batchUnit">%</span>');
+    						var _span7 = $('<span class="batchfont1">飞行学院参与分成培训费收费标准</span>');
+    						var _text6 = $('<input>');
+    						_text6.attr('id', "pTrainPrice_" + clickIndex);
+    						_text6.attr('name', "pTrainPrice_" + clickIndex);
+    						_text6.attr('type', 'text');
+    						_text6.attr('class', 'tableinput3 ml10 left');
+    						var _span10 = $('<span class="batchUnit">元</span>');
+
+    						_div4.append(_span4);
+    						_div4.append(_text4);
+    						_div4.append(_span11);
+    						_div4.append(_span7);
+    						_div4.append(_text6);
+    						_div4.append(_span10);
+
+    						_div.append(_div2);
+    						_div.append(_div3);
+    						_div.append(_div4);
+    						$('.payCon').append(_div);
+    						var gradecount=countgrade();
+    						var batchcount=countbatch();
+    						new $.dropDownList(batchcount*2+gradecount-2, true, 180);
+    						new $.dropDownList(batchcount*2+gradecount-1, true, 60);
+    						btnAddcount++;
+    					});
+      // 保存
+    	$('#Button2').click(function() {	
+    		//debugger;	
+    	var k=0;
+    	for(var i=0;i<btnAddcount;i++){
+    		var PName= $('#pName_'+i+'').val().trim();
+    		var PProStatus= $('#pProStatus_'+i+'').val().trim();
+    		var PPercent= $('#pPercent_'+i+'').val().trim();
+    		var PType= $('#pType_'+i+'').val().trim();
+    		var PBuildPrice= $('#pBuildPrice_'+i+'').val().trim();
+    		var PTrainPrice = $('#pTrainPrice_'+i+'').val().trim();
+    		if(PName==''){
+    			if(i==0){
+    				alert("第1个节点描述不能为空");
+    				break;
+    			}
+    		}else{
+    			if(PProStatus==""){
+    				alert("第"+(i+1)+"个收款进程为空");
+    				break;
+    			}
+    			if(PPercent==""){
+    				alert("第"+(i+1)+"个百分比为空");
+    				break;
+    			}			
+    		}
+    		if(PType=='0'){
+    			if(PBuildPrice!=""||PTrainPrice!=""){
+    				alert("第"+(i+1)+"个经费类型为空");
+    				k=1;
+    				break;
+    			}
+    		}
+    	}
+    		if(k==0){
+    			// 付款选项
+    			var paymenJson = "";
+    			// 支付节点
+    			var paymentListJson = "";
+    			//年级信息
+    			var strgGradeJson = "";
+    			var dealPrice = $('#strDealPrice').val().trim();
+    			var trainCycle = $('#strTrainCycle').val().trim();
+    			if (getPayMentInfo()) {
+    				if(getGradeInfo()){
+    					if (jqchk()) {      					
+        					if(dealPrice==''){
+        						alert('请输入成交价');
+        					}else if(trainCycle==''){
+        						alert('请输入训练周期');
+        					}
+        					else{
+        						$("#dia").dialog("open");
+        						return false;						
+        					}
+        				}else{
+        					alert("您还没有选取任何收款项目");
+        				}
+					}else{
+						alert("请至少填写一个年级的学生信息");
+					}    				
+    			}else{
+    				alert("付款百分比之和不等于百分之百");
+    				$('#pPercent_0').focus();
+    			}
+    		}								    		
+   	});	
+});
+
+
+function countgrade()
+{
+	var gradecount=0;
+	$(".paybatch").each(function() {
+		if($(this).first("span").text().indexOf("所在年级")>-1)
+			{
+			gradecount++;
+			}
+	})
+	return gradecount;
+}
+function countbatch()
+{
+	var batchcount=0;
+	$(".paybatch").each(function() {
+		if($(this).first("span").text().indexOf("节点描述")>-1)
+			{
+			batchcount++;
+			}
+	})
+	return batchcount;
+}
+//初始化年级信息
+function initGradeDiv(){
+	//alert($("#gradeInfo").val());
+	var showGradeData = eval("["+$("#gradeInfo").val()+"]");
+	
+	var gg=$('#hCInitFlg').val();	
+	if($("#gradeInfo").val()!='')//有年级信息
+	{
+	for(var i=0;i<(showGradeData.length);i++){	
+		var str = '';
+		str+=' <div class="dropDownList ml10" > ';						
+		str+='  <button class="tableselect1 ui-button ui-widget ui-state-default ui-corner-all ui-button-text-icon-secondary" role="button" aria-disabled="false"><span class="ui-button-text">学生年级</span><span class="ui-button-icon-secondary ui-icon ui-icon-carat-1-s"></span></button> ';
+		str+='  <ul id="ui-id-52" class="ui-menu ui-widget ui-widget-content ui-corner-all ui-menu-icons" role="menu" tabindex="0" style="width: 160px; z-index: 995; position: absolute;"> ';
+		str+=''+allgrade()+'';
+		str+='  </ul> ';
+		str+=' <input type="hidden" id="gradeYear_'+i+'" name="gradeYear" value="'+showGradeData[i].gradeYear+'" /> '; 
+		str+='</div> ';
+		if(gg==0 && i==0)//flag=0，且在第一行有加号
+		{
+		  
+	       str+='<button id="addStudentInfoBtn" class="greenBtn" style="margin-left: 10px;">+</button>' ;
+		}
+	    else
+		{
+	       str+='<button id="addStudentInfoBtn" class="greenBtn" style="margin-left: 10px;visibility:hidden;">+</button>'
+		}
+		str+='<span class="ml20">学员人数</span> ';
+		str+='<input id="studentCount_'+i+'" name="studentCount"  value="'+showGradeData[i].studentCount+'"  type="text" class="tableinput3 ml10" /> ';
+		str+='<button class="greenBtn bindStuBtn" style="margin-left: 10px;">绑定学号</button>';
+		str+='<input type="hidden" id="NameNo_'+i+'" name="NameNo" value=\''+JSON.stringify(showGradeData[i].studentNameNo)+'\' />'
+		str+='<span class="ml20">入校时间</span> ';
+		str+='<input id="schoolTime_'+i+'" name="schoolTime"   value="'+showGradeData[i].schoolTime+'"  type="text" class="tableinput2 ml10 date" onmouseup="WdatePicker()" /> ';
+		var Node = $('<div class="paybatch pb1 gradeclass"><span class="batchfont">所在年级</span>'+ str + '</div>');
+		var index=$('.payCon').children('.pb1').length-1;
+		//alert(index);
+		$('.payCon').children().eq(index).after(Node);
+	    //this.find('.greenBth').css('visibility','hidden');
+		//new $.dropDownList(i++, true, 160);
+		}
+
+		var gradecount=countgrade();
+	    for(var i=0;i<gradecount;i++){
+	    	new $.dropDownList(i, true, 160);
+		}
+	}
+		else//无年级信息
+		{
+			var str = '';
+			str+=' <div class="dropDownList ml10"> ';						
+			str+='  <button class="tableselect1 ui-button ui-widget ui-state-default ui-corner-all ui-button-text-icon-secondary" role="button" aria-disabled="false"><span class="ui-button-text">学生年级</span><span class="ui-button-icon-secondary ui-icon ui-icon-carat-1-s"></span></button> ';
+			str+='  <ul id="ui-id-52" class="ui-menu ui-widget ui-widget-content ui-corner-all ui-menu-icons" role="menu" tabindex="0" style="width: 160px; z-index: 995; position: absolute;"> ';
+			str+=''+allgrade()+'';
+			str+='  </ul> ';
+			str+=' <input type="hidden" id="gradeYear_0" name="gradeYear" value="1" /> '; 
+			str+='</div> ';
+		if(gg==0)//flag=0
+		{
+	       str+='<button id="addStudentInfoBtn" class="greenBtn" style="margin-left: 10px;">+</button>' ;
+		}
+	    else
+		{
+	       str+='<button id="addStudentInfoBtn" class="greenBtn" style="margin-left: 10px;visibility:hidden;">+</button>'
+		}
+		str+='<span class="ml20">学员人数</span> ';
+		str+='<input id="studentCount_0" name="studentCount"  value=""  type="text" class="tableinput3 ml10" /> ';
+		str+='<button  class="greenBtn bindStuBtn" style="margin-left: 10px;">绑定学号</button>';
+		str+='<input type="hidden" id="NameNo_0" name="NameNo" value="1" />'
+		str+='<span class="ml20">入校时间</span> ';
+		str+='<input id="schoolTime_0" name="schoolTime"   value=""  type="text" class="tableinput2 ml10 date" onmouseup="WdatePicker()" /> ';
+		var Node = $('<div class="paybatch pb1 gradeclass"><span class="batchfont">所在年级</span>'+ str + '</div>');
+		$('#treeView0').next().prepend(Node);
+	//	this.find('.greenBth').css('visibility','hidden');
+//		var index=$('.payCon').children('.pb1').length-2;
+		new $.dropDownList(0, true, 160);
+		
+		} 
+	}
+function ajaxZtree() {
+	$.ajax({
+		type : "post",
+		async : false,
+		url : "<%=request.getContextPath()%>/ajaxGetDictionary.do?parentdictionaryId=516",
+		dataType : "json",
+		success : function(data, statusCode) {
+			if (data == null) {
+			alert("data is null");
+			} else {
+				// data = eval(data);
+				alert(data);
+				if (data != null && data.length > 0) {
+					initTree(data);
+				}
+			}
+		},
+		error : function(XMLHttpRequest, textStatus, errorThrown) {
+			      alert(errorThrown);
+				}
+	});
+}
+function contains(arr, obj) {
+	var i = arr.length;
+	while (i--) {
+		if (arr[i] === obj) {
+			// 有重复
+			return true;
+		}
+	}
+	// 没有重复
+	return false;
+}
+//四级经费树
+function initTree(data) {
+	//debugger;
+	var strHtml = "";
+	var showPaymentInfo = eval("["+$("#paymentInfo").val()+"]");
+	
+	if (data.length > 0) {
+		for (var i = 1; i < data.length; i++) {
+			if (data[i].id == data[i].TopId) {
+				var did = "D" + data[i].id;
+				strHtml = '<li style="display: list-item;" class="folderNode rootNode"><span class="ui-icon ui-icon-circlesmall-minus">+</span><input style="display: none;" name="tree" value="'
+						+ data[i].id
+						+ '" type="checkbox"><b class="check boxUnhecked"></b><span>'
+						+ data[i].name + '</span></li>';
+				strHtml += '<ul style="display: block;" id=' + did + '></ul>';
+				$("#treeView0").append(strHtml);
+			} else if (data[i].level == 2) {
+				var did = "D" + data[i].id;
+				var pdid = "D" + data[i].ParentId;
+				strHtml = '<li style="display: list-item;" class="folderNode"><span class="ui-icon ui-icon-circlesmall-minus">+</span><input style="display: none;" name="tree" value="'
+						+ data[i].id
+						+ '" type="checkbox"><b class="check boxUnhecked"></b><span>'
+						+ data[i].name + '</span></li>';
+				strHtml += '<ul style="display: block;" id=' + did + '></ul>';
+				$("#" + pdid).append(strHtml);
+			} else if (data[i].level == 3) {
+				var did = "D" + data[i].id;
+				var pdid = "D" + data[i].ParentId;
+				//var showPaymentInfo = eval("["+$("#paymentInfo").val()+"]");
+				var bstr=' boxUnhecked';
+				var cstr='';
+				var vstr =' value="" type="text"><label class="ml10">元/人</label></li>';	
+					if($("#paymentInfo").val()!=''){
+						for(var k=0;k<showPaymentInfo.length;k++){	
+							if(data[i].id==showPaymentInfo[k].name){
+								vstr = ' value="'+showPaymentInfo[k].value+'" type="text"><label class="ml10">元/人</label></li>';
+								bstr = ' boxChecked';
+								cstr = ' checked="checked"';
+							}
+						}													
+					}
+				strHtml = '<li style="display: list-item;" class="folderNode"><span class="ui-icon ui-icon-circlesmall-minus">+</span>'
+						+'<input style="display: none;" name="tree" value="'+ data[i].id
+						+ '" type="checkbox"'+ cstr +'><b class="check '+ bstr +'"></b><span>'+ data[i].name+ '</span>'
+						+'<input class="ddlJF" id ="'+ data[i].id+'"' + vstr;
+				strHtml += '<ul style="display: block;" id=' + did + '></ul>';
+				$("#" + pdid).append(strHtml);
+			}else if(data[i].level == 4){
+				var pdid = "D" + data[i].ParentId;			
+				var bstr=' boxUnhecked';
+				var cstr='';
+				var vstr =' value="" type="text"><label class="ml10">时</label></li>';	
+				if($("#paymentInfo").val()!=''){
+					for(var j=0;j<showPaymentInfo.length;j++){	
+						if(data[i].id==showPaymentInfo[j].name){
+							//alert(data[i].id+"---"+showPaymentInfo[j].name+"---"+showPaymentInfo[j].value);
+							vstr = ' value="'+showPaymentInfo[j].value+'" type="text"><label class="ml10">时</label></li>';
+							bstr = ' boxChecked';
+							cstr = ' checked="checked"';
+						}
+					}
+				}
+				strHtml = '<li style="display: list-item;" class="treeNode fourLevel"><input style="display: none;" name="tree" value="'+ data[i].id
+						+ '" type="checkbox"'+ cstr +'><b class="check '+ bstr +'"></b><span>'+ data[i].name+ '</span>'
+						+'<input class="ddlJF" id ="'+ data[i].id+'" ' + vstr;
+				$("#" + pdid).append(strHtml);
+			}
+		}
+		
+	}
+	//alert($("#treeView0").html());
+	return strHtml;
+}
+
+
+
+
+/**
+ * 节点描述部分
+ */
+function checkForm() {
+	setHiddenValue();
+}
+
+function setHiddenValue() {
+	// 合同主键;
+	// 年级学生信息 json
+	 //alert($("#payMentData").val());
+	// 付款详细信息 json
+	$("#paymentInfo").val($.trim(paymenJson));
+	// 成交价
+	$("#dealPrice").val($.trim($("#strDealPrice").val()));
+	// 训练周期
+	$("#trainCycle").val($.trim($("#strTrainCycle").val()));
+	// 付款表信息 json
+	$("#payMentData").val($.trim(paymentListJson));
+	//alert($("#payMentData").val());
+	//年级信息
+	$("#gradeInfo").val($.trim(strgGradeJson));
+	$("#paymentContract").submit();
+}
+
+//初始化加载
+function initPaymentDiv() {
+	//alert("["+$("#payMentData").val()+"]");
+	var showCPnameInfo = eval("["+$("#payMentData").val()+"]");  
+	var gg=$("#hCInitFlg").val();
+	btnAddcount=showCPnameInfo.length;
+	if(btnAddcount==0){
+		btnAddcount=1;
+	}
+	if($("#payMentData").val()!=''){	
+		for(i=0;i<showCPnameInfo.length;i++){
+			var str='';
+			str+='<div class="paybatch pb2"  >';
+			str+='<span class="batchfont mt20">节点描述</span>';
+			str+='<input type="text" class="tableinput3 ml10 mt20 left" id="pName_'+i+'" name="pName_'+i+'" value="'+showCPnameInfo[i].PName+'" >';
+			str+='<span class="batchUnit1">';
+			if(gg==0 && i==0){//gg=0，
+				str+='<button id="btnAddBatch" class="greenBtn"  style="margin-left: 10px;">+</button></span> ';
+			}else{
+				str+='<button id="btnAddBatch" class="greenBtn" style="margin-left: 10px;visibility:hidden;">+</button></span>';
+			}
+			str+='<span class="batchfont1 mt20">飞行技术学院经费类型</span>';
+			str+='<div class="dropDownList left ml10 mt20">'
+				+'<button class="tableselect2" >飞行技术学院经费类型</button>'
+			    +'<ul >'
+				+'<li><a href="#N" val="0"><span class="ui-icon ui-icon-bullet"></span>飞行技术学院经费类型</a></li>'
+				+'<li><a href="#N" val="1">HPA理论</a></li><li><a href="#N" val="2">飞行基础理论</a></li>'
+			    +'<li><a href="#N" val="3">高性能理论培训费</a></li><li><a href="#N" val="4">合作共建+执照理论</a></li>'
+			    +'<li><a href="#N" val="5">合作共建费</a></li><li><a href="#N" val="6">基础理论</a></li>'
+			    +'<li><a href="#N" val="7">基础理论+执照理论</a></li><li><a href="#N" val="8">招飞经费</a></li>'
+			    +'<li><a href="#N" val="9">执照理论</a></li>'
+			    +'</ul>';
+			str+='<input type="hidden" id="pType_'+i+'" name="pType_'+i+'" value="'+showCPnameInfo[i].PFundBudgetType+'" />';
+			str+='</div></div>';
+			
+			str+='<div class="paybatch"><span class="batchfont">收款进程</span>'; 
+			str+='<input type="text" class="tableinput3 ml10 left" name="pProStatus_'+i+'" id="pProStatus_'+i+'" value="'+showCPnameInfo[i].PProcessState+'">';
+			str+='<span class="batchUnit"><div class="dropDownList barMiddle" id="Div3">';
+			str+='<button>月</button>'
+				+'<ul>'
+				+'<li><a href="#N" val="1"><span class="ui-icon ui-icon-bullet"></span>月</a></li>'
+				+'<li><a href="#N" val="2">年</a></li>'
+				+'</ul>';
+			str+='<input type="hidden" name="pProStatusYM_'+i+'" id="pProStatusYM_'+i+'" value="'+showCPnameInfo[i].PProStatusYM+'" />';
+			str+='</div></span>'; 
+			str+='<span  class="batchfont1">飞行学院合作共建费收费标准</span> ';
+			str+='<input class="tableinput3 ml10 left" type="text"  name="pBuildPrice_'+i+'" id="pBuildPrice_'+i+'" value="'+showCPnameInfo[i].PBuildFeeStandardPrice+'"> ';
+			str+='<span  class="batchUnit">元</span>';
+			str+='</div>';
+			
+			str+='<div class="paybatch" ><span  class="batchfont">百分比</span>';
+			str+='<input class="tableinput3 ml10 left" type="text" name="pPercent_'+i+'" id="pPercent_'+i+'" value="'+showCPnameInfo[i].PPaymentPercent+'" > ';
+			str+='<span  class="batchUnit">%</span> <span  class="batchfont1">飞行学院参与分成培训费收费标准</span>';
+			str+='<input class="tableinput3 ml10 left" type="text" name="pTrainPrice_'+i+'" id="pTrainPrice_'+i+'"  value="'+showCPnameInfo[i].PTrainFeeStandardPrice+'" >'; 
+			str+='<span  class="batchUnit">元</span>';
+			str+='</div></div>';
+			var  strNode = str;
+				$('#payCon').append(strNode); 	
+				//var gradecount=countgrade();
+				var batchcount=countbatch();
+				new $.dropDownList(batchcount*2-2, true, 180);
+				new $.dropDownList(batchcount*2-1, true, 60);			
+		}
+	}  else{
+			var str='';
+			str+='<div class="paybatch pb2" >';
+			str+='<span class="batchfont mt20">节点描述</span>';
+			str+='<input type="text" class="tableinput3 ml10 mt20 left" id="pName_0" name="pName_0"  >';
+			str+='<span class="batchUnit1">';
+			if(gg==0){//gg=0，无节点信息 显示+号
+				str+='<button id="btnAddBatch" class="greenBtn"  style="margin-left: 10px;">+</button></span> ';
+			}else{
+				str+='<button id="btnAddBatch" class="greenBtn" style="margin-left: 10px;visibility:hidden;">+</button></span>';
+			}
+			str+='<span class="batchfont1 mt20">飞行技术学院经费类型</span>';
+			str+='<div class="dropDownList left ml10 mt20">'
+				+'<button class="tableselect2"></button>'
+			    +'<ul >'
+				+'<li><a href="#N" val="0"><span class="ui-icon ui-icon-bullet"></span>飞行技术学院经费类型</a></li>'
+				+'<li><a href="#N" val="1">HPA理论</a></li><li><a href="#N" val="2">飞行基础理论</a></li>'
+			    +'<li><a href="#N" val="3">高性能理论培训费</a></li><li><a href="#N" val="4">合作共建+执照理论</a></li>'
+			    +'<li><a href="#N" val="5">合作共建费</a></li><li><a href="#N" val="6">基础理论</a></li>'
+			    +'<li><a href="#N" val="7">基础理论+执照理论</a></li><li><a href="#N" val="8">招飞经费</a></li>'
+			    +'<li><a href="#N" val="9">执照理论</a></li>'
+			    +'</ul>';
+			str+='<input type="hidden" id="pType_0" name="pType_0" value="1" />';
+			str+='</div></div>';
+			
+			str+='<div class="paybatch" id="Div_0"><span class="batchfont">收款进程</span>'; 
+			str+='<input type="text" class="tableinput3 ml10 left" name="pProStatus_0" id="pProStatus_0" >';
+			str+='<span class="batchUnit"><div class="dropDownList barMiddle" id="Div3">';
+			str+='<button>月</button>'
+				+'<ul>'
+			    +'<li><a href="#N" val="1"><span class="ui-icon ui-icon-bullet"></span>月</a></li>'
+			    +'<li><a href="#N" val="2">年</a></li>'
+			    +'</ul>';
+			str+='<input type="hidden" name="pProStatusYM_0" id="pProStatusYM_0" value="1" />';
+			str+='</div></span>'; 
+			str+='<span  class="batchfont1">飞行学院合作共建费收费标准</span> ';
+			str+='<input class="tableinput3 ml10 left" type="text"  name="pBuildPrice_0" id="pBuildPrice_0" > ';
+			str+='<span  class="batchUnit">元</span>';
+			str+='</div>';
+			
+			str+='<div class="paybatch" id="Div_0"><span  class="batchfont">百分比</span>';
+			str+='<input class="tableinput3 ml10 left" type="text" name="pPercent_0" id="pPercent_0"> ';
+			str+='<span  class="batchUnit">%</span> <span  class="batchfont1">飞行学院参与分成培训费收费标准</span>';
+			str+='<input class="tableinput3 ml10 left" type="text" name="pTrainPrice_0" id="pTrainPrice_0" >'; 
+			str+='<span  class="batchUnit">元</span>';
+			str+='</div></div>';
+			var  strNode = str;
+				$('#payCon').append(strNode);
+			
+			new $.dropDownList(0, true, 180);
+			new $.dropDownList(1, true, 60);
+		}
+	 
+
+	}
+//保存节点信息json格式	
+function getPayMentInfo() {
+	//debugger;
+	var payMentInfo = [];
+	var precentCheck = 0;
+	for (var i = 0; i < btnAddcount; i++) {
+		var tempStr = "";
+		if ($("#pName_" + i).length > 0) {
+			tempStr += '{';
+			tempStr += '"PName":"' + $("#pName_" + i).val() + '"';
+			tempStr += ',"PFundBudgetType":"' + $("#pType_" + i).val() + '"';
+			tempStr += ',"PProcessState":"'+ $("#pProStatus_" + i).val() + '"';
+			if ($("#pProStatusYM_" + i).val() == "2") {
+				// 年为单位	
+				tempStr +=',"PProStatusYM":"'+2+'"';
+			} else {
+				// 月为单位
+				tempStr +=',"PProStatusYM":"'+1+'"';
+			}
+			tempStr += ',"PPaymentPercent":"' + $("#pPercent_" + i).val() + '"';
+			tempStr += ',"PBuildFeeStandardPrice":"'
+					+ $("#pBuildPrice_" + i).val() + '"';
+			tempStr += ',"PTrainFeeStandardPrice":"'
+					+ $("#pTrainPrice_" + i).val() + '"';
+			tempStr += '}';
+			precentCheck += Number($("#pPercent_" + i).val());
+			payMentInfo.push(tempStr);
+		}
+	}
+	if (precentCheck != 100) {
+		return false;
+	} else {
+		paymentListJson = payMentInfo;
+		return true;
+	}
+}
+function jqchk() { // jquery获取复选框值
+	var chk_value = [];
+	$('input[name="tree"]:checked').each(
+			function() {
+				if ($("#" + $(this).val() + "").length > 0) {
+					chk_value.push('{"name":"' + $(this).val() + '","value":"'+ $("#" + $(this).val() + "").val() + '"}');
+				}
+			});
+	if (chk_value.length == 0) {
+		return false;
+	} else {
+		paymenJson = chk_value;
+	}
+	return true;
+}
+//保存年级信息
+function getGradeInfo(){
+	var gradeInfo =[];
+	$(".gradeclass").each(function(){
+		//alert($(this).html());
+		var tempStr = "";
+		tempStr += '{';
+		tempStr += '"gradeYear":"'+$(this).find(":input[name='gradeYear']").val()+'"';
+		tempStr += ',"studentCount":"'+$(this).find(":input[name='studentCount']").val()+'"';
+		var stuNameNo = JSON.stringify($(this).find(":input[name='NameNo']").val());
+		if(stuNameNo.length>0){
+			stuNameNo=stuNameNo.substring(1,stuNameNo.length-1);
+		}
+	    tempStr += ',"studentNameNo":'+stuNameNo+'';				
+		tempStr += ',"schoolTime":"'+$(this).find(":input[name='schoolTime']").val()+'"';
+		tempStr += '}';
+		tempStr=RptReplace(tempStr,'\\');
+		//alert(tempStr);
+		gradeInfo.push(tempStr);
+
+	})
+	if($.trim($("#gradeYear_0").val())=="1"||$.trim($("#studentCount_0").val())==""||$.trim($("#schoolTime_0").val())==""){
+		return false;
+	}else{
+		strgGradeJson = gradeInfo;
+		return true;
+	}
+}
+//递归替换字符
+function RptReplace(str,rs){
+	if(str.indexOf(rs)>-1)
+		{
+		str=str.replace(rs,'');
+		return RptReplace(str,rs);
+		}
+	else
+		{
+		return str;
+		}
+}
+function allgrade(){
+	var myDate= new Date(); 
+	var startYear=myDate.getFullYear()-9;//起始年份 
+	var endYear=myDate.getFullYear()+10;//结束年份 
+	var html=' <li class="ui-menu-item" role="presentation"><a href="#N" val="1" class="inline ui-corner-all" id="ui-id-53" tabindex="-1" role="menuitem"><span class="ui-icon ui-icon-bullet" style="margin-left: -1.3em;"></span>学生年级</a></li> ';
+	for (var i=startYear;i<=startYear+9;i++) 
+	{ 
+		var j=i-startYear;
+			if(j==0)
+				{
+				html+=' <li class="ui-menu-item" role="presentation"><a href="#N" val='+i+' class="inline ui-corner-all" id="ui-id-54" tabindex="-1" role="menuitem">'+i+'</a><a href="#N" val='+(i+10)+' class="inline ui-corner-all" id="ui-id-55" tabindex="-1" role="menuitem">'+(i+10)+'</a></li>';				
+				}
+			else
+				{
+				html+=' <li class="ui-menu-item" role="presentation"><a href="#N" val='+i+' class="inline ui-corner-all" id="ui-id-54" tabindex="-1" role="menuitem">'+i+'</a><a href="#N" val='+(i+10)+' class="inline ui-corner-all" id="ui-id-55" tabindex="-1" role="menuitem">'+(i+10)+'</a></li>';				
+				}
+	} 
+	return html;
+}
+
+

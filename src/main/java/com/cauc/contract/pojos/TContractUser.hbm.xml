@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<!-- Generated 2016-8-2 9:00:47 by Hibernate Tools 3.6.0.Final -->
+<hibernate-mapping>
+    <class name="com.cauc.contract.pojos.TContractUser" table="t_contract_user" schema="dbo" catalog="trainingRecord">
+        <id name="VId" type="int">
+            <column name="V_ID" />
+            <generator class="native" />
+        </id>
+        <property name="VNo" type="string">
+            <column name="V_NO" length="50" />
+        </property>
+        <property name="VName" type="string">
+            <column name="V_NAME" length="50" />
+        </property>
+        <property name="VRole" type="string">
+            <column name="V_ROLE" length="50" />
+        </property>
+        <property name="VDelFlg" type="string">
+            <column name="V_DEL_FLG" length="1" not-null="true" />
+        </property>
+    </class>
+</hibernate-mapping>

@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE struts PUBLIC
+    "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN"
+    "http://struts.apache.org/dtds/struts-2.0.dtd">
+<struts>
+	<package name="ajax_plane" extends="ErsDefault" namespace="/system">
+	
+		<action name="readPlaneTimeByBeginTimeAndEndTime" class="com.cauc.training.ui.core.PlaneManagerAction"
+		 method="readPlaneTimeByBeginTimeAndEndTime">
+			<result name="success" type="json">
+			<param name="root">viewOrg</param>
+			</result>
+		</action>
+		<action name="showPlaneCheckFormList" class="com.cauc.training.ui.core.PlaneManagerAction" method="readPlaneCheckFormList">
+			<result name="success" type="json">
+			<param name="root">checkFormList</param>
+			</result>
+		</action>
+		<action name="showPlaneCheckList" class="com.cauc.training.ui.core.PlaneManagerAction" method="readPlaneCheckListById">
+			<result name="success" type="json">
+			<param name="root">viewPlaneCheckList</param>
+			</result>
+		</action>
+		<action name="showPlaneRepairList" class="com.cauc.training.ui.core.PlaneManagerAction" method="readPlaneRepairListById">
+			<result name="success" type="json">
+			<param name="root">viewRepairRecordList</param>
+			</result>
+		</action>
+		<action name="readPlaneformById" class="com.cauc.training.ui.core.PlaneManagerAction" method="readPlaneformById">
+			<result name="success" type="json">
+			<param name="root">viewPlaneform</param>
+			</result>
+		</action>
+		<action name="showPlaneBaseInfoById" class="com.cauc.training.ui.core.PlaneManagerAction" method="readPlaneBaseInfoById">
+			<result name="success" type="json">
+			<param name="root">viewPlaneinfo</param>
+			</result>
+		</action>
+	</package>
+	<package name="plane_management" extends="ErsDefault" namespace="/system">
+	
+		<action name="open_planeInfoList" class="com.cauc.training.ui.core.PlaneManagerAction"	method="readPlaneInfoList">
+			<result name="success">/WEB-INF/planeInfo/planeInfoList.jsp</result>
+		</action>
+		<action name="createPlaneform" class="com.cauc.training.ui.core.PlaneManagerAction" method="createPlaneform">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_planeInfoList</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<action name="updateSetPlaneCheckForm" class="com.cauc.training.ui.core.PlaneManagerAction" method="updateSetPlaneCheckForm">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_planeInfoList</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<action name="deleteSetPlaneCheckForm" class="com.cauc.training.ui.core.PlaneManagerAction" method="deleteSetPlaneCheckForm">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_planeInfoList</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<action name="saveSetPlaneCheckForm" class="com.cauc.training.ui.core.PlaneManagerAction" method="saveSetPlaneCheckForm">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_planeInfoList</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 更新-->
+		<action name="updatePlaneform" class="com.cauc.training.ui.core.PlaneManagerAction" method="updatePlaneform">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_planeInfoList</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 删除-->
+		<action name="deletePlaneform" class="com.cauc.training.ui.core.PlaneManagerAction" method="deletePlaneform">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_planeInfoList</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		
+		<!-- 飞机基础信息管理 -->
+		
+		<action name="open_planeBaseInfoList" class="com.cauc.training.ui.core.PlaneManagerAction"	method="readPlaneBaseInfoList">
+			<result name="success">/WEB-INF/planeInfo/planeBaseInfoList.jsp</result>
+		</action>
+		<!-- 飞机调换 -->
+		<action name="open_planeChangeList" class="com.cauc.training.ui.core.PlaneManagerAction" method="readPlaneBaseInfoList">
+			<result name="success">/WEB-INF/planeInfo/planeChangeList.jsp</result>
+		</action>
+		<action name="createPlaneBaseInfo" class="com.cauc.training.ui.core.PlaneManagerAction" method="createPlaneBaseInfo">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_planeBaseInfoList</param>
+				<param name="statusMsg">${statusMsg}</param>
+				<param name="deviceType">${deviceType}</param>
+			</result>
+		</action>
+		<!-- 更新-->
+		<action name="updatePlaneBaseInfo" class="com.cauc.training.ui.core.PlaneManagerAction" method="updatePlaneBaseInfo">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_planeBaseInfoList</param>
+				<param name="statusMsg">${statusMsg}</param>
+				<param name="deviceType">${deviceType}</param>
+			</result>
+		</action>
+		<!-- 删除-->
+		<action name="deletePlaneBaseInfo" class="com.cauc.training.ui.core.PlaneManagerAction" method="deletePlaneBaseInfo">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_planeBaseInfoList</param>
+				<param name="statusMsg">${statusMsg}</param>
+				<param name="deviceType">${deviceType}</param>
+			</result>
+		</action>
+		<!-- 调换基地-->
+		<action name="open_planeChangeStatus" class="com.cauc.training.ui.core.PlaneManagerAction" method="readPlaneBaseInfoList">
+			<result name="success">/WEB-INF/planeInfo/planeChangeStatus.jsp</result>
+		</action>
+		<action name="changePlaneBase" class="com.cauc.training.ui.core.PlaneManagerAction" method="changePlaneBase">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_planeChangeList</param>
+				<param name="statusMsg">${statusMsg}</param>
+				<param name="deviceType">${deviceType}</param>
+			</result>
+		</action>
+		<action name="changePlaneStatus" class="com.cauc.training.ui.core.PlaneManagerAction" method="changePlaneStatus">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_planeChangeStatus</param>
+				<param name="statusMsg">${statusMsg}</param>
+				<param name="deviceType">${deviceType}</param>
+			</result>
+		</action>
+		<!-- 飞机维修 -->
+		<action name="open_planeRepairRecord" class="com.cauc.training.ui.core.PlaneManagerAction" method="readPlaneRepairInfoList">
+			<result name="success">/WEB-INF/planeInfo/planeRepairRecord.jsp</result>
+		</action>
+		<action name="createplaneRepairRecord" class="com.cauc.training.ui.core.PlaneManagerAction" method="createplaneRepairRecord">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_planeRepairRecord</param>
+				<param name="statusMsg">${statusMsg}</param>
+				<param name="deviceType">${deviceType}</param>
+			</result>
+		</action>
+		<action name="saveRepairReault" class="com.cauc.training.ui.core.PlaneManagerAction" method="createRepairReault">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_planecheck</param>
+				<param name="statusMsg">${statusMsg}</param>
+				<param name="deviceType">${deviceType}</param>
+			</result>
+		</action>
+		<!-- 机务放行 -->
+		<action name="open_maintenanceRelease" class="com.cauc.training.ui.core.PlaneManagerAction" method="readUsedPlaneInfoList">
+			<result name="success">/WEB-INF/planeInfo/maintenanceRelease.jsp</result>
+		</action>
+		<!-- 转场机务放行 -->
+		<action name="open_zhuanchangmaintenanceRelease" class="com.cauc.training.ui.core.PlaneManagerAction" method="readUsedPlaneInfoList">
+			<result name="success">/WEB-INF/planeInfo/maintenanceRelease.jsp</result>
+		</action>
+		<!-- 保存机务放行 -->
+		<action name="saveMaintenanceRelease" class="com.cauc.training.ui.core.PlaneManagerAction" method="saveMaintenanceRelease">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_maintenanceRelease</param>
+				<param name="statusMsg">${statusMsg}</param>
+				<param name="deviceType">${deviceType}</param>
+			</result>
+		</action>
+		<!-- 签派放行 -->
+		<action name="open_planeDispatch" class="com.cauc.training.ui.core.PlaneManagerAction" method="readPlaneDispatchInfoList">
+			<result name="success">/WEB-INF/planeInfo/planeDispatch.jsp</result>
+		</action>
+		<!-- 转场签派放行 -->
+		<action name="open_zhuanchangplaneDispatch" class="com.cauc.training.ui.core.PlaneManagerAction" method="readPlaneDispatchInfoList">
+			<result name="success">/WEB-INF/planeInfo/planeDispatch.jsp</result>
+		</action>
+		<!-- 保存签派放行 -->
+		<action name="savePlaneDispatch" class="com.cauc.training.ui.core.PlaneManagerAction" method="savePlaneDispatch">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_planeDispatch</param>
+				<param name="statusMsg">${statusMsg}</param>
+				<param name="deviceType">${deviceType}</param>
+			</result>
+		</action>
+		<!-- 签派回收 -->
+		<action name="open_planeRecycle" class="com.cauc.training.ui.core.PlaneManagerAction" method="readPlaneRecycleInfoList">
+			<result name="success">/WEB-INF/planeInfo/planeRecycle.jsp</result>
+		</action>
+		<!-- 转场派回收 -->
+		<action name="open_zhuanchangplaneRecycle" class="com.cauc.training.ui.core.PlaneManagerAction" method="readPlaneRecycleInfoList">
+			<result name="success">/WEB-INF/planeInfo/planeRecycle.jsp</result>
+		</action>
+		<!-- 保存签派回收 -->
+		<action name="savePlaneRecycle" class="com.cauc.training.ui.core.PlaneManagerAction" method="savePlaneRecycle">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_planeRecycle</param>
+				<param name="statusMsg">${statusMsg}</param>
+				<param name="deviceType">${deviceType}</param>
+			</result>
+		</action>
+		<!-- 机务回收 -->
+		<action name="open_maintenanceRecycle" class="com.cauc.training.ui.core.PlaneManagerAction" method="readMaintenanceRecycleInfoList">
+			<result name="success">/WEB-INF/planeInfo/maintenanceRecycle.jsp</result>
+		</action>
+		<!-- 异常回收 -->
+		<action name="open_bugmaintenanceRecycle" class="com.cauc.training.ui.core.PlaneManagerAction" method="readBugMaintenanceRecycleInfoList">
+			<result name="success">/WEB-INF/planeInfo/bugmaintenanceRecycle.jsp</result>
+		</action>
+		<!-- 转场机务回收 -->
+		<action name="open_zhuanchangmaintenanceRecycle" class="com.cauc.training.ui.core.PlaneManagerAction" 
+			method="readMaintenanceRecycleInfoList">
+			<result name="success">/WEB-INF/planeInfo/maintenanceRecycle.jsp</result>
+		</action>
+		<!-- 保存机务回收 -->
+		<action name="saveMaintenanceRecycle" class="com.cauc.training.ui.core.PlaneManagerAction" method="saveMaintenanceRecycle">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_maintenanceRecycle</param>
+				<param name="statusMsg">${statusMsg}</param>
+				<param name="deviceType">${deviceType}</param>
+			</result>
+		</action>
+		<!-- 保存机务异常回收 -->
+		<action name="saveBugMaintenanceRecycle" class="com.cauc.training.ui.core.PlaneManagerAction" method="saveBugMaintenanceRecycle">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_bugmaintenanceRecycle</param>
+				<param name="statusMsg">${statusMsg}</param>
+				<param name="deviceType">${deviceType}</param>
+			</result>
+		</action>
+		<!--  回收直接签派教员 -->
+		<action name="savePlaneRecycleToTeacher" class="com.cauc.training.ui.core.PlaneManagerAction" method="savePlaneRecycleToTeacher">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_planeRecycle</param>
+				<param name="statusMsg">${statusMsg}</param>
+				<param name="deviceType">${deviceType}</param>
+			</result>
+		</action>
+		<!-- 飞机定检 -->
+		<action name="open_planecheck" class="com.cauc.training.ui.core.PlaneManagerAction" method="readPlaneCheckInfoList">
+			<result name="success">/WEB-INF/planeInfo/planeCheck.jsp</result>
+		</action>
+		<!-- 保存定检信息 -->
+		<action name="savePlaneCheck" class="com.cauc.training.ui.core.PlaneManagerAction" method="savePlaneCheck">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_planecheck</param>
+				<param name="statusMsg">${statusMsg}</param>
+				<param name="deviceType">${deviceType}</param>
+			</result>
+		</action>
+	</package>
+</struts> 

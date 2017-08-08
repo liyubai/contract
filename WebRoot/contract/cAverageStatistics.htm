@@ -1,0 +1,168 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>平均统计</title>
+    <link href="themes/cupertino/jquery.ui.all.css" rel="stylesheet" type="text/css" />
+    <link href="themes/cupertino/selfStyle.css" rel="stylesheet" type="text/css" />
+    <script src="scripts/jquery.min.js"></script>
+    <script src="scripts/jquery-ui.min.js"></script>
+    <script src="scripts/ui/jquery.ui.position.min.js"></script>
+    <script src="scripts/ui/jquery.ui.core.min.js"></script>
+    <script src="scripts/ui/jquery.ui.widget.min.js"></script>
+    <script src="scripts/ui/jquery.ui.button.min.js"></script>
+    <script src="scripts/ui/jquery.ui.tabs.min.js"></script>
+    <script src="scripts/ui/jquery.ui.dialog.min.js"></script>
+    <script src="scripts/ui/jquery.ui.menu.min.js"></script>
+    <script src="scripts/function.min.js"></script>
+    <!-- 此js务必放在所有页面自带的js后面加载 -->
+    <script src="scripts/base.min.js"></script>
+</head>
+<body>
+<div id="indexHead">
+  <div class="headercontent">
+      <img src="themes/cupertino/images/logo.png" />
+      <span class="sysNameC">中国民航大学飞行培训合同管理系统</span>
+      <div class="sysNameE">Civil aviation university of china Contract management system </div>
+      <div class="logout">
+          <span class="today">2016-6-6</span>
+          <span class="wel">欢迎</span>
+          <a href="">张雪</a>
+          <span class="sep"></span>
+          <a href="">退出</a>
+      </div>
+  </div>
+</div>
+<div id="leftPartA">
+    <ul class="itemList">
+	    <li class="active"><a style="display:block;" href="cMain.htm" title="主页">主页</a></li>
+	    <li><a href="cContractList.htm" title="合同管理">合同管理</a></li>
+	    <li><a href="cStudentList.htm" title="学生管理">学生管理</a></li>
+	    <li><a href="cPaylist.htm" title="付款管理">付款管理</a></li>
+	    <li><a href="cClearingList.htm" title="结算管理">结算管理</a></li>
+    </ul>
+    <ul class="foldList">
+	    <li title="统计">统计</li>
+	    <ul class="itemList">
+	        <li><a href="cPayStatistics.htm">付款统计</a></li>
+	        <li><a href="cCollectStatistics.htm">汇总统计</a></li>
+	        <li><a href="cAverageStatistics.htm">平均统计</a></li>
+	    </ul>
+	</ul>
+	<ul class="foldList">
+        <li title="用户管理">用户管理</li>
+        <ul class="itemList">
+	        <li><a href="cUserList.htm">用户列表</a></li>
+	        <li><a href="cRoleList.htm">角色列表</a></li>
+	    </ul>
+    </ul>
+	<ul class="itemList">
+	    <li><a href="cDataDictionary.htm" title="数据字典">数据字典</a></li>
+	</ul>
+</div>
+<div id="rightPartA" style="overflow-x:hidden;">
+<div>   
+    <div class="Panel ui-corner-all-0">
+    <div class="panelContent clear">
+        <table class="panelTable" border="0" cellspacing="0" cellpadding="3">
+            <thead>
+	          <tr class="trSpliter">
+				<th width="180"></th>
+				<th width="180"></th>
+				<th width="180"></th>
+				<th width="180"></th>
+				<th width="180"></th>
+				<th width="180"></th>
+				<th width="180"></th>
+			  </tr>
+			  <tr>
+				<th class="thSortableGray">合同号</th>
+				<th class="thSortableGray">人数</th>
+				<th class="thSortableGray">标的额(元)</th>
+				<th class="thSortableGray">飞行训练报价(人/元)</th>
+				<th class="thSortableGray">合作共建(元)</th>
+				<th class="thSortableGray">理论培训(元)</th>
+				<th class="thSortableGray">训练费余额(元)</th>
+			  </tr>
+			</thead>
+			<tbody>
+			  <tr>
+				<td>CAUC2011-G01</td>
+				<td>26</td>
+				<td>18070000</td>
+				<td>732440</td>
+				<td>5000</td>
+				<td>10000</td>
+				<td>680000</td>
+			  </tr>
+			  <tr>
+				<td>CAUC2012-G01</td>
+				<td>18</td>
+				<td>12708000</td>
+				<td>732440</td>
+				<td>5000</td>
+				<td>10000</td>
+				<td>691000</td>
+			  </tr>
+			  <tr>
+				<td>CAUC2012-G01</td>
+				<td>18</td>
+				<td>12708000</td>
+				<td>732440</td>
+				<td>5000</td>
+				<td>10000</td>
+				<td>680000</td>
+			  </tr>
+			  <tr>
+				<td>CAUC2012-G03</td>
+				<td>8</td>
+				<td>5672000</td>
+				<td>732440</td>
+				<td>5000</td>
+				<td>10000</td>
+				<td>694000</td>
+			  </tr>
+			  <tr>
+				<td>CAUC2012-G04</td>
+				<td>32</td>
+				<td>22688000</td>
+				<td>715940</td>
+				<td>5000</td>
+				<td>10000</td>
+				<td>694000</td>
+			  </tr>
+			  <tr>
+				<td>CAUC2012-G05</td>
+				<td>19</td>
+				<td>13205000</td>
+				<td>715940</td>
+				<td>5000</td>
+				<td>10000</td>
+				<td>680000</td>
+			  </tr>
+			  <tr style="color:Red;">
+				<td colspan="7">
+				平均训练费余额：686500元
+				</td>
+			  </tr>
+			</tbody>
+        </table>
+        <table width="98%" border="0" align="center" cellpadding="0" cellspacing="0">
+  <tr>
+    <td height="30" align="right" class="link11">
+<a href="javascript:firstPage();" class="blue"><span class="STYLE2">首页</span></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+	<a href="javascript:prePage();" class="blue"><span class="STYLE2">上一页</span></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+	<a href="javascript:nextPage();" class="blue"><span class="STYLE2">下一页</span></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+	<a href="javascript:lastPage();" class="blue"><span class="STYLE2">尾页</span></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+	<input type="button"  value="跳转到" class="aLinkCommonBtn" onClick="jumpPage();">第<input type="text" name="page.currentPageNo" size="2" value="1" id="page.currentPageNo" style="height:24px; width:20px;border:1px solid #BBB;
+border-radius:2px" onKeyPress="enterPress(this)"/>页&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    本页显示1-7条 / 共1页7条
+	</td>
+  </tr>
+</table>
+    </div>
+    </div>
+</div>
+</div>
+</body>
+</html>

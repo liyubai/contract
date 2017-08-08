@@ -1,0 +1,4894 @@
+package com.cauc.training.business.hibernate;
+
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.hibernate.Criteria;
+import org.hibernate.HibernateException;
+import org.hibernate.criterion.Order;
+import org.hibernate.criterion.Restrictions;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.business.IOutLineService;
+import com.cauc.training.business.dao.GenericHibernateDAO;
+import com.cauc.training.business.dao.support.Page;
+import com.cauc.training.config.FinanceConfig;
+import com.cauc.training.pojos.Changedbaseflyline;
+import com.cauc.training.pojos.Lessonchangedbaseflyline;
+import com.cauc.training.pojos.OutLineAudit;
+import com.cauc.training.pojos.Planeform;
+import com.cauc.training.pojos.Station;
+import com.cauc.training.pojos.StudentBaseInfo;
+import com.cauc.training.pojos.TChangedoutline;
+import com.cauc.training.pojos.TDgdistribution;
+import com.cauc.training.pojos.TDiction;
+import com.cauc.training.pojos.TFunction;
+import com.cauc.training.pojos.TOrg;
+import com.cauc.training.pojos.TOutline;
+import com.cauc.training.pojos.TPhase;
+import com.cauc.training.pojos.TSetClass;
+import com.cauc.training.pojos.TSubjectsort;
+import com.cauc.training.pojos.TTimesubject;
+import com.cauc.training.pojos.TTrainingLesson;
+import com.cauc.training.pojos.TTrainlessonsubject;
+import com.cauc.training.pojos.TTrainsubject;
+import com.cauc.training.pojos.TUser;
+import com.cauc.training.pojos.TrainingLessonSort;
+import com.cauc.training.pojos.TrainingPlane;
+import com.cauc.training.pojos.TraininglessonRelation;
+import com.cauc.training.pojos.TraininglessonSubjectRelation;
+import com.cauc.training.pojos.Trainlessonunit;
+import com.cauc.training.util.Utilities;
+import com.cauc.training.vo.AdvancedSearchBean;
+import com.cauc.training.vo.VChangedbaseflyline;
+import com.cauc.training.vo.VLeftNavigation;
+import com.cauc.training.vo.VLeftNavigationNext;
+import com.cauc.training.vo.VOrg;
+import com.cauc.training.vo.VOutLineAudit;
+import com.cauc.training.vo.VOutline;
+import com.cauc.training.vo.VOutlineDetail;
+import com.cauc.training.vo.VStation;
+import com.cauc.training.vo.VStudentBaseInfo;
+import com.cauc.training.vo.VStudentDistributionClass;
+import com.cauc.training.vo.VTimesubject;
+import com.cauc.training.vo.VTrainingLesson;
+import com.cauc.training.vo.VTrainingLessonContent;
+import com.cauc.training.vo.VTrainingRecordCompletion;
+import com.cauc.training.vo.VTraininglessonSubjectRelation;
+import com.cauc.training.vo.VTrainlessonunit;
+import com.cauc.training.vo.VTrainsubject;
+
+
+@Service
+public class OutLineServiceImpl extends GenericHibernateDAO implements IOutLineService {
+
+	private static Log log = LogFactory.getLog(OutLineServiceImpl.class);
+
+	
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void deleteUnitSubjectDictionaryByIds(String... Ids)
+			throws FinanceServiceException {
+		Assert.notNull(Ids, "需要删除的科目ID不能为空");
+
+		try {
+			for (String id : Ids) {
+				
+				if(super.findBy(TraininglessonSubjectRelation.class, "TTimesubject.VId", id).size()>0){
+					throw new FinanceServiceException("该科目已经被引用，不能删除。");
+				}
+				super.removeById(TTimesubject.class, id);
+			}
+		}catch (HibernateException e) {
+			throw new FinanceServiceException("删除科目信息失败", e);
+		}
+	}
+
+	public VTimesubject readVUnitSubjectDictionaryById(String id)
+			throws FinanceServiceException {
+		try{
+			VTimesubject vt = new VTimesubject();
+			TTimesubject t= super.get(TTimesubject.class, id);
+			
+			vt.setVId(t.getVId());
+			vt.setVName(t.getVName());
+			vt.setVGroup(t.getTDiction().getVId());
+			vt.setVUnit(t.getVUnitid());
+			vt.setDCreatedate(t.getDCreatedate());
+			return vt;
+		}catch(HibernateException e){
+			throw new FinanceServiceException("读取科目对象信息失败", e);
+		}
+	}
+
+	
+	@SuppressWarnings("unchecked")
+	public List<TTimesubject> readUnitSubjectDictionaryList(Map<String, Object> params)
+			throws FinanceServiceException {
+		
+		Criteria criteria = this.createCriteria(TTimesubject.class);
+
+		if (params.get(QUERY_KEY_NAME) != null
+				&& !params.get(QUERY_KEY_NAME).equals(""))
+			criteria.add(Restrictions.like(QUERY_KEY_NAME, "%"
+					+ params.get(QUERY_KEY_NAME) + "%"));
+		if (params.get(QUERY_KEY_SUBJECT_SORT_ID) != null
+				&& !params.get(QUERY_KEY_SUBJECT_SORT_ID).equals("")){
+			criteria.add(Restrictions.eq("VUnitid",params.get(QUERY_KEY_SUBJECT_SORT_ID)));
+		}
+		criteria.addOrder(Order.asc("VUnitid"));
+		criteria.addOrder(Order.asc(QUERY_KEY_DATE));
+
+		try {
+			List<TTimesubject> blist = new ArrayList<TTimesubject>();
+			TTimesubject sub;
+			List<TTimesubject> list = criteria.list();
+			for(TTimesubject t:list){
+				sub = new TTimesubject();
+				sub.setDCreatedate(t.getDCreatedate());
+				sub.setTDiction(t.getTDiction());
+				sub.setVId(t.getVId());
+				sub.setVName(t.getVName());
+				sub.setVUnitid(super.get(TrainingLessonSort.class,t.getVUnitid()).getVName());
+				blist.add(sub);
+			
+			}
+			
+			return blist;
+		} catch (HibernateException e) {
+			log.error("读取科目信息列表失败", e);
+			throw new FinanceServiceException("读取科目信息列表失败", e);
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void saveUnitSubjectDictionary(TTimesubject timesubject)
+			throws FinanceServiceException {
+		try {
+
+			String hql = " from TTimesubject where VName=? and TDiction.VId=? and VUnitid=?";
+			List<TTimesubject> dicList = super.find(hql, timesubject.getVName(), 
+					timesubject.getTDiction().getVId(),timesubject.getVUnitid());
+			if(dicList.size()>0){
+				throw new FinanceServiceException("保存科目失败，该科目已经存在。");
+			}	
+			timesubject.setDCreatedate(new Date());
+			super.save(timesubject);
+		}catch (HibernateException e) {
+			throw new FinanceServiceException("保存科目失败", e);
+		}
+		
+	}
+
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void updateUnitSubjectDictionary(TTimesubject timesubject)
+			throws FinanceServiceException {
+		try {
+			TTimesubject old = super.get(TTimesubject.class, timesubject.getVId());
+			old.setVName(timesubject.getVName());
+			old.setTDiction(timesubject.getTDiction());
+			old.setVUnitid(timesubject.getVUnitid());
+			super.update(old);
+		}catch (HibernateException e) {
+			throw new FinanceServiceException("更新科目对象失败", e);
+		}
+		
+	}
+
+	//以下为站名管理---------------------------------------------------------
+	@SuppressWarnings("unchecked")
+	private boolean isExistStation(String name)
+			throws FinanceServiceException {
+
+		String hql = " from Station where VName=?";
+		List<Station> dicList = super.find(hql, name);
+		if (dicList != null && dicList.size() > 0)
+			return true;
+		else
+			return false;
+	}
+
+	
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void deleteStationByIds(String... Ids)
+			throws FinanceServiceException {
+
+		try {
+			for (String id : Ids) {
+				
+				if(super.findBy(Changedbaseflyline.class, "stationByStartStationid.VId", id).size()>0){
+					throw new FinanceServiceException("该站名已经被引用，不能删除。");
+				}
+				super.removeById(Station.class, id);
+			}
+		}catch (HibernateException e) {
+			throw new FinanceServiceException("删除站名信息失败"+e.getMessage());
+		}
+	}
+
+	public Station readStationById(String id)
+			throws FinanceServiceException {
+		try{
+			return super.get(Station.class, id);
+		}catch(HibernateException e){
+			throw new FinanceServiceException("读取站名对象信息失败", e);
+		}
+	}
+	public VStation readVStationById(String id)
+	throws FinanceServiceException {
+		try{
+
+			VStation vs = new VStation();
+			Station s= super.get(Station.class, id);
+			vs.setVId(s.getVId());
+			vs.setVName(s.getVName());
+			vs.setVConditions(s.getVCode());
+			vs.setDCreateDate(s.getDCreateDate());
+			vs.setVLicenseform(s.getVJcname());
+			if(s.getDArpx().indexOf(",")==-1){
+				vs.setVNo("");
+			}else{
+				vs.setVNo(s.getDArpx());
+			}
+			if(s.getDArpy().indexOf(",")==-1){
+				vs.setVPassstandard("");
+			}else{
+				vs.setVPassstandard(s.getDArpy());
+			}
+			return vs;
+		}catch(HibernateException e){
+			throw new FinanceServiceException("读取站名对象信息失败", e);
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	public List<Station> readStationList(Map<String, Object> params)
+			throws FinanceServiceException {
+		
+		Criteria criteria = this.createCriteria(Station.class);
+
+		if (params.get(QUERY_KEY_NAME) != null
+				&& !params.get(QUERY_KEY_NAME).equals(""))
+			criteria.add(Restrictions.like(QUERY_KEY_NAME, "%"
+					+ params.get(QUERY_KEY_NAME) + "%"));
+		criteria.addOrder(Order.asc("VCode"));
+		criteria.addOrder(Order.desc(QUERY_KEY_UPDATE));
+
+		try {
+			String x;
+			String y;
+			List<Station> blist = new ArrayList<Station>();
+			Station s;
+			List<Station> list =  criteria.list();
+			for(Station t:list){
+				s = new Station();
+				s.setVId(t.getVId());
+				s.setVName(t.getVName());
+				s.setVCode(t.getVCode());
+				s.setDCreateDate(t.getDCreateDate());
+				s.setVJcname(t.getVJcname());
+				x = t.getDArpx();
+				y = t.getDArpy();
+				if(x.indexOf(",")==-1){
+					s.setDArpx("");
+				}else{
+					s.setDArpx(x.split(",")[0] +"°"+x.split(",")[1]+"ˊ" + x.split(",")[2]+"&quot;");
+				}
+				if(y.indexOf(",")==-1){
+					s.setDArpy("");
+				}else{
+					s.setDArpy(y.split(",")[0]+"°"+y.split(",")[1]+"ˊ" +y.split(",")[2]+"&quot;");
+				}
+				blist.add(s);
+			}
+			
+			return blist;
+		} catch (HibernateException e) {
+			log.error("读取站名信息列表失败", e);
+			throw new FinanceServiceException("读取站名信息列表失败", e);
+		}
+	}
+
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void saveStation(Station station)
+			throws FinanceServiceException {
+		try {
+			if(isExistStation(station.getVName())){
+				throw new FinanceServiceException("保存站名失败，该站名已经存在。");
+			}
+	
+			station.setDCreateDate(new Date());
+			super.save(station);
+		}catch (HibernateException e) {
+			throw new FinanceServiceException("保存站名失败，数据格式错误。", e);
+		}
+		
+	}
+
+
+	@SuppressWarnings("unchecked")
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void updateStation(Station station)
+			throws FinanceServiceException {
+		try {
+			String hql=" from Station t where t.VId<>? and t.VName=?";
+			List<Station> list = super.find(hql,station.getVId(), station.getVName());
+			if(list!=null && list.size()>0){
+				
+				throw new FinanceServiceException("输入的新站名与库中原有的站名重复，编辑失败。");
+			}
+			Station old = super.get(Station.class, station.getVId());
+			old.setVName(station.getVName());
+			old.setVCode(station.getVCode());
+			old.setVJcname(station.getVJcname());
+			old.setDArpx(station.getDArpx());
+			old.setDArpy(station.getDArpy());
+			super.update(old);
+		}catch (HibernateException e) {
+			throw new FinanceServiceException("更新站名对象失败，数据格式错误。",e);
+		}
+		
+	}
+	//以下为课目类型管理---------------------------------------------------------
+	@SuppressWarnings("unchecked")
+	private boolean isExistTraininglessonunitdiction(String name)
+			throws FinanceServiceException {
+
+		String hql = " from TrainingLessonSort where VName=?";
+		List<TrainingLessonSort> dicList = super.find(hql, name);
+		if (dicList != null && dicList.size() > 0)
+			return true;
+		else
+			return false;
+	}
+
+	
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void deleteTraininglessonunitdictionByIds(String... Ids)
+			throws FinanceServiceException {
+
+		try {
+			for (String id : Ids) {
+				
+				if(super.findBy(TTimesubject.class, "VUnitid", id).size()>0){
+					throw new FinanceServiceException("该课目类型已经被引用，不能删除。");
+				}
+				super.removeById(TrainingLessonSort.class, id);
+			}
+		}catch (HibernateException e) {
+			throw new FinanceServiceException("删除课程单元信息失败"+e.getMessage());
+		}
+	}
+
+
+	public VStation readTraininglessonunitdictionById(String id)
+	throws FinanceServiceException {
+		try{
+			VStation vs = new VStation();
+			TrainingLessonSort s= super.get(TrainingLessonSort.class, id);
+			vs.setVId(s.getVId());
+			vs.setVName(s.getVName());
+			return vs;
+		}catch(HibernateException e){
+			throw new FinanceServiceException("读取课目类型信息失败", e);
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	public VStation readTraininglessonunitdictionByNoId(String id)
+	throws FinanceServiceException {
+		try{
+			
+			VStation vs = new VStation();
+			Trainlessonunit s = super.get(Trainlessonunit.class, id);
+
+			vs.setVId(s.getVId());
+			vs.setVName(s.getVName());
+			vs.setVNo(s.getVNo());
+			vs.setVConditions(s.getVConditions());
+			vs.setVPassstandard(s.getVPassstandard());
+
+			//处理执照类型
+			if(StringUtils.isNotBlank(s.getVLicenseform())){//执照
+				String v = "";
+				String hql= "from TDiction where ? like '%'+VId+'%'";//高招，翻过来用
+				List<TDiction> flist = super.find(hql, s.getVLicenseform());
+				for(int i=0;i<flist.size();i++){
+					if(i==flist.size()-1){
+						v+=flist.get(i).getVName();
+					}else{
+						v+=flist.get(i).getVName()+"、";
+					}
+				}
+				vs.setVLicenseform(v);
+			}else{
+				vs.setVLicenseform("");
+			}
+
+			return vs;
+		}catch(HibernateException e){
+			throw new FinanceServiceException("读取课程单元对象信息失败", e);
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	public List<TrainingLessonSort> readTraininglessonunitdictionList(Map<String, Object> params)
+			throws FinanceServiceException {
+		
+		Criteria criteria = this.createCriteria(TrainingLessonSort.class);
+
+		if (params.get(QUERY_KEY_NAME) != null
+				&& !params.get(QUERY_KEY_NAME).equals(""))
+			criteria.add(Restrictions.like(QUERY_KEY_NAME, "%"
+					+ params.get(QUERY_KEY_NAME) + "%"));
+			criteria.addOrder(Order.asc("VId"));
+			try {
+			
+			return criteria.list();
+		} catch (HibernateException e) {
+			log.error("读取信息列表失败", e);
+			throw new FinanceServiceException("读取信息列表失败", e);
+		}
+	}
+	
+
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void saveTraininglessonunitdiction(TrainingLessonSort sort)
+			throws FinanceServiceException {
+		try {
+			if(isExistTraininglessonunitdiction(sort.getVName())){
+				throw new FinanceServiceException("保存失败，该课目类型名称已经存在。");
+			}
+			
+			sort.setDCreatedate(new Date());
+			super.save(sort);
+			
+			
+		}catch (HibernateException e) {
+			throw new FinanceServiceException("保存课目类型失败", e);
+		}
+		
+	}
+
+	@SuppressWarnings("unchecked")
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void updateTraininglessonunitdiction(TrainingLessonSort sort)
+			throws FinanceServiceException {
+		try {
+			String hql=" from TrainingLessonSort t where t.VId<>? and t.VName=?";
+			List<TrainingLessonSort> list = super.find(hql,sort.getVId(), sort.getVName());
+			if(list!=null && list.size()>0){
+				
+				throw new FinanceServiceException("输入的课目类型名称与库中原有的名称重复，编辑失败。");
+			}
+			TrainingLessonSort old = super.get(TrainingLessonSort.class, sort.getVId());
+			old.setVName(sort.getVName());
+			super.update(old);
+		}catch (HibernateException e) {
+			throw new FinanceServiceException("更新课程单元对象失败", e);
+		}
+		
+	}
+	//以下为专场航线管理---------------------------------------------------------
+	@SuppressWarnings("unchecked")
+	private boolean isExistChangedbaseflyline(Station start,Station end)
+			throws FinanceServiceException {
+
+		String hql = " from Changedbaseflyline where stationByStartStationid=? and  stationByEndStationId=?";
+		List<Changedbaseflyline> dicList = super.find(hql, start,end);
+		if (dicList != null && dicList.size() > 0)
+			return true;
+		else
+			return false;
+	}
+
+	
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void deleteChangedbaseflylineByIds(String... Ids)
+			throws FinanceServiceException {
+
+		try {
+			for (String id : Ids) {
+				
+				if(super.findBy(Lessonchangedbaseflyline.class, "changedbaseflyline.VId", id).size()>0){
+					throw new FinanceServiceException("该专场航线已经被引用，不能删除。");
+				}
+				super.removeById(Changedbaseflyline.class, id);
+			}
+		}catch (HibernateException e) {
+			throw new FinanceServiceException("删除专场航线信息失败"+e.getMessage());
+		}
+	}
+
+	public Changedbaseflyline readChangedbaseflylineById(String id)
+			throws FinanceServiceException {
+		try{
+			return super.get(Changedbaseflyline.class, id);
+		}catch(HibernateException e){
+			throw new FinanceServiceException("读取专场航线对象信息失败", e);
+		}
+	}
+	
+	public VChangedbaseflyline readVChangedbaseflylineById(String id)
+	throws FinanceServiceException {
+	try{
+		VChangedbaseflyline vline = new VChangedbaseflyline();
+		Changedbaseflyline line = super.get(Changedbaseflyline.class, id);
+		vline.setVId(line.getVId());
+		vline.setStartStationId(line.getStationByStartStationid().getVId());
+		vline.setEndStationId(line.getStationByEndStationId().getVId());
+		vline.setDCourse(line.getDCourse());
+		return vline;
+	}catch(HibernateException e){
+		throw new FinanceServiceException("读取专场航线对象信息失败", e);
+	}
+	}
+
+	@SuppressWarnings("unchecked")
+	public List<Changedbaseflyline> readChangedbaseflylineList(Map<String, Object> params)
+			throws FinanceServiceException {
+		
+		String cond = "";
+		String hql = " from Changedbaseflyline where stationByStartStationid.VName " +
+				"like ? or stationByEndStationId.VName like ? order by DCreatedate desc";
+			if (params.get(QUERY_KEY_NAME) != null
+				&& !params.get(QUERY_KEY_NAME).equals("")){
+				cond = params.get(QUERY_KEY_NAME).toString();
+			}
+
+		try {
+			
+			return super.find(hql, "%"+ cond + "%", "%"+ cond + "%");
+		} catch (HibernateException e) {
+			log.error("读取专场航线信息列表失败", e);
+			throw new FinanceServiceException("读取专场航线信息列表失败", e);
+		}
+	}
+
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void saveChangedbaseflyline(Changedbaseflyline line)
+			throws FinanceServiceException {
+		try {
+			if(isExistChangedbaseflyline(line.getStationByStartStationid(),line.getStationByEndStationId())){
+				throw new FinanceServiceException("保存专场航线失败，该专场航线已经存在。");
+			}
+	
+			line.setDCreatedate(new Date());
+			super.save(line);
+		}catch (HibernateException e) {
+			e.printStackTrace();
+			throw new FinanceServiceException("保存专场航线失败"+e);
+		}catch (NumberFormatException e) {
+			e.printStackTrace();
+			throw new FinanceServiceException("保存专场航线失败"+e);
+		}catch (IllegalArgumentException e) {
+			e.printStackTrace();
+			throw new FinanceServiceException("保存专场航线失败"+e);
+		}
+		
+	}
+
+
+	@SuppressWarnings("unchecked")
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void updateChangedbaseflyline(Changedbaseflyline line)
+			throws FinanceServiceException {
+		try {
+			String hql=" from Changedbaseflyline t where t.VId<>? and t.stationByStartStationid=? and t.stationByEndStationId=?";
+			List<Changedbaseflyline> list = super.find(hql,line.getVId(),line.getStationByStartStationid(),line.getStationByEndStationId());
+			if(list!=null && list.size()>0){
+				
+				throw new FinanceServiceException("输入的专场航线与原有的专场航线重复，编辑失败。");
+			}
+			Changedbaseflyline old = super.get(Changedbaseflyline.class, line.getVId());
+			old.setDCourse(line.getDCourse());
+			old.setStationByStartStationid(line.getStationByStartStationid());
+			old.setStationByEndStationId(line.getStationByEndStationId());
+			super.update(old);
+		}catch (HibernateException e) {
+			throw new FinanceServiceException("更新专场航线对象失败", e);
+		}
+		
+	}
+	//以下为训练科目分类管理---------------------------------------------------------
+	@SuppressWarnings("unchecked")
+	private boolean isExistSubjectsort(String name)
+			throws FinanceServiceException {
+
+		String hql = " from TSubjectsort where VName=?";
+		List<TSubjectsort> dicList = super.find(hql, name);
+		if (dicList != null && dicList.size() > 0)
+			return true;
+		else
+			return false;
+	}
+
+	
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void deleteSubjectsortByIds(String... Ids)
+			throws FinanceServiceException {
+
+		try {
+			for (String id : Ids) {
+				
+				if(super.findBy(TTrainsubject.class, "TSubjectsort.VId", id).size()>0){
+					throw new FinanceServiceException("该分类已经被引用，不能删除。");
+				}
+				super.removeById(TSubjectsort.class, id);
+			}
+		}catch (HibernateException e) {
+			throw new FinanceServiceException("删除分类信息失败"+e.getMessage());
+		}
+	}
+
+
+	public VStation readSubjectsortById(String id)
+	throws FinanceServiceException {
+		try{
+			VStation vs = new VStation();
+			TSubjectsort s= super.get(TSubjectsort.class, id);
+			vs.setVId(s.getVId());
+			vs.setVName(s.getVName());
+			return vs;
+		}catch(HibernateException e){
+			throw new FinanceServiceException("读取分类对象信息失败", e);
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	public List<TSubjectsort> readSubjectsortList(Map<String, Object> params)
+			throws FinanceServiceException {
+		
+		Criteria criteria = this.createCriteria(TSubjectsort.class);
+
+		if (params.get(QUERY_KEY_NAME) != null
+				&& !params.get(QUERY_KEY_NAME).equals(""))
+			criteria.add(Restrictions.like(QUERY_KEY_NAME, "%"
+					+ params.get(QUERY_KEY_NAME) + "%"));
+		criteria.addOrder(Order.asc("IOrder"));
+		criteria.addOrder(Order.asc(QUERY_KEY_DATE));
+		try {
+			
+			return criteria.list();
+		} catch (HibernateException e) {
+			log.error("读取训练科目分类信息列表失败", e);
+			throw new FinanceServiceException("读取分类信息列表失败", e);
+		}
+	}
+
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void saveSubjectsort(TSubjectsort sort)
+			throws FinanceServiceException {
+		try {
+			if(isExistSubjectsort(sort.getVName())){
+				throw new FinanceServiceException("保存分类失败，该分类已经存在。");
+			}
+	
+			sort.setDCreatedate(new Date());
+			sort.setIOrder(100);
+			super.save(sort);
+		}catch (HibernateException e) {
+			throw new FinanceServiceException("保存分类失败", e);
+		}
+		
+	}
+
+	@SuppressWarnings("unchecked")
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void updateSubjectsort(TSubjectsort sort)
+			throws FinanceServiceException {
+		try {
+			String hql=" from TSubjectsort t where t.VId<>? and t.VName=?";
+			List<TSubjectsort> list = super.find(hql,sort.getVId(), sort.getVName());
+			if(list!=null && list.size()>0){
+				
+				throw new FinanceServiceException("输入的新分类与库中原有的分类重复，编辑失败。");
+			}
+			TSubjectsort old = super.get(TSubjectsort.class, sort.getVId());
+			old.setVName(sort.getVName());
+			super.update(old);
+		}catch (HibernateException e) {
+			throw new FinanceServiceException("更新分类对象失败", e);
+		}
+		
+	}
+
+	//以下为训练科目管理---------------------------------------------------------
+		
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void deleteTrainsubjectByIds(String... Ids)
+			throws FinanceServiceException {
+
+		try {
+			for (String id : Ids) {
+				
+				if(super.findBy(TTrainlessonsubject.class, "TTrainsubject.VId", id).size()>0){
+					throw new FinanceServiceException("该训练科目已经被引用，不能删除。");
+				}
+				super.removeById(TTrainsubject.class, id);
+			}
+		}catch (HibernateException e) {
+			throw new FinanceServiceException("删除训练科目信息失败"+e.getMessage());
+		}
+	}
+
+
+	public VTrainsubject readTrainsubjectById(String id)
+	throws FinanceServiceException {
+		try{
+			VTrainsubject vs = new VTrainsubject();
+			TTrainsubject s= super.get(TTrainsubject.class, id);
+			vs.setVId(s.getVId());
+			vs.setVName(s.getVName());
+			vs.setISort(s.getISort());
+			vs.setTypeid(s.getTSubjectsort().getVId());
+			vs.setVSubname(s.getVSubname());
+			vs.setDCreatedate(s.getDCreatedate());
+			return vs;
+		}catch(HibernateException e){
+			throw new FinanceServiceException("读取训练科目对象信息失败", e);
+		}
+	}
+
+
+
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void saveTrainsubject(TTrainsubject subject)
+			throws FinanceServiceException {
+		try {
+			subject.setDCreatedate(new Date());
+			subject.setIOrder(100);
+			super.save(subject);
+		}catch (HibernateException e) {
+			throw new FinanceServiceException("保存训练科目失败", e);
+		}
+		
+	}
+
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void updateTrainsubject(TTrainsubject subject)
+			throws FinanceServiceException {
+		try {
+
+			TTrainsubject old = super.get(TTrainsubject.class, subject.getVId());
+			old.setVName(subject.getVName());
+			old.setISort(subject.getISort());
+			old.setTSubjectsort(subject.getTSubjectsort());
+			old.setVSubname(subject.getVSubname());
+			super.update(old);
+		}catch (HibernateException e) {
+			throw new FinanceServiceException("更新训练科目对象失败", e);
+		}
+		
+	}
+
+	public Page readTrainsubjectList(Map<String, Object> params, String pageNo)
+	throws FinanceServiceException {
+
+		return readTrainsubjectList(params, pageNo, FinanceConfig
+			.getIntProperty("default.system.pagesize"));
+	}
+	
+	public Page readTrainsubjectList(Map<String, Object> params, String pageNo,
+		int pageSize) throws FinanceServiceException {
+		Assert.isTrue(pageNo.matches("\\d+"), "pageNo must be a number");
+		try {
+			String cond = "";
+			String condValue = "";
+			
+			if (params.get(QUERY_KEY_SUBJECT_SORT_ID) != null
+					&& !params.get(QUERY_KEY_SUBJECT_SORT_ID).equals("")) {
+		
+				cond+=" and TSubjectsort.VId =?";
+				condValue+=params.get(QUERY_KEY_SUBJECT_SORT_ID) + ",";
+			}
+	
+			if (params.get(QUERY_KEY_NAME) != null
+					&& !params.get(QUERY_KEY_NAME).equals("")) {
+				//criteria.add(Restrictions.or(Restrictions.like(QUERY_KEY_NAME,
+				//		"%" + params.get(QUERY_KEY_NAME) + "%"), Restrictions.like("VSubname",
+				//		"%" + params.get(QUERY_KEY_NAME) + "%")));
+				cond+=" and ( VName like ? or VSubname like ? )";
+				condValue+="%" + params.get(QUERY_KEY_NAME) + "%" + ","+"%" + params.get(QUERY_KEY_NAME) + "%" + ",";
+			}
+			//criteria.addOrder(Order.asc("TSubjectsort"));
+			//criteria.addOrder(Order.asc("IOrder"));
+			//criteria.addOrder(Order.asc(QUERY_KEY_DATE));
+			Integer pageIndex = Integer.parseInt(pageNo);
+			
+			String  hql= " from TTrainsubject where 1=1 "+cond+" order by TSubjectsort.IOrder,IOrder,DCreatedate";
+			Page page;
+			if(condValue.equals("")){
+				page = this.pagedQuery(hql, pageIndex, pageSize);
+			}else{
+				page = this.pagedQuery(hql, pageIndex, pageSize,(Object[])condValue.split(","));
+			}
+			//Page page = this.pagedQuery(criteria, pageIndex, pageSize);
+			//Page page = this.pagedQuery(hql, pageIndex, pageSize);
+			return page;
+		} catch (HibernateException e) {
+			throw new FinanceServiceException("读取信息列表失败："+e.getMessage());
+		}
+	}
+
+
+	//以下训练课程管理-------------------------------------------------
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void saveTrainingLesson(TTrainingLesson trainingLesson)
+			throws FinanceServiceException {
+		try {
+			String hql =" from TTrainingLesson where VNo=? and VVersion=?";
+			
+			if(super.find(hql,trainingLesson.getVNo(), trainingLesson.getVVersion()).size()>0){
+				throw new FinanceServiceException("保存课目信息失败：编号与版本号原数据库中已存在。");
+			}
+			List<TTrainingLesson> list = super.getAll(TTrainingLesson.class,QUERY_KEY_DATE,false);
+			if(list==null || list.size()==0){
+				trainingLesson.setIOrder(1);//序号从1开始
+			}else{
+				trainingLesson.setIOrder(list.get(0).getIOrder()+1);//读取数据库序号最大值
+			}
+			
+			if(trainingLesson.getIType()==0){//0代表飞机，1代表训练器,2模拟机
+				trainingLesson.setDFjsj(trainingLesson.getDFjsj());
+				
+				trainingLesson.setDXlqsj(0);
+				trainingLesson.setDMnjsj(0);
+			}else if(trainingLesson.getIType()==1){
+				trainingLesson.setDXlqsj(trainingLesson.getDFjsj());
+				trainingLesson.setDFjsj(0);
+				trainingLesson.setDMnjsj(0);
+			}else{
+				trainingLesson.setDMnjsj(trainingLesson.getDFjsj());
+				trainingLesson.setDXlqsj(0);
+				trainingLesson.setDFjsj(0);
+				
+			}
+			
+			/*
+			if(trainingLesson.getStationByVStartpos().getVId()!=null  //非转场课程，起点为空
+					&& trainingLesson.getStationByVStartpos().getVId().equals("")){
+				trainingLesson.setStationByVStartpos(null);
+			}
+			if(trainingLesson.getStationByVEndpos().getVId()!=null//非转场课程，终点为空
+					&& trainingLesson.getStationByVEndpos().getVId().equals("")){
+				trainingLesson.setStationByVEndpos(null);
+			}
+			*/
+			//存储转场航线
+			String lines = trainingLesson.getStationByVStartpos().getVId();
+			
+			trainingLesson.setStationByVStartpos(null);//设置转场航线，没有用处
+			trainingLesson.setStationByVEndpos(null);//设置转场航线，没有用处
+			
+			//科目
+			String neirong = trainingLesson.getVNeirong();
+			
+			String bak = trainingLesson.getVBeiyong();//获取单元与课目时间值
+			trainingLesson.setDCreatedate(new Date());
+			if(bak!=null && bak.length()>33){//unitid 长度是32
+				trainingLesson.setVBeiyong(bak.split(";")[0]);
+			}
+			trainingLesson.setVNeirong("");
+			trainingLesson.setIAsciino(Utilities.string2ASCII(trainingLesson.getVNo()));
+			trainingLesson.setIAsciiversion(Utilities.string2ASCII(trainingLesson.getVVersion()));
+			super.save(trainingLesson);
+			
+			if(lines!=null){//借用此字段，存储转场航线id
+				List<Lessonchangedbaseflyline> sslist = new ArrayList<Lessonchangedbaseflyline>();
+				Lessonchangedbaseflyline lessonLine;
+				String shql =" from Lessonchangedbaseflyline where TTrainingLesson.VId=? and changedbaseflyline.VId=?";
+				Changedbaseflyline line;
+				String[] os = lines.split(",");
+				for(int i=0;i<os.length;i++){
+					if(super.find(shql, trainingLesson.getVId(),os[i]).size()==0){
+						line = super.get(Changedbaseflyline.class, os[i]);
+						if(line!=null){
+							lessonLine = new Lessonchangedbaseflyline();
+							lessonLine.setChangedbaseflyline(line);
+							lessonLine.setTTrainingLesson(trainingLesson);
+							lessonLine.setIDefine(0);
+							sslist.add(lessonLine);
+						}
+					}
+				}
+				if(sslist.size()>0){
+					super.saveOrUpdateALL(sslist);
+				}
+			}
+			
+			Map<String, Object> queryMap = new HashMap<String, Object>();
+			if(bak!=null && bak.length()>33){//unitid 长度是32
+				//取得课程单元id
+				String unitid = bak.split(";")[0];
+				String subjectsValue = bak.split(";")[1];
+				String subjectsValueArray[] = subjectsValue.split(",");
+				queryMap.put(QUERY_KEY_SUBJECT_SORT_ID, unitid);
+				TraininglessonSubjectRelation relation;
+				List<TraininglessonSubjectRelation> relationList = new ArrayList<TraininglessonSubjectRelation>();
+				List<TTimesubject>  subjects = readUnitSubjectDictionaryList(queryMap);
+				
+				for(int i=0;i<subjects.size();i++){
+					relation = new TraininglessonSubjectRelation();
+					relation.setTTrainingLesson(trainingLesson);
+					relation.setTTimesubject(subjects.get(i));
+					relation.setDTime(Utilities.getMinitue(subjectsValueArray[i]));
+					relationList.add(relation);
+				}
+				super.saveOrUpdateALL(relationList);
+			}
+			if(StringUtils.isNotBlank(neirong) && neirong.length()>32){
+				//保存训练科目
+				VTrainsubject vTrainsubject = new VTrainsubject();
+				vTrainsubject.setVId(trainingLesson.getVId());
+				vTrainsubject.setTypeid(neirong);
+				vTrainsubject.setVName(trainingLesson.getTUser().getVId());
+				saveSetTrainingLessonSubject(vTrainsubject);
+			}
+				
+			
+		}catch (HibernateException e) {
+			throw new RuntimeException("保存训练课程失败：数据库错误。");
+		}
+		
+		
+	}
+
+
+	public Page readTrainingLessonList(Map<String, Object> params, String pageNo)
+	throws FinanceServiceException {
+
+		return readTrainingLessonList(params, pageNo, FinanceConfig
+			.getIntProperty("default.index.min"));
+	}
+	
+	@SuppressWarnings("unchecked")
+	public Page readTrainingLessonList(Map<String, Object> params, String pageNo,
+		int pageSize) throws FinanceServiceException {
+		Assert.isTrue(pageNo.matches("\\d+"), "pageNo must be a number");
+		Criteria criteria = this.createCriteria(TTrainingLesson.class);
+		
+		String unitid = "";
+		String hql = " from TrainingLessonSort order by d_createdate asc";
+		List<TrainingLessonSort> lis;
+		
+		if(params.get(QUERY_KEY_UNIT_ID)!=null){
+			unitid  = params.get(QUERY_KEY_UNIT_ID).toString();
+		}
+		
+		if(unitid.equals("")){
+			lis = super.find(hql);
+			unitid = lis.get(0).getVId();
+		}
+		
+		if (params.get(QUERY_KEY_NAME) != null
+				&& !params.get(QUERY_KEY_NAME).equals("")) {
+			criteria.add(Restrictions.or(Restrictions.like(QUERY_KEY_NAME,
+					"%" + params.get(QUERY_KEY_NAME) + "%"), Restrictions.like("VNo",
+					"%" + params.get(QUERY_KEY_NAME) + "%")));
+		};
+		
+		criteria.add(Restrictions.eq(QUERY_KEY_UNIT_ID, unitid));//借用备用字段存储单元id
+		criteria.addOrder(Order.asc("IAsciino"));
+		criteria.addOrder(Order.desc("IAsciiversion"));
+		criteria.addOrder(Order.asc("VId"));
+		Integer pageIndex = Integer.parseInt(pageNo);
+		List<VTraininglessonSubjectRelation> relationzList;
+		VTraininglessonSubjectRelation vr;
+		List<TraininglessonSubjectRelation> rlist;
+		try {
+			Page page = this.pagedQuery(criteria, pageIndex, pageSize);
+			List<VTrainingLesson> rList = new ArrayList<VTrainingLesson>();
+			VTrainingLesson vtr;
+			List<TTrainingLesson>list = page.getResult();
+			for(TTrainingLesson p:list){
+				vtr = new VTrainingLesson();
+				vtr.setTrainingLseeson(p);
+				if(p.getDFjsj()>0){
+					vtr.setDFjsj(Utilities.formatTime(p.getDFjsj()));
+				}else{
+					vtr.setDFjsj("");
+				}
+				if(p.getDXlqsj()>0){
+					vtr.setDXlqsj(Utilities.formatTime(p.getDXlqsj()));
+				}else{
+					vtr.setDXlqsj("");
+				}
+				if(p.getDMnjsj()>0){
+					vtr.setDMnjsj(Utilities.formatTime(p.getDMnjsj()));
+				}else{
+					vtr.setDMnjsj("");
+				}
+				if(p.getIType()==0){
+					vtr.setDXlsj(vtr.getDFjsj());
+				}
+				if(p.getIType()==1){
+					vtr.setDXlsj(vtr.getDXlqsj());
+				}
+				if(p.getIType()==2){
+					vtr.setDXlsj(vtr.getDMnjsj());
+				}
+				relationzList = new ArrayList<VTraininglessonSubjectRelation>();
+				rlist = this.find("from TraininglessonSubjectRelation where TTrainingLesson.VId=?",p.getVId());
+				
+				for(TraininglessonSubjectRelation r:rlist){
+					vr=new VTraininglessonSubjectRelation();
+					if(r.getDTime()>0){
+						vr.setDTime(Utilities.formatTime(r.getDTime()));
+					}else{
+						vr.setDTime("");
+					}
+					vr.setSubjectid(r.getTTimesubject().getVId());
+					relationzList.add(vr);
+				}
+				
+				vtr.setRelationzList(relationzList);
+				rList.add(vtr);
+			}
+		
+			page.setData(rList);
+			return page;
+		} catch (HibernateException e) {
+			throw new FinanceServiceException("读取信息列表失败："+e.getMessage());
+		}
+	}
+	
+	//jSon 方式分页开始-------------------------------------------------------------
+	public Page readVTrainingLessonContentList(Map<String, Object> params, String pageNo)
+	throws FinanceServiceException {
+		return readVTrainingLessonContentList(params, pageNo,8);//dialog窗口显示10条记录
+	}
+	
+	@SuppressWarnings("unchecked")
+	public Page readVTrainingLessonContentList(Map<String, Object> params, String pageNo,
+		int pageSize) throws FinanceServiceException {
+		Assert.isTrue(pageNo.matches("\\d+"), "pageNo must be a number");
+		Criteria criteria = this.createCriteria(TTrainingLesson.class);
+		
+		if (params.get(QUERY_KEY_NAME) != null
+				&& !params.get(QUERY_KEY_NAME).equals("")) {
+			criteria.add(Restrictions.or(Restrictions.like(QUERY_KEY_NAME,
+					"%" + params.get(QUERY_KEY_NAME) + "%"), Restrictions.like("VNo",
+							"%" + params.get(QUERY_KEY_NAME) + "%")));
+		}
+		
+		if (params.get(QUERY_KEY_UNIT_ID) != null
+				&& !params.get(QUERY_KEY_UNIT_ID).equals("")) {
+			criteria.add(Restrictions.eq(QUERY_KEY_UNIT_ID, params.get(QUERY_KEY_UNIT_ID)));
+		}
+		
+		if (params.get(QUERY_KEY_SUBJECT_SORT_ID) != null
+				&& !params.get(QUERY_KEY_SUBJECT_SORT_ID).equals("")) {
+			
+			String hql = "";
+			String vid = "0";
+			String id =  params.get(QUERY_KEY_SUBJECT_SORT_ID).toString();
+			TOutline outline = super.get(TOutline.class, id);
+			if(outline!=null){
+				vid = id;
+			}
+			Trainlessonunit unit = super.get(Trainlessonunit.class, id);
+			if(unit!=null){
+				vid = unit.getTOutline().getVId();
+			}
+			TPhase phase =  super.get(TPhase.class, id);
+			
+			if(phase!=null){
+				vid = phase.getTrainlessonunit().getTOutline().getVId();
+			}
+			hql = "select TTrainingLesson.VId from TraininglessonRelation where TPhase.trainlessonunit.TOutline.VId=?";
+			
+			List<String> list = super.find(hql,vid);
+			if(list.size()>0)
+				criteria.add(Restrictions.not(Restrictions.in("VId", list))); //去掉已经选择的课程
+			
+		}
+
+		criteria.addOrder(Order.asc("VNo"));
+		criteria.addOrder(Order.asc("VId"));
+		Integer pageIndex = Integer.parseInt(pageNo);
+		
+		try {
+			Page page = this.pagedQuery(criteria, pageIndex, pageSize);
+			List<VTrainingLessonContent> rList = new ArrayList<VTrainingLessonContent>();
+			VTrainingLessonContent vtr;
+			List<TTrainingLesson> list = page.getResult();
+			for(TTrainingLesson p:list){
+				vtr = new VTrainingLessonContent();
+				vtr.setVId(p.getVId());
+				vtr.setVVersion(p.getVVersion());
+				vtr.setVNo(p.getVNo());
+				vtr.setVName(p.getVName());
+				if(p.getDFjsj()>0)
+					vtr.setVBz(Utilities.formatTime(p.getDFjsj()));//用备注字段存储训练时间，训练时间取决于飞机时间与训练器时间与模拟机时间
+				if(p.getDXlqsj()>0)
+					vtr.setVBz(Utilities.formatTime(p.getDXlqsj()));
+				if(p.getDMnjsj()>0){
+					vtr.setVBz(Utilities.formatTime(p.getDMnjsj()));
+				}
+				vtr.setDXlqsj(p.getDXlqsj());
+				vtr.setDFjsj(p.getDFjsj());
+				vtr.setDMnjsj(p.getDMnjsj());
+				rList.add(vtr);
+			}
+		
+			page.setData(rList);
+			return page;
+		} catch (HibernateException e) {
+			e.printStackTrace();
+			throw new FinanceServiceException("读取信息列表失败："+e.getMessage());
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	public Page readVTrainingLessonListByParentId(Map<String, Object> params, String pageNo) throws FinanceServiceException {
+		int pageSize = 10;
+		
+		String parentid = "";
+		String cond = "";
+		if (params.get(QUERY_KEY_SUBJECT_SORT_ID) != null
+				&& !params.get(QUERY_KEY_SUBJECT_SORT_ID).equals("")) {
+			
+			parentid = params.get(QUERY_KEY_SUBJECT_SORT_ID).toString();
+			
+		}
+		String type = "";
+		if (params.get(QUERY_KEY_NODE_TYPE) != null
+				&& !params.get(QUERY_KEY_NODE_TYPE).equals("")) {
+			
+			type = params.get(QUERY_KEY_NODE_TYPE).toString();
+			
+		}
+		
+		if(type.equals("outline")){//大纲
+			cond+= " and TPhase.trainlessonunit.TOutline.VId='"+parentid+"'";
+		}else if(type.equals("unit")){//单元
+			cond+= " and TPhase.trainlessonunit.VId='"+parentid+"'";
+		}else if(type.equals("phase")){//阶段
+			cond+= " and TPhase.VId='"+parentid+"'";
+		}else{
+			cond+= " and 1=2";
+		}
+		
+		
+		String lhql = " from TraininglessonRelation where 1=1 " + cond + 
+		" order by IOrder, TTrainingLesson.IAsciino,TTrainingLesson.IAsciiversion desc,TTrainingLesson.VId";
+		
+		Integer pageIndex = Integer.parseInt(pageNo);
+		try {
+			Page page = this.pagedQuery(lhql, pageIndex, pageSize);
+			List<VTrainingLessonContent> rList = new ArrayList<VTrainingLessonContent>();
+			VTrainingLessonContent vtr;
+			List<TraininglessonRelation> list = page.getResult();
+			for(TraininglessonRelation p:list){
+				vtr = new VTrainingLessonContent();
+				vtr.setIOrder(p.getIOrder());
+				vtr.setVId(p.getVId());
+				vtr.setVVersion(p.getTTrainingLesson().getVVersion());
+				vtr.setVNo(p.getTTrainingLesson().getVNo());
+				vtr.setVName(p.getTTrainingLesson().getVName());
+				vtr.setVName(p.getVSecondName());
+				if(p.getTTrainingLesson().getDFjsj()>0)
+					vtr.setDYbsj(p.getTTrainingLesson().getDFjsj());
+				if(p.getTTrainingLesson().getDXlqsj()>0)
+					vtr.setDYbsj(p.getTTrainingLesson().getDXlqsj());
+				if(p.getTTrainingLesson().getDMnjsj()>0){
+					vtr.setDYbsj(p.getTTrainingLesson().getDMnjsj());
+				}
+				vtr.setDFjsj(p.getTTrainingLesson().getDFjsj());
+				vtr.setDXlqsj(p.getTTrainingLesson().getDXlqsj());
+				vtr.setDMnjsj(p.getTTrainingLesson().getDMnjsj());
+				rList.add(vtr);
+			}
+		
+			page.setData(rList);
+			return page;
+		} catch (HibernateException e) {
+			e.printStackTrace();
+			throw new FinanceServiceException("读取信息列表失败："+e.getMessage());
+		}
+	}
+	
+	//jSon 方式分页开始-------------------------------------------------------------
+	public Page readCanUsedOutlineList(Map<String, Object> params, String pageNo)
+	throws FinanceServiceException {
+		return readCanUsedOutlineList(params, pageNo,9);//dialog窗口显示9条记录，按大纲名称查询
+	}
+	
+	@SuppressWarnings("unchecked")
+	public Page readCanUsedOutlineList(Map<String, Object> params, String pageNo,
+		int pageSize) throws FinanceServiceException {
+		Assert.isTrue(pageNo.matches("\\d+"), "pageNo must be a number");
+		Criteria criteria = this.createCriteria(TOutline.class);
+		
+		if (params.get(QUERY_KEY_NAME) != null
+				&& !params.get(QUERY_KEY_NAME).equals("")) {
+			criteria.add(Restrictions.like(QUERY_KEY_NAME,
+					"%" + params.get(QUERY_KEY_NAME) + "%"));
+		}
+
+		criteria.add(Restrictions.eq("IStatus", QUERY_AUDIT_TYPE_EFFECT));
+		criteria.addOrder(Order.desc(QUERY_KEY_DATE));
+		Integer pageIndex = Integer.parseInt(pageNo);
+		
+		try {
+			Page page = this.pagedQuery(criteria, pageIndex, pageSize);
+			List<VOutline> rList = new ArrayList<VOutline>();
+			VOutline vtr;
+			List<TOutline>list = page.getResult();
+			for(TOutline p:list){
+				vtr = new VOutline();
+				vtr.setVId(p.getVId());
+				vtr.setVName(p.getVName());
+				rList.add(vtr);
+			}
+		
+			page.setData(rList);
+			return page;
+		} catch (HibernateException e) {
+			throw new FinanceServiceException("读取大纲列表失败："+e.getMessage());
+		}
+	}
+	//结束
+	
+	public Page readChangeBaseTrainingLessonList(Map<String, Object> params, String pageNo)
+	throws FinanceServiceException {
+
+		return readChangeBaseTrainingLessonList(params, pageNo, FinanceConfig
+			.getIntProperty("default.system.pagesize"));
+	}
+	
+	@SuppressWarnings("unchecked")
+	public Page readChangeBaseTrainingLessonList(Map<String, Object> params, String pageNo,
+		int pageSize) throws FinanceServiceException {
+		Assert.isTrue(pageNo.matches("\\d+"), "pageNo must be a number");
+		Criteria criteria = this.createCriteria(TTrainingLesson.class);
+		
+
+		if (params.get(QUERY_KEY_NAME) != null
+				&& !params.get(QUERY_KEY_NAME).equals("")) {
+			criteria.add(Restrictions.like(QUERY_KEY_NAME,
+					"%" + params.get(QUERY_KEY_NAME) + "%"));
+		}
+		if (params.get(QUERY_KEY_ZHUANCHANG) != null
+				&& !params.get(QUERY_KEY_ZHUANCHANG).equals("")) {
+			criteria.add(Restrictions.eq(QUERY_KEY_ZHUANCHANG, Integer.parseInt(params.get(QUERY_KEY_ZHUANCHANG).toString())));
+		}
+		
+		
+		String unitid = "";
+		
+		if(params.get(QUERY_KEY_UNIT_ID)!=null){
+			unitid  = params.get(QUERY_KEY_UNIT_ID).toString();
+		}
+		String hql = " from TrainingLessonSort order by DCreatedate asc";
+		List<TrainingLessonSort> lis;
+	
+		if(unitid.equals("")){
+			lis = super.find(hql);
+			unitid = lis.get(0).getVId();
+		}
+		
+		criteria.add(Restrictions.eq(QUERY_KEY_UNIT_ID, unitid));//借用备用字段存储单元id
+		
+		criteria.addOrder(Order.asc("IAsciino"));
+		criteria.addOrder(Order.desc("IAsciiversion"));
+		criteria.addOrder(Order.asc("VId"));
+		Integer pageIndex = Integer.parseInt(pageNo);
+		List<VTraininglessonSubjectRelation> relationzList;
+		VTraininglessonSubjectRelation vr;
+		List<TraininglessonSubjectRelation> rlist;
+		try {
+			Page page = this.pagedQuery(criteria, pageIndex, pageSize);
+			List<VTrainingLesson> rList = new ArrayList<VTrainingLesson>();
+			VTrainingLesson vtr;
+			List<TTrainingLesson>list = page.getResult();
+			for(TTrainingLesson p:list){
+				vtr = new VTrainingLesson();
+				vtr.setTrainingLseeson(p);
+				if(p.getDFjsj()>0){
+					vtr.setDFjsj(Utilities.formatTime(p.getDFjsj()));
+				}else{
+					vtr.setDFjsj("");
+				}
+				if(p.getDXlqsj()>0){
+					vtr.setDXlqsj(Utilities.formatTime(p.getDXlqsj()));
+				}else{
+					vtr.setDXlqsj("");
+				}
+				if(p.getDMnjsj()>0){
+					vtr.setDMnjsj(Utilities.formatTime(p.getDMnjsj()));
+				}else{
+					vtr.setDMnjsj("");
+				}
+				if(p.getIType()==0){
+					vtr.setDXlsj(vtr.getDFjsj());
+				}
+				if(p.getIType()==1){
+					vtr.setDXlsj(vtr.getDXlqsj());
+				}
+				vtr.setLessonchangedbaseflylineList(super.find("from Lessonchangedbaseflyline where TTrainingLesson.VId=?",
+								p.getVId()));
+				relationzList = new ArrayList<VTraininglessonSubjectRelation>();
+				rlist = this.find("from TraininglessonSubjectRelation where TTrainingLesson.VId=?",p.getVId());
+				
+				for(TraininglessonSubjectRelation r:rlist){
+					vr=new VTraininglessonSubjectRelation();
+					if(r.getDTime()>0){
+						vr.setDTime(Utilities.formatTime(r.getDTime()));
+					}else{
+						vr.setDTime("");
+					}
+					vr.setSubjectid(r.getTTimesubject().getVId());
+					relationzList.add(vr);
+				}
+				
+				vtr.setRelationzList(relationzList);
+				rList.add(vtr);
+			}
+		
+			page.setData(rList);
+			return page;
+		} catch (HibernateException e) {
+			throw new FinanceServiceException("读取信息列表失败："+e.getMessage());
+		}
+	}
+	@SuppressWarnings("unchecked")
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void deleteTrainingLessonById(String id)
+			throws FinanceServiceException {
+		try {
+				if(super.findBy(TraininglessonRelation.class, "TTrainingLesson.VId", id).size()>0){
+					throw new FinanceServiceException("该课程已经被引用，不能删除。");
+				}
+				
+				List<Lessonchangedbaseflyline> llist = super.find(" from Lessonchangedbaseflyline where  TTrainingLesson.VId=?", id);
+				
+				super.removeALL(llist);
+				
+				//if(super.findBy(Lessonchangedbaseflyline.class, "TTrainingLesson.VId", id).size()>0){
+				//	throw new FinanceServiceException("该课程已经被引用，不能删除。");
+				//}
+				
+				List<TTrainlessonsubject> deleteSubjectList=super.find(" from TTrainlessonsubject where TTrainingLesson.VId=?",id);
+				super.removeALL(deleteSubjectList);
+				//if(super.findBy(TTrainlessonsubject.class, "TTrainingLesson.VId", id).size()>0){
+				//	throw new FinanceServiceException("该课程已经被引用，不能删除。");
+				//}
+				 List<TraininglessonSubjectRelation> list =  super.findBy(TraininglessonSubjectRelation.class, "TTrainingLesson.VId", id);
+				// for(TraininglessonSubjectRelation t:list){
+				//	 super.remove(t);
+				// }
+				super.removeALL(list);
+				super.removeById(TTrainingLesson.class, id);
+	
+		}catch (HibernateException e) {
+			throw new RuntimeException("删除训练课程信息失败"+e.getMessage());
+		}
+	}
+
+
+	public List<VOutline> readOutlineListByLessonId(String id)
+			throws FinanceServiceException {
+		try{
+			
+		//	Map<String, TOutline> map = new HashMap<String, TOutline>();
+			
+			List<TraininglessonRelation> list = super.findBy(  //课程与阶段关联列表
+					TraininglessonRelation.class, "TTrainingLesson.VId", id);
+			List<VOutline> vList = new ArrayList<VOutline>();
+			TOutline to;
+			VOutline vo;
+			for(TraininglessonRelation t:list){
+				to = super.get(TOutline.class, t.getTPhase().getTrainlessonunit().getTOutline().getVId());
+				
+				vo = new VOutline();
+	        	vo.setVId(to.getVId());
+	        	vo.setVName(to.getVName());
+	        	vo.setIStatus(to.getIStatus());
+	        	vList.add(vo);
+
+			//	map.put(to.getVId(), to);
+				
+				//to = t.getTPhase().getTrainlessonunit().getTOutline(); //测试这样是否能取到
+				/*
+				if(vList.size()==0){
+					vo = new VOutline();
+					vo.setVId(to.getVId());
+					vo.setVName(to.getVName());
+					vo.setIStatus(to.getIStatus());
+					vList.add(vo);					
+				}
+				for(VOutline v:vList){
+					if(!to.getVId().equals(v.getVId())){//去掉重复的大纲
+						vo = new VOutline();
+						vo.setVId(to.getVId());
+						vo.setVName(to.getVName());
+						vo.setIStatus(to.getIStatus());
+						vList.add(vo);
+					}
+				}
+				*/
+				
+			}
+			/*
+			Collection<TOutline> c = map.values();//去掉重复的大纲，前台已限制不会重复引用
+	        for (TOutline cc:c) {
+	        	vo = new VOutline();
+	        	vo.setVId(cc.getVId());
+	        	vo.setVName(cc.getVName());
+	        	vo.setIStatus(cc.getIStatus());
+	        	vList.add(vo);
+	        }
+	        */
+			return vList;
+		}catch (HibernateException e) {
+			throw new FinanceServiceException("获取大纲信息列表失败"+e.getMessage());
+		}
+	}
+
+
+	public TTrainingLesson readTrainingLessonById(String id)
+			throws FinanceServiceException {
+		try{
+			TTrainingLesson t = super.get(TTrainingLesson.class, id);
+			if(t.getDFjsj()>0){
+				t.setVNeirong(Utilities.formatTime(t.getDFjsj()));
+			}
+			if(t.getDXlqsj()>0){
+				t.setVNeirong(Utilities.formatTime(t.getDXlqsj()));
+			}
+			if(t.getDMnjsj()>0){
+				t.setVNeirong(Utilities.formatTime(t.getDMnjsj()));
+			}
+			return t;
+		}catch(HibernateException e){
+			throw new FinanceServiceException("获取训练课程信息失败"+e.getMessage());
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	public VTrainingLessonContent readTrainingLessonContentById(String id)
+			throws FinanceServiceException {
+		try{
+			VTrainingLessonContent vc = new VTrainingLessonContent();
+			TraininglessonRelation r = super.get(TraininglessonRelation.class, id);
+			TTrainingLesson t = null;
+			if(r!=null){
+				t= r.getTTrainingLesson();
+				//throw new FinanceServiceException("获取训练课程信息失败，课程不存在。");
+			}else{
+				t= super.get(TTrainingLesson.class, id);
+			}
+			
+			if(t==null){
+				throw new FinanceServiceException("获取训练课程信息失败，课程不存在。");
+			}
+			vc.setVName(t.getVName());
+			vc.setVVersion(t.getVVersion());
+			vc.setVNo(t.getVNo());
+			vc.setIIsthree(t.getIIsthree());
+			vc.setIOneNum(t.getIOneNum());
+			vc.setITotalNum(t.getITotalNum());
+			
+			if(t.getIPlaneproperty()==0){
+				vc.setIPlaneproperty("单发");
+			}else if(t.getIPlaneproperty()==1){
+				vc.setIPlaneproperty("多发");
+			}else if(t.getIPlaneproperty()==2){
+				vc.setIPlaneproperty("高性能");
+			}else{
+				vc.setIPlaneproperty("未选择");
+			}
+			if(t.getIDaynightproperty()==0){
+				vc.setIDaynightproperty("昼");
+			}else if(t.getIDaynightproperty()==1){
+				vc.setIDaynightproperty("夜");
+			}else{
+				vc.setIDaynightproperty("未选择");
+			}
+			if(t.getITrainType()==0){
+				vc.setITrainType("本场");
+			}else if(t.getITrainType()==1){
+				vc.setITrainType("转场");
+				//vc.setStartName(t.getStationByVStartpos().getVName());
+				//vc.setEndName(t.getStationByVEndpos().getVName());
+			}else{
+				vc.setITrainType("未选择");
+			}
+			if(t.getIFxxz()==0){
+				vc.setIFxxz("带飞");
+			}else if(t.getIFxxz()==1){
+				vc.setIFxxz("单飞");
+			}else if(t.getIFxxz()==2){
+				vc.setIFxxz("机长");
+			}else{
+				vc.setIFxxz("未选择");
+			}
+			if(t.getIKcxz()==0){
+				vc.setIKcxz("训练");
+			}else if(t.getIKcxz()==1){
+				vc.setIKcxz("检查");
+			}else if(t.getIKcxz()==2){
+				vc.setIKcxz("考试");
+			}else{
+				vc.setIKcxz("未选择");
+			}
+			vc.setDYbsj(t.getDYbsj());
+			
+			if(t.getITj()==0){
+				vc.setITj("否");
+			}else{
+				vc.setITj("是");
+			}
+			if(t.getIType()==0){
+				vc.setIType("飞机");
+				vc.setVShebei(Utilities.formatTime(t.getDFjsj()));
+				//vc.setDFjsj(t.getDFjsj());
+			}else if(t.getIType()==1){
+				vc.setIType("训练器");
+				//vc.setDFjsj(t.getDXlqsj());
+				vc.setVShebei(Utilities.formatTime(t.getDXlqsj()));
+			}else if(t.getIType()==2){
+				vc.setIType("模拟机");
+				vc.setVShebei(Utilities.formatTime(t.getDMnjsj()));
+			}else{
+				vc.setIType("未选择");
+			}
+			
+			vc.setVTrainpurpose(t.getVTrainpurpose());
+			vc.setVNeirong(t.getVNeirong());
+			vc.setVTiaojian(t.getVTiaojian());
+			//vc.setVShebei(t.getVShebei());
+			vc.setVXiangmu(t.getVXiangmu());
+			vc.setVTsyq(t.getVTsyq());
+			vc.setVBz(t.getVBz());
+			List<VTimesubject> subList = new ArrayList<VTimesubject>();
+			VTimesubject vo;
+			String hql =" from TraininglessonSubjectRelation where TTrainingLesson.VId=?";
+			List<TraininglessonSubjectRelation> list = super.find(hql, t.getVId());
+			for(TraininglessonSubjectRelation s:list){
+				vo = new VTimesubject();
+				vo.setViewTotalTime(Utilities.formatTime(s.getDTime()));
+				vo.setVName(s.getTTimesubject().getVName());
+				subList.add(vo);
+			}
+			vc.setSubList(subList);
+			return vc;
+		}catch(HibernateException e){
+			e.printStackTrace();
+			throw new FinanceServiceException("获取训练课程信息失败"+e.getMessage());
+		}
+	}
+	/*
+	public VTrainingLessonContent readTrainingLessonContentByNoId(String id)
+	throws FinanceServiceException {
+	try{
+		
+		String lessonid = super.get(TraininglessonRelation.class,id).getTTrainingLesson().getVId();
+		VTrainingLessonContent vc = new VTrainingLessonContent();
+		TTrainingLesson t= super.get(TTrainingLesson.class, lessonid);
+		if(t==null){
+			throw new FinanceServiceException("获取训练课程信息失败，课程不存在。");
+		}
+		vc.setVName(t.getVName());
+		vc.setVVersion(t.getVVersion());
+		vc.setVNo(t.getVNo());
+		
+		if(t.getIPlaneproperty()==0){
+			vc.setIPlaneproperty("单发");
+		}else if(t.getIPlaneproperty()==1){
+			vc.setIPlaneproperty("多发");
+		}else if(t.getIPlaneproperty()==2){
+			vc.setIPlaneproperty("高性能");
+		}else{
+			vc.setIPlaneproperty("未选择");
+		}
+		if(t.getIDaynightproperty()==0){
+			vc.setIDaynightproperty("昼");
+		}else if(t.getIDaynightproperty()==1){
+			vc.setIDaynightproperty("夜");
+		}else{
+			vc.setIDaynightproperty("未选择");
+		}
+		if(t.getITrainType()==0){
+			vc.setITrainType("本场");
+		}else if(t.getITrainType()==1){
+			vc.setITrainType("转场");
+			vc.setStartName(t.getStationByVStartpos().getVName());
+			vc.setEndName(t.getStationByVEndpos().getVName());
+		}else{
+			vc.setITrainType("未选择");
+		}
+		if(t.getIFxxz()==0){
+			vc.setIFxxz("带飞");
+		}else if(t.getIFxxz()==1){
+			vc.setIFxxz("单飞");
+		}else if(t.getIFxxz()==2){
+			vc.setIFxxz("机长");
+		}else{
+			vc.setIFxxz("未选择");
+		}
+		if(t.getIKcxz()==0){
+			vc.setIKcxz("训练");
+		}else if(t.getIKcxz()==1){
+			vc.setIKcxz("检查");
+		}else if(t.getIKcxz()==2){
+			vc.setIKcxz("考试");
+		}else{
+			vc.setIKcxz("未选择");
+		}
+		vc.setDYbsj(t.getDYbsj());
+		
+		if(t.getITj()==0){
+			vc.setITj("否");
+		}else{
+			vc.setITj("是");
+		}
+		if(t.getIType()==0){
+			vc.setIType("飞机");
+			vc.setDFjsj(t.getDFjsj());
+		}else if(t.getIType()==1){
+			vc.setIType("训练器");
+			vc.setDFjsj(t.getDXlqsj());
+		}else{
+			vc.setIType("未选择");
+		}
+		
+		vc.setVTrainpurpose(t.getVTrainpurpose());
+		vc.setVNeirong(t.getVNeirong());
+		vc.setVTiaojian(t.getVTiaojian());
+		vc.setVShebei(t.getVShebei());
+		vc.setVXiangmu(t.getVXiangmu());
+		vc.setVTsyq(t.getVTsyq());
+		vc.setVBz(t.getVBz());
+		return vc;
+	}catch(HibernateException e){
+		e.printStackTrace();
+		throw new FinanceServiceException("获取训练课程信息失败"+e.getMessage());
+	}
+	}
+	*/
+	@SuppressWarnings("unchecked")
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void updateTrainingLesson(TTrainingLesson trainingLesson)
+			throws FinanceServiceException {
+		try{
+
+			String hql =" from TTrainingLesson where VNo=? and VVersion=? and VId<>?";
+			
+			if(super.find(hql,trainingLesson.getVNo(), trainingLesson.getVVersion(),trainingLesson.getVId()).size()>0){
+				throw new FinanceServiceException("更新课目信息失败：编号与版本号原数据库中已存在。");
+			}
+
+			TTrainingLesson old = super.get(TTrainingLesson.class, trainingLesson.getVId());
+			old.setVName(trainingLesson.getVName());
+			old.setVNo(trainingLesson.getVNo());
+			old.setVVersion(trainingLesson.getVVersion());
+			
+			old.setIType(trainingLesson.getIType());
+			old.setIPlaneproperty(trainingLesson.getIPlaneproperty());
+			old.setITrainType(trainingLesson.getITrainType());
+			old.setIDaynightproperty(trainingLesson.getIDaynightproperty());
+			old.setIIsthree(trainingLesson.getIIsthree());
+			old.setIOneNum(trainingLesson.getIOneNum());
+			old.setITotalNum(trainingLesson.getITotalNum());
+			
+			old.setIFxxz(trainingLesson.getIFxxz());
+			old.setIKcxz(trainingLesson.getIKcxz());
+			old.setITj(trainingLesson.getITj());
+			
+			if(trainingLesson.getIType()==0){//0代表飞机，1代表训练器
+				old.setDXlqsj(0);
+				old.setDFjsj(trainingLesson.getDFjsj());
+			}else{
+				old.setDXlqsj(trainingLesson.getDFjsj());
+				old.setDFjsj(0);
+			}
+			if(trainingLesson.getIType()==0){//0代表飞机，1代表训练器,2模拟机
+				old.setDFjsj(trainingLesson.getDFjsj());
+				old.setDXlqsj(0);
+				old.setDMnjsj(0);
+			}else if(trainingLesson.getIType()==1){
+				old.setDXlqsj(trainingLesson.getDFjsj());
+				old.setDFjsj(0);
+				old.setDMnjsj(0);
+			}else{
+				old.setDMnjsj(trainingLesson.getDFjsj());
+				old.setDXlqsj(0);
+				old.setDFjsj(0);
+				
+			}
+			//old.setDYbsj(trainingLesson.getDYbsj());
+			/*
+			if(trainingLesson.getStationByVStartpos().getVId()!=null  //非转场课程，起点为空
+					&& trainingLesson.getStationByVStartpos().getVId().equals("")){
+				old.setStationByVStartpos(null);
+			}else{
+				old.setStationByVStartpos(trainingLesson.getStationByVStartpos());
+			}
+			if(trainingLesson.getStationByVEndpos().getVId()!=null//非转场课程，终点为空
+					&& trainingLesson.getStationByVEndpos().getVId().equals("")){
+				old.setStationByVEndpos(null);
+			}else{
+				old.setStationByVEndpos(trainingLesson.getStationByVEndpos());
+			}
+			*/
+			String lines = trainingLesson.getStationByVStartpos().getVId();
+			
+			old.setStationByVStartpos(null);//设置转场航线，没有用处
+			old.setStationByVEndpos(null);//设置转场航线，没有用处
+			List<Lessonchangedbaseflyline> dslist = super.find(" from Lessonchangedbaseflyline where TTrainingLesson.VId=?", trainingLesson.getVId());
+			super.removeALL(dslist);
+			
+			if(lines!=null){//借用此字段，存储转场航线id
+				List<Lessonchangedbaseflyline> sslist = new ArrayList<Lessonchangedbaseflyline>();
+				String shql =" from Lessonchangedbaseflyline where TTrainingLesson.VId=? and changedbaseflyline.VId=?";
+				Lessonchangedbaseflyline lessonLine;
+				Changedbaseflyline line;
+				String[] os = lines.split(",");
+				for(int i=0;i<os.length;i++){
+					if(super.find(shql, trainingLesson.getVId(),os[i]).size()==0){
+						line = super.get(Changedbaseflyline.class, os[i]);
+						if(line!=null){
+							lessonLine = new Lessonchangedbaseflyline();
+							lessonLine.setChangedbaseflyline(line);
+							lessonLine.setTTrainingLesson(trainingLesson);
+							lessonLine.setIDefine(0);
+							sslist.add(lessonLine);
+						}
+					}
+				}
+				if(sslist.size()>0){
+					super.saveOrUpdateALL(sslist);
+				}
+			}
+			
+			
+			old.setVTrainpurpose(trainingLesson.getVTrainpurpose());
+			//科目
+			String neirong = trainingLesson.getVNeirong();
+			//trainingLesson.setVNeirong("");
+			old.setVNeirong("");
+			old.setVTiaojian(trainingLesson.getVTiaojian());
+			//old.setVShebei(trainingLesson.getVShebei());
+			old.setVXiangmu(trainingLesson.getVXiangmu());
+			old.setVTsyq(trainingLesson.getVTsyq());
+			old.setVBz(trainingLesson.getVBz());
+			//old.setVBeiyong(trainingLesson.getVBeiyong());
+			//更新科目时间
+			
+			String bak = trainingLesson.getVBeiyong();//获取单元与课目时间值
+		//	System.out.println(bak);
+			Map<String, Object> queryMap = new HashMap<String, Object>();
+			if(bak!=null && bak.length()>33){
+				//取得课程单元id
+				String unitid = bak.split(";")[0];
+				String subjectsValue = bak.split(";")[1];
+				String subjectsValueArray[] = subjectsValue.split(",");
+				queryMap.put(QUERY_KEY_SUBJECT_SORT_ID, unitid);
+
+				List<TTimesubject>  subjects = readUnitSubjectDictionaryList(queryMap);
+				
+				List<TraininglessonSubjectRelation> deletelist = super.findBy(
+						TraininglessonSubjectRelation.class, "TTrainingLesson.VId", trainingLesson.getVId());
+				
+				super.removeALL(deletelist);
+				
+				//String hql = " from TraininglessonSubjectRelation where TTimesubject=? and TTrainingLesson=?";
+				
+				
+				
+				TraininglessonSubjectRelation relation;
+				List<TraininglessonSubjectRelation> updateList = new ArrayList<TraininglessonSubjectRelation>();
+				for(int i=0;i<subjects.size();i++){
+					relation =new TraininglessonSubjectRelation();
+					relation.setTTimesubject(subjects.get(i));
+					relation.setTTrainingLesson(trainingLesson);
+					relation.setDTime(Utilities.getMinitue(subjectsValueArray[i]));
+					updateList.add(relation);
+
+				}
+				super.saveOrUpdateALL(updateList);
+			}
+			//先删除科目，再添加
+			if(StringUtils.isNotBlank(neirong) && neirong.length()>32){
+				String dhql = " from TTrainlessonsubject where TTrainingLesson.VId=?";
+				List<TTrainlessonsubject> dlist = super.find(dhql, trainingLesson.getVId());
+				super.removeALL(dlist);
+				//保存训练科目
+				VTrainsubject vTrainsubject = new VTrainsubject();
+				vTrainsubject.setVId(trainingLesson.getVId());
+				vTrainsubject.setTypeid(neirong);
+				vTrainsubject.setVName(old.getTUser().getVId());
+				saveSetTrainingLessonSubject(vTrainsubject);
+			}
+			old.setIAsciino(Utilities.string2ASCII(trainingLesson.getVNo()));
+			old.setIAsciiversion(Utilities.string2ASCII(trainingLesson.getVVersion()));
+			super.update(old);
+		}catch (HibernateException e) {
+			throw new RuntimeException("更新训练课程失败", e);
+		}
+	}
+
+	//保存转场航线
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void saveTrainingLessonChangeBaseLine(
+			Lessonchangedbaseflyline lessonchangedbaseflyline)
+			throws FinanceServiceException {
+		try{
+			if(super.findBy(Lessonchangedbaseflyline.class,
+					"changedbaseflyline.VId", lessonchangedbaseflyline
+							.getChangedbaseflyline().getVId()).size()>0){
+				throw new FinanceServiceException("所选的航线已经为该课程分配过。");
+			}
+			lessonchangedbaseflyline.setIDefine(0);//0非默认1默认
+			super.save(lessonchangedbaseflyline);
+		}catch(HibernateException e){
+			throw new FinanceServiceException("为课程分配转场航线失败", e);
+		}
+		
+	}
+	
+	//保存转场航线
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void deleteTrainingLessonChangeBaseLine(String id)
+			throws FinanceServiceException {
+		try{
+			
+			super.removeById(Lessonchangedbaseflyline.class, id);
+		}catch(HibernateException e){
+			throw new FinanceServiceException("删除课程分配的转场航线失败", e);
+		}
+		
+	}
+
+
+	public List<VTimesubject> readTimesubjectByLessonUnitId(String unitid)
+			throws FinanceServiceException {
+		try{
+			if(StringUtils.isBlank(unitid)){
+				unitid = super.getAll(TrainingLessonSort.class).get(0).getVId();
+			}
+	
+			List<TTimesubject> list = super.findBy(TTimesubject.class, "VUnitid", unitid, QUERY_KEY_DATE, true);
+			List<VTimesubject> vlist = new ArrayList<VTimesubject>();
+			VTimesubject vt;
+			for(TTimesubject t:list){
+				vt = new VTimesubject();
+				vt.setVId(t.getVId());
+				vt.setVName(t.getVName());
+				vt.setVGroup(t.getTDiction().getVId());
+				vlist.add(vt);
+			}
+			return vlist;
+		}catch(HibernateException e){
+			throw new FinanceServiceException("获取课程单元科目失败", e);
+		}
+	}
+
+
+	@SuppressWarnings("unchecked")
+	public List<VTimesubject> readTraininglessonSubjectRelationByLessonId(
+			String lessonid) throws FinanceServiceException {
+		try{
+			if(StringUtils.isBlank(lessonid)){
+				throw new FinanceServiceException("获取课程单元科目失败");
+			}
+			TTrainingLesson lesson = super.get(TTrainingLesson.class, lessonid);
+			
+			String unitid = lesson.getVBeiyong();//单元id
+			
+			List<TTimesubject> diclist = super.findBy(TTimesubject.class, 
+					"VUnitid", unitid, QUERY_KEY_DATE, true);//获取时间科目字典
+
+			List<VTimesubject> vlist = new ArrayList<VTimesubject>();
+			VTimesubject vt;
+			
+			String hql= " from TraininglessonSubjectRelation where TTrainingLesson.VId=? and TTimesubject.VId=?";
+			
+			List<TraininglessonSubjectRelation> list;
+			
+			for(TTimesubject t:diclist){
+				list = super.find(hql, lessonid,t.getVId());
+				vt = new VTimesubject();
+				vt.setVId(t.getVId());
+				vt.setVName(t.getVName());
+				
+				if(list.size()>0){
+					vt.setDTime(Utilities.formatTime(list.get(0).getDTime()));
+				}else{
+					vt.setDTime("");
+				}
+				
+				vt.setVUnit(unitid);
+				vlist.add(vt);
+			}
+			return vlist;
+		}catch(HibernateException e){
+			throw new FinanceServiceException("获取课程单元科目失败", e);
+		}
+	}
+
+
+	@SuppressWarnings("unchecked")
+	public List<VTrainsubject> readVTrainsubjectListById(VTrainsubject vTrainsubject)
+			throws FinanceServiceException {
+		try{
+			List<VTrainsubject> vlist = new ArrayList<VTrainsubject>();
+			VTrainsubject vt;
+			String sortid = vTrainsubject.getTypeid();
+			String hql =" from TTrainsubject where TSubjectsort.VId=? order by IOrder asc,DCreatedate asc";
+			List<TTrainsubject> list  = super.find(hql, sortid);
+			for(TTrainsubject t:list){
+				vt = new VTrainsubject();
+				vt.setVId(t.getVId());
+				vt.setVName(t.getVName());
+				vlist.add(vt);
+			}
+			return vlist;
+		}catch(HibernateException e){
+			throw new FinanceServiceException("获取科目列表失败", e);
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void saveSetTrainingLessonSubject(VTrainsubject vTrainsubject)
+			throws FinanceServiceException {
+		try{
+
+			String hql = " from TTrainlessonsubject where TTrainingLesson.VId=? and TTrainsubject.VId=? order by VId";
+			List<TTrainlessonsubject> list;
+			List<TTrainlessonsubject> savelist = new ArrayList<TTrainlessonsubject>();
+			TTrainlessonsubject subject;
+			String lessonid = vTrainsubject.getVId();
+			String userid = vTrainsubject.getVName();
+			String[] subjects = vTrainsubject.getTypeid().split(";"); 
+			//获取登录用户对象
+			TUser user = super.get(TUser.class, userid);
+			TTrainsubject sub;
+			TTrainingLesson lesson = super.get(TTrainingLesson.class, lessonid);
+			for(int i=0;i<subjects.length;i++){
+				
+				//判断该科目是否已经分配到所选的课程上。
+				list = super.find(hql, lessonid,subjects[i].split(",")[0]);
+				if(list==null || list.size()==0){
+					
+					//构造TTrainlessonsubject对象
+					subject= new TTrainlessonsubject();
+					subject.setTTrainingLesson(lesson);
+					subject.setTUser(user);
+					subject.setDCreatedate(new Date());
+					sub = super.get(TTrainsubject.class, subjects[i].split(",")[0]);
+					subject.setTTrainsubject(sub);
+					subject.setDScore(Double.parseDouble(subjects[i].split(",")[1]));
+					savelist.add(subject);
+				}
+				
+			}
+			if(savelist.size()>0){
+				super.saveOrUpdateALL(savelist);
+			}
+			
+		}catch(HibernateException e){
+			throw new FinanceServiceException("保存课程科目失败", e);
+		}
+	}
+
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void updateSetTrainingLessonSubject(VTrainsubject vTrainsubject)
+			throws FinanceServiceException {
+		try{
+			
+			List<TTrainlessonsubject> savelist = new ArrayList<TTrainlessonsubject>();
+			String[] subjects = vTrainsubject.getTypeid().split(";"); 
+			TTrainlessonsubject old;
+			for(int i=0;i<subjects.length;i++){
+					old = super.get(TTrainlessonsubject.class, subjects[i].split(",")[0]);
+				if(old!=null){
+					old.setDScore(Double.parseDouble(subjects[i].split(",")[1]));
+					savelist.add(old);	
+				}
+							
+			}
+			if(savelist.size()>0){
+				super.saveOrUpdateALL(savelist);
+			}
+			
+		}catch(HibernateException e){
+			e.printStackTrace();
+			throw new FinanceServiceException("更新课程科目失败", e);
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	public List<VTrainsubject> readSetTrainsubjectListById(String id)
+			throws FinanceServiceException {
+		try{
+					
+			List<VTrainsubject> vlist = new ArrayList<VTrainsubject>();
+			VTrainsubject vt;
+				
+			String lhql =" from TTrainlessonsubject where TTrainingLesson.VId=? order by TTrainsubject.IOrder,TTrainsubject.DCreatedate";
+			List<TTrainlessonsubject> list = super.find(lhql, id);
+			
+			String hql ="select t.VId,t.VName from TSubjectsort t where  t in " +
+					"(select s.TTrainsubject.TSubjectsort from TTrainlessonsubject s where s.TTrainingLesson.VId=?" +
+					" group by s.TTrainsubject.TSubjectsort) order by t.IOrder,t.DCreatedate asc" ;
+			
+			List<Object[]> sorts  = super.find(hql,id);
+        
+			for(Object[] sort:sorts){
+				vt = new VTrainsubject();
+				vt.setVId(sort[0].toString());
+				vt.setVName(sort[1].toString());
+				vt.setISort(0);//分类
+				vlist.add(vt);
+				
+				for(TTrainlessonsubject t:list){
+					if(sort[0].equals(t.getTTrainsubject().getTSubjectsort().getVId())){
+						vt = new VTrainsubject();
+						//vt.setVId(t.getTTrainsubject().getVId());
+						vt.setVId(t.getVId());
+						vt.setVName(t.getTTrainsubject().getVName());
+						vt.setISort(1);//科目
+						vt.setDScore(t.getDScore());
+						vt.setTypeid(String.valueOf(t.getTTrainsubject().getISort()));
+						vlist.add(vt);	
+					}
+				}
+			}
+			return vlist;
+		}catch(HibernateException e){
+			e.printStackTrace();
+			throw new FinanceServiceException("获取科目列表失败", e);
+		}
+	}
+	@SuppressWarnings("unchecked")
+	public List<VTrainsubject> readAuditTrainingLessonSubjectListById(String id)
+			throws FinanceServiceException {
+		try{
+					
+			List<VTrainsubject> vlist = new ArrayList<VTrainsubject>();
+			VTrainsubject vt;
+				
+			String lhql =" from TTrainlessonsubject where TTrainingLesson.VId=? order by TTrainsubject.IOrder,TTrainsubject.DCreatedate";
+			List<TTrainlessonsubject> list = super.find(lhql, id);
+			
+			String hql ="select t.VId,t.VName from TSubjectsort t where  t in " +
+					"(select s.TTrainsubject.TSubjectsort from TTrainlessonsubject s where s.TTrainingLesson.VId=?" +
+					" group by s.TTrainsubject.TSubjectsort) order by t.IOrder,t.DCreatedate asc" ;
+			
+			List<Object[]> sorts  = super.find(hql,id);
+        
+			for(Object[] sort:sorts){
+				vt = new VTrainsubject();
+				vt.setVId(sort[0].toString());
+				vt.setVName(sort[1].toString());
+				vt.setISort(0);//分类
+				vlist.add(vt);
+				
+				for(TTrainlessonsubject t:list){
+					if(sort[0].equals(t.getTTrainsubject().getTSubjectsort().getVId())){
+						vt = new VTrainsubject();
+						vt.setVId(t.getTTrainsubject().getVId());
+						//vt.setVId(t.getVId());
+						vt.setVName(t.getTTrainsubject().getVName());
+						vt.setISort(1);//科目
+						vt.setDScore(t.getDScore());
+						vt.setTypeid(String.valueOf(t.getTTrainsubject().getISort()));
+						vlist.add(vt);	
+					}
+				}
+			}
+			return vlist;
+		}catch(HibernateException e){
+			e.printStackTrace();
+			throw new FinanceServiceException("获取科目列表失败", e);
+		}
+	}
+	@SuppressWarnings("unchecked")
+	public List<VTrainsubject> readTrainingLessonSubjectListById(String id)
+			throws FinanceServiceException {
+		try{
+			
+			TraininglessonRelation r = super.get(TraininglessonRelation.class, id);
+			
+			
+					
+			List<VTrainsubject> vlist = new ArrayList<VTrainsubject>();
+			VTrainsubject vt;
+				
+			String lhql =" from TTrainlessonsubject where TTrainingLesson.VId=? order by TTrainsubject.IOrder,TTrainsubject.DCreatedate";
+			List<TTrainlessonsubject> list = super.find(lhql, r.getTTrainingLesson().getVId());
+			
+			String hql ="select t.VId,t.VName from TSubjectsort t where  t in " +
+					"(select s.TTrainsubject.TSubjectsort from TTrainlessonsubject s where s.TTrainingLesson.VId=?" +
+					" group by s.TTrainsubject.TSubjectsort) order by t.IOrder,t.DCreatedate asc" ;
+			
+			List<Object[]> sorts  = super.find(hql,r.getTTrainingLesson().getVId());
+        
+			for(Object[] sort:sorts){
+				vt = new VTrainsubject();
+				vt.setVId(sort[0].toString());
+				vt.setVName(sort[1].toString());
+				vt.setISort(0);//分类
+				vlist.add(vt);
+				
+				for(TTrainlessonsubject t:list){
+					if(sort[0].equals(t.getTTrainsubject().getTSubjectsort().getVId())){
+						vt = new VTrainsubject();
+						//vt.setVId(t.getTTrainsubject().getVId());
+						vt.setVId(t.getVId());
+						vt.setVName(t.getTTrainsubject().getVName());
+						vt.setISort(1);//科目
+						vt.setDScore(t.getDScore());
+						vt.setTypeid(String.valueOf(t.getTTrainsubject().getISort()));
+						vlist.add(vt);	
+					}
+				}
+			}
+			return vlist;
+		}catch(HibernateException e){
+			e.printStackTrace();
+			throw new FinanceServiceException("获取科目列表失败", e);
+		}
+	}
+
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void deleteSetTrainingLessonSubject(String id)
+			throws FinanceServiceException {
+		try{
+			super.removeById(TTrainlessonsubject.class, id);
+		}catch(HibernateException e){
+			e.printStackTrace();
+			throw new FinanceServiceException("删除已设置的课程科目失败", e);
+		}
+	}
+
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public String copyTrainingLesson(String id) throws FinanceServiceException {
+		try{
+			//获取序号
+			int order = 0;
+			List<TTrainingLesson> list = super.getAll(TTrainingLesson.class,QUERY_KEY_DATE,false);
+			if(list==null || list.size()==0){
+				order =1;//序号从1开始
+			}else{
+				order = list.get(0).getIOrder()+1;//读取数据库序号最大值
+			}
+			
+			TTrainingLesson trainingLesson = super.get(TTrainingLesson.class, id);
+			
+			TTrainingLesson old = new TTrainingLesson(); //old新课程对象
+			old.setVName(trainingLesson.getVName() + "- 副本");
+			old.setVNo(trainingLesson.getVNo()+ "- 副本");
+			old.setVVersion(trainingLesson.getVVersion());
+			old.setIAsciino(Utilities.string2ASCII(trainingLesson.getVNo()));
+			old.setIAsciiversion(Utilities.string2ASCII(trainingLesson.getVVersion()));
+			old.setIOrder(order);
+			
+			old.setIType(trainingLesson.getIType());
+			old.setIPlaneproperty(trainingLesson.getIPlaneproperty());
+			old.setITrainType(trainingLesson.getITrainType());
+			old.setIDaynightproperty(trainingLesson.getIDaynightproperty());
+			
+			old.setIFxxz(trainingLesson.getIFxxz());
+			old.setIKcxz(trainingLesson.getIKcxz());
+			old.setITj(trainingLesson.getITj());
+			
+			old.setDXlqsj(trainingLesson.getDXlqsj());
+			old.setDFjsj(trainingLesson.getDFjsj());
+			old.setDYbsj(trainingLesson.getDYbsj());
+			
+			old.setStationByVStartpos(trainingLesson.getStationByVStartpos());
+			old.setStationByVEndpos(trainingLesson.getStationByVEndpos());
+						
+			old.setVTrainpurpose(trainingLesson.getVTrainpurpose());
+			old.setVNeirong(trainingLesson.getVNeirong());
+			old.setVTiaojian(trainingLesson.getVTiaojian());
+			old.setVShebei(trainingLesson.getVShebei());
+			old.setVXiangmu(trainingLesson.getVXiangmu());
+			old.setVTsyq(trainingLesson.getVTsyq());
+			old.setVBz(trainingLesson.getVBz());
+			old.setVBeiyong(trainingLesson.getVBeiyong());
+			old.setIIsthree(trainingLesson.getIIsthree());
+			old.setIOneNum(trainingLesson.getIOneNum());
+			old.setITotalNum(trainingLesson.getITotalNum());
+			old.setTUser(trainingLesson.getTUser());
+			old.setDCreatedate(new Date());
+			super.save(old);
+			
+			//复制科目时间
+			List<TraininglessonSubjectRelation> slist = new ArrayList<TraininglessonSubjectRelation>();
+			TraininglessonSubjectRelation relation;
+			List<TraininglessonSubjectRelation> rlist = super.findBy(
+					TraininglessonSubjectRelation.class, "TTrainingLesson.VId",
+					id, "VId", true);
+			for(TraininglessonSubjectRelation r:rlist){
+				relation = new TraininglessonSubjectRelation();
+				relation.setDTime(r.getDTime());
+				relation.setTTimesubject(r.getTTimesubject());
+				relation.setTTrainingLesson(old);
+				slist.add(relation);
+			}
+			super.saveOrUpdateALL(slist);
+			
+			//复制转场航线
+			if(trainingLesson.getITrainType()==1){//转场课程
+				//复制科目时间
+				List<Lessonchangedbaseflyline> sline = new ArrayList<Lessonchangedbaseflyline>();
+				Lessonchangedbaseflyline line;
+				List<Lessonchangedbaseflyline> rline = super.findBy(
+						Lessonchangedbaseflyline.class, "TTrainingLesson.VId",
+						id, "VId", true);
+				for(Lessonchangedbaseflyline r:rline){
+					line = new Lessonchangedbaseflyline();
+					line.setChangedbaseflyline(r.getChangedbaseflyline());
+					line.setIDefine(r.getIDefine());
+					line.setTTrainingLesson(old);
+					sline.add(line);
+				}
+				super.saveOrUpdateALL(sline);
+			}
+			//复制 训练科目
+			
+			List<TTrainlessonsubject> ssub = new ArrayList<TTrainlessonsubject>();
+			TTrainlessonsubject sub;
+			List<TTrainlessonsubject> rsub = super.findBy(
+					TTrainlessonsubject.class, "TTrainingLesson.VId",
+					id, "VId", true);
+			for(TTrainlessonsubject r:rsub){
+				sub = new TTrainlessonsubject();
+				sub.setDCreatedate(new Date());
+				sub.setTUser(r.getTUser());
+				sub.setDScore(r.getDScore());
+				sub.setTTrainsubject(r.getTTrainsubject());
+				sub.setTTrainingLesson(old);
+				ssub.add(sub);
+			}
+			super.saveOrUpdateALL(ssub);
+			return old.getVId();
+		}catch(HibernateException e){
+			throw new RuntimeException("复制课程失败", e);
+		}
+	}
+
+
+	public List<Planeform> readPlaneformList() throws FinanceServiceException {
+		try{
+			return super.getAll(Planeform.class);
+		}catch(HibernateException e){
+			e.printStackTrace();
+			throw new FinanceServiceException("获取飞机型号列表失败", e);
+		}
+	}
+
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void createOutline(TOutline outline) throws FinanceServiceException {
+		try{
+			outline.setIStatus(QUERY_AUDIT_TYPE_NOSUBMIT);
+			/*
+			0：审批生效
+			1：作废
+			3：未审批
+			2：审批未通过
+			4：未提交审批
+			*/
+			outline.setDCreatedate(new Date());
+
+			super.save(outline);
+		}catch(HibernateException e){
+			throw new RuntimeException("创建大纲失败：数据库错误。", e);
+		}
+	}
+
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void deleteOutlineById(String id) throws FinanceServiceException {
+		try{
+			
+			if(super.findBy(Trainlessonunit.class, "TOutline.VId", id).size()>0){
+				throw new FinanceServiceException("删除大纲失败：该大纲下已经有单元 。");
+			}
+			
+			TOutline old = super.get(TOutline.class, id);
+			if(old.getIStatus()==QUERY_AUDIT_TYPE_EFFECT){
+				throw new FinanceServiceException("删除大纲失败：该大纲已经审批生效 。");
+			}
+			if(old.getIStatus()!=QUERY_AUDIT_TYPE_NOSUBMIT){
+				throw new FinanceServiceException("删除大纲失败：该大纲已经提交审批 。");
+			}
+			
+			
+			super.removeById(TOutline.class, id);
+			
+		}catch(HibernateException e){
+			e.printStackTrace();
+			throw new FinanceServiceException("创建大纲失败：数据库错误。", e);
+		}
+	}
+	
+	public TOutline readOutlineById(String id) throws FinanceServiceException {
+		try{
+			return super.get(TOutline.class, id);
+		}catch(HibernateException e){
+			e.printStackTrace();
+			throw new FinanceServiceException("获取大纲对象失败：数据库错误。", e);
+		}
+	}
+	
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void updateOutline(TOutline outline) throws FinanceServiceException {
+		try{
+			if(outline==null){
+				throw new FinanceServiceException("修订大纲失败：数据库错误。");
+			}
+			TOutline old = super.get(TOutline.class, outline.getVId());
+			
+			/*
+			if(old.getIStatus()==QUERY_AUDIT_TYPE_EFFECT){
+				throw new FinanceServiceException("修订大纲失败：该大纲已经审批生效 。");
+			}
+			*/
+			if(old.getIStatus()==QUERY_AUDIT_TYPE_NOTEFFECT){
+				throw new FinanceServiceException("修订大纲失败：该大纲已经已经作废 。");
+			}
+			
+			if(old.getIStatus()==QUERY_AUDIT_TYPE_NO){
+				throw new FinanceServiceException("修订大纲失败：该大纲处于待审批中 。");
+			}
+			if(old.getIStatus()==QUERY_AUDIT_TYPE_NOTPASS){//未通过的，修改后变成 ，未审批。
+				old.setIStatus(QUERY_AUDIT_TYPE_NO);
+			}
+			
+			old.setVCode(outline.getVCode());
+			old.setVName(outline.getVName());
+			old.setVBc(outline.getVBc());
+			
+			old.setIUnits(outline.getIUnits());
+			old.setIStages(outline.getIStages());
+			old.setILessons(outline.getILessons());
+			
+			old.setDTraintime(outline.getDTraintime());
+			old.setDPlanetime(outline.getDPlanetime());
+			old.setDTrainningdevicetime(outline.getDTrainningdevicetime());
+			old.setDMonijitime(outline.getDMonijitime());
+			
+			old.setVMeterclass(outline.getVMeterclass());
+			old.setVMultipleclass(outline.getVMultipleclass());
+			old.setVTrainequipment(outline.getVTrainequipment());
+			old.setVTrainform(outline.getVTrainform());
+			
+			old.setVRange(outline.getVRange());
+			old.setVTarget(outline.getVTarget());
+			old.setVConditions(outline.getVConditions());
+			old.setVTraincycle(outline.getVTraincycle());
+			old.setVChangeschool(outline.getVChangeschool());
+			old.setVStoptrain(outline.getVStoptrain());
+			old.setVTrainmethod(outline.getVTrainmethod());
+			old.setVScorejudge(outline.getVScorejudge());
+			old.setVTrainrecord(outline.getVTrainrecord());
+			old.setDUpdatetme(new Date());
+			super.update(old);
+		}catch(HibernateException e){
+			e.printStackTrace();
+			throw new FinanceServiceException("修订大纲失败：数据库错误。", e);
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	public VOutlineDetail readTrainingOutlineContentById(String id)
+			throws FinanceServiceException {	
+		try {
+			TOutline outline =super.get(TOutline.class,id);
+			if(outline==null){
+				throw new FinanceServiceException("大纲不存在，参数传递错误。");
+			}
+			VOutlineDetail old = new VOutlineDetail();
+			
+			old.setVCode(outline.getVCode());
+			old.setVName(outline.getVName());
+			old.setVBc(outline.getVBc());
+			
+			old.setIUnits(outline.getIUnits());
+			old.setIStages(outline.getIStages());
+			old.setILessons(outline.getILessons());
+			
+			old.setDTraintime(outline.getDTraintime());
+			old.setDPlanetime(outline.getDPlanetime());
+			old.setDTrainningdevicetime(outline.getDTrainningdevicetime());
+			
+			if(StringUtils.isNotBlank(outline.getVMeterclass())){
+				String m = "";
+				if(outline.getVMeterclass().indexOf("1,")!=-1){
+					m+="仪表(飞机)、";
+				}if(outline.getVMeterclass().indexOf("2,")!=-1){
+					m+="仪表(直升机)、";
+				}
+				old.setVMeterclass(m.substring(0, m.length()-1));
+			}else{
+				old.setVMeterclass("");
+			}
+			
+			if(StringUtils.isNotBlank(outline.getVMultipleclass())){
+				String v = "";
+				if(outline.getVMultipleclass().indexOf("1,")!=-1){
+					v+="单发陆地、";
+				}
+				if(outline.getVMultipleclass().indexOf("2,")!=-1){
+					v+="多发陆地、";
+				}if(outline.getVMultipleclass().indexOf("3,")!=-1){
+					v+="单发水上、";
+				}
+				if(outline.getVMultipleclass().indexOf("4,")!=-1){
+					v+="多发水上、";
+				}
+
+				old.setVMultipleclass(v.substring(0, v.length()-1));
+			}else{
+				old.setVMultipleclass("");
+			}
+			
+			if(StringUtils.isNotBlank(outline.getVTrainequipment())){
+				String s = "";
+				if(outline.getVTrainequipment().indexOf("1,")!=-1){
+					s+="飞机、";
+				}if(outline.getVTrainequipment().indexOf("2,")!=-1){
+					s+="训练器、";
+				}
+				old.setVTrainequipment(s.substring(0, s.length()-1));
+			}else{
+				old.setVTrainequipment("");
+			}
+
+			if(StringUtils.isNotBlank(outline.getVTrainform())){//执照
+				String s = "";
+				String hql= "from Planeform where ? like '%'+VId+'%'";//高招，放过来用
+				List<Planeform> flist = super.find(hql, outline.getVTrainform());
+				for(int i=0;i<flist.size();i++){
+					if(i==flist.size()-1){
+						s+=flist.get(i).getVName();
+					}else{
+						s+=flist.get(i).getVName()+"、";
+					}
+				}
+				old.setVTrainform(s);
+			}else{
+				old.setVTrainform("");
+			}
+			
+			old.setVRange(outline.getVRange());
+			old.setVTarget(outline.getVTarget());
+			old.setVConditions(outline.getVConditions());
+			old.setVTraincycle(outline.getVTraincycle());
+			old.setVChangeschool(outline.getVChangeschool());
+			old.setVStoptrain(outline.getVStoptrain());
+			old.setVTrainmethod(outline.getVTrainmethod());
+			old.setVScorejudge(outline.getVScorejudge());
+			old.setVTrainrecord(outline.getVTrainrecord());
+			old.setDCreatedate(outline.getDCreatedate());
+			old.setViewCreatedate(Utilities.format(outline.getDCreatedate()));
+			old.setIStatus(outline.getIStatus());
+			
+			List<VOutLineAudit> viewOutLineAuditList = new ArrayList<VOutLineAudit>();
+			VOutLineAudit va;
+			List<OutLineAudit> list = super.findBy(OutLineAudit.class,"TOutline.VId", id);
+			
+			for(OutLineAudit t:list){
+				va = new VOutLineAudit();
+				va.setIStatus(t.getIStatus());
+				va.setUserName(t.getTUser().getVUsername());
+				va.setViewAudittime(Utilities.format(t.getDAudittime()));
+				va.setVReason(t.getVReason());
+				viewOutLineAuditList.add(va);
+			}
+			
+			old.setViewOutLineAuditList(viewOutLineAuditList);
+			
+			return old;
+		} catch (HibernateException e) {
+			log.error("读取大纲对象失败", e);
+			throw new FinanceServiceException("读取大纲对象失败", e);
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	public List<VOutlineDetail> readVOutlineDetailList(Map<String, Object> params)
+			throws FinanceServiceException {
+		Criteria criteria = this.createCriteria(TOutline.class);
+
+		if (params.get(QUERY_KEY_NAME) != null
+				&& !params.get(QUERY_KEY_NAME).equals(""))
+			criteria.add(Restrictions.like(QUERY_KEY_NAME, "%"
+					+ params.get(QUERY_KEY_NAME) + "%"));
+		if (params.get(QUERY_KEY_OUTLINE_STATUS) != null
+				&& !params.get(QUERY_KEY_OUTLINE_STATUS).equals(""))
+			criteria.add(Restrictions.eq(QUERY_KEY_OUTLINE_STATUS, 
+					Integer.parseInt(params.get(QUERY_KEY_OUTLINE_STATUS).toString())));
+		criteria.addOrder(Order.asc("VName"));
+		criteria.addOrder(Order.asc("VId"));
+
+		//String hql ="select sum(t.TTrainingLesson.DFjsj),sum(t.TTrainingLesson.DXlqsj) from " +
+		//		"TraininglessonRelation t where t.TPhase.trainlessonunit.TOutline.VId=?";
+		//List<Object[]> listo;
+		
+		List<VOutlineDetail> vlist = new ArrayList<VOutlineDetail>();
+		VOutlineDetail vo;
+		List<TOutline> list = criteria.list();
+		
+		List<Trainlessonunit> child;//孙子节点列表
+		for(TOutline t:list){
+			vo =new VOutlineDetail();
+			vo.setVId(t.getVId());
+			vo.setVName(t.getVName());
+			vo.setVConditions("1");//大纲
+			vo.setILessons(1);//标注是父节点
+			vo.setIStatus(t.getIStatus());
+			vo.setVBc(t.getVBc());
+			vo.setDTraintime(t.getDTraintime());//训练时间
+			vo.setDPlanetime(t.getDPlanetime());
+			vo.setDTrainningdevicetime(t.getDTrainningdevicetime());
+			vo.setDMonijitime(t.getDMonijitime());
+			
+			//listo = super.find(hql,t.getVId());
+			/*
+			if(listo.size()>0){
+				if(listo.get(0)[0]==null){
+					vo.setDLessonDPlanetime(0);
+				}else{
+					vo.setDLessonDPlanetime(Double.parseDouble(listo.get(0)[0].toString()));
+				}
+				if(listo.get(0)[1]==null){
+					vo.setDLessonDTrainningdevicetime(0);
+				}else{
+					vo.setDLessonDTrainningdevicetime(Double.parseDouble(listo.get(0)[1].toString()));
+				}
+				vo.setDLessonTraintime(vo.getDLessonDPlanetime()+vo.getDLessonDTrainningdevicetime());
+
+			}
+			*/
+			
+			vlist.add(vo);
+			
+			child = super.findBy(Trainlessonunit.class, "TOutline.VId", t.getVId());
+			if(child.size()>0){
+				vo =new VOutlineDetail();
+				vo.setVId(child.get(0).getVId());
+				vo.setVConditions(t.getVId());
+				vo.setVName(child.get(0).getVName());
+				vo.setILessons(0);//标注是子节点
+				vlist.add(vo);
+			}
+			
+		}
+		
+		try {
+			
+			return vlist;
+		} catch (HibernateException e) {
+			log.error("读取大纲列表失败", e);
+			throw new FinanceServiceException("读取大纲列表失败", e);
+		}
+	}
+	
+	public Page readVOutlineDetailCheckList(Map<String, Object> params, String pageNo)
+	throws FinanceServiceException {
+
+		return readVOutlineDetailCheckList(params, pageNo, FinanceConfig
+			.getIntProperty("default.system.pagesize"));
+	}
+	@SuppressWarnings("unchecked")
+	public Page readVOutlineDetailCheckList(Map<String, Object> params, String pageNo,
+			int pageSize)throws FinanceServiceException {
+		Criteria criteria = this.createCriteria(TOutline.class);
+
+		if (params.get(QUERY_KEY_NAME) != null
+				&& !params.get(QUERY_KEY_NAME).equals(""))
+			criteria.add(Restrictions.like(QUERY_KEY_NAME, "%"
+					+ params.get(QUERY_KEY_NAME) + "%"));
+		if (params.get(QUERY_KEY_OUTLINE_STATUS) != null
+				&& !params.get(QUERY_KEY_OUTLINE_STATUS).equals(""))
+			criteria.add(Restrictions.eq(QUERY_KEY_OUTLINE_STATUS, 
+					Integer.parseInt(params.get(QUERY_KEY_OUTLINE_STATUS).toString())));
+		criteria.addOrder(Order.asc("VName"));
+		criteria.addOrder(Order.asc("VId"));
+
+		Integer pageIndex = Integer.parseInt(pageNo);
+		Page page = this.pagedQuery(criteria, pageIndex, pageSize);//注入分页数据
+		
+		String hql ="select sum(t.TTrainingLesson.DFjsj),sum(t.TTrainingLesson.DXlqsj)," +
+				"count(t.TTrainingLesson.VId),sum(t.TTrainingLesson.DMnjsj) from " +
+				"TraininglessonRelation t where t.TPhase.trainlessonunit.TOutline.VId=?";
+		List<Object[]> listo;
+		
+		String unit = " from Trainlessonunit where TOutline.VId=? and VName<>'单元'";
+		String phase = " from TPhase where trainlessonunit.TOutline.VId=? and VName<>'阶段'";
+		
+		
+		List<VOutlineDetail> vlist = new ArrayList<VOutlineDetail>();
+		VOutlineDetail vo;
+		List<TOutline> list = page.getResult();
+		int units = 0;
+		int phases =0;
+		for(TOutline t:list){
+			vo =new VOutlineDetail();
+			vo.setVId(t.getVId());
+			vo.setVName(t.getVName());
+			vo.setVConditions("1");//大纲
+			vo.setILessons(1);//标注是父节点
+			vo.setIStatus(t.getIStatus());
+			vo.setVBc(t.getVBc());
+			vo.setDTraintime(t.getDTraintime());//训练时间
+			vo.setDPlanetime(t.getDPlanetime());//飞机时间
+			vo.setDTrainningdevicetime(t.getDTrainningdevicetime());//训练器时间
+			vo.setDMonijitime(t.getDMonijitime());//模拟机时间
+			vo.setIUnits(t.getIUnits());
+			vo.setIStages(t.getIStages());
+			vo.setILessons(t.getILessons());
+			units = t.getIUnits();
+			phases = t.getIStages();
+			// 获取大纲单元数量
+			vo.setILessonUnits(super.find(unit, t.getVId()).size());
+			//获取大纲阶段数量
+			vo.setILessonStages(super.find(phase, t.getVId()).size());
+
+			listo = super.find(hql,t.getVId());//添加课程时间
+			if(listo.size()>0){
+				if(listo.get(0)[0]==null){
+					vo.setDLessonDPlanetime(0);
+				}else{
+					vo.setDLessonDPlanetime(Double.parseDouble(listo.get(0)[0].toString()));//课目-飞机时间
+				}
+				if(listo.get(0)[1]==null){
+					vo.setDLessonDTrainningdevicetime(0);
+				}else{
+					vo.setDLessonDTrainningdevicetime(Double.parseDouble(listo.get(0)[1].toString()));//课目-训练器时间
+				}
+				
+				if(listo.get(0)[3]==null){
+					vo.setDLessonMonijitime(0);
+				}else{
+					vo.setDLessonMonijitime(Double.parseDouble(listo.get(0)[3].toString()));//课目-模拟机时间
+				}
+				
+				vo.setDLessonTraintime(vo.getDLessonDPlanetime()+vo.getDLessonDTrainningdevicetime()
+						+ vo.getDLessonMonijitime());//课目-总时间
+				
+				if(listo.get(0)[2]==null){
+					vo.setILessonLessons(0);
+				}else{
+					vo.setILessonLessons(Integer.parseInt(listo.get(0)[2].toString()));
+				}
+				
+				/*
+				System.out.println(t.getVName()+ ":" + vo.getIUnits() + "-" + vo.getILessonUnits() + ";" + vo.getIStages() + "-" + vo.getILessonStages()
+						+";" + vo.getILessons() + "-" + vo.getILessonLessons()
+						+";" + vo.getDTraintime() + "-" + vo.getDLessonTraintime()
+						+";" + vo.getDPlanetime()+"-" + vo.getDLessonDPlanetime()
+						+";" + vo.getDTrainningdevicetime() + "-" + vo.getDTrainningdevicetime()
+						+";" + vo.getDMonijitime() + "-" + vo.getDLessonMonijitime()
+				);
+				*/
+				
+				//判断是否合格
+				if(units==0 && phases!=0){
+					if(vo.getIStages().equals(vo.getILessonStages()) && 
+						vo.getILessons().equals(vo.getILessonLessons()) && 
+						vo.getDTraintime()<=vo.getDLessonTraintime() &&
+						vo.getDPlanetime()<=vo.getDLessonDPlanetime() &&
+						vo.getDTrainningdevicetime()<=vo.getDLessonDTrainningdevicetime() &&
+						vo.getDMonijitime()<=vo.getDLessonMonijitime()){
+						vo.setHege(1);
+					}else{
+						vo.setHege(0);
+					}
+				}
+				if(phases==0 && units!=0){
+					if(vo.getIUnits().equals(vo.getILessonUnits()) &&
+						vo.getILessons().equals(vo.getILessonLessons()) && 
+						vo.getDTraintime()<=vo.getDLessonTraintime() &&
+						vo.getDPlanetime()<=vo.getDLessonDPlanetime() &&
+						vo.getDTrainningdevicetime()<=vo.getDLessonDTrainningdevicetime() &&
+						vo.getDMonijitime()<=vo.getDLessonMonijitime()){
+						vo.setHege(1);
+					}else{
+						vo.setHege(0);
+					}
+				}
+				if(units==0 && phases==0){
+					if(vo.getILessons().equals(vo.getILessonLessons()) && 
+							vo.getDTraintime()<=vo.getDLessonTraintime() &&
+							vo.getDPlanetime()<=vo.getDLessonDPlanetime() &&
+							vo.getDTrainningdevicetime()<=vo.getDLessonDTrainningdevicetime() &&
+							vo.getDMonijitime()<=vo.getDLessonMonijitime()){
+						vo.setHege(1);
+					}else{
+						vo.setHege(0);
+					}
+				}
+				if(units!=0 && phases!=0){
+					if(vo.getIUnits().equals(vo.getILessonUnits()) && vo.getIStages().equals(vo.getILessonStages())
+							&& vo.getILessons().equals(vo.getILessonLessons()) && 
+							vo.getDTraintime()<=vo.getDLessonTraintime() &&
+							vo.getDPlanetime()<=vo.getDLessonDPlanetime() &&
+							vo.getDTrainningdevicetime()<=vo.getDLessonDTrainningdevicetime() &&
+							vo.getDMonijitime()<=vo.getDLessonMonijitime()){
+						vo.setHege(1);
+					}else{
+						vo.setHege(0);
+					}
+				}
+				
+			}
+			
+			vo.setSTraintime(Utilities.formatzoneTime(vo.getDTraintime()));	
+			vo.setSLessonTraintime(Utilities.formatzoneTime(vo.getDLessonTraintime()));
+			
+			if(vo.getDTrainningdevicetime()==0){
+				vo.setSTrainningdevicetime("");
+				vo.setSLessonDTrainningdevicetime("");
+			}else{
+				vo.setSTrainningdevicetime("/"+Utilities.formatzoneTime(vo.getDTrainningdevicetime()));
+				vo.setSLessonDTrainningdevicetime(Utilities.formatzoneTime(vo.getDLessonDTrainningdevicetime()));
+			}
+			
+			if(vo.getDPlanetime()==0){
+				vo.setSPlanetime("");
+				vo.setSLessonDPlanetime("");
+			}else{
+				vo.setSPlanetime("/"+Utilities.formatzoneTime(vo.getDPlanetime()));
+				vo.setSLessonDPlanetime(Utilities.formatzoneTime(vo.getDLessonDPlanetime()));
+			}
+			
+			if(vo.getDMonijitime()==0){
+				vo.setSMonijitime("");
+				vo.setSLessonMonijitime("");
+			}else{
+				vo.setSMonijitime("/"+Utilities.formatzoneTime(vo.getDMonijitime()));
+				vo.setSLessonMonijitime(Utilities.formatzoneTime(vo.getDLessonMonijitime()));
+			}
+			
+			vlist.add(vo);
+
+		}
+			page.setData(vlist);
+		try {
+			return page;
+		} catch (HibernateException e) {
+			log.error("读取大纲列表失败", e);
+			throw new FinanceServiceException("读取大纲列表失败", e);
+		}
+	}
+	
+	public Page readVOutlineDetailAuditList(Map<String, Object> params, String pageNo)
+	throws FinanceServiceException {
+
+		return readVOutlineDetailAuditList(params, pageNo, FinanceConfig
+			.getIntProperty("default.system.pagesize"));
+	}
+	@SuppressWarnings("unchecked")
+	public Page readVOutlineDetailAuditList(Map<String, Object> params, String pageNo,
+			int pageSize)throws FinanceServiceException {
+		Criteria criteria = this.createCriteria(TOutline.class);
+
+		if (params.get(QUERY_KEY_NAME) != null
+				&& !params.get(QUERY_KEY_NAME).equals(""))
+			criteria.add(Restrictions.like(QUERY_KEY_NAME, "%"
+					+ params.get(QUERY_KEY_NAME) + "%"));
+		if (params.get(QUERY_KEY_OUTLINE_STATUS) != null
+				&& !params.get(QUERY_KEY_OUTLINE_STATUS).equals(""))
+			criteria.add(Restrictions.eq(QUERY_KEY_OUTLINE_STATUS, 
+					Integer.parseInt(params.get(QUERY_KEY_OUTLINE_STATUS).toString())));
+		criteria.add(Restrictions.ne(QUERY_KEY_OUTLINE_STATUS,QUERY_AUDIT_TYPE_NOSUBMIT));//不等于未提交的数据
+		criteria.addOrder(Order.desc("IStatus"));//未审批是3，放到最上面
+
+		Integer pageIndex = Integer.parseInt(pageNo);
+		Page page = this.pagedQuery(criteria, pageIndex, pageSize);//注入分页数据
+		
+		String hql ="select sum(t.TTrainingLesson.DFjsj),sum(t.TTrainingLesson.DXlqsj)," +
+				"count(t.TTrainingLesson.VId) ,sum(t.TTrainingLesson.DMnjsj) from " +
+				"TraininglessonRelation t where t.TPhase.trainlessonunit.TOutline.VId=?";
+		List<Object[]> listo;
+		
+		String unit = " from Trainlessonunit where TOutline.VId=? and VName<>'单元'";
+		String phase = " from TPhase where trainlessonunit.TOutline.VId=? and VName<>'阶段'";
+		
+		
+		List<VOutlineDetail> vlist = new ArrayList<VOutlineDetail>();
+		VOutlineDetail vo;
+		List<TOutline> list = page.getResult();
+			
+		for(TOutline t:list){
+			vo =new VOutlineDetail();
+			vo.setVId(t.getVId());
+			vo.setVName(t.getVName());
+			vo.setVConditions("1");//大纲
+			vo.setILessons(1);//标注是父节点
+			vo.setIStatus(t.getIStatus());
+			vo.setVBc(t.getVBc());
+			vo.setDTraintime(t.getDTraintime());//训练时间
+			vo.setDPlanetime(t.getDPlanetime());//飞机时间
+			vo.setDTrainningdevicetime(t.getDTrainningdevicetime());//训练器时间
+			vo.setDMonijitime(t.getDMonijitime());//模拟机时间
+			vo.setIUnits(t.getIUnits());
+			vo.setIStages(t.getIStages());
+			vo.setILessons(t.getILessons());
+			
+			// 获取大纲单元数量
+			vo.setILessonUnits(super.find(unit, t.getVId()).size());
+			//获取大纲阶段数量
+			vo.setILessonStages(super.find(phase, t.getVId()).size());
+
+			listo = super.find(hql,t.getVId());//添加课程时间
+			if(listo.size()>0){
+				if(listo.get(0)[0]==null){
+					vo.setDLessonDPlanetime(0);
+				}else{
+					vo.setDLessonDPlanetime(Double.parseDouble(listo.get(0)[0].toString()));//课程飞机时间
+				}
+				if(listo.get(0)[1]==null){
+					vo.setDLessonDTrainningdevicetime(0);
+				}else{
+					vo.setDLessonDTrainningdevicetime(Double.parseDouble(listo.get(0)[1].toString()));//课程训练器时间
+				}
+				
+				if(listo.get(0)[3]==null){
+					vo.setDLessonMonijitime(0);
+				}else{
+					vo.setDLessonMonijitime(Double.parseDouble(listo.get(0)[3].toString()));//课目-模拟机时间
+				}
+				vo.setDLessonTraintime(vo.getDLessonDPlanetime()+vo.getDLessonDTrainningdevicetime()
+						+ vo.getDLessonMonijitime());//总时间
+				
+				if(listo.get(0)[2]==null){
+					vo.setILessonLessons(0);
+				}else{
+					vo.setILessonLessons(Integer.parseInt(listo.get(0)[2].toString()));
+				}
+						
+			}
+			vo.setSTraintime(Utilities.formatzoneTime(vo.getDTraintime()));	
+			vo.setSLessonTraintime(Utilities.formatzoneTime(vo.getDLessonTraintime()));
+			
+			if(vo.getDTrainningdevicetime()==0){
+				vo.setSTrainningdevicetime("");
+				vo.setSLessonDTrainningdevicetime("");
+			}else{
+				vo.setSTrainningdevicetime("/"+Utilities.formatzoneTime(vo.getDTrainningdevicetime()));
+				vo.setSLessonDTrainningdevicetime(Utilities.formatzoneTime(vo.getDLessonDTrainningdevicetime()));
+			}
+			
+			if(vo.getDPlanetime()==0){
+				vo.setSPlanetime("");
+				vo.setSLessonDPlanetime("");
+			}else{
+				vo.setSPlanetime("/"+Utilities.formatzoneTime(vo.getDPlanetime()));
+				vo.setSLessonDPlanetime(Utilities.formatzoneTime(vo.getDLessonDPlanetime()));
+			}
+			
+			if(vo.getDMonijitime()==0){
+				vo.setSMonijitime("");
+				vo.setSLessonMonijitime("");
+			}else{
+				vo.setSMonijitime("/"+Utilities.formatzoneTime(vo.getDMonijitime()));
+				vo.setSLessonMonijitime(Utilities.formatzoneTime(vo.getDLessonMonijitime()));
+			}
+			vo.setIStatus(t.getIStatus());
+			
+			vlist.add(vo);
+
+		}
+			page.setData(vlist);
+		try {
+			return page;
+		} catch (HibernateException e) {
+			log.error("读取大纲列表失败", e);
+			throw new FinanceServiceException("读取大纲列表失败", e);
+		}
+	}
+	
+	public Page readStudentAssignOutlineList(Map<String, Object> params, String pageNo)
+	throws FinanceServiceException {
+
+		return readStudentAssignOutlineList(params, pageNo, FinanceConfig
+			.getIntProperty("default.index.min"));
+	}
+
+	@SuppressWarnings("unchecked")
+	public Page readStudentAssignOutlineList(Map<String, Object> params, String pageNo,
+			int pageSize)throws FinanceServiceException {
+		try {
+
+			String cond = "";
+			String condValue = "";
+			
+			if (params.get(QUERY_KEY_NAME) != null
+					&& !params.get(QUERY_KEY_NAME).equals("")){
+				cond+=" and ( a.v_code like ? or a.v_name like ? )";
+				condValue+="%" + params.get(QUERY_KEY_NAME) + "%" + ","+"%" + params.get(QUERY_KEY_NAME) + "%" + ",";
+			}
+			
+			if (params.get(QUERY_KEY_CLASS) != null
+					&& !params.get(QUERY_KEY_CLASS).equals("")){
+				cond+=" and a.V_classNoid like ? ";
+				condValue+="%" + params.get(QUERY_KEY_CLASS) + "%" + ",";
+			}
+			
+			if (params.get(QUERY_KEY_YEAR) != null
+					&& !params.get(QUERY_KEY_YEAR).equals("")){
+				cond+=" and year(a.D_rxsj) = ? ";
+				condValue+=params.get(QUERY_KEY_YEAR) + ",";
+			}
+		
+			if(params.get(QUERY_KEY_IF_ASSIGN) != null
+					&& !params.get(QUERY_KEY_IF_ASSIGN).equals("1")){
+				if(params.get(QUERY_KEY_IF_ASSIGN).equals("2")){
+					//cond+=" and isnull(b.v_outlineid,'')=''";
+					cond+=" and a.v_id not in ( select v_stuid from t_dgdistribution)";
+				}else if(params.get(QUERY_KEY_IF_ASSIGN).equals("3")){
+					//cond+=" and isnull(b.v_outlineid,'')<>''";
+					cond+=" and a.v_id in ( select v_stuid from t_dgdistribution)";
+				}else if(params.get(QUERY_KEY_IF_ASSIGN).equals("4")){
+					cond+=" and a.v_gender='男'";
+				}else if(params.get(QUERY_KEY_IF_ASSIGN).equals("5")){
+					cond+=" and a.v_gender='女'";
+				}else{
+					cond+="";
+				}
+			}
+			
+			if(params.get(QUERY_KEY_ASSIGN_YES) != null
+					&& !params.get(QUERY_KEY_ASSIGN_YES).equals("")){
+				//cond+=" and isnull(b.v_outlineid,'')<>''";
+				cond+=" and a.v_id in ( select v_stuid from t_dgdistribution)";
+			}
+			
+			if(params.get(QUERY_KEY_STUDENT_TYPE) != null
+					&& !params.get(QUERY_KEY_STUDENT_TYPE).equals("")){
+				cond+=" and a.v_stuTypeid = ? ";
+				condValue+= params.get(QUERY_KEY_STUDENT_TYPE)+","; 
+			}
+			
+			if(params.get(QUERY_KEY_COMPANY) != null
+					&& !params.get(QUERY_KEY_COMPANY).equals("")){
+				cond+=" and a.v_companyid = ? ";
+				condValue+= params.get(QUERY_KEY_COMPANY)+","; 
+			}
+			
+			if(params.get(QUERY_KEY_STUDENT_STATUS) != null
+					&& !params.get(QUERY_KEY_STUDENT_STATUS).equals("")){
+				cond+=" and a.v_stuStatusid = ? ";
+				condValue+= params.get(QUERY_KEY_STUDENT_STATUS)+","; 
+			}
+			
+			if(params.get(QUERY_KEY_XJ_STUDENT_STATUS) != null
+					&& !params.get(QUERY_KEY_XJ_STUDENT_STATUS).equals("")){
+				cond+=" and a.v_xjStatusid = ? ";
+				condValue+= params.get(QUERY_KEY_XJ_STUDENT_STATUS)+","; 
+			}
+			if(params.get(QUERY_KEY_FORM) != null
+					&& !params.get(QUERY_KEY_FORM).equals("")){
+				cond+=" and a.v_formid = ? ";
+				condValue+= params.get(QUERY_KEY_FORM)+","; 
+			}
+			if(params.get(QUERY_KEY_FREE_FORM) != null
+					&& !params.get(QUERY_KEY_FREE_FORM).equals("")){
+				cond+=" and a.v_freeTypeid = ? ";
+				condValue+= params.get(QUERY_KEY_FREE_FORM)+","; 
+			}
+			//高级查询写在此处
+			if(params.get(QUERY_KEY_ADVANCED_SEARCH_OBJ) != null){
+				
+				AdvancedSearchBean bean = (AdvancedSearchBean)params.get(QUERY_KEY_ADVANCED_SEARCH_OBJ);
+				
+				//按照并且与或者两大类处理
+				
+				//对八种条件一一处理
+				//1.关键字
+				if(bean.getName()!=null && bean.getName().length()>0){
+					
+					if(bean.getParaNum()<2){
+						cond+=" and ";
+					}
+					else{
+						if(bean.getIsAndName().equals("0")){
+							cond+=" and ";						
+						}else{
+							cond+=" or ";
+						}
+					}
+					cond+=" ( a.v_code like ? or a.v_name like ?  or a.v_gender=? or a.v_cardid like ?) ";
+					condValue+="%" + bean.getName() + "%" + ","+"%" + bean.getName() + "%" 
+							+ "," + bean.getName() + ","+"%" + bean.getName() + "%" + ",";
+				}
+				
+				if(bean.getXstuTypeid()!=null && bean.getXstuTypeid().length()>0){
+					if(bean.getParaNum()<2){
+						cond+=" and ";
+					}else{
+						if(bean.getIsAndStuType().equals("0")){
+							cond+=" and ";	
+							
+						}else{
+							cond+=" or "; 
+						}
+					}
+					cond+=" ? like '%'+ a.v_stuTypeid + '%' ";//高招，翻过来用
+					condValue+=bean.getXstuTypeid().replaceAll(",", "")+",";
+				}
+				
+				//3.公司
+				if(bean.getXcompanyid()!=null && bean.getXcompanyid().length()>0){
+					if(bean.getParaNum()<2){
+						cond+=" and ";
+					}else{
+						if(bean.getIsAndCompany().equals("0")){
+							cond+=" and ";
+							
+						}else{
+							cond+=" or "; 
+						}
+					}
+					cond+=" ? like '%'+ a.v_companyid + '%' ";
+					condValue+=bean.getXcompanyid().replaceAll(",", "")+",";
+				}
+				
+				//4.学生状态
+
+				if(bean.getXstatusid()!=null && bean.getXstatusid().length()>0){
+					if(bean.getParaNum()<2){
+						cond+=" and ";
+					}else{
+						if(bean.getIsAndStatus().equals("0")){
+							cond+=" and ";
+							
+						}else{
+							cond+=" or "; 
+						}
+					}
+					cond+=" ? like '%'+ a.v_stuStatusid + '%' ";
+					condValue+=bean.getXstatusid().replaceAll(",", "")+",";
+				}
+				
+				//5.学籍状态
+
+				if(bean.getXxjstatusid()!=null && bean.getXxjstatusid().length()>0){
+					if(bean.getParaNum()<2){
+						cond+=" and ";
+					}else{
+						if(bean.getIsAndXjStatus().equals("0")){
+							cond+=" and ";
+						}else{
+							cond+=" or "; 
+						}
+					}
+					cond+=" ? like '%'+ a.v_xjStatusid + '%' ";
+					condValue+=bean.getXxjstatusid().replaceAll(",", "")+",";
+				}
+				//6.招生形式
+
+				if(bean.getXformid()!=null && bean.getXformid().length()>0){
+					if(bean.getParaNum()<2){
+						cond+=" and ";
+					}else{
+						if(bean.getIsAndForm().equals("0")){
+							cond+=" and ";
+							
+						}else{
+							cond+=" or "; 
+						}
+					}
+					cond+=" ? like '%'+ a.v_formid + '%' "; 
+					condValue+=bean.getXformid().replaceAll(",", "")+",";
+				}
+				//7.费用形式
+
+				if(bean.getXfreetypeid()!=null && bean.getXfreetypeid().length()>0){
+					if(bean.getParaNum()<2){
+						cond+=" and ";
+					}else{
+						if(bean.getIsAndFreeType().equals("0")){
+							cond+=" and ";
+							
+						}else{
+							cond+=" or "; 
+						}
+					}
+					cond+=" ? like '%'+ a.v_freeTypeid + '%' ";
+					condValue+=bean.getXfreetypeid().replaceAll(",", "")+",";
+				}
+				//8.是否分配
+				if(bean.getIsAssignid()!=null && bean.getIsAssignid().length()>0 && bean.getIsAssignid().length()<4){//2,3, 表示全选
+					
+					if(bean.getIsAndAssign().equals("0")){
+						cond+=" and ";
+					}else{
+						cond+=" or ";
+					}
+					
+					if(bean.getIsAssignid().indexOf("2")!=-1){
+						//cond+=" isnull(b.v_outlineid,'')=''";
+						cond+=" and a.v_id not in ( select v_stuid from t_dgdistribution)";
+					}else if(bean.getIsAssignid().indexOf("3")!=-1){
+						//cond+=" isnull(b.v_outlineid,'')<>''";
+						cond+=" and a.v_id in ( select v_stuid from t_dgdistribution)";
+					}
+				}
+			}
+			
+			String sql = "select isnull(a.v_id,'') as v_id," +
+					"isnull(a.v_code,'') as v_code," +
+					"isnull(a.v_name,'') as v_name," +
+					"isnull(a.v_gender,'') as v_gender," +
+					"isnull(g.v_name,'') as stuTypeName," +
+					"isnull(c.v_name,'') as companyname," +
+					"isnull(f.v_name,'') as stuStatusName," +
+					"isnull(h.v_name,'') as xjStatusName," +
+					"isnull(d.v_name,'') as vform," +
+					"isnull(e.v_name,'') as freename" +
+					//"isnull(b.v_outlineid,'') as v_outlineid," +
+					//"isnull(i.v_name,'') as outlinename," +
+					//"isnull(b.v_id,'') as dvid from studentBaseInfo a " +
+					" from studentBaseInfo a " +
+					//"left join t_dgdistribution b on a.v_id=b.v_stuid " +
+					"left join t_org c on a.V_companyid=c.v_id " +
+					"left join t_diction d on a.V_formid=d.v_id " +
+					"left join t_diction e on  a.V_freeTypeid=e.v_id " +
+					"left join t_diction f on a.V_stuStatusid=f.v_id " +
+					"left join t_diction g on a.V_stuTypeid=g.v_id " +
+					"left join t_diction h on a.V_xjStatusid=h.v_id " +
+					//"left join t_outline i on b.v_outlineid= i.v_id " +
+					"where a.i_usertype=0 " + cond + 
+					" order by a.d_createdate";
+			//System.out.println(sql);
+			Integer pageIndex = Integer.parseInt(pageNo);
+
+			Page page;
+			if(condValue.equals("")){
+				page = this.pagedSQLQuery(sql, pageIndex, pageSize);
+			}else{
+				page = this.pagedSQLQuery(sql, pageIndex, pageSize,(Object[])condValue.split(","));
+			}
+			List<VStudentDistributionClass> stuClassList;
+			VStudentDistributionClass sd;
+			String hql =" from TDgdistribution where studentBaseInfo.VId=?";
+			List<TDgdistribution> dlist;
+			List<VStudentBaseInfo> vlist = new ArrayList<VStudentBaseInfo>();
+			VStudentBaseInfo vs;
+			
+			List<Object[]> olist = page.getResult();
+			
+			for(Object[] obj:olist){
+				vs = new VStudentBaseInfo();
+				vs.setVId(obj[0].toString());
+				vs.setVCode(obj[1].toString());
+				vs.setVName(obj[2].toString());
+				vs.setVGender(obj[3].toString());
+				
+				vs.setStuTypeName(obj[4].toString());
+				vs.setCompanyName(obj[5].toString());
+				vs.setStuStatusName(obj[6].toString());
+				
+				vs.setXjStatusName(obj[7].toString());
+				vs.setFormName(obj[8].toString());
+				vs.setFreeTypeName(obj[9].toString());
+				
+				stuClassList = new ArrayList<VStudentDistributionClass>();
+				dlist = super.find(hql, vs.getVId());
+				for(TDgdistribution t:dlist){
+					sd = new VStudentDistributionClass();
+					sd.setVId(t.getVId());
+					sd.setClassName(t.getTOutline().getVName());
+					stuClassList.add(sd);
+				}
+				
+				
+				//vs.setOutlineid(obj[10].toString());
+				//vs.setOutlineName(obj[11].toString());
+				//vs.setDvid(obj[12].toString());
+				vs.setStuClassList(stuClassList);
+				vlist.add(vs);
+			}
+			
+			page.setData(vlist);
+			
+			return page;
+		} catch (HibernateException e) {
+			e.printStackTrace();
+			log.error("读取学员信息列表失败", e);
+			throw new FinanceServiceException("读取学员信息列表失败", e);
+		}
+	}
+	public List<TDiction> readDictionList(String typeid)
+			throws FinanceServiceException {
+		try{
+			return super.findBy(TDiction.class, "TDictype.VId", typeid);
+		}catch (HibernateException e) {
+			log.error("读取教员执照列表失败", e);
+			throw new FinanceServiceException("读取信息列表失败", e);
+		}
+	}
+
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public VOrg saveOutlineUnit(Trainlessonunit unit)
+			throws FinanceServiceException {
+		try{
+			
+			String hql = " from Trainlessonunit where TOutline.VId=? and VName=?";
+			if(super.find(hql, unit.getTOutline().getVId(),unit.getVName()).size()>0){
+				throw new FinanceServiceException("创建大纲单元失败,单元名称已经存在。");
+			}
+			unit.setIType(0);//正常创建
+			unit.setDCreatedate(new Date());
+			super.save(unit);
+			
+			VOrg org = new VOrg();
+			org.setMessage(unit.getVId());
+			org.setFlag(true);	
+			return org;
+			
+		}catch (HibernateException e) {
+			log.error("创建大纲单元失败", e);
+			e.printStackTrace();
+			throw new FinanceServiceException("创建大纲单元失败", e);
+		}
+	}
+	
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void updateOutlineUnit(Trainlessonunit unit)
+			throws FinanceServiceException {
+		try{
+			Trainlessonunit old = super.get(Trainlessonunit.class, unit.getVId());
+
+			old.setVName(unit.getVName());
+			old.setVNo(unit.getVNo());
+			old.setVLicenseform(unit.getVLicenseform());
+			old.setVConditions(unit.getVConditions());
+			old.setVPassstandard(unit.getVPassstandard());
+			super.update(old);
+			
+		}catch (HibernateException e) {
+			//log.error("更新大纲单元失败", e);
+			//e.printStackTrace();
+			throw new FinanceServiceException("更新大纲单元失败", e);
+		}
+	}
+
+
+	@SuppressWarnings("unchecked")
+	public List<VOutline> readOutlineUnitList(String outlineid)//单元作为二级目录
+			throws FinanceServiceException {
+		try{
+			List<VOutline> vlist =new ArrayList<VOutline>();
+			VOutline vo;
+			String name = "单元";
+			String pname = "阶段";
+			String flag ="";//类型标识
+			String hql ="";
+			String order = " order by IOrder,TTrainingLesson.IAsciino,TTrainingLesson.IAsciiversion desc";
+
+			TOutline outline = super.get(TOutline.class, outlineid);
+			if(outline!=null){
+				flag="outline";
+				List<Trainlessonunit> slist = super.find(" from Trainlessonunit where TOutline.VId=? and VName=?", outlineid,name);
+				List<TPhase> plist = super.find(" from TPhase where trainlessonunit.TOutline.VId=? and VName=?",outlineid,pname);
+
+				if(slist.size()>0 && plist.size()>0){//显示课目
+					
+					hql =" from TraininglessonRelation where TPhase.trainlessonunit.TOutline.VId=?" +order;
+					List<TraininglessonRelation> lessons = super.find(hql, outlineid);
+					for(TraininglessonRelation lesson:lessons){
+						vo = new VOutline();
+						vo.setVId(lesson.getVId());
+						vo.setVName(lesson.getTTrainingLesson().getVNo() + " " + lesson.getVSecondName());
+						vo.setVParentid(outlineid);
+						vo.setIStatus(0);
+						vlist.add(vo);
+					}
+				}
+				else if(slist.size()>0 && plist.size()==0){//显示阶段
+					
+					String unitid = slist.get(0).getVId();
+					List<TPhase> list = super.findBy(TPhase.class, "trainlessonunit.VId", unitid,"VNo",true);
+
+					List<TraininglessonRelation> child;
+					for(TPhase t:list){
+						vo = new VOutline();
+						vo.setVId(t.getVId());
+						vo.setVName(t.getVName());
+						vo.setVParentid(outlineid);
+						vo.setIStatus(1);
+						vlist.add(vo);
+						child = super.findBy(TraininglessonRelation.class, "TPhase.VId", t.getVId());
+						if(child.size()>0){
+							vo =new VOutline();
+							vo.setVId(child.get(0).getVId());
+							vo.setVParentid(t.getVId());
+							vo.setVName(child.get(0).getTTrainingLesson().getVNo() + " "+ child.get(0).getVSecondName());
+							vo.setIStatus(0);//标注是子节点
+							vlist.add(vo);
+						}
+					}
+				}
+				else{//显示单元
+					String hqlu =" from Trainlessonunit where TOutline.VId=? order by VNo";
+					//List<Trainlessonunit> list = super.findBy(Trainlessonunit.class, "TOutline.VId", outlineid,"VNo",true);
+					List<Trainlessonunit> list = super.find(hqlu, outlineid);
+					List<TPhase> child;//孙子节点列表
+					for(Trainlessonunit t:list){
+						vo = new VOutline();
+						vo.setVId(t.getVId());
+						vo.setVName(t.getVName());
+						vo.setVParentid(outlineid);
+						vo.setIStatus(1);
+						vlist.add(vo);
+						child = super.findBy(TPhase.class, "trainlessonunit.VId", t.getVId());
+						if(child.size()>0){
+							vo =new VOutline();
+							vo.setVId(child.get(0).getVId());
+							vo.setVParentid(t.getVId());
+							vo.setVName(child.get(0).getVName());
+							vo.setIStatus(0);//标注是子节点
+							vlist.add(vo);
+						}
+					}
+				}
+
+			}
+			if(flag.length()==0){
+				Trainlessonunit unit = super.get(Trainlessonunit.class, outlineid);
+				if(unit!=null){
+					flag = "unit";
+					List<TPhase> plist = super.find(" from TPhase where trainlessonunit.TOutline.VId=?" +
+							" and VName=?",unit.getTOutline().getVId(),pname);
+					
+					if(plist.size()==0){//1.阶段
+						List<TraininglessonRelation> child;
+						hql =" from TPhase where trainlessonunit.VId=?";
+						List<TPhase> lessons = super.find(hql, outlineid);
+						for(TPhase lesson:lessons){
+							vo = new VOutline();
+							vo.setVId(lesson.getVId());
+							vo.setVName(lesson.getVName());
+							vo.setVParentid(outlineid);
+							vo.setIStatus(1);
+							vlist.add(vo);
+							
+							child = super.findBy(TraininglessonRelation.class, "TPhase.VId", lesson.getVId());
+							if(child.size()>0){
+								vo =new VOutline();
+								vo.setVId(child.get(0).getVId());
+								vo.setVParentid(lesson.getVId());
+								vo.setVName(child.get(0).getTTrainingLesson().getVNo()+ " "+child.get(0).getVSecondName());
+								vo.setIStatus(0);//标注是子节点
+								vlist.add(vo);
+							}
+						}
+					}else{//2.课目
+						hql =" from TraininglessonRelation where TPhase.trainlessonunit.VId=? " +order;
+						List<TraininglessonRelation> lessons = super.find(hql, outlineid);
+						for(TraininglessonRelation lesson:lessons){
+							vo = new VOutline();
+							vo.setVId(lesson.getVId());
+							vo.setVName(lesson.getTTrainingLesson().getVNo()+ " "+lesson.getVSecondName());
+							vo.setVParentid(outlineid);
+							vo.setIStatus(0);
+							vlist.add(vo);
+						}
+					}
+					
+				}
+			}
+			
+			if(flag.length()==0){
+				TPhase phase =  super.get(TPhase.class, outlineid);
+				if(phase!=null){
+					//只能显示课目
+					hql =" from TraininglessonRelation where TPhase.VId=? " + order;
+					List<TraininglessonRelation> lessons = super.find(hql, outlineid);
+					for(TraininglessonRelation lesson:lessons){
+						vo = new VOutline();
+						vo.setVId(lesson.getVId());
+						vo.setVName(lesson.getTTrainingLesson().getVNo()+ " "+lesson.getVSecondName());
+						vo.setVParentid(outlineid);
+						vo.setIStatus(0);
+						vlist.add(vo);
+					}
+				}	
+			}
+
+			return vlist;
+		}catch(HibernateException e){
+			throw new FinanceServiceException("获取单元列表失败。",e);
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	public List<Trainlessonunit> readOutlineUnitListById(String outlineid) 
+	throws FinanceServiceException {
+	try{
+		String hql =" from Trainlessonunit where TOutline.VId=? order by VNo,DCreatedate";
+		List<Trainlessonunit> list = super.find(hql, outlineid);
+		return list;
+	}catch(HibernateException e){
+		throw new FinanceServiceException("获取单元列表失败。",e);
+	}
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void saveOutlinePhase(TPhase phase)
+			throws FinanceServiceException {
+		try{
+			String type = phase.getVName().split(",")[1];
+			String name = phase.getVName().split(",")[0];
+			
+			phase.setVName(name);
+			phase.setDCreatedate(new Date());
+			if(type.equals("10")){//大纲下建立阶段，虚拟单元
+				Trainlessonunit unit;
+				String uname = "单元";
+				String outlineid = phase.getTrainlessonunit().getVId();
+				String hql =" from Trainlessonunit where TOutline.VId=? and VName=?";
+				List<Trainlessonunit> list = super.find(hql, outlineid,uname);
+
+				if(list.size()>0){
+					unit = list.get(0);
+				}else{
+					
+					TOutline outline = super.get(TOutline.class, outlineid);
+					unit = new Trainlessonunit();
+					unit.setVName(uname);
+					unit.setDCreatedate(new Date());
+					unit.setTUser(phase.getTUser());
+					unit.setTOutline(outline);
+					unit.setIType(1);//虚拟创建
+					super.save(unit);
+				}
+				phase.setTrainlessonunit(unit);
+			}
+			super.save(phase);
+		}catch (HibernateException e) {
+			log.error("保存大纲阶段失败", e);
+			e.printStackTrace();
+			throw new FinanceServiceException("保存大纲阶段失败", e);
+		}
+	}
+	
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void updateOutlinePhase(TPhase phase)
+			throws FinanceServiceException {
+		try{
+			TPhase old = super.get(TPhase.class, phase.getVId());
+			old.setVName(phase.getVName());
+			old.setVNo(phase.getVNo());
+			old.setVConditions(phase.getVConditions());
+			old.setVPassstandard(phase.getVPassstandard());
+			super.update(old);
+		}catch (HibernateException e) {
+			log.error("更新大纲阶段失败", e);
+			e.printStackTrace();
+			throw new FinanceServiceException("更新大纲阶段失败", e);
+		}
+	}
+
+	public List<VOutline> readOutlinePhaseList(String unitid)//阶段作为三级目录
+			throws FinanceServiceException {
+		try{
+			List<TPhase> list = super.findBy(TPhase.class, "trainlessonunit.VId", unitid,"DCreatedate",true);
+			List<VOutline> vlist =new ArrayList<VOutline>();
+			VOutline vo;
+			List<TraininglessonRelation> child;//孙子节点列表，阶段下面的课程
+			for(TPhase t:list){
+				vo = new VOutline();
+				vo.setVId(t.getVId());
+				vo.setVName(t.getVName());
+				vo.setVParentid(unitid);
+				vo.setIStatus(1);
+				vlist.add(vo);
+				child = super.findBy(TraininglessonRelation.class, "TPhase.VId", t.getVId());
+				if(child.size()>0){
+					vo =new VOutline();
+					vo.setVId(child.get(0).getVId());
+					vo.setVParentid(t.getVId());
+					vo.setVName(child.get(0).getTTrainingLesson().getVName());
+					vo.setIStatus(0);//标注是子节点
+					vlist.add(vo);
+				}
+			}
+			
+			return vlist;
+		}catch(HibernateException e){
+			throw new FinanceServiceException("获取阶段列表失败。",e);
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	public List<VOutline> readOutlinePhaseListById(String outlineid)// 飞行记录录入使用
+	throws FinanceServiceException {
+	try{
+		if(StringUtils.isBlank(outlineid)){
+			return null;
+		}
+		List<TPhase> list= super.find(" from TPhase where trainlessonunit.TOutline.VId=? order by VNo, DCreatedate asc",outlineid);
+		
+
+		List<VOutline> vlist =new ArrayList<VOutline>();
+		VOutline vo;
+
+		for(TPhase t:list){
+			vo = new VOutline();
+			vo.setVId(t.getVId());
+			vo.setVName(t.getVName());
+			vo.setVParentid(t.getTrainlessonunit().getVId());
+			vo.setIStatus(1);
+			vlist.add(vo);
+		}
+		
+		return vlist;
+	}catch(HibernateException e){
+		throw new FinanceServiceException("获取阶段列表失败。",e);
+	}
+	}
+	
+	@SuppressWarnings("unchecked")
+	public List<VOutline> readOutlineAllLessonList(String outlineid)//飞行训练记录录入
+	throws FinanceServiceException {
+	try{
+		//List<TraininglessonRelation> list = super.findBy(TraininglessonRelation.class, "TPhase.VId", phaseid,"DCreatedate",true);
+		String order = " order by IOrder,TTrainingLesson.IAsciino,TTrainingLesson.IAsciiversion desc";
+		String hql = " from TraininglessonRelation where TPhase.trainlessonunit.TOutline.VId=?" + order;
+		List<TraininglessonRelation> list = super.find(hql, outlineid);
+		List<VOutline> vlist =new ArrayList<VOutline>();
+		VOutline vo;
+		
+		for(TraininglessonRelation t:list){
+			vo = new VOutline();
+			vo.setVId(t.getTTrainingLesson().getVId());
+			vo.setVName(t.getVSecondName());
+			vo.setVNo(t.getTTrainingLesson().getVNo());
+			vo.setVParentid(t.getTPhase().getVId());
+			vo.setIStatus(t.getIOrder());
+			vlist.add(vo);
+		}
+		
+		return vlist;
+	}catch(HibernateException e){
+		throw new FinanceServiceException("获取阶段列表失败。",e);
+	}
+	}
+	@SuppressWarnings("unchecked")
+	public List<VOutline> readOutlinePhaseLessonList(String phaseid)//课程作为四级目录
+			throws FinanceServiceException {
+		try{
+			String hql =" from TraininglessonRelation where TPhase.VId=? order by IOrder,DCreatedate";
+			List<TraininglessonRelation> list = super.find(hql, phaseid);
+			List<VOutline> vlist =new ArrayList<VOutline>();
+			VOutline vo;
+			
+			for(TraininglessonRelation t:list){
+				vo = new VOutline();
+				vo.setVId(t.getTTrainingLesson().getVId());
+				vo.setVName(t.getTTrainingLesson().getVName());
+				vo.setVParentid(phaseid);
+				vo.setIStatus(0);
+				vlist.add(vo);
+			}
+			
+			return vlist;
+		}catch(HibernateException e){
+			throw new FinanceServiceException("获取阶段列表失败。",e);
+		}
+	}
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void deleteOutlineUnitById(String unitid)
+			throws FinanceServiceException {
+		try{
+			if(super.findBy(TPhase.class, "trainlessonunit.VId", unitid).size()>0){
+				throw new FinanceServiceException("该单元已经有阶段，不能删除。");
+			}
+			super.removeById(Trainlessonunit.class, unitid);
+		}catch (HibernateException e) {
+			log.error("删除大纲单元失败", e);
+			e.printStackTrace();
+			throw new FinanceServiceException("删除大纲单元失败", e);
+		}
+	}
+	
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void deleteOutlinePhaseById(String phaseid)
+			throws FinanceServiceException {
+		try{
+			
+			boolean flag = false;
+			
+			if(super.findBy(TraininglessonRelation.class, "TPhase.VId", phaseid).size()>0){
+				throw new FinanceServiceException("该阶段下已经有课程，不能删除。");
+			}
+			
+			TPhase old = super.get(TPhase.class,phaseid); 
+			Trainlessonunit unit = old.getTrainlessonunit();
+
+			if(unit.getVName().equals("单元")){
+				String hql =" from TPhase where trainlessonunit.VId=?";//是虚拟单元，且是有一个阶段，删除该虚拟单元。
+				if(super.find(hql, unit.getVId()).size()==1){
+					flag =true;
+				}
+			}
+			super.remove(old);
+			if(flag){
+				super.remove(unit);
+			}
+		}catch (HibernateException e) {
+			log.error("删除大纲阶段失败", e);
+			e.printStackTrace();
+			throw new RuntimeException("删除大纲阶段失败", e);
+		}
+	}
+
+	public VTrainlessonunit readVTrainlessonunitById(String id)
+			throws FinanceServiceException {
+		VTrainlessonunit vt = new VTrainlessonunit();
+		Trainlessonunit t= super.get(Trainlessonunit.class, id);
+		vt.setVId(t.getVId());
+		vt.setVName(t.getVName());
+		vt.setVNo(t.getVNo());
+		vt.setVLicenseform(t.getVLicenseform());
+		vt.setVConditions(t.getVConditions());
+		vt.setVPassstandard(t.getVPassstandard());
+		vt.setOutlineid(t.getTOutline().getVId());
+		return vt;
+	}
+	
+	public VTrainlessonunit readVTrainlessonphaseById(String id)
+			throws FinanceServiceException {
+		VTrainlessonunit vt = new VTrainlessonunit();
+		TPhase t= super.get(TPhase.class, id);
+		vt.setVId(t.getVId());
+		vt.setVName(t.getVName());
+		vt.setVNo(t.getVNo());
+		vt.setVConditions(t.getVConditions());
+		vt.setVPassstandard(t.getVPassstandard());
+		vt.setOutlineid(t.getTrainlessonunit().getVId());
+		return vt;
+	}
+
+	@SuppressWarnings("unchecked")
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public List<VOutline> saveOutlinePhaseAndLessonRelation(VTrainsubject vTrainsubject)
+			throws FinanceServiceException {
+		try{
+			List<TraininglessonRelation> saveList = new ArrayList<TraininglessonRelation>();
+			TraininglessonRelation tr;
+			TUser user = super.get(TUser.class, vTrainsubject.getVName());
+			TTrainingLesson lesson;
+			TPhase phase = null;
+			
+			String phaseid = vTrainsubject.getVId();
+			String[] lessons = vTrainsubject.getTypeid().split(",");
+			
+			String flag ="";//类型标识
+			
+			//所选节点类型：大纲、单元、阶段 
+			
+			//1.大纲：虚拟单元、虚拟阶段
+			TOutline outline = super.get(TOutline.class, phaseid);
+			if(outline!=null){
+				flag="outline";				
+				Trainlessonunit unit;
+				String uname = "单元";
+				String hql =" from Trainlessonunit where TOutline.VId=? and VName=?";
+				List<Trainlessonunit> list = super.find(hql, outline.getVId(),uname);
+				if(list.size()>0){
+					unit = list.get(0);
+				}else{
+					
+					unit = new Trainlessonunit();
+					unit.setVName(uname);
+					unit.setDCreatedate(new Date());
+					unit.setIType(1);//虚拟创建
+					unit.setTUser(user);
+					unit.setTOutline(outline);
+					super.save(unit);
+
+				}
+				hql =" from TPhase where trainlessonunit.TOutline.VId=? and VName=?";
+				List<TPhase> plist= super.find(hql, outline.getVId(),"阶段");
+				if(plist.size()==0){
+					phase = new TPhase();
+					phase.setTrainlessonunit(unit);
+					phase.setVName("阶段");
+					phase.setTUser(user);
+					phase.setDCreatedate(new Date());
+					super.save(phase);
+				}else{
+					phase = plist.get(0);
+				}
+			}
+			
+			//2.单元：虚拟一个阶段
+			if(flag.length()==0){
+				Trainlessonunit unit = super.get(Trainlessonunit.class, phaseid);
+				if(unit!=null){
+					String hql =" from TPhase where trainlessonunit.VId=? and VName=?";
+					List<TPhase> plist = super.find(hql, phaseid,"阶段");
+					if(plist.size()==0){
+						phase = new TPhase();
+						phase.setTrainlessonunit(unit);
+						phase.setVName("阶段");
+						phase.setTUser(user);
+						phase.setDCreatedate(new Date());
+						super.save(phase);
+					}else{
+						phase = plist.get(0);
+					}
+					
+					flag="unit";
+				}
+			}
+			
+			//3.阶段：直接添加课程
+			if(flag.length()==0){
+				phase = super.get(TPhase.class, phaseid);
+			}
+			for(int i=0;i<lessons.length;i++){
+				if(phase!=null){
+					lesson = super.get(TTrainingLesson.class, lessons[i].split(";")[0]);
+					tr = new TraininglessonRelation();
+					tr.setDCreatedate(new Date());
+					tr.setTPhase(phase);
+					tr.setTUser(user);
+					tr.setIOrder(Integer.parseInt(lessons[i].split(";")[1]));
+					tr.setTTrainingLesson(lesson);
+					tr.setVSecondName(lessons[i].split(";")[2]);
+					saveList.add(tr);
+				}
+			}
+			if(saveList.size()>0)
+				super.saveOrUpdateALL(saveList);
+			
+			List<VOutline> vlist = new ArrayList<VOutline>();
+			return vlist;
+			
+		}catch (HibernateException e) {
+			throw new FinanceServiceException("分配课程失败，数据库连接超时。", e);
+		}
+	}
+	
+
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void deleteOutlinePhaseAndLessonRelation(String id)
+			throws FinanceServiceException {
+		try{
+			boolean flag = false;
+			boolean isunit = false;
+			TraininglessonRelation old = super.get(TraininglessonRelation.class, id);
+			TPhase p = old.getTPhase();
+			Trainlessonunit unit = p.getTrainlessonunit();
+			if(p.getVName().equals("阶段")){
+				String hql =" from TraininglessonRelation where TPhase.VId=?";//如只有一条记录并且是虚拟阶段，删除虚拟阶段
+				if(super.find(hql, p.getVId()).size()==1){
+					flag = true;
+				}
+				
+			}
+			//是否是虚拟单元
+			if(unit.getVName().equals("单元")){
+				isunit = true;
+			}
+			super.remove(old);
+			
+			if(flag){
+				super.remove(p);
+			}
+			
+			if(flag && isunit){
+				super.remove(unit);
+			}
+			
+			
+		}catch (HibernateException e) {
+			log.error("删除已分配的课程失败", e);
+			e.printStackTrace();
+			throw new FinanceServiceException("删除已分配的课程失败，数据库连接超时。", e);
+		}catch (Exception e) {
+			log.error("删除已分配的课程失败", e);
+			e.printStackTrace();
+			throw new FinanceServiceException("删除已分配的课程失败，数据库连接超时。", e);
+		}
+	}
+	
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public VOrg execOutlineCopyById(String id) throws FinanceServiceException {
+		try{
+			
+			TOutline outline = super.get(TOutline.class, id);//获取大纲信息
+			
+			TOutline old = new TOutline(); //old借用新大纲对象
+						
+			old.setVCode(outline.getVCode() + "-副本");
+			old.setVName(outline.getVName() + "-副本");
+			old.setVBc(outline.getVBc());
+			
+			old.setIUnits(outline.getIUnits());
+			old.setIStages(outline.getIStages());
+			old.setILessons(outline.getILessons());
+			
+			old.setDTraintime(outline.getDTraintime());
+			old.setDPlanetime(outline.getDPlanetime());
+			old.setDTrainningdevicetime(outline.getDTrainningdevicetime());
+			
+			old.setVMeterclass(outline.getVMeterclass());
+			old.setVMultipleclass(outline.getVMultipleclass());
+			old.setVTrainequipment(outline.getVTrainequipment());
+			old.setVTrainform(outline.getVTrainform());
+			
+			old.setVRange(outline.getVRange());
+			old.setVTarget(outline.getVTarget());
+			old.setVConditions(outline.getVConditions());
+			old.setVTraincycle(outline.getVTraincycle());
+			old.setVChangeschool(outline.getVChangeschool());
+			old.setVStoptrain(outline.getVStoptrain());
+			old.setVTrainmethod(outline.getVTrainmethod());
+			old.setVScorejudge(outline.getVScorejudge());
+			old.setVTrainrecord(outline.getVTrainrecord());
+			
+			old.setTUserByVCreateuserid(outline.getTUserByVCreateuserid());
+			old.setTUserByVAudituserid(outline.getTUserByVAudituserid());
+			old.setDAudittime(outline.getDAudittime());
+			old.setDCreatedate(outline.getDCreatedate());
+			old.setDUpdatetme(outline.getDUpdatetme());
+			old.setVFilename(outline.getVFilename());
+			old.setIStatus(QUERY_AUDIT_TYPE_NOSUBMIT);//未提交审核
+			super.save(old);
+			
+			//复制单元
+			List<Trainlessonunit> slist = new ArrayList<Trainlessonunit>();
+			Trainlessonunit unit;
+			List<Trainlessonunit> rlist = super.findBy(Trainlessonunit.class, "TOutline.VId",id, "VId", true);
+			//复制阶段
+			List<TPhase> sphase = new ArrayList<TPhase>();
+			TPhase phase;
+			List<TPhase> rphase;
+			
+			//复制课程
+			List<TraininglessonRelation> sRelationList = new ArrayList<TraininglessonRelation>();
+			TraininglessonRelation relation;
+			List<TraininglessonRelation> rRelationList;
+					
+			for(Trainlessonunit r:rlist){
+				
+				unit = new Trainlessonunit();
+				unit.setTOutline(old);
+				unit.setTUser(r.getTUser());
+				unit.setVName(r.getVName());
+				unit.setVNo(r.getVNo());
+				unit.setVLicenseform(r.getVLicenseform());
+				unit.setVConditions(r.getVConditions());
+				unit.setVPassstandard(r.getVPassstandard());
+				unit.setDCreatedate(r.getDCreatedate());
+				unit.setDCreatedate(new Date());
+				slist.add(unit);
+				
+				//单元id到阶段表中获取阶段列表
+				rphase = super.findBy(TPhase.class, "trainlessonunit.VId",r.getVId(), "VId", true);
+				for(TPhase p:rphase){
+					
+					phase = new TPhase();
+					phase.setTrainlessonunit(unit);
+					phase.setTUser(p.getTUser());
+					phase.setVName(p.getVName());
+					phase.setVNo(p.getVNo());
+					phase.setVConditions(p.getVConditions());
+					phase.setVPassstandard(p.getVPassstandard());
+					phase.setDCreatedate(p.getDCreatedate());
+					sphase.add(phase);
+					
+					//根据阶段的id获取阶段课程关联列表
+					rRelationList = super.findBy(TraininglessonRelation.class, "TPhase.VId",p.getVId(), "VId", true);
+					for(TraininglessonRelation tr:rRelationList){
+						
+						relation = new TraininglessonRelation();
+						relation.setTPhase(phase);
+						relation.setTUser(tr.getTUser());
+						relation.setTTrainingLesson(tr.getTTrainingLesson());
+						relation.setDCreatedate(tr.getDCreatedate());
+						sRelationList.add(relation);
+						relation.setIOrder(tr.getIOrder());
+						relation.setVSecondName(tr.getVSecondName());
+					}
+				}
+			}
+			
+			if(slist.size()>0)
+				super.saveOrUpdateALL(slist);
+			if(sphase.size()>0)
+				super.saveOrUpdateALL(sphase);
+			if(sRelationList.size()>0)
+				super.saveOrUpdateALL(sRelationList);
+			VOrg org = new VOrg();
+			if(rlist.size()>0){
+				org.setIStatus(1);//树形＋号
+			}else{
+				org.setIStatus(0);
+			}
+			org.setFlag(true);
+			org.setMessage(old.getVName());
+			org.setVId(old.getVId());
+			return org;
+		}catch(HibernateException e){
+			throw new RuntimeException("复制大纲失败", e);
+		}
+	}
+
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void execOutlineSubmitAuditById(String id)
+			throws FinanceServiceException {
+		try{
+			TOutline o = super.get(TOutline.class, id);
+			if(o.getIStatus()==QUERY_AUDIT_TYPE_NO){
+				throw new FinanceServiceException("提交审批失败，该大纲处在待审批状态。");
+			}
+			if(o.getIStatus()==QUERY_AUDIT_TYPE_EFFECT){
+				throw new FinanceServiceException("提交审批失败，该大纲已生效。");
+			}
+			if(o.getIStatus()==QUERY_AUDIT_TYPE_NOTEFFECT){
+				throw new FinanceServiceException("提交审批失败，该大纲已经作废。");
+			}
+			if(o.getIStatus()==QUERY_AUDIT_TYPE_NOTPASS){
+				throw new FinanceServiceException("提交审批失败，该大纲审批未通过，要先修改再提交审批。");
+			}
+			
+			o.setIStatus(QUERY_AUDIT_TYPE_NO);
+			super.update(o);
+
+		}catch(HibernateException e){
+			throw new FinanceServiceException("提交审批失败，数据库连接超时。", e);
+		}
+		
+	}
+	
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void saveTrainingLessonOrderByNum(String id,String order)
+			throws FinanceServiceException {
+		try{
+			TraininglessonRelation o = super.get(TraininglessonRelation.class, id);
+			
+			o.setIOrder(Integer.parseInt(order));
+			super.update(o);
+
+		}catch(HibernateException e){
+			throw new FinanceServiceException("排序失败，数据库连接超时。", e);
+		}
+		
+	}
+
+	@SuppressWarnings("unchecked")
+	public List<VOrg> readOutlineUnitSubjectGroupById(String unitid)
+			throws FinanceServiceException {
+		try{
+			
+			String hqlu = " from TrainingLessonSort order by VId asc";
+			List<TrainingLessonSort> lis;
+			
+			
+			if(StringUtils.isBlank(unitid)){
+				lis = super.find(hqlu);
+				unitid = lis.get(0).getVId();
+			}
+			
+			String hql = "select t.TDiction.VId,count(t.TDiction.VId) from TTimesubject t where " +
+					"VUnitid=? group by t.TDiction.VId order by t.TDiction.VId";
+			List<VOrg> blist = new ArrayList<VOrg>();
+			VOrg org;
+			TDiction t;
+			List<Object[]> list = super.find(hql, unitid);
+			
+			for(Object[] o:list){
+				org = new VOrg();
+				t = super.get(TDiction.class, o[0].toString());
+				org.setMessage(t.getVName());
+				org.setIStatus(Integer.parseInt(o[1].toString()));
+				blist.add(org);
+
+			}
+			
+			return blist;
+
+		}catch(HibernateException e){
+			throw new FinanceServiceException("获取课程信息列表失败。", e);
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	public List<VLeftNavigation> readLeftNavigation(String parentid,String userid)//适合一级栏目、二级栏目、三级、功能（非导航）
+			throws FinanceServiceException {
+		try{
+			
+			String hasUrl = userid;
+			//System.out.println(hasUrl);
+			List<VLeftNavigation> list =new ArrayList<VLeftNavigation>();
+			List<VLeftNavigationNext> clist ;//二级栏目列表
+			VLeftNavigation vf;
+			VLeftNavigationNext cf;//二级栏目对象
+			String hql = " from TFunction where VParentid=?  order by IOrder asc,DCreateDate asc";
+			
+			List<TFunction> child;
+			List<TFunction> nextchild;
+			List<TFunction> functionNextList;
+			String url = "";
+			String purl="";
+			int flag=0;
+			int nextflag = 0;
+
+			List<TFunction> flist = super.find(hql, parentid);//第一级栏目
+			for(TFunction f:flist){
+				
+				if(!hasUrl.equals("all") && hasUrl.indexOf(f.getVUrl())==-1){
+					continue;
+				}
+				
+				purl="";
+				vf = new VLeftNavigation();
+				vf.setVName(f.getVName());
+				vf.setVUrl(f.getVUrl());
+				
+				
+
+				child = super.find(hql, f.getVId());//第二级栏目
+				flag=0;
+				
+				clist =new ArrayList<VLeftNavigationNext>();//二级栏目也可能是导航且有三级 
+				
+				for(TFunction c:child){
+					
+					if(!hasUrl.equals("all") && hasUrl.indexOf(c.getVUrl())==-1){
+						continue;
+					}
+					
+					nextflag = 0;
+					cf = new VLeftNavigationNext();
+					cf.setVName(c.getVName());
+					cf.setVUrl(c.getVUrl());
+					cf.setIDh(c.getIDh());
+					
+					if(c.getIDh()==0)
+						flag++;
+					url = "";
+					nextchild = super.find(hql, c.getVId());//第三级栏目，先判断是否是导航
+					
+					functionNextList = new ArrayList<TFunction>();
+					
+					for(TFunction n:nextchild){
+						
+						if(!hasUrl.equals("all") && hasUrl.indexOf(n.getVUrl())==-1){
+							continue;
+						}
+						
+						if(n.getIDh()==0){//第三级也是导航
+							nextflag ++;
+						}
+						url+=n.getVUrl();
+						
+						n.setVParentid(n.getVUrl());
+						
+						functionNextList.add(n);
+					}
+					cf.setFunctionNextList(functionNextList);
+					cf.setIsnext(nextflag);
+					cf.setVParentid(c.getVUrl() + url);//当前节点与其下所有功能节点的URL 用作前台匹配
+					purl+=c.getVUrl();//当二级栏目不是导航的时候，将其放到一级的URL中，用作匹配。
+					
+					clist.add(cf);
+				}
+				
+				vf.setVParentid(f.getVUrl() + purl);
+				vf.setIsnext(flag);
+				vf.setFunctionList(clist);
+				list.add(vf);
+			}
+			
+			return list;
+			
+		}catch(HibernateException e){
+			throw new FinanceServiceException("获取信息列表失败。", e);
+		}
+	}
+
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void auditOutlineById(VTrainsubject v)
+			throws FinanceServiceException {
+		try{
+			
+			if(!StringUtils.isNumeric(v.getTypeid())){
+				throw new FinanceServiceException("审核大纲失败，参数传递错误。");
+			}
+			
+			if(StringUtils.isBlank(v.getVId())){
+				throw new FinanceServiceException("审核大纲失败，参数传递错误。");
+			}
+			TOutline old = super.get(TOutline.class, v.getVId());
+			if(old==null){
+				throw new FinanceServiceException("审核大纲失败，参数传递错误。");
+			}
+			OutLineAudit audit = new OutLineAudit();
+			
+			//记录审批原因。
+			audit.setVReason(v.getVSubname());//VSubname 存储原因
+					
+			if(Integer.parseInt(v.getTypeid())==QUERY_AUDIT_TYPE_EFFECT){//审批生效
+				
+				if(old.getIStatus()==QUERY_AUDIT_TYPE_EFFECT){
+					throw new FinanceServiceException("审核大纲失败，该大纲已经生效。");
+				}
+				if(old.getIStatus()==QUERY_AUDIT_TYPE_NOTEFFECT){
+					throw new FinanceServiceException("审核大纲失败，该大纲已经取消。");
+				}
+				if(old.getIStatus()==QUERY_AUDIT_TYPE_NOSUBMIT){
+					throw new FinanceServiceException("审核大纲失败，该大纲未提交审批，非法操作。");
+				}
+				if(old.getIStatus()==QUERY_AUDIT_TYPE_NOTPASS){
+					throw new FinanceServiceException("审核大纲失败，该大纲已是审批未通过，等待修改中，不能审批生效。");
+				}
+				
+			}
+			
+			if(Integer.parseInt(v.getTypeid())==QUERY_AUDIT_TYPE_NOTPASS){//不通过
+				
+				if(old.getIStatus()==QUERY_AUDIT_TYPE_EFFECT){
+					throw new FinanceServiceException("审核大纲失败，该大纲已经生效。");
+				}
+				if(old.getIStatus()==QUERY_AUDIT_TYPE_NOTEFFECT){
+					throw new FinanceServiceException("审核大纲失败，该大纲已经取消。");
+				}
+				
+				if(old.getIStatus()==QUERY_AUDIT_TYPE_NOSUBMIT){
+					throw new FinanceServiceException("审核大纲失败，该大纲未提交审批，非法操作。");
+				}
+				
+				if(old.getIStatus()==QUERY_AUDIT_TYPE_NOTPASS){
+					throw new FinanceServiceException("审核大纲失败，该大纲已经是审批未通过，无需再次审批。");
+				}
+				
+			}
+			
+			if(Integer.parseInt(v.getTypeid())==QUERY_AUDIT_TYPE_NOTEFFECT){//取消
+				
+				if(old.getIStatus()==QUERY_AUDIT_TYPE_EFFECT){
+					throw new FinanceServiceException("审核大纲失败，该大纲已经生效。");
+				}
+				if(old.getIStatus()==QUERY_AUDIT_TYPE_NOTEFFECT){
+					throw new FinanceServiceException("审核大纲失败，该大纲已经取消。");
+				}
+				
+				if(old.getIStatus()==QUERY_AUDIT_TYPE_NOTPASS){
+					throw new FinanceServiceException("审核大纲失败，该大纲审核未通过，等待修改中，不能取消。");
+				}
+				
+				if(old.getIStatus()==QUERY_AUDIT_TYPE_NOSUBMIT){
+					throw new FinanceServiceException("审核大纲失败，该大纲未提交审批，非法操作。");
+				}
+								
+			}
+			TUser user = super.get(TUser.class, v.getVName());
+			old.setTUserByVAudituserid(user);//vname 存放 审批人id
+			old.setDAudittime(new Date());
+			old.setIStatus(Integer.parseInt(v.getTypeid()));
+			super.update(old);
+			
+			//大纲审批表插入记录
+			audit.setTOutline(old);
+			audit.setTUser(user);
+			audit.setDAudittime(new Date());
+			audit.setIStatus(Integer.parseInt(v.getTypeid()));
+			super.save(audit);
+			
+		}catch(HibernateException e){
+			throw new RuntimeException("审核大纲失败。", e);
+		}
+	}
+	
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void saveAssignOutline(VTrainsubject v)
+			throws FinanceServiceException {
+		try{
+
+			String[] plans = v.getPdate().split(";");
+
+		//	TOutline old = super.get(TOutline.class, v.getVId());
+			TOutline old;
+			//if(old==null){
+			//	throw new FinanceServiceException("分配大纲失败，参数传递错误。");
+			//}
+			TUser user = super.get(TUser.class, v.getVName());
+			
+			List<TrainingPlane> savePlaneList= new ArrayList<TrainingPlane>();
+			
+			TrainingPlane plan;
+			
+			List<TDgdistribution> savelist = new ArrayList<TDgdistribution>();
+			TDgdistribution audit;	
+			String[] stus = v.getTypeid().split(",");
+			String VContact = v.getVSubname();//合同号
+			if(VContact==null || VContact.equals("")){
+				VContact = "C.No" + Utilities.format(new Date(), "yyyyMMddHHmmss");
+			}
+			int sort = v.getISort();
+			int cycle = Integer.parseInt(v.getTypeName());
+			
+			//String hql = " from TDgdistribution where TOutline.VId=? and studentBaseInfo.VId=?";
+			
+			String hql = " from TDgdistribution where studentBaseInfo.VId=? and TOutline.VId=?";
+			StudentBaseInfo stu;
+			String[] ids = v.getVId().split(",");
+			for(int i=0;i<stus.length;i++){
+				//if(super.find(hql, v.getVId(),stus[i]).size()==0){
+				stu = super.get(StudentBaseInfo.class, stus[i]);
+				for(int j = 0;j<ids.length;j++){
+					old = super.get(TOutline.class, ids[j]);
+					if(super.find(hql, stus[i],old.getVId()).size()==0){//该学员已经分配大纲。	学员大纲可以分配多个大纲。
+						audit = new TDgdistribution();
+						audit.setVContact(VContact);
+						audit.setIType(sort);
+						audit.setICycle(cycle);
+						audit.setDCreatedate(new Date());
+						audit.setTUser(user);
+						audit.setTOutline(old);
+						audit.setStudentBaseInfo(stu);
+						audit.setDEnterDate(v.getDCreatedate());//入训时间
+						savelist.add(audit);
+					}
+				}
+				for(int j=0;j<plans.length;j++){
+					for(int w=Integer.parseInt(plans[j].split(",")[0]);w<=Integer.parseInt(plans[j].split(",")[1]);w++){
+						plan = new TrainingPlane();
+						plan.setDCreatedate(new Date());
+						plan.setStudentBaseInfo(stu);
+						plan.setIWeek(w);
+						plan.setDTime(Utilities.getMinitue(plans[j].split(",")[2]));
+						savePlaneList.add(plan);
+					}
+					
+				}
+				
+			}
+			if(savelist.size()>0){
+				//throw new FinanceServiceException("分配大纲失败，选中的学员已经分配大纲。");
+				super.saveOrUpdateALL(savelist);
+			}
+			
+			if(savePlaneList.size()>0){
+				super.saveOrUpdateALL(savePlaneList);
+			}
+				
+			
+		}catch(HibernateException e){
+			throw new RuntimeException("分配大纲失败。", e);
+		}
+	}
+	
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void saveChangedOutline(VTrainsubject v)
+			throws FinanceServiceException {
+		try{
+
+			TOutline old = super.get(TOutline.class, v.getVId());
+			
+			if(old==null){
+				throw new FinanceServiceException("大纲变更失败，参数传递错误。");
+			}
+			TUser user = super.get(TUser.class, v.getVName());
+			
+			List<TDgdistribution> savelist = new ArrayList<TDgdistribution>();
+			List<TChangedoutline> changelist = new ArrayList<TChangedoutline>();
+			TDgdistribution audit;	
+			String[] stus = v.getTypeid().split(",");//学员id
+			String VContact = v.getVSubname();//新合同号
+			if(VContact==null || VContact.equals("")){
+				VContact = "C.No" + Utilities.format(new Date(), "yyyyMMddHHmmss");
+			}
+			int sort = v.getISort();//新周期类型
+			int cycle = Integer.parseInt(v.getTypeName());//新周期
+			
+			//String hql = " from TDgdistribution where TOutline.VId=? and studentBaseInfo.VId=?";
+			String hql = " from TDgdistribution where studentBaseInfo.VId=?";
+			
+			TChangedoutline change;
+			
+			for(int i=0;i<stus.length;i++){
+				audit = (TDgdistribution)super.find(hql,stus[i]).get(0);
+			//	if(!audit.getTOutline().getVId().equals(old.getVId())){//变更的大纲与原大纲相等 忽略， 存在更新周期的可能。
+				//组装change对象
+				change = new TChangedoutline();
+				change.setICycle(audit.getICycle());//保存旧的信息
+				change.setIType(audit.getIType());
+				change.setTUser(audit.getTUser());//保存创建人
+				change.setVContact(audit.getVContact());
+				change.setDCreatedate(audit.getDCreatedate());
+				change.setStudentBaseInfo(audit.getStudentBaseInfo());
+				change.setTOutlineByVOlddgid(audit.getTOutline());
+				//以上为旧数据
+				change.setDChangeddate(Utilities.parse(v.getPdate()));//变更日期
+				change.setTOutlineByVNewdgid(old);// 新的大纲
+				changelist.add(change);
+				
+				audit.setVContact(VContact);
+				audit.setIType(sort);
+				audit.setICycle(cycle);
+				audit.setDCreatedate(Utilities.parse(v.getPdate()));//日期变成更新日期
+				
+				audit.setTUser(user);
+				audit.setTOutline(old);//新大纲
+				savelist.add(audit);
+			//}
+			}
+			if(changelist.size()>0)
+				super.saveOrUpdateALL(changelist);
+			
+			if(savelist.size()>0)
+				super.saveOrUpdateALL(savelist);
+			
+		}catch (ParseException e) {
+			e.printStackTrace();
+		}
+		catch(HibernateException e){
+			e.printStackTrace();
+			throw new RuntimeException("大纲变更失败。", e);
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void escAssignOutline(String id)
+			throws FinanceServiceException {
+		try{
+			TDgdistribution old = super.get(TDgdistribution.class,id);
+			if(old==null){
+				throw new FinanceServiceException("取消大纲失败，参数传递错误。");
+			}
+			
+			String hql = " from TFlightTrainingrecord where TOutline.VId=? and studentBaseInfo.VId=?";
+			
+			if(super.find(hql, old.getTOutline().getVId(),old.getStudentBaseInfo().getVId()).size()>0){
+				throw new FinanceServiceException("取消大纲失败，该学员已经录入了所分配大纲的飞行训练记录。");
+			}
+			String stuid= old.getStudentBaseInfo().getVId();
+			
+			String dhql =" from TDgdistribution where studentBaseInfo.VId=?";
+			List<TDgdistribution> dlist = super.find(dhql, stuid);
+			if(dlist.size()==1){			
+				List<TrainingPlane> list = super.find(" from TrainingPlane where studentBaseInfo.VId=?", stuid);
+				super.removeALL(list);
+			}
+			super.removeById(TDgdistribution.class, id);
+			
+		}catch(HibernateException e){
+			throw new RuntimeException("取消大纲失败。", e);
+		}
+	}
+	
+	public VOutlineDetail readAssignOutlineDetailById(String id) throws FinanceServiceException {
+		try{
+			TDgdistribution old = super.get(TDgdistribution.class,id);
+			if(old==null){
+				throw new FinanceServiceException("取消大纲失败，参数传递错误。");
+			}
+			
+			VOutlineDetail vo = new VOutlineDetail();
+			vo.setVId(old.getTOutline().getVId());//大纲id
+			vo.setVName(old.getTOutline().getVName());//大纲民称
+			vo.setVBc(old.getVContact());//合同号
+			vo.setIUnits(old.getICycle());//周期
+			if(old.getIType()==0){//周期类型
+				vo.setVCode("周");
+			}else if(old.getIType()==1){
+				vo.setVCode("天");
+			}else{
+				vo.setVCode("月");
+			}
+			vo.setViewCreatedate(Utilities.format(old.getDCreatedate()));//分配时间
+			vo.setVConditions(old.getStudentBaseInfo().getVName());//学员姓名
+			vo.setVRange(old.getStudentBaseInfo().getVCode());//学号 
+			return vo;
+			
+		}catch(HibernateException e){
+			throw new FinanceServiceException("取消大纲失败。", e);
+		}
+	}
+
+
+	@SuppressWarnings("unchecked")
+	public List<TOrg> readCompanyList() throws FinanceServiceException {
+		String hql = " from TOrg where VParentid=?";
+		List<TOrg> list =super.find(hql, "fbd3253b48cb0a620148cb3e07910017");
+		return list;
+	}
+
+
+	@SuppressWarnings("unchecked")
+	public List<TSetClass> readSetClass(String year) throws FinanceServiceException {
+		String cond = "";
+		if(StringUtils.isBlank(year)){
+			cond = " and 1=2";
+		}else if(year.length()==4){
+			cond = " and substring(VName,0,3)='"+year.substring(2,4) + "'";
+		}else{
+			cond = " and 1=2";
+		}
+		String hql =" from TSetClass where IType=0 "+cond+" order by VClassid"; 
+		return super.find(hql);
+	}
+	
+	@SuppressWarnings("unchecked")
+	public List<TSetClass> readTrainingClass(String userName) throws FinanceServiceException {
+
+		if(!userName.equals("")){
+			String shql =" from TSetClass where IType=1 and TOtheruser.VCode=? order by VName";
+			List<TSetClass> tlist = super.find(shql, userName);
+			if(tlist.size()>0) return tlist;
+		}
+		String hql =" from TSetClass where IType=1 order by VName"; 
+		List<TSetClass> alist = super.find(hql);
+		return alist;
+	}
+	
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void saveSubjectOrder(String sortId, String order)
+			throws FinanceServiceException {
+		TTrainsubject subject = super.get(TTrainsubject.class, sortId);
+		int iorder = Integer.parseInt(order);
+		if(subject!=null){
+			subject.setIOrder(subject.getIOrder()+iorder);
+		}
+		super.update(subject);
+	}
+	
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void subjectSortOrder(String sortId, String order)
+			throws FinanceServiceException {
+		TSubjectsort subject = super.get(TSubjectsort.class, sortId);
+		int iorder = Integer.parseInt(order);
+		if(subject!=null){
+			subject.setIOrder(subject.getIOrder()+iorder);
+		}
+		super.update(subject);
+	}
+
+
+	@SuppressWarnings("unchecked")
+	public List<Lessonchangedbaseflyline> readLessonchangedbaseflylineById(
+			String id) throws FinanceServiceException {
+		String hql =" from Lessonchangedbaseflyline where TTrainingLesson.VId=?";
+		return super.find(hql, id);
+	}
+
+	@SuppressWarnings("unchecked")
+	public VOrg existOutlineUnitById(String id,String sortId) throws FinanceServiceException {
+		
+		VOrg org = new VOrg();
+		String hql = " from Trainlessonunit where TOutline.VId=? and IType=?";//0正常添加、1虚拟	
+		List<Trainlessonunit> list = super.find(hql, id,Integer.parseInt(sortId));
+		if(list.size()>0){
+			org.setFlag(true);
+		}else{
+			org.setFlag(false);
+		}
+	
+
+		return org;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public VOrg existOutlinePhaseById(String id,String sortId) throws FinanceServiceException {
+
+		String hql = " from TPhase where trainlessonunit.TOutline.VId=? and VName<>?";
+		VOrg org = new VOrg();
+		List<Trainlessonunit> list = super.find(hql, id,"阶段");
+		if(list.size()>0){
+			org.setFlag(true);
+		}else{
+			org.setFlag(false);
+		}
+
+		return org;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public VOrg isHasLessonById(String id) throws FinanceServiceException {
+		VOrg org = new VOrg();
+		TOutline outline = super.get(TOutline.class, id);
+		String hql = "";
+		String flag = "";
+		if(outline!=null){
+			hql = " from TPhase where trainlessonunit.TOutline.VId=? and VName=?";
+			List<TPhase> list = super.find(hql, id,"阶段");
+			if(list.size()>0){
+				org.setFlag(true);
+			}else{
+				org.setFlag(false);
+			}
+			flag ="outline";
+		}
+		if(flag.length()==0){
+			Trainlessonunit unit = super.get(Trainlessonunit.class, id);
+			if(unit!=null){
+				
+				hql = " from TPhase where trainlessonunit.TOutline.VId=? and VName=?";
+				List<TPhase> list = super.find(hql, unit.getTOutline().getVId(),"阶段");
+				if(list.size()>0){
+					org.setFlag(true);
+				}else{
+					org.setFlag(false);
+				}
+			}
+		}
+
+		return org;
+	}
+	@SuppressWarnings("unchecked")
+	public VOrg ifCanAddLessonById(String id,String sortId) throws FinanceServiceException {
+		
+		VOrg org = new VOrg();
+		String outlineid = "";
+		Trainlessonunit unit = super.get(Trainlessonunit.class, id);
+		if (unit != null) {// 单元
+			outlineid = unit.getTOutline().getVId();
+		}
+		String hql = " from TPhase where trainlessonunit.TOutline.VId=? and VName<>?";
+		
+		List<TPhase> list = super.find(hql, outlineid, "阶段");
+		if (list.size() > 0) {
+			org.setFlag(true);
+		} else {
+			org.setFlag(false);
+		}
+	
+
+		return org;
+	}
+	public VOrg readTreeNodeType(String id) throws FinanceServiceException {
+		
+		VOrg org = new VOrg();
+		Trainlessonunit unit = super.get(Trainlessonunit.class, id);
+		if(unit!=null){
+			org.setMessage("unit");
+			return org;
+		}
+		TPhase phase = super.get(TPhase.class, id);
+		if(phase!=null){
+			org.setMessage("phase");
+			return org;
+		}
+		TraininglessonRelation lesson = super.get(TraininglessonRelation.class, id);
+		if(lesson!=null){
+			org.setMessage("lesson");
+			return org;
+		}
+		TOutline outline = super.get(TOutline.class, id);
+		if(outline!=null){
+			org.setMessage("outline");
+			return org;
+		}
+		return null;
+	}
+	
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void saveOrderByNum(String id, String num,String type)
+			throws FinanceServiceException {
+		if(type.equals("sort")){
+			TSubjectsort sort = super.get(TSubjectsort.class, id);
+			if(sort==null){
+				throw new FinanceServiceException("设置失败，参数错误。");
+			}
+			sort.setIOrder(Integer.parseInt(num));
+			super.update(sort);
+		}
+
+		if(type.equals("subject")){
+			TTrainsubject sort = super.get(TTrainsubject.class, id);
+			if(sort==null){
+				throw new FinanceServiceException("设置失败，参数错误。");
+			}
+			sort.setIOrder(Integer.parseInt(num));
+			super.update(sort);
+		}
+		
+	}
+
+	@SuppressWarnings("unchecked")
+	public List<TTrainsubject> readTrainsubjectList()
+			throws FinanceServiceException {
+		String hql =" from TTrainsubject order by TSubjectsort.IOrder asc,IOrder asc,DCreatedate asc";
+		return super.find(hql);
+	}
+
+	@SuppressWarnings("unchecked")
+	public List<TTrainlessonsubject> readTrainLessonSubjectList(String lessonid)
+			throws FinanceServiceException {
+		
+		String hql =" from TTrainlessonsubject where TTrainingLesson.VId=?";
+		return super.find(hql,lessonid);
+	}
+
+	@SuppressWarnings("unchecked")
+	public List<VTrainingRecordCompletion> readOutlineUnitPhaseListByOutlineId(
+			String outlineid) throws FinanceServiceException {
+		try{
+
+			String hql =" from Trainlessonunit where TOutline.VId=? order by VNo, DCreatedate";
+			List<VTrainingRecordCompletion> blist = new ArrayList<VTrainingRecordCompletion>();
+			VTrainingRecordCompletion vs;
+			List<Trainlessonunit> list = super.find(hql, outlineid);
+			//List<TPhase> plist;
+			
+			String lhql =" from TraininglessonRelation where TPhase.trainlessonunit.VId=?";
+			List<TraininglessonRelation> lessonList;
+			double d = 0;
+			double d1 = 0;
+			double d2 = 0;
+			int unitLessonNum = 0;
+			double training = 0;
+			for(Trainlessonunit t:list){
+				d=0;
+				d1=0;
+				unitLessonNum = 0;
+				training = 0;
+				vs = new VTrainingRecordCompletion();
+				vs.setVId(t.getVId());//避免重复，获取大纲与单元关联的id
+				vs.setVName(t.getVName());
+				//plist = super.find("from TPhase where trainlessonunit.VId=?",t.getVId());
+				//vs.setIsChild(plist.size());//下级的阶段是否存在
+				
+				//课程定义的时长
+				
+				lessonList = super.find(lhql, t.getVId());
+				
+				for(TraininglessonRelation l:lessonList){
+					
+					unitLessonNum ++;
+					d+=l.getTTrainingLesson().getDFjsj();
+					d1+=l.getTTrainingLesson().getDXlqsj();
+					d2+=l.getTTrainingLesson().getDMnjsj();
+					if(l.getTTrainingLesson().getDFjsj()>0){
+						training+=l.getTTrainingLesson().getDFjsj();
+					}else if(l.getTTrainingLesson().getDXlqsj()>0){
+						training+=l.getTTrainingLesson().getDXlqsj();
+					}else if(l.getTTrainingLesson().getDMnjsj()>0){
+						training+=l.getTTrainingLesson().getDMnjsj();
+					}else{
+						training+=0;
+					}
+					
+				}
+
+				vs.setVCode(String.valueOf(unitLessonNum));//课程数量
+				vs.setFinishTime(d);
+				vs.setTotalTime(d1);
+				vs.setMonijiTime(d2);
+				vs.setTrainingTime(training);
+				blist.add(vs);
+			}			
+			return blist;
+		}catch(HibernateException e){
+			throw new FinanceServiceException("读取信息列表失败："+e.getMessage());
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	public List<VTrainingRecordCompletion> readUnitPhaseListByOutlineId(
+			String unitid) throws FinanceServiceException {
+		String hql =" from TPhase where trainlessonunit.VId=? order by VNo,DCreatedate";
+		List<VTrainingRecordCompletion> blist = new ArrayList<VTrainingRecordCompletion>();
+		VTrainingRecordCompletion vs;
+		List<TPhase> list = super.find(hql, unitid);
+
+		//List<TraininglessonRelation> plist;
+		List<TraininglessonRelation> lessonList;
+		double d = 0;
+		double d1 = 0;
+		double d2 = 0;
+		double training = 0;
+		int phaseLessonNume = 0;
+		for(TPhase t:list){
+			d = 0;
+			d1 = 0;
+			training = 0;
+			d2 = 0;
+			phaseLessonNume = 0;
+			vs = new VTrainingRecordCompletion();
+			vs.setVId(t.getVId());
+			vs.setVName(t.getVName());
+			//plist = super.find(" from TraininglessonRelation where TPhase.VId=?",t.getVId());
+			//vs.setIsChild(plist.size());
+			
+			//课程定义的时长
+			//hql =" from TTrainingLesson where VId in (select TTrainingLesson.VId " +
+			//		"from TraininglessonRelation where TPhase.VId=?)";
+			hql =" from TraininglessonRelation where TPhase.VId=?";
+			lessonList = super.find(hql, t.getVId());
+			for(TraininglessonRelation l:lessonList){
+				d+=l.getTTrainingLesson().getDFjsj();
+				d1+=l.getTTrainingLesson().getDXlqsj();
+				d2+=l.getTTrainingLesson().getDMnjsj();
+				phaseLessonNume ++;
+				if(l.getTTrainingLesson().getDFjsj()>0){
+					training+=l.getTTrainingLesson().getDFjsj();
+				}else if(l.getTTrainingLesson().getDXlqsj()>0){
+					training+=l.getTTrainingLesson().getDXlqsj();
+				}else{
+					training+=l.getTTrainingLesson().getDMnjsj();
+				}
+			}
+			vs.setVCode(String.valueOf(phaseLessonNume));
+			vs.setFinishTime(d);
+			vs.setTotalTime(d1);
+			vs.setMonijiTime(d2);
+			vs.setTrainingTime(training);
+			blist.add(vs);
+		}
+		return blist;
+	}
+
+	public String readDateByWeekAndSelectDate(String bweek,String eweek,String date)
+			throws FinanceServiceException {
+		try{
+			String beginDate = "";
+			String endDate = "";
+			int ibweek = Integer.parseInt(bweek);
+			int ieweek = Integer.parseInt(eweek);
+			Calendar brightNow = Calendar.getInstance(); 
+			brightNow.setTime(Utilities.parse(date));
+
+			
+			if(ibweek==ieweek){
+				
+				brightNow.add(Calendar.WEEK_OF_YEAR, ibweek-1);
+				beginDate = Utilities.format(brightNow.getTime());
+				
+				brightNow.add(Calendar.DAY_OF_YEAR, 6);
+				endDate = Utilities.format(brightNow.getTime());
+			}else{
+				if(ibweek==1){
+					beginDate = date;
+					brightNow.add(Calendar.DAY_OF_YEAR, 7*(ieweek-ibweek+1)-1);
+					endDate = Utilities.format(brightNow.getTime());
+				}else{
+					brightNow.add(Calendar.WEEK_OF_YEAR, ibweek-1);
+					beginDate = Utilities.format(brightNow.getTime());
+					
+					brightNow.add(Calendar.DAY_OF_YEAR, 7*(ieweek-ibweek+1)-1);
+					endDate = Utilities.format(brightNow.getTime());
+				}
+			}
+			
+			
+				
+			return beginDate + "," + endDate;
+		}catch(ParseException e){
+			throw new FinanceServiceException("获取日期失败：日期格式错误。");
+		}
+		catch(HibernateException e){
+			throw new FinanceServiceException("获取日期失败："+e.getMessage());
+		}
+
+	}
+
+	@SuppressWarnings("unchecked")
+	public List<TOutline> readOutlineList() throws FinanceServiceException {
+		try{
+			String hql =" from TOutline where IStatus=? order by VCode";
+			List<TOutline> list = super.find(hql, QUERY_AUDIT_TYPE_EFFECT);
+			return list;
+		}catch(HibernateException e){
+			throw new FinanceServiceException("获取信息列表失败：网络连接超时。");
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	public List<VOutline> readLessonObjectList(List<TOutline> list, String type)
+			throws FinanceServiceException {
+		
+		try{
+			String cond = "";
+			if(list.size()==0){
+				cond= "1=2";
+			}else{
+				cond+= "(";
+				
+				for(int i=0;i<list.size();i++){
+					if(i==list.size()-1){
+						if(type.equals("unit")){
+							cond+=" TOutline.VId='"+ list.get(i).getVId() + "'";
+						}else if(type.equals("phase")){
+							cond+=" trainlessonunit.TOutline.VId='"+ list.get(i).getVId() + "'";
+						}else{
+							cond+=" TPhase.trainlessonunit.TOutline.VId='"+ list.get(i).getVId() + "'";
+						}
+						
+					}else{
+						if(type.equals("unit")){
+							cond+=" TOutline.VId='"+ list.get(i).getVId() + "' or ";
+						}else if(type.equals("phase")){
+							cond+=" trainlessonunit.TOutline.VId='"+ list.get(i).getVId() + "' or ";
+						}else{
+							cond+=" TPhase.trainlessonunit.TOutline.VId='"+ list.get(i).getVId() + "' or ";
+						}
+					}
+				}
+				cond+= ")";
+				
+			}
+			List<VOutline> vlist =new ArrayList<VOutline>();
+			VOutline vo;
+			//单元
+			if(type.equals("unit")){
+				String hql =" from Trainlessonunit where "+cond+" order by VNo,DCreatedate";
+				List<Trainlessonunit> lists = super.find(hql);
+				for(Trainlessonunit t:lists){
+					vo = new VOutline();
+					vo.setVId(t.getVId());
+					vo.setVName(t.getVName());
+					vo.setVParentid(t.getTOutline().getVId());
+					vo.setIStatus(1);
+					vlist.add(vo);
+				}
+				
+			}else if(type.equals("phase")){//阶段
+				List<TPhase> plist= super.find(" from TPhase where "+cond+" order by VNo, DCreatedate asc");
+				for(TPhase t:plist){
+					vo = new VOutline();
+					vo.setVId(t.getVId());
+					vo.setVName(t.getVName());
+					vo.setVParentid(t.getTrainlessonunit().getVId());
+					vo.setIStatus(1);
+					vlist.add(vo);
+				}
+			}else{//课程
+				String order = " order by IOrder,TTrainingLesson.IAsciino,TTrainingLesson.IAsciiversion desc";
+				String hql = " from TraininglessonRelation where "+cond + order;
+				List<TraininglessonRelation> llist = super.find(hql);
+				
+				for(TraininglessonRelation t:llist){
+					vo = new VOutline();
+					vo.setVId(t.getTTrainingLesson().getVId());
+					vo.setVName(t.getVSecondName());
+					vo.setVNo(t.getTTrainingLesson().getVNo());
+					vo.setVParentid(t.getTPhase().getVId());
+					vo.setIStatus(t.getIOrder());
+					vlist.add(vo);
+				}
+			}
+			return vlist;
+
+		}catch(HibernateException e){
+			throw new FinanceServiceException("获取课程信息列表失败，网络连接超时。");
+		}
+		
+	}
+
+	@SuppressWarnings("unchecked")
+	public TraininglessonRelation readTraininglessonRelationByOutlineId(
+			String outlineid) throws FinanceServiceException {
+		
+		String order = " order by IOrder,TTrainingLesson.IAsciino,TTrainingLesson.IAsciiversion desc";
+		String hql = " from TraininglessonRelation where TPhase.trainlessonunit.TOutline.VId=?" + order;
+		List<TraininglessonRelation> list = super.find(hql,outlineid);
+		if(list.size()==0)
+			return null;
+		else
+		 return list.get(0);
+	}
+	
+}

@@ -1,0 +1,1 @@
+<%response.sendRedirect("system/index.do");%>

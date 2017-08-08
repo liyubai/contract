@@ -1,0 +1,70 @@
+package com.cauc.training.business;
+
+import java.util.Map;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.business.dao.support.Page;
+import com.cauc.training.pojos.TFile;
+import com.cauc.training.pojos.TRole;
+
+/**
+ * 功能：用于局方文件管理
+ * 
+ * */
+
+
+public interface ITFileManager {
+
+	
+	/**
+	 * 名称，查询使用
+	 */
+	public static final String  QUERY_KEY_NAME="VTitle";
+	
+	/**
+	 * 时间，排序使用
+	 */
+	public static final String  QUERY_KEY_DATE="DCreateDate";
+	
+	/**
+	 * 功能：保存局方文件
+	 * @param tfile
+	 * @throws FinanceServiceException
+	 */
+	public void saveTFile(TFile tfile) throws FinanceServiceException;
+	
+	
+	/**
+	 * 功能：查询局方文件，带分页查询
+	 * @param params：Map结构，key为TFile中的VTitle，value为用户输入的关键字
+	 * @param pageNo：当前页号
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page searchTFiles(Map<String,Object> params, String pageNo) throws FinanceServiceException;
+
+
+	/**
+	 * 功能：根据局方文件主键值，查询局方文件
+	 * @param id
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public TFile searchTFileById(String id) throws FinanceServiceException;
+	
+	/**
+	 * 更新局方文件
+	 * @param role
+	 * @throws FinanceServiceException
+	 */
+	public void updateTFile(TFile tfile) throws FinanceServiceException;
+	
+	/**删除局方文件（可单一删除，也可批量删除）
+	 * 
+	 * @param ids
+	 * @throws FinanceServiceException
+	 * 说明：String... ids 表示定义一个可变变量，即Ids就是一个字符串数组，等价于String[] ids，且必须作为最后一个参数
+	 */
+	public void deleteTFileByIds(String path, String... ids) throws FinanceServiceException;
+
+}

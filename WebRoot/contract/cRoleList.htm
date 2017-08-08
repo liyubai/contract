@@ -1,0 +1,163 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>角色列表</title>
+    <link href="themes/cupertino/jquery.ui.all.css" rel="stylesheet" type="text/css" />
+    <link href="themes/cupertino/selfStyle.css" rel="stylesheet" type="text/css" />
+    <script src="scripts/jquery.min.js"></script>
+    <script src="scripts/jquery-ui.min.js"></script>
+    <script src="scripts/ui/jquery.ui.position.min.js"></script>
+    <script src="scripts/ui/jquery.ui.core.min.js"></script>
+    <script src="scripts/ui/jquery.ui.widget.min.js"></script>
+    <script src="scripts/ui/jquery.ui.button.min.js"></script>
+    <script src="scripts/ui/jquery.ui.tabs.min.js"></script>
+    <script src="scripts/ui/jquery.ui.dialog.min.js"></script>
+    <script src="scripts/ui/jquery.ui.menu.min.js"></script>
+    <script src="scripts/function.min.js"></script>
+    <script>
+        $(function() {
+            new $.dropDownList(0, true, 240);
+        });
+    </script>
+    <!-- 此js务必放在所有页面自带的js后面加载 -->
+    <script src="scripts/base.min.js"></script>
+</head>
+
+<body>
+<div id="indexHead">
+  <div class="headercontent">
+      <img src="themes/cupertino/images/logo.png" />
+      <span class="sysNameC">中国民航大学飞行培训合同管理系统</span>
+      <div class="sysNameE">Civil aviation university of china Contract management system </div>
+      <div class="logout">
+          <span class="today">2016-6-6</span>
+          <span class="wel">欢迎</span>
+          <a href="">张雪</a>
+          <span class="sep"></span>
+          <a href="">退出</a>
+      </div>
+  </div>
+</div>
+<div id="leftPartA">
+    <ul class="itemList">
+	    <li class="active"><a style="display:block;" href="cMain.htm" title="主页">主页</a></li>
+	    <li><a href="cContractList.htm" title="合同管理">合同管理</a></li>
+	    <li><a href="cStudentList.htm" title="学生管理">学生管理</a></li>
+	    <li><a href="cPaylist.htm" title="付款管理">付款管理</a></li>
+	    <li><a href="cClearingList.htm" title="结算管理">结算管理</a></li>
+    </ul>
+    <ul class="foldList">
+	    <li title="统计">统计</li>
+	    <ul class="itemList">
+	        <li><a href="cPayStatistics.htm">付款统计</a></li>
+	        <li><a href="cCollectStatistics.htm">汇总统计</a></li>
+	        <li><a href="cAverageStatistics.htm">平均统计</a></li>
+	    </ul>
+	</ul>
+	<ul class="foldList">
+        <li title="用户管理">用户管理</li>
+        <ul class="itemList">
+	        <li><a href="cUserList.htm">用户列表</a></li>
+	        <li><a href="cRoleList.htm">角色列表</a></li>
+	    </ul>
+    </ul>
+	<ul class="itemList">
+	    <li><a href="cDataDictionary.htm" title="数据字典">数据字典</a></li>
+	</ul>
+</div>
+<div id="rightPartA" style="overflow-x:hidden;">
+<div>
+    <div class="panelBox buttonBox">
+        <a href="javascript:void(0)" class="aLinkBtn1 left" id="addRole">新增角色</a>
+    </div>
+    <div class="Panel ui-corner-all-0">
+    <div class="panelContent clear">
+        <table class="panelTable" border="0" cellspacing="0" cellpadding="3">
+            <thead>
+	          <tr class="trSpliter">
+				<th width="240"></th>
+				<th width="240"></th>
+			  </tr>
+			  <tr>
+				<th class="thSortableGray"><span class="ml10">角色名称</span></th>
+				<th class="thSortableGray"><span class="ml10">操作</span></th>
+			  </tr>
+			</thead>
+			<tbody>
+			  <tr>
+			    <td>管理员</td>
+				<td><a href="cRoleManage.htm" class="blue modifyUser">修改权限</a></td>
+			  </tr>
+			  <tr>
+			    <td>普通用户</td>
+				<td><a href="cRoleManage.htm" class="blue modifyUser">修改权限</a></td>
+			  </tr>
+			</tbody>
+        </table>
+    </div>
+    </div>
+</div>
+</div>
+
+<div id="dialogForm1" title="新建角色">
+	<p class="validateTips">请填写信息</p>
+	<form>
+		<div>
+		    <span>角色名称</span>
+            <input id="txtRole" type="text" class="tableinput2" />
+		</div>
+	</form>
+</div>
+
+<script>
+    $(function() {
+
+    var txt1 = $("#txtRole"),
+		allFields = $([]).add(txt1),
+		tips = $(".validateTips");
+
+        function updateTips(t) {
+            tips.html(t).addClass("ui-state-highlight");
+            setTimeout(function() {
+                tips.removeClass("ui-state-highlight", 1500);
+            }, 2000);
+        }
+
+        $("#dialogForm1").dialog({
+            autoOpen: false,
+            height: 200,
+            width: 300,
+            background: '#FF0000', // 背景色
+            opacity: 0.27,     // 透明度
+            modal: true,
+            resizable: false,
+            buttons: {
+                "确 定": function() {
+                    //确定按钮的处理代码段：
+
+                    $(this).dialog("close");
+                },
+                "取 消": function() {
+                    $(this).dialog("close");
+                }
+            },
+            close: function() {
+                allFields.val("").removeClass("error");
+            }
+        });
+
+
+
+        $('#addRole').click(function() {
+            tips.removeClass("ui-state-highlight").html("新建节点信息");
+            $("#modalDialogButton1 input.error").removeClass("error");
+            $("#dialogForm1").dialog("open");
+        });
+
+        
+    });
+</script>
+</body>
+</html>

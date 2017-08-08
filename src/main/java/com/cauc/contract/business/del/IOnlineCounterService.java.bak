@@ -1,0 +1,38 @@
+package com.cauc.training.business;
+
+import java.util.Map;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.business.dao.support.Page;
+import com.cauc.training.pojos.TUserOnline;
+
+public interface IOnlineCounterService {
+	/**
+	 * @功能描述：分页查询在线时间统计
+	 * @param params
+	 * @param pageNo
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page searchPageList(Map<String,Object> params, String pageNo) throws FinanceServiceException;
+	/**
+	 * @功能描述：查询在线人数
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public int searchCount() throws FinanceServiceException;
+	/**
+	 * @功能描述：用于添加登录系统人员到统计在线时间表中
+	 * @param tuser
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public boolean save(TUserOnline tuser) throws FinanceServiceException;
+	/**
+	 * @功能描述：用于更新登录系统人员到统计在线时间表中
+	 * @param tuser
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public boolean update(TUserOnline tuser) throws FinanceServiceException;
+}

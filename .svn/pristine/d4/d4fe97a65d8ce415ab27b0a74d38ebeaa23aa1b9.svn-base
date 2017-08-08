@@ -1,0 +1,26 @@
+package com.cauc.training.business.hibernate;
+
+import org.hibernate.HibernateException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.business.IDataDictionary;
+import com.cauc.training.business.dao.GenericHibernateDAO;
+import com.cauc.training.pojos.TDiction;
+
+@Service
+public class DataDictionaryImpl extends GenericHibernateDAO implements IDataDictionary {
+
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void saveDataDic(TDiction dic) throws FinanceServiceException {
+		
+		try{
+			super.save(dic);
+		}catch (HibernateException e) {
+			throw new FinanceServiceException("保存用户字典失败", e);
+		}
+	}
+
+}

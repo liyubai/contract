@@ -1,0 +1,259 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>付款统计</title>
+    <link href="themes/cupertino/jquery.ui.all.css" rel="stylesheet" type="text/css" />
+    <link href="themes/cupertino/selfStyle.css" rel="stylesheet" type="text/css" />
+    <link href="themes/cupertino/date.css" rel="stylesheet" type="text/css" />
+    <script src="scripts/jquery.min.js"></script>
+    <script src="scripts/jquery-ui.min.js"></script>
+    <script src="scripts/ui/jquery.ui.position.min.js"></script>
+    <script src="scripts/ui/jquery.ui.core.min.js"></script>
+    <script src="scripts/ui/jquery.ui.widget.min.js"></script>
+    <script src="scripts/ui/jquery.ui.button.min.js"></script>
+    <script src="scripts/ui/jquery.ui.tabs.min.js"></script>
+    <script src="scripts/ui/jquery.ui.dialog.min.js"></script>
+    <script src="scripts/ui/jquery.ui.menu.min.js"></script>
+    <script src="scripts/function.min.js"></script>
+    <script src="scripts/datepicker4.8/WdatePicker.js" type="text/javascript"></script>
+    <script>
+        $(function() {
+            new $.dropDownList(0, true, 160);
+            new $.dropDownList(1, true, 200);
+            new $.dropDownList(2, true, 100);
+            new $.dropDownList(3, true, 150);
+            new $.dropDownList(4, true, 150);
+            new $.dropDownList(5, true, 150);
+        });
+</script>
+    <!-- 此js务必放在所有页面自带的js后面加载 -->
+    <script src="scripts/base.min.js"></script>
+</head>
+<body>
+<div id="indexHead">
+  <div class="headercontent">
+      <img src="themes/cupertino/images/logo.png" />
+      <span class="sysNameC">中国民航大学飞行培训合同管理系统</span>
+      <div class="sysNameE">Civil aviation university of china Contract management system </div>
+      <div class="logout">
+          <span class="today">2016-6-6</span>
+          <span class="wel">欢迎</span>
+          <a href="">张雪</a>
+          <span class="sep"></span>
+          <a href="">退出</a>
+      </div>
+  </div>
+</div>
+<div id="leftPartA">
+    <ul class="itemList">
+	    <li class="active"><a style="display:block;" href="cMain.htm" title="主页">主页</a></li>
+	    <li><a href="cContractList.htm" title="合同管理">合同管理</a></li>
+	    <li><a href="cStudentList.htm" title="学生管理">学生管理</a></li>
+	    <li><a href="cPaylist.htm" title="付款管理">付款管理</a></li>
+	    <li><a href="cClearingList.htm" title="结算管理">结算管理</a></li>
+    </ul>
+    <ul class="foldList">
+	    <li title="统计">统计</li>
+	    <ul class="itemList">
+	        <li><a href="cPayStatistics.htm">付款统计</a></li>
+	        <li><a href="cCollectStatistics.htm">汇总统计</a></li>
+	        <li><a href="cAverageStatistics.htm">平均统计</a></li>
+	    </ul>
+	</ul>
+	<ul class="foldList">
+        <li title="用户管理">用户管理</li>
+        <ul class="itemList">
+	        <li><a href="cUserList.htm">用户列表</a></li>
+	        <li><a href="cRoleList.htm">角色列表</a></li>
+	    </ul>
+    </ul>
+	<ul class="itemList">
+	    <li><a href="cDataDictionary.htm" title="数据字典">数据字典</a></li>
+	</ul>
+</div>
+<div id="rightPartA" style="overflow-x:hidden;">
+<div>   
+    <div class="panelBox buttonBox">
+<!-- panelBox计划用于布局横向的简单一行 -->
+
+<div class="dropDownList barLeft" id="dropDownList0">
+	<button>年份</button>
+	<ul>
+	    <li><a href="#N" val="1" class="inline">年份</a></li>
+	    <li><a href="#N" val="2" class="inline"><span class="ui-icon ui-icon-bullet"></span>2017</a><a href="#N" val="12" class="inline">2007</a></li>
+		<li><a href="#N" val="3" class="inline">2016</a><a href="#N" val="13" class="inline">2006</a></li>
+		<li><a href="#N" val="4" class="inline">2015</a><a href="#N" val="14" class="inline">2005</a></li>
+		<li><a href="#N" val="5" class="inline">2014</a><a href="#N" val="15" class="inline">2004</a></li>
+		<li><a href="#N" val="6" class="inline">2013</a><a href="#N" val="16" class="inline">2003</a></li>
+		<li><a href="#N" val="7" class="inline">2012</a><a href="#N" val="17" class="inline">2002</a></li>
+		<li><a href="#N" val="8" class="inline">2011</a><a href="#N" val="18" class="inline">2001</a></li>
+		<li><a href="#N" val="9" class="inline">2010</a><a href="#N" val="19" class="inline">2000</a></li>
+		<li><a href="#N" val="10" class="inline">2009</a><a href="#N" val="20" class="inline">1999</a></li>
+		<li><a href="#N" val="11" class="inline">2008</a><a href="#N" val="21" class="inline">1998</a></li>
+	</ul>
+	<input type="hidden" name="年份" value="1" />
+</div>
+<div class="dropDownList barMiddle" id="Div1">
+	<button>合同类型</button>
+	<ul>
+	    <li><a href="#N" val="1"><span class="ui-icon ui-icon-bullet"></span>合同类型</a></li>
+		<li><a href="#N" val="2">自费通航</a></li>
+		<li><a href="#N" val="3">自费整体</a></li>
+		<li><a href="#N" val="4">整体大包</a></li>
+		<li><a href="#N" val="5">整体课程</a></li>
+		<li><a href="#N" val="6">通航</a></li>
+		<li><a href="#N" val="7">军转民</a></li>
+		<li><a href="#N" val="8">自费高性能</a></li>
+		<li><a href="#N" val="9">基础理论+招飞</a></li>
+		<li><a href="#N" val="10">基础理论+执照理论</a></li>
+		<li><a href="#N" val="11">执照理论</a></li>
+		<li><a href="#N" val="8">基础理论</a></li>
+		<li><a href="#N" val="9">合作共建</a></li>
+	</ul>
+	<input type="hidden" name="合同类型" value="1" />
+</div>
+<div class="dropDownList barMiddle" id="Div2">
+	<button>合同状态</button>
+	<ul>
+	    <li><a href="#N" val="1"><span class="ui-icon ui-icon-bullet"></span>意向</a></li>
+		<li><a href="#N" val="2">初稿</a></li>
+		<li><a href="#N" val="3">定稿</a></li>
+		<li><a href="#N" val="4">生效</a></li>
+		<li><a href="#N" val="5">完成</a></li>
+	</ul>
+	<input type="hidden" name="合同类型" value="1" />
+</div>
+<div class="dropDownList barMiddle" id="Div3">
+	<button>客户单位</button>
+	<ul>
+	    <li><a href="#N" val="1"><span class="ui-icon ui-icon-bullet"></span>客户单位</a></li>
+		<li><a href="#N" val="2">山东航空</a></li>
+	</ul>
+	<input type="hidden" name="合同类型" value="1" />
+</div>
+<div class="dropDownList barRight" id="Div4">
+	<button>付款状态</button>
+	<ul>
+	    <li><a href="#N" val="1"><span class="ui-icon ui-icon-bullet"></span>付款状态</a></li>
+		<li><a href="#N" val="2">已通知未到账</a></li>
+		<li><a href="#N" val="3">已通知已到账</a></li>
+		<li><a href="#N" val="4">未达收款条件</a></li>
+	</ul>
+	<input type="hidden" name="付款单位" value="1" />
+</div>
+	<input type="text" class="queryInput date" value="开始时间" onmouseup="WdatePicker()" />
+	<span class="left">-</span>
+	<input type="text" class="queryInput date" value="结束时间" onmouseup="WdatePicker()" />
+    <div class="buttonInput relative left ml10" width="180" height="28">
+	<input title="合同号" id="" name="" type="text" maxlength="50" value="合同号" />
+	<button>查询</button>
+</div>
+</div>
+    <div class="Panel ui-corner-all-0">
+    <div class="panelContent clear">
+        <table class="panelTable" border="0" cellspacing="0" cellpadding="3">
+            <thead>
+	          <tr class="trSpliter">
+				<th width="80"></th>
+				<th width="180"></th>
+				<th width="180"></th>
+				<th width="180"></th>
+				<th width="220"></th>
+				<th width="170"></th>
+				<th width="170"></th>
+				<th width="170"></th>
+				<th width="170"></th>
+			  </tr>
+			  <tr>
+				<th class="thSortableGray">年</th>
+				<th class="thSortableGray">合同编号</th>
+				<th class="thSortableGray">客户单位</th>
+				<th class="thSortableGray">合同类型</th>
+				<th class="thSortableGray">状态</th>
+				<th class="thSortableGray">标的额(元)</th>
+				<th class="thSortableGray">预计收款(元)</th>
+				<th class="thSortableGray">通知收款(元)</th>
+				<th class="thSortableGray">实际应收款(元)</th>
+			  </tr>
+			</thead>
+			<tbody>
+			  <tr>
+				<td>2012</td>
+				<td>CAUC2012-G07</td>
+				<td>山东航空</td>
+				<td>自费通航</td>
+				<td>飞训结算2012-001</td>
+				<td>10590000</td>
+				<td>2118000</td>
+				<td>2118000</td>
+				<td>2118000</td>
+			  </tr>
+			  <tr>
+				<td>2012</td>
+				<td>CAUC2012-G07</td>
+				<td>山东航空</td>
+				<td>自费通航</td>
+				<td>不涉及飞行技术学院</td>
+				<td>10590000</td>
+				<td>1588500</td>
+				<td>2118000</td>
+				<td>2118000</td>
+			  </tr>
+			  <tr>
+				<td>2012</td>
+				<td>CAUC2012-G07</td>
+				<td>山东航空</td>
+				<td>自费通航</td>
+				<td>不涉及飞行技术学院</td>
+				<td>10590000</td>
+				<td>4236000</td>
+				<td>2118000</td>
+				<td>2118000</td>
+			  </tr>
+			  <tr>
+				<td>2012</td>
+				<td>CAUC2012-G07</td>
+				<td>山东航空</td>
+				<td>自费通航</td>
+				<td>不涉及飞行技术学院</td>
+				<td>0</td>
+				<td>0</td>
+				<td>0</td>
+				<td>0</td>
+			  </tr>
+			  <tr style="color:Red;">
+				<td colspan="2">
+				标的额合计：<span>10590000元</span>
+				</td>
+				<td colspan="2">
+				预计收款金额合计：<span>7942500元</span>
+				</td>
+				<td colspan="2">
+				通知收款金额合计：<span>7942500元</span>
+				</td>
+				<td colspan="2">
+				实际应收款金额合计：<span>7942500元</span>
+				</td>
+			  </tr>
+			</tbody>
+        </table>
+        <table width="98%" border="0" align="center" cellpadding="0" cellspacing="0">
+  <tr>
+    <td height="30" align="right" class="link11">
+<a href="javascript:firstPage();" class="blue"><span class="STYLE2">首页</span></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+	<a href="javascript:prePage();" class="blue"><span class="STYLE2">上一页</span></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+	<a href="javascript:nextPage();" class="blue"><span class="STYLE2">下一页</span></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+	<a href="javascript:lastPage();" class="blue"><span class="STYLE2">尾页</span></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+	<input type="button"  value="跳转到" class="aLinkCommonBtn" onClick="jumpPage();">第<input type="text" name="page.currentPageNo" size="2" value="1" id="page.currentPageNo" style="height:24px; width:20px;border:1px solid #BBB;
+border-radius:2px" onKeyPress="enterPress(this)"/>页&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    本页显示1-7条 / 共1页7条
+	</td>
+  </tr>
+</table>
+    </div>
+    </div>
+</div>
+</div>
+</body>
+</html>

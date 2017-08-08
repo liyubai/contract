@@ -1,0 +1,41 @@
+package com.cauc.contract.pojos;
+
+public class PaymentNotice {
+	private String StuName;
+	private String LessonName;
+	private String Id;
+	private String Val;
+	private String Value;
+	
+	public String getStuName() {
+		return StuName;
+	}
+	public void setStuName(String stuName) {
+		StuName = stuName;
+	}
+	public String getLessonName() {
+		return LessonName;
+	}
+	public void setLessonName(String lessonName) {
+		LessonName = lessonName;
+	}
+	public String getId() {
+		return Id;
+	}
+	public void setId(String id) {
+		Id = id;
+	}
+	public String getVal() {
+		return Val;
+	}
+	public void setVal(String val) {
+		Val = val;
+	}
+	public String getValue() {
+		return Value;
+	}
+	public void setValue(String value) {
+		Value = value;
+	}
+
+}

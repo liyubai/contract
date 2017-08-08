@@ -1,0 +1,557 @@
+package com.cauc.training.ui.core.del;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.lang.StringUtils;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.business.ILogService;
+import com.cauc.training.pojos.TDiction;
+import com.cauc.training.pojos.TLessonFitCheck;
+import com.cauc.training.pojos.TTeaLicense;
+import com.cauc.training.pojos.TTrainingLesson;
+import com.cauc.training.ui.common.BaseActionSupport;
+import com.cauc.training.util.Utilities;
+import com.cauc.training.vo.VOrg;
+import com.cauc.training.vo.VStudentLicense;
+import com.cauc.training.vo.VTrainingRecordCompletion;
+
+public class LogAction extends BaseActionSupport{
+
+	/**
+	 * 日志查询类
+	 */
+	private static final long serialVersionUID = 2406658221746971337L;
+	private String beginDate;
+	private String endDate;
+	private String year;
+	private String month;
+	private List<Integer> yearList;
+	private List<Integer> monthList;
+	private String flyMoment;//出发时刻
+	private String endMoment;//到达时刻
+	private String name;//查询关键字
+	private String code;//学号
+	private String lesson;//课程
+	private String outlineid;//大纲id	
+	private String studentCode;//学号
+	private String unitid;//单元id
+	private List<TTrainingLesson> lessonList; 
+	private List<VTrainingRecordCompletion> viewCompletionList; //显示大纲单元
+	private TLessonFitCheck fitCheck;
+	private VOrg viewOrg;
+	private List<VOrg> viewOrgList;
+	private List<VStudentLicense> stuLicenseList;
+	private List<TTeaLicense> teaLicenseList;
+	//教员执照类型
+	private List<TDiction> jyzzLxList;
+	//仪表等级
+	private List<TDiction> ybDjList;
+	//航空器类别
+	private List<TDiction> hkqLbList;
+	//飞机级别等级
+	private List<TDiction> fjJbList;
+	// 所飞机型
+	private List<TDiction> sfjxList;
+	// 教员类型
+	private List<TDiction> jyLxList;
+	//航空器型别等级
+	private List<TDiction> hkqXbList;
+	
+	//飞机时间与发动机计时器校验
+	public String planeTimeAndEngineTimeCheck(){
+		//获取默认年
+		Map<String, Object> queryMap = new HashMap<String, Object>();
+		if(StringUtils.isBlank(this.year)){
+			Date d = new Date();
+			year = Utilities.format(d,"yyyy");
+		}
+		if(StringUtils.isBlank(this.month)){
+			Date dd = new Date();
+			month = Utilities.format(dd,"M");
+		}
+
+		yearList = new ArrayList<Integer>();
+		for(int i=2008;i<=2020;i++){
+			
+			yearList.add(i);
+		}
+		monthList = new ArrayList<Integer>();
+		for(int j=1;j<=12;j++){
+			
+			monthList.add(j);
+		}
+		
+		queryMap.put("year", year);
+		queryMap.put("month", month);
+		return SUCCESS;
+	}
+	
+	public String studentTimeAndDispatchTimeCheck(){
+		
+		return SUCCESS;
+	}
+	
+	
+	//飞行教员
+	public String statisticsFlyTeacherBase(){
+		try {
+			jyzzLxList = getFactory().getFinanceProviderInstance()
+			.getTeacherManagentService().searchTDictionByType("教员执照类型");
+			ybDjList = getFactory().getFinanceProviderInstance()
+			.getTeacherManagentService().searchTDictionByType("仪表等级");
+			hkqLbList = getFactory().getFinanceProviderInstance()
+			.getTeacherManagentService().searchTDictionByType("航空器类别");
+			fjJbList = getFactory().getFinanceProviderInstance()
+			.getTeacherManagentService().searchTDictionByType("飞机级别等级");
+			sfjxList = getFactory().getFinanceProviderInstance()
+			.getTeacherManagentService().searchTDictionByType("所飞机型");
+			
+			jyLxList = getFactory().getFinanceProviderInstance()
+			.getTeacherManagentService().searchTDictionByType("教员类型");
+			hkqXbList = getFactory().getFinanceProviderInstance()
+			.getTeacherManagentService().searchTDictionByType("航空器型别等级");
+			teaLicenseList=getFactory().getFinanceProviderInstance().getLogService().statisticsFlyTeacherBase(searchGetValue());
+		} catch (FinanceServiceException e) {
+		}
+		return SUCCESS;
+	}
+	
+	public String statisticsFlyTeacherSort(){
+		try {
+			viewOrg= getFactory().getFinanceProviderInstance().getLogService().statisticsFlyTeacherSort(searchGetValue());
+		} catch (FinanceServiceException e) {
+
+		}
+		return SUCCESS;
+	}
+	
+	//非整体课程
+	public String statisticsNoWholeLessonBase(){
+		try {
+			Map<String, Object> queryMap = searchGetValue();
+			queryMap.put(ILogService.QUERY_TYPE, "no");
+			stuLicenseList = getFactory().getFinanceProviderInstance().getLogService().statisticsWholeLessonBase(queryMap);
+		} catch (FinanceServiceException e) {
+		}
+		return SUCCESS;
+	}
+	
+	public String statisticsNoWholeLessonAll(){
+		try {
+			viewOrgList= getFactory().getFinanceProviderInstance().getLogService().statisticsNoWholeLessonAll(searchGetValue());
+		} catch (FinanceServiceException e) {
+
+		}
+		return SUCCESS;
+	}
+	public String statisticsNoWholeLessonSi(){
+		try {
+			Map<String, Object> queryMap = searchGetValue();
+			queryMap.put(ILogService.QUERY_TYPE, "4028aa494765f33d01476602f15f0045");
+			viewOrgList= getFactory().getFinanceProviderInstance().getLogService().statisticsNoWholeLessonAll(queryMap);
+		} catch (FinanceServiceException e) {
+
+		}
+		return SUCCESS;
+	}
+	public String statisticsNoWholeLessonShang(){
+		try {
+			Map<String, Object> queryMap = searchGetValue();
+			queryMap.put(ILogService.QUERY_TYPE, "4028aa494765f33d014766031e5b0046");
+			viewOrgList= getFactory().getFinanceProviderInstance().getLogService().statisticsNoWholeLessonAll(queryMap);
+		} catch (FinanceServiceException e) {
+
+		}
+		return SUCCESS;
+	}
+	//整体课程汇总
+	public String statisticsWholeLessonBase(){
+		try {
+			Map<String, Object> queryMap = searchGetValue();
+			queryMap.put(ILogService.QUERY_TYPE, "all");
+			stuLicenseList = getFactory().getFinanceProviderInstance().getLogService().statisticsWholeLessonBase(queryMap);
+		} catch (FinanceServiceException e) {
+		}
+		return SUCCESS;
+	}
+	public String statisticsWholeLessonHz(){
+		try {
+			viewOrg= getFactory().getFinanceProviderInstance().getLogService().statisticsWholeLessonHz(searchGetValue());
+		} catch (FinanceServiceException e) {
+
+		}
+		return SUCCESS;
+	}
+	public String statisticsWholeLessonZc(){
+		try {
+			viewOrg= getFactory().getFinanceProviderInstance().getLogService().statisticsWholeLessonZc(searchGetValue());
+		} catch (FinanceServiceException e) {
+
+		}
+		return SUCCESS;
+	}
+	public String statisticsWholeLessonXb(){
+		try {
+			viewOrgList= getFactory().getFinanceProviderInstance().getLogService().statisticsWholeLessonXb(searchGetValue());
+		} catch (FinanceServiceException e) {
+
+		}
+		return SUCCESS;
+	}
+	
+	public String saveTrainingLessonFitCheck(){
+		viewOrg = new VOrg();
+		try {
+			fitCheck.setTUser(getFactory().getFinanceProviderInstance()
+					.getSysUserService().readSysUserByLoginID(
+							this.getLoginContext().getLoginId()));
+			getFactory().getFinanceProviderInstance().getLogService().saveTrainingLessonFitCheck(fitCheck);
+		} catch (FinanceServiceException e) {
+			//setStatusMsg(e.getMessage());
+			viewOrg.setFlag(false);
+			viewOrg.setMessage(e.getMessage());
+			return SUCCESS;
+		}
+		viewOrg.setFlag(true);
+		viewOrg.setMessage("操作成功。");
+		//setStatusMsg("操作成功。");
+		return SUCCESS;
+	}
+	
+	//获取大纲单元列表
+	public String readUnitTrainingRecordFitCheckListByOutlineId() {
+		try {
+			viewCompletionList = getFactory().getFinanceProviderInstance()
+					.getLogService()
+					.readUnitTrainingRecordFitCheckListByOutlineId(outlineid,studentCode);
+
+		} catch (FinanceServiceException e) {
+			viewCompletionList = null;
+			e.printStackTrace();
+		}
+		return SUCCESS;
+	}
+	
+	//获取单元阶段列表
+	public String readPhaseTrainingRecordFitCheckListByOutlineId() {
+		try {
+			viewCompletionList = getFactory().getFinanceProviderInstance()
+					.getLogService()
+					.readPhaseTrainingRecordFitCheckListByOutlineId(unitid,studentCode);
+		} catch (FinanceServiceException e) {
+			viewCompletionList = null;
+		}
+		return SUCCESS;
+	}
+
+	//课程符合性校验
+	public String trainingLessonFitCheck(){
+		setViewDate(Utilities.format(new Date()));
+		try {
+			
+			setPage(getFactory().getFinanceProviderInstance()
+					.getLogService()
+					.trainingLessonFitCheck(searchGetValue(), getPageIndex()));
+		} catch (FinanceServiceException e) {
+			setStatusMsg("获取训练记录列表失败。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		return SUCCESS;
+	}
+	public String readLogList(){
+		
+		try {
+			setPage(getFactory().getFinanceProviderInstance()
+					.getLogService()
+					.readTrainingHistoryRecordLogList(searchGetValue(), getPageIndex()));
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		return SUCCESS;
+	}
+	
+	public String openAFL52TrainingLessonRecordPage(){
+			
+		try {
+					
+			ILogService logService = getFactory().getFinanceProviderInstance().getLogService();
+			lessonList = logService.readZhuanChangLessonList();
+			setPage(logService.readAFL52TrainingLessonRecordList(searchGetValue(), getPageIndex()));
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		} 
+		return SUCCESS;
+	}
+
+	public String readZhuanChangNoSameDayRecordList(){
+			
+		try {
+					
+			ILogService logService = getFactory().getFinanceProviderInstance().getLogService();
+			lessonList = logService.readZhuanChangLessonList();
+			setPage(logService.readZhuanChangNoSameDayRecordList(searchGetValue(), getPageIndex()));
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		} 
+		return SUCCESS;
+	}
+	public String readZhuanChangNoTreePosRecordList(){
+		
+		try {
+					
+			ILogService logService = getFactory().getFinanceProviderInstance().getLogService();
+			lessonList = logService.readZhuanChangLessonList();
+			setPage(logService.readZhuanChangNoTreePosRecordList(searchGetValue(), getPageIndex()));
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		} 
+		return SUCCESS;
+	}
+	
+	private Map<String, Object> searchGetValue(){
+		Map<String, Object> queryMap = new HashMap<String, Object>();
+		if (StringUtils.isNotBlank(getFlyMoment())) {
+			queryMap.put(ILogService.QUERY_KEY_BEGIN_DATE,getFlyMoment() + " 00:00:00");
+		}
+		if (StringUtils.isNotBlank(getEndMoment())) {
+			queryMap.put(ILogService.QUERY_KEY_EDN_DATE,getEndMoment() + " 23:59:59");
+		}
+
+		queryMap.put(ILogService.QUERY_KEY, this.getName());
+		queryMap.put(ILogService.QUERY_CODE, this.getCode());
+		queryMap.put(ILogService.QUERY_KEY_LESSON, this.getLesson());
+
+		return queryMap;
+	}
+	//-----------------------setter and getter------------------------
+
+	public String getFlyMoment() {
+		return flyMoment;
+	}
+
+	public void setFlyMoment(String flyMoment) {
+		this.flyMoment = flyMoment;
+	}
+
+	public String getEndMoment() {
+		return endMoment;
+	}
+
+	public void setEndMoment(String endMoment) {
+		this.endMoment = endMoment;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getCode() {
+		return code;
+	}
+
+	public void setCode(String code) {
+		this.code = code;
+	}
+
+	public String getLesson() {
+		return lesson;
+	}
+
+	public void setLesson(String lesson) {
+		this.lesson = lesson;
+	}
+
+	public List<TTrainingLesson> getLessonList() {
+		return lessonList;
+	}
+
+	public void setLessonList(List<TTrainingLesson> lessonList) {
+		this.lessonList = lessonList;
+	}
+
+	public String getOutlineid() {
+		return outlineid;
+	}
+
+	public void setOutlineid(String outlineid) {
+		this.outlineid = outlineid;
+	}
+
+	public String getStudentCode() {
+		return studentCode;
+	}
+
+	public void setStudentCode(String studentCode) {
+		this.studentCode = studentCode;
+	}
+
+	public List<VTrainingRecordCompletion> getViewCompletionList() {
+		return viewCompletionList;
+	}
+
+	public void setViewCompletionList(
+			List<VTrainingRecordCompletion> viewCompletionList) {
+		this.viewCompletionList = viewCompletionList;
+	}
+
+	public String getUnitid() {
+		return unitid;
+	}
+
+	public void setUnitid(String unitid) {
+		this.unitid = unitid;
+	}
+
+	public TLessonFitCheck getFitCheck() {
+		return fitCheck;
+	}
+
+	public void setFitCheck(TLessonFitCheck fitCheck) {
+		this.fitCheck = fitCheck;
+	}
+
+	public VOrg getViewOrg() {
+		return viewOrg;
+	}
+
+	public void setViewOrg(VOrg viewOrg) {
+		this.viewOrg = viewOrg;
+	}
+
+	public String getBeginDate() {
+		return beginDate;
+	}
+
+	public void setBeginDate(String beginDate) {
+		this.beginDate = beginDate;
+	}
+
+	public String getEndDate() {
+		return endDate;
+	}
+
+	public void setEndDate(String endDate) {
+		this.endDate = endDate;
+	}
+	public List<VOrg> getViewOrgList() {
+		return viewOrgList;
+	}
+	public void setViewOrgList(List<VOrg> viewOrgList) {
+		this.viewOrgList = viewOrgList;
+	}
+
+	public List<VStudentLicense> getStuLicenseList() {
+		return stuLicenseList;
+	}
+
+	public void setStuLicenseList(List<VStudentLicense> stuLicenseList) {
+		this.stuLicenseList = stuLicenseList;
+	}
+
+	public List<TTeaLicense> getTeaLicenseList() {
+		return teaLicenseList;
+	}
+
+	public void setTeaLicenseList(List<TTeaLicense> teaLicenseList) {
+		this.teaLicenseList = teaLicenseList;
+	}
+
+	public List<TDiction> getJyzzLxList() {
+		return jyzzLxList;
+	}
+
+	public void setJyzzLxList(List<TDiction> jyzzLxList) {
+		this.jyzzLxList = jyzzLxList;
+	}
+
+	public List<TDiction> getYbDjList() {
+		return ybDjList;
+	}
+
+	public void setYbDjList(List<TDiction> ybDjList) {
+		this.ybDjList = ybDjList;
+	}
+
+	public List<TDiction> getHkqLbList() {
+		return hkqLbList;
+	}
+
+	public void setHkqLbList(List<TDiction> hkqLbList) {
+		this.hkqLbList = hkqLbList;
+	}
+
+	public List<TDiction> getFjJbList() {
+		return fjJbList;
+	}
+
+	public void setFjJbList(List<TDiction> fjJbList) {
+		this.fjJbList = fjJbList;
+	}
+
+	public List<TDiction> getSfjxList() {
+		return sfjxList;
+	}
+
+	public void setSfjxList(List<TDiction> sfjxList) {
+		this.sfjxList = sfjxList;
+	}
+
+	public List<TDiction> getJyLxList() {
+		return jyLxList;
+	}
+
+	public void setJyLxList(List<TDiction> jyLxList) {
+		this.jyLxList = jyLxList;
+	}
+
+	public List<TDiction> getHkqXbList() {
+		return hkqXbList;
+	}
+
+	public void setHkqXbList(List<TDiction> hkqXbList) {
+		this.hkqXbList = hkqXbList;
+	}
+
+	public String getYear() {
+		return year;
+	}
+
+	public void setYear(String year) {
+		this.year = year;
+	}
+
+	public String getMonth() {
+		return month;
+	}
+
+	public void setMonth(String month) {
+		this.month = month;
+	}
+
+	public List<Integer> getYearList() {
+		return yearList;
+	}
+
+	public void setYearList(List<Integer> yearList) {
+		this.yearList = yearList;
+	}
+
+	public List<Integer> getMonthList() {
+		return monthList;
+	}
+
+	public void setMonthList(List<Integer> monthList) {
+		this.monthList = monthList;
+	}
+
+}

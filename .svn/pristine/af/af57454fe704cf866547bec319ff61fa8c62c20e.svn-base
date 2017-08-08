@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>main</title>
+
+<link rel="stylesheet" href="themes/cupertino/jquery.ui.all.css">
+<script src="scripts/jquery.min.js"></script>
+<script src="scripts/jquery-ui.min.js"></script>
+<script src="scripts/ui/jquery.ui.position.min.js"></script>
+<script src="scripts/ui/jquery.ui.core.min.js"></script>
+<script src="scripts/ui/jquery.ui.widget.min.js"></script>
+<script src="scripts/ui/jquery.ui.button.min.js"></script>
+<script src="scripts/ui/jquery.ui.tabs.min.js"></script>
+<script src="scripts/ui/jquery.ui.dialog.min.js"></script>
+<script src="scripts/ui/jquery.ui.menu.min.js"></script>
+<script src="scripts/function.min.js"></script>
+
+<style>
+.testDiv { padding: 5px; border-bottom: dotted 1px #000; }
+</style>
+<script>
+$(function() {
+
+});
+</script>
+
+<!-- 此js务必放在所有页面自带的js后面加载 -->
+<script src="scripts/base.min.js"></script>
+
+</head>
+<body class="hide">
+
+<div class="testDiv">
+<a class="navLink" href="Func1.html" id="navLink101">功能1</a>：iframe内的超链接和最外层的Tab联动
+</div>
+
+<div class="testDiv">
+<a class="navLink" href="Func2.html" id="navLink102">功能2</a>：自定义下拉菜单类
+</div>
+
+<div class="testDiv">
+<a class="navLink" href="Func3.html" id="navLink103">功能3</a>：固定在底部的Div，可以用显示/隐藏等方法来使用
+</div>
+
+<div class="testDiv">
+<a class="navLink" href="Func4.html" id="navLink104">功能4</a>：规范化面板
+</div>
+
+<div class="testDiv">
+<a class="navLink" href="Func5.html" id="navLink105">功能5</a>：表格面板
+</div>
+
+<div class="testDiv">
+<a class="navLink" href="Func6.html" id="navLink106">功能6</a>：联动全选，点击后和功能5中的所有复选框联动
+</div>
+
+<div class="testDiv">
+<a class="navLink" href="Func7.html" id="navLink107">功能7</a>：折叠列表
+</div>
+
+<div class="testDiv">
+<a class="navLink" href="Func8.html" id="navLink108">功能8</a>：菜单弹出图标
+</div>
+
+<div class="testDiv">
+<a class="navLink" href="Func9.html" id="navLink109">功能9</a>：模态弹出窗
+</div>
+
+<div class="testDiv">
+<a class="navLink" href="Func10.html" id="navLink110">功能10</a>：左右互动列表
+</div>
+
+<div class="testDiv">
+<a class="navLink" href="Func11.html" id="navLink111">功能11</a>：菜单树
+</div>
+
+<div class="testDiv">
+<a class="navLink" href="Func12.html" id="navLink112">功能12</a>：登录表单及提示
+</div>
+
+<div class="testDiv">
+<a class="navLink" href="Func13.html" id="navLink113">功能13</a>：选择日期
+</div>
+
+</body>
+</html>

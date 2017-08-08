@@ -1,0 +1,209 @@
+package com.cauc.contract.business.hibernate;
+
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.hibernate.HibernateException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.cauc.contract.FinanceServiceException;
+import com.cauc.contract.business.IStudentManagementService;
+import com.cauc.contract.business.dao.*;
+import com.cauc.contract.pojos.ConStudent;
+import com.cauc.contract.pojos.Contract;
+import com.cauc.contract.pojos.Student;
+import com.cauc.contract.util.CommonUtils;
+import com.sun.org.apache.commons.collections.CollectionUtils;
+
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+
+
+/**此类所有注释暂时保留*/
+
+@Service
+public class StudentManagementServiceImpl extends GenericHibernateDAO implements IStudentManagementService{
+	private static Log log = LogFactory.getLog(StudentManagementServiceImpl.class);
+
+	public List<Student> readAllStudent(Student student) {
+		String hql="";
+		String strWhere="";
+		hql = "from " + Student.class.getSimpleName() + " t ";
+		if(!student.getStudentName().equals(""))
+		{
+			if(strWhere=="")
+				strWhere =" where t.studentName like '"+student .getStudentName()+"%'";
+			else {
+				strWhere +=" and t.studentName like '"+student .getStudentName()+"%'";
+			}
+		}
+		if(!student.getNo().equals(""))
+		{
+			if(strWhere=="")
+				strWhere =" where t.no='"+student.getNo()+"'";
+			else {
+				strWhere +=" and t.no='"+student .getNo()+"'";
+			}
+		}
+		if(!student.getGrade().equals(0))
+		{
+			if(strWhere=="")
+				strWhere =" where t.grade="+student .getGrade();
+			else {
+				strWhere +=" and t.grade="+student .getGrade();
+			}
+		}
+		if(!student.getState().equals(0))
+		{
+			if(strWhere=="")
+				strWhere =" where t.state="+student .getState();
+			else {
+				strWhere +=" and t.state="+student .getState();
+			}
+		}
+		if(!student.getContractNo().equals(""))
+		{
+			if(strWhere=="")
+				strWhere =" where t.contractNo like '"+student .getContractNo()+"%'";
+			else {
+				strWhere +=" and t.contractNo like '"+student .getContractNo()+"%'";
+			}
+		}
+		if(!student.getCompany().equals("0"))
+		{
+			if(strWhere=="")
+				strWhere =" where t.company='"+student .getCompany()+"'";
+			else {
+				strWhere +=" and t.company='"+student .getCompany()+"'";
+			}
+		}
+		hql=hql+strWhere;
+		List<Student> list = find(hql);
+		
+		return list;
+	}
+	
+	@Override
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void saveStudent(Student student) throws FinanceServiceException {
+		try {
+			if (student.getStudentId()==0) {
+				try {
+					super.save(student);
+				} catch (HibernateException e) {
+					log.error("录入学生失败", e);
+					throw new FinanceServiceException("录入学生失败", e);
+				}
+				
+			} else 
+			{
+				// 更新
+				Student currentStudent = get(Student.class, student.getStudentId());
+			    currentStudent.setState(student.getState());
+//			    if(student .getJoinTime()!=null)
+//			    	currentStudent .setJoinTime(student.getJoinTime());
+			    if(student .getStopTime()!=null)
+			    	currentStudent .setStopTime(student.getStopTime());
+			    if(student.getStopReason()!=null)
+			    	currentStudent .setStopReason(student.getStopReason());
+			    if(student.getLastModifyTime()!=null)
+			    	currentStudent .setLastModifyTime(student.getLastModifyTime());
+				update(currentStudent);
+			}
+		} catch (HibernateException e) {
+			log.error("保持学生信息时失败", e);
+			throw new FinanceServiceException("保持学生信息时失败。", e);
+		}
+	}
+	@Override
+	public String getInfoById(int studentId)
+	{
+		JSONObject jsonObj = null;
+		JSONArray jsonArr = null;
+		JSONObject dicJson = null;
+		// 取得对象
+		Student currentStudent = get(Student.class,studentId);
+				
+				if(currentStudent!=null){
+					jsonObj = new JSONObject();
+					dicJson = new JSONObject();
+					jsonArr = new JSONArray();
+					SimpleDateFormat sdf=new SimpleDateFormat("yyyy-MM-dd");  
+					//String jointime="";
+					String stoptime="";
+//					if(null!=currentStudent.getJoinTime())
+//					{
+//					  jointime=sdf.format(currentStudent.getJoinTime()); 
+//					}
+					if(null!=currentStudent.getStopTime())
+					{
+					  stoptime=sdf.format(currentStudent.getStopTime()); 
+					}
+					dicJson.put("studentId", currentStudent.getStudentId());
+					dicJson.put("state", currentStudent.getState());
+					//dicJson.put("joinTime", jointime);
+					dicJson.put("stopTime", stoptime);
+					dicJson.put("stopReason", currentStudent.getStopReason());
+					jsonArr.add(dicJson);
+				}else{
+					return null;
+				}
+				
+				jsonObj.put("dics", jsonArr);
+				return jsonObj.toString();
+	}
+	/**通过学生学号No获取合同号信息*/
+	@Override
+	public ConStudent ContractListByNo(Student student) {
+		List<ConStudent> returnlist = new ArrayList<ConStudent>();
+		String sql = "select a.ContractNo as Cont,a.CourseInfo as Cour,a.No as NO,"
+					+ "b.C_Grade_Info as CGrad,b.C_CONTRACT_ID  as CCONT,b.C_Payment_Info as CPay,a.StudentName as stud from "
+					+ "(select CourseInfo,ContractNo,No,StudentName FROM Student where No ='"+student.getNo()+"') a "
+					+ "LEFT JOIN "
+					+ "(select C_Grade_Info,C_CONTRACT_ID,C_Payment_Info from Contract where C_Grade_Info like '%"+student.getNo()+"%') b "
+					+ "on b.C_CONTRACT_ID=a.ContractNo";
+		List<Object[]> list = super.createSQLQuery(sql).list();
+		for(Object[] ob:list){
+			ConStudent cons = new ConStudent();
+			cons.setContractNo(ob[0].toString());
+			cons.setCourseInfo(CommonUtils.ObjecttoString(ob[1]));
+			cons.setNO(ob[2].toString());
+			cons.setC_Grade_Info(CommonUtils.ObjecttoString(ob[3]));
+			cons.setC_CONTRACT_ID(ob[4].toString());
+			cons.setCPaymentInfo(CommonUtils.ObjecttoString(ob[5]));
+			cons.setStudentName(ob[6].toString());
+			returnlist.add(cons);
+		}
+		return returnlist.get(0);
+	}
+    //保存课程信息
+	@Override
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void saveDetaile(Student student) throws FinanceServiceException {
+		if (student.getStudentId()!=0) {
+			Student stu = get(Student.class,student.getStudentId());
+			stu.setCourseInfo(student.getCourseInfo());
+			update(stu);
+		}
+	}
+
+	@Override
+	public List<Student> GetStudentByNo(String jsonNo) {
+		List<Student> students = new ArrayList<Student>();
+		JSONArray ListNo = JSONArray.fromObject(jsonNo);
+		String hql = "from Student where No in (";
+		for (int i = 0; i < ListNo.size(); i++) {
+			JSONObject jo = (JSONObject) ListNo.get(i);
+			hql += "'" + jo.get("studentNo") + "',";
+		}
+		hql = hql.substring(0, hql.length() - 1) + ")";
+		students = find(hql);
+		return students;
+	}
+}

@@ -1,0 +1,300 @@
+package com.cauc.training.business;
+
+import java.util.List;
+import java.util.Map;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.business.dao.support.Page;
+import com.cauc.training.pojos.TUser;
+import com.cauc.training.vo.VOTUser;
+import com.cauc.training.vo.VStatisticsByDay;
+
+public interface ISystemUserManagerService {
+	
+	/**
+	 * C90
+	 */
+	public static final String QUERY_KEY_PLANE_C90 = "402889a32f333888012f343c2d86000c";
+	
+	/**
+	 * DA42
+	 */
+	public static final String QUERY_KEY_PLANE_DA42 = "40287f612721c03b012721c045440001";
+	
+	/**
+	 * DA40
+	 */
+	public static final String QUERY_KEY_PLANE_DA40 = "402889a32f333888012f342bdad00002";
+	
+	/**
+	 * DA20
+	 */
+	public static final String QUERY_KEY_PLANE_DA20 = "402889a32f333888012f343a6f6b0009";
+	
+	/**
+	 * FTD42
+	 */
+	public static final String QUERY_KEY_PLANE_FTD42 = "402889a32f333888012f3441575d0017";
+	
+	/**
+	 * FTD40
+	 */
+	public static final String QUERY_KEY_PLANE_FTD40 = "402889a32f333888012f343f8ef10013";
+	
+	
+	/**
+	 * 用户账号，来自于TUser实体类中，用于查询TUser实体 
+	*/
+	public static final String QUERY_KEY_USERACCOUNT = "VUsername";
+	
+	/**
+	 * 用户状态，来自于TUser实体类中，用于查询TUser实体 
+	 * 状态信息：0 正常（已开通）; 1 停用; -1 代表删除;
+	*/
+	public static final String QUERY_KEY_USERSTATUS = "IStatus";
+
+	/**
+	 * 时间，来自于TUser实体类
+	 */
+	public static final String  QUERY_KEY_TUSER_DATE = "DCreateDate";
+	
+	/**
+	 * 教员、学员、其他人员的编号，来自于StudentBaseInfo、TeacherBaseInfo和TOtheruser等实体类中，
+	 * 用于查询StudentBaseInfo、TeacherBaseInfo和TOtheruser等实体 
+	*/
+	public static final String QUERY_KEY_VCODE = "VCode";
+
+	
+	/**
+	 * 教员、学员、其他人员的姓名，来自于StudentBaseInfo、TeacherBaseInfo和TOtheruser等实体类中，
+	 * 用于查询StudentBaseInfo、TeacherBaseInfo和TOtheruser等实体 
+	*/
+	public static final String QUERY_KEY_VNAME = "VName";
+	
+	/**
+	 * 教员、学员、其他人员的账号是否开通标志位，来自于StudentBaseInfo、TeacherBaseInfo和TOtheruser等实体类中，
+	 * 用于过滤查询StudentBaseInfo、TeacherBaseInfo和TOtheruser等实体是否在开通账号页面显示
+	*/
+	public static final String QUERY_KEY_OPENSTATUS = "openStatus";
+	
+	/**
+	 * 时间，来自于StudentBaseInfo、TeacherBaseInfo和TOtheruser等实体类
+	 */
+	public static final String  QUERY_KEY_INFO_DATE = "DCreatedate";
+	
+	/**
+	 * 飞行出发时刻
+	 */
+	public static final String QUERY_KEY_BEGIN_DATE = "beginDate";
+	
+	/**
+	 * 飞行到达时刻
+	 */
+	public static final String QUERY_KEY_EDN_DATE = "endDate";
+	
+	/**
+	 * 用户类型
+	 */
+	public static final String QUERY_KEY_USER_TYPE="IUserType";
+	
+	/**
+	 * 用户类型1：学员；2：教员；3：管理员；4：其他 
+	*/
+	
+	public static final int USERTYPE_STUDENT = 1;
+	public static final int USERTYPE_TEACHER = 2;
+	public static final int USERTYPE_ADMIN = 3;	
+	public static final int USERTYPE_OTHER = 4;
+	
+	
+	/**
+	 * 功能：保存用户账号
+	 * @param user
+	 * @throws FinanceServiceException
+	 */
+	public void saveUserAccount(TUser user) throws FinanceServiceException;
+	
+	
+	/** 
+	 * 更新用户账号
+	 * @param user
+	 * @throws FinanceServiceException
+	 */
+	public void updateUserAccount(TUser user) throws FinanceServiceException;
+	
+	/**
+	 * 更新用户状态（可单一更新，也可批量更新）
+	 * @param ids：String... ids 表示定义一个可变变量，即ids就是一个字符串数组，等价于String[] ids
+	 * @param status：状态值
+	 * @throws FinanceServiceException
+	 */
+	public void updateUserStatus(int status, String... ids) throws FinanceServiceException;	
+	
+	
+	/**删除用户账号（可单一删除，也可批量删除）
+	 * 
+	 * @param ids
+	 * @throws FinanceServiceException
+	 * 说明：String... ids 表示定义一个可变变量，即ids就是一个字符串数组，等价于String[] ids
+	 */
+	public void deleteUserAccountByIds(String... ids) throws FinanceServiceException;
+	
+	
+	/**恢复默认密码，默认密码与用户账号相同
+	 * 
+	 * @param id
+	 * @throws FinanceServiceException
+	 */
+	public void recoverDefaultPassword(String id) throws FinanceServiceException;	
+	
+	/**
+	 * 根据用户ID查询用户账号
+	 * @param id
+	 * 返回值为VOTUser
+	 */
+	public VOTUser searchSystemUserAccountById(String id) throws FinanceServiceException;
+
+	/**
+	 * 根据用户ID查询用户账号
+	 * @param id
+	 * 返回值为TUser
+	 */
+	public TUser searchUserAccountById(String id) throws FinanceServiceException;
+	/**
+	 * 功能：根据用户状态查询用户账号
+	 * @param params：Map结构，key为TUser中的VUsername，value为用户输入的关键字
+	 * @param status：用户状态，0：正常（开通）；1：停用；-1：删除。
+	 *                特别说明：如果要查询所有状态，则将该参数值固定设置为：10
+	 * @param pageNo：当前页号
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page searchStatuUserAccountByStatus(Map<String,Object> params, int status, String pageNo) throws FinanceServiceException;	
+
+	
+//	/**
+//	 * 功能：查询已开通用户账号
+//	 * @param params：Map结构，key为TUser中的IStatus，value为状态数值
+//	 * @param pageNo：当前页号
+//	 * @return
+//	 * @throws FinanceServiceException
+//	 */
+//	public Page searchOpenedStatusUserAccount(Map<String,Object> params, String pageNo) throws FinanceServiceException;	
+//
+//	
+//	
+//	/**
+//	 * 功能：查询已停用用户账号
+//	 * @param params：Map结构，key为TUser中的IStatus，value为状态数值
+//	 * @param pageNo：当前页号
+//	 * @return
+//	 * @throws FinanceServiceException
+//	 */
+//	public Page searchDisabledStatusUserAccount(Map<String,Object> params, String pageNo) throws FinanceServiceException;	
+//
+//	/**
+//	 * 功能：查询已删除用户账号
+//	 * @param params：Map结构，key为TUser中的IStatus，value为状态数值
+//	 * @param pageNo：当前页号
+//	 * @return
+//	 * @throws FinanceServiceException
+//	 */
+//	public Page searchDeleteStatusUserAccount(Map<String,Object> params, String pageNo) throws FinanceServiceException;	
+	
+	
+	/**
+	 * 功能：查询教员信息
+	 * @param params：Map结构，条件有两个：1、key为TeacherBaseInfo中的VCode，value为用户输入的关键字；2、key为TeacherBaseInfo中的VName，value为用户输入的关键字
+	 * @param pageNo：当前页号
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page searchTeachersInfo(Map<String,Object> params, String pageNo) throws FinanceServiceException;	
+
+	/**
+	 * 功能：查询学员信息
+	 * @param params：Map结构，条件有两个：1、key为StudentBaseInfo中的VCode，value为用户输入的关键字；2、key为StudentBaseInfo中的VName，value为用户输入的关键字
+	 * @param pageNo：当前页号
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page searchStudentsInfo(Map<String,Object> params, String pageNo) throws FinanceServiceException;	
+
+	/**
+	 * 功能：查询其他人员信息
+	 * @param params：Map结构，条件有两个：1、key为TOtheruser中的VCode，value为用户输入的关键字；2、key为TOtheruser中的VName，value为用户输入的关键字
+	 * @param pageNo：当前页号
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page searchOtherUsersInfo(Map<String,Object> params, String pageNo) throws FinanceServiceException;	
+	
+	
+	/**
+	 * 开通教员、学员、其他人员的登录账号信息（可单一开通，也可批量开通）
+	 * @param userType：开通账号的人员类别。1：表示教员；2：表示学员；3：表示其他人员
+	 * @param ids：String... ids 表示定义一个可变变量，即ids就是一个字符串数组，等价于String[] ids
+	 * @param createUserId：当前操作的人员的主键
+	 * @throws FinanceServiceException
+	 */
+	public void openTSOUserAccount(int userType, String createUserId, String... ids) throws FinanceServiceException;	
+	
+	/**
+	 * 运行简报数据统计 
+	 * @param params
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<VStatisticsByDay> readStatisticsByDayList(Map<String,Object> params)throws FinanceServiceException;
+	
+	/**
+	 * 月数据统计表 
+	 * @param params
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<VStatisticsByDay> statisticsByMonthListData(Map<String,Object> params)throws FinanceServiceException;
+	
+	/**
+	 * 训练统计周表
+	 * @param params
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page statisticsByWeekListData(Map<String,Object> params,String pageNo)throws FinanceServiceException;
+	
+	
+	/**
+	 * 年数据统计
+	 * @param params
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<VStatisticsByDay> statisticsByYearListData(Map<String,Object> params)throws FinanceServiceException;
+	
+	/**
+	 * 整体进度统计表
+	 * @param params
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public VStatisticsByDay statisticalAllDataReport(Map<String,Object> params)throws FinanceServiceException;
+	
+	/**
+	 * 航空公司统计表
+	 * @param params
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<VStatisticsByDay> statisticalCompanyReport(Map<String,Object> params)throws FinanceServiceException;
+	
+	/**
+	 * 数字证书绑定
+	 * @param userid
+	 * @param uniqueId
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public TUser usbKeyToUser(String userid,String uniqueId)throws FinanceServiceException;
+	
+}

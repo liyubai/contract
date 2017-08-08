@@ -1,0 +1,181 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>数据字典操作</title>
+    <link href="themes/cupertino/jquery.ui.all.css" rel="stylesheet" type="text/css" />
+    <link href="themes/cupertino/selfStyle.css" rel="stylesheet" type="text/css" />
+    <script src="scripts/jquery.min.js"></script>
+    <script src="scripts/jquery-ui.min.js"></script>
+    <script src="scripts/ui/jquery.ui.position.min.js"></script>
+    <script src="scripts/ui/jquery.ui.core.min.js"></script>
+    <script src="scripts/ui/jquery.ui.widget.min.js"></script>
+    <script src="scripts/ui/jquery.ui.button.min.js"></script>
+    <script src="scripts/ui/jquery.ui.tabs.min.js"></script>
+    <script src="scripts/ui/jquery.ui.dialog.min.js"></script>
+    <script src="scripts/ui/jquery.ui.menu.min.js"></script>
+    <script src="scripts/function.min.js"></script>
+    <!-- 此js务必放在所有页面自带的js后面加载 -->
+    <script src="scripts/base.min.js"></script>
+    <style type="text/css">
+    .treeView li
+    {
+    	cursor:default;
+    	font-size:12px;
+    }
+    .treeView li span
+    {
+    	font-size:12px;
+    }
+    </style>
+</head>
+<body oncontextmenu="return false">
+<div id="indexHead">
+  <div class="headercontent">
+      <img src="themes/cupertino/images/logo.png" />
+      <span class="sysNameC">中国民航大学飞行培训合同管理系统</span>
+      <div class="sysNameE">Civil aviation university of china Contract management system </div>
+      <div class="logout">
+          <span class="today">2016-6-6</span>
+          <span class="wel">欢迎</span>
+          <a href="">张雪</a>
+          <span class="sep"></span>
+          <a href="">退出</a>
+      </div>
+  </div>
+</div>
+<div id="leftPartA">
+    <ul class="itemList">
+	    <li class="active"><a style="display:block;" href="cMain.htm" title="主页">主页</a></li>
+	    <li><a href="cContractList.htm" title="合同管理">合同管理</a></li>
+	    <li><a href="cStudentList.htm" title="学生管理">学生管理</a></li>
+	    <li><a href="cPaylist.htm" title="付款管理">付款管理</a></li>
+	    <li><a href="cClearingList.htm" title="结算管理">结算管理</a></li>
+    </ul>
+    <ul class="foldList">
+	    <li title="统计">统计</li>
+	    <ul class="itemList">
+	        <li><a href="cPayStatistics.htm">付款统计</a></li>
+	        <li><a href="cCollectStatistics.htm">汇总统计</a></li>
+	        <li><a href="cAverageStatistics.htm">平均统计</a></li>
+	    </ul>
+	</ul>
+	<ul class="foldList">
+        <li title="用户管理">用户管理</li>
+        <ul class="itemList">
+	        <li><a href="cUserList.htm">用户列表</a></li>
+	        <li><a href="cRoleList.htm">角色列表</a></li>
+	    </ul>
+    </ul>
+	<ul class="itemList">
+	    <li><a href="cDataDictionary.htm" title="数据字典">数据字典</a></li>
+	</ul>
+</div>
+<div id="rightPartA" style="overflow-x:hidden;">
+<div>
+    <div class="Panel">
+        <div class="panelHead">
+            <span>数据字典</span>
+        </div>
+        <div class="panelContent" style="min-height:400px;">
+            <div class="treeView ml10" id="treeView0">
+                <ul class="tV" style="overflow:hidden;">
+                    <li class="folderNode rootNode">合作共建</li>
+                    <ul>
+                        <li class="folderNode">招飞经费</li>
+                        <li class="folderNode">体检费</li>
+                        <li class="folderNode">共建费</li>
+                        <ul>
+                            <li class="folderNode">服装费</li>
+                            <li class="folderNode">伙食费</li>
+                            <li class="folderNode">住宿费</li>
+                            <li class="folderNode">英语培训费</li>
+                            <li class="folderNode">奖教奖学基金</li>
+                            <li class="folderNode">理论培训费</li>
+                        </ul>
+                    </ul>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+<input id="hidNodeLevel" type="hidden" value="" />
+<input id="hidNodeId" type="hidden" value="" />
+<div id="showMes" class="showMes">
+       <span class="span" id="addNode">新建子分类</span>
+       <span class="span" id="delNode">删除本分类</span>
+</div>
+<div id="dialogForm1" title="新建节点信息">
+	<p class="validateTips">节点信息</p>
+	<form>
+		<div>
+		    <span>节点文本</span>
+            <input id="txtNode" type="text" class="tableinput2" />
+		</div>
+	</form>
+</div>
+<script>
+    $(function() {
+
+        var txt1 = $("#txtNode"),
+		allFields = $([]).add(txt1),
+		tips = $(".validateTips");
+
+        function updateTips(t) {
+            tips.html(t).addClass("ui-state-highlight");
+            setTimeout(function() {
+                tips.removeClass("ui-state-highlight", 1500);
+            }, 2000);
+        }
+
+        $("#dialogForm1").dialog({
+            autoOpen: false,
+            height: 200,
+            width: 300,
+            background: '#FF0000', // 背景色
+            opacity: 0.27,     // 透明度
+            modal: true,
+            resizable: false,
+            buttons: {
+                "确 定": function() {
+                    //确定按钮的处理代码段：
+
+                    $(this).dialog("close");
+                },
+                "取 消": function() {
+                    $(this).dialog("close");
+                }
+            },
+            close: function() {
+                allFields.val("").removeClass("error");
+            }
+        });
+
+        var folderNodes = $(".treeView").find("li.rootNode");
+        $(".treeView").delegate(folderNodes, "mousedown", function(e) {
+
+            if (e.which == 3) {
+                var mouseX = e.pageX;
+                var mouseY = e.pageY;
+                $('#showMes').css({ 'left': mouseX + 'px', 'top': mouseY + 'px' }).show();
+            }
+
+        });
+
+        $('#addNode').click(function() {
+            tips.removeClass("ui-state-highlight").html("新建节点信息");
+            $("#modalDialogButton1 input.error").removeClass("error");
+            $("#dialogForm1").dialog("open");
+        });
+
+        $(document).bind("click", function(e) {
+            var target = $(e.target);
+            if (target.closest("#showMes").length == 0) {
+                $('#showMes').hide();
+            }
+        });
+    });
+</script>
+</body>
+</html>

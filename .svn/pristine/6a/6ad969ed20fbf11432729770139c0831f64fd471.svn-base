@@ -1,0 +1,444 @@
+package com.cauc.contract.ui.core;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+
+import com.cauc.contract.FinanceServiceException;
+import com.cauc.contract.business.IPayListService;
+import com.cauc.contract.business.IPayStatisticsService;
+import com.cauc.contract.pojos.PayStatistics;
+import com.cauc.contract.pojos.Payment;
+import com.cauc.contract.pojos.PaymentExtends;
+import com.cauc.contract.ui.common.BaseActionSupport;
+import com.cauc.contract.ui.common.Paging;
+import com.cauc.contract.util.JsonToBean;
+
+/**
+ * 
+ * @author guot 付款统计
+ */
+public class PayStatisticsAction extends BaseActionSupport {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	// 付款统计的List
+	private List<PayStatistics> paySList;
+	private List<PayStatistics> payList;
+	private PaymentExtends payExt;
+
+	// 接受的界面参数
+	private String rtime;// 年份
+	private String rcontractId;// 合同号
+	private int rcontractType;// 合同类型
+	private int rcontractStatus;// 合同状态
+	private int rcompany;// 付款单位
+	private int rpayStatus;// 付款状态
+	private String rbeginTime;// 开始时间
+	private String rendTime;// 结束时间
+
+	private String quantities; // 标的额
+	private String expectedPayment;// 预计收款
+	private String noticePayment;// 通知收款
+	private String trueMoney;// 实际到款金额
+	private String trueDate;// 实际到款日期
+
+	// 回显值
+	private String compyName;
+	private String contractType;
+	private String contractstatus;
+	// private String paystatus;
+
+	// 分页部分
+	// 分页
+	private Paging paging;
+	// 每页显示多少条
+	private int pagesize;
+	// 当前页码
+	private int cur_page;
+	// 分页字符串
+	private String pageStr;
+	// 付款PID
+	/**
+	 * 
+	 */
+	private int PID;
+
+	/**
+	 * 查询付款统计
+	 * 
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	@SuppressWarnings({ "unchecked", "unchecked" })
+	public String showPayStatisticsList() throws FinanceServiceException {
+		IPayStatisticsService payStatisticsService = getFactory().getFinanceProviderInstance().getPayStatisticsService();
+		PayStatistics payS = new PayStatistics();
+		// PayStatistics payL = new PayStatistics();
+		if (rtime == null || "".equals(rtime)) {
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyy");
+			Date date = new Date();
+			rtime = sdf.format(date); // 获取当前年份
+		}
+		// System.out.println("前"+rcontractId);
+		if (rcontractId == null || rcontractId.equals("合同号")) {
+			rcontractId = "";
+		}
+		payS.setRtime(rtime);
+		payS.setRcontractId(rcontractId);
+		payS.setRcontractStatus(rcontractStatus);
+		payS.setRcontractType(rcontractType);
+		payS.setRcompany(rcompany);
+		payS.setRpayStatus(rpayStatus);
+		payS.setRbeginTime(rbeginTime);
+		payS.setRendTime(rendTime);
+
+		if (payS.getRcompany() == 0 || payS.getRcompany() == 2) {
+			compyName = "签约单位";
+		} else
+			compyName = payStatisticsService.backgetDictionaryNameById(payS.getRcompany());
+		if (payS.getRcontractType() == 0 || payS.getRcontractType() == 322) {
+			contractType = "合同类型";
+		} else
+			contractType = payStatisticsService.backgetDictionaryNameById(payS.getRcontractType());
+		if (!(StringUtils.isNotBlank(payS.getRcontractId())) || ("null".equals(payS.getRcontractId()))) {
+			rcontractId = null;
+		}
+		// if(payS.getRcontractStatus() == 0 ){
+		// contractstatus = "合同状态";
+		// }else
+		// contractstatus = "sdsd";
+		// if(payS.getRpayStatus()==0 ){
+		// paystatus = "付款状态";
+		// }else
+		// paystatus = payStatisticsService.
+		// backgetDictionaryNameById(payS.getRpayStatus());
+		// 分页
+		int totalRowCount = 0; // 查询到的总条目
+		totalRowCount = payStatisticsService.getTotalRowCount("Payment", payS);
+		this.paging = new Paging();
+		// 当前页码
+		if (this.cur_page == 0) {
+			this.cur_page = 1;
+		}
+		// 每页显示数目
+		this.pagesize = 5;
+		// 设置当前页码
+		this.paging.setCurPage(this.cur_page);
+		// 把得到总共显示的数据记录设置在分页总纪录中
+		this.paging.setTotalRowCount(totalRowCount);
+		// 设置每页显示的数据记录 （根据页面显示条数设置 ）
+		this.paging.setPageRowCount(this.pagesize);
+
+		paySList = payStatisticsService.showPayStatistics(payS);
+		payList = payStatisticsService.showPayList(payS);
+		double sumQuan = 0.00; // 标的额合计
+		double sumEPay = 0.00; // 预计收款合计
+		double sumNPay = 0.00; // 通知收款合计
+		double sumTMoney = 0.00;// 实际收款合计
+		java.text.NumberFormat nf = java.text.NumberFormat.getInstance();
+		nf.setGroupingUsed(false); // 避免double数据显示科学记数法
+		if (CollectionUtils.isNotEmpty(paySList)) {
+			PayStatistics payStat = new PayStatistics();
+			List<PayStatistics> PayStatList = new ArrayList<PayStatistics>();
+			for (PayStatistics paySList : paySList) { // 循环遍历每份合同
+				int num = 0; // 学生人数
+				double trueMoney = 0.00; // 真实收款
+				double expectedPayment = 0.00; // 预计收款
+				double noticePayment = 0.00; // 通知收款
+				if (paySList.getGradeInfo() != null && !paySList.getGradeInfo().equals("") && !paySList.getGradeInfo().equals("0")) {
+					List<PayStatistics> jsonList = JsonToBean.makeJavaBean(paySList.getGradeInfo(), PayStatistics.class);
+					if (CollectionUtils.isNotEmpty(jsonList)) {
+						for (PayStatistics jsonInfor : jsonList) { // 循环每份合同中的学生信息GradeInfo
+							num += Integer.parseInt(jsonInfor.getStudentCount().toString());
+						}
+						paySList.setStudentCount(String.valueOf(num));
+						// 标的额
+						paySList.setQuantities(String.valueOf(Integer.parseInt(paySList.getCdealPrice().toString()) * num));
+					}
+				}
+				if (CollectionUtils.isNotEmpty(payList)) {
+					for (PayStatistics plist : payList) { // 循环遍历相同合同号付款信息
+						if (paySList.getContractId().equals(plist.getPcontractId())) {
+							if (paySList.getYear().equals(plist.getPReceiveDate())) {
+								// if (!plist.getPNoticeStatus().equals("0")) {
+								expectedPayment += Double.parseDouble(plist.getPReceiveMoney().toString());
+								// }
+								if (plist.getPNoticeStatus().equals("2")) {
+									noticePayment += Double.parseDouble(plist.getPReceiveMoney().toString());
+								} else if (plist.getPNoticeStatus().equals("3")) {
+									noticePayment += Double.parseDouble(plist.getPReceiveMoney().toString());
+								}
+							}
+							// json字段非空 用tobean方法获取getTureMoney getTrueDate
+							if (plist.getPPrealityDate() != null && !plist.getPPrealityDate().equals("")) {
+								String JSONstr = plist.getPPrealityDate().substring(0, plist.getPPrealityDate().length() - 1);
+								List<PayStatistics> list = JsonToBean.makeJavaBean(JSONstr, PayStatistics.class);
+								if (CollectionUtils.isNotEmpty(list)) {
+									for (PayStatistics json : list) { // 获取jsontobean对象//
+																		// TureMoney,TrueDate
+										String jsonYear = json.getTrueDate().toString().substring(0, 4);
+										if (json.getTrueDate() != null && paySList.getYear().equals(jsonYear)) {
+											trueMoney += Double.parseDouble(json.getTrueMoney().toString());
+										}
+									}
+								}
+							}
+						}
+					}
+					// System.out.println(trueMoney);
+					// 预计收款
+					paySList.setExpectedPayment(nf.format(new Double(String.valueOf(expectedPayment))));
+					// 通知收款
+					paySList.setNoticePayment(nf.format(new Double(String.valueOf(noticePayment))));
+					// 实际收款
+					paySList.setTrueMoney(nf.format(new Double(String.valueOf(trueMoney))));
+				}
+				sumQuan += Double.parseDouble(paySList.getQuantities().toString());
+				sumEPay += Double.parseDouble(paySList.getExpectedPayment().toString());
+				sumNPay += Double.parseDouble(paySList.getNoticePayment().toString());
+				sumTMoney += Double.parseDouble(paySList.getTrueMoney().toString());
+			}
+			// 标的额合计
+			payStat.setSumQuan(nf.format(new Double(String.valueOf(sumQuan))));
+			// 预计收款合计
+			payStat.setSumEPay(nf.format(new Double(String.valueOf(sumEPay))));
+			// 通知收款合计
+			payStat.setSumNpay(nf.format(new Double(String.valueOf(sumNPay))));
+			// 实际收款合计
+			payStat.setSumTMoney(nf.format(new Double(String.valueOf(sumTMoney))));
+			PayStatList.add(payStat);
+			setPayList(PayStatList);
+		}
+		return SUCCESS;
+	}
+
+	public String PaymentNoticeGroup() throws FinanceServiceException, ParseException {
+		IPayListService payListService = getFactory().getFinanceProviderInstance().getPayListService();
+		Payment payment = new Payment();
+		payment.setPId(PID);
+		payment.setPContractId("CAUC2016-G15");
+		payListService.searchPayment(payment);
+//		Payment pay = payListService.searchPaymentById(payment);
+//		payExt.setP_id(Integer.toString(pay.getPId()));
+//		payExt.setPContractId(pay.getPContractId());
+		return SUCCESS;
+	}
+
+	// -----------------------getter and setter---------------------
+	public List<PayStatistics> getPaySList() {
+		return paySList;
+	}
+
+	public void setPayStatisticsList(List<PayStatistics> paySList) {
+		this.paySList = paySList;
+	}
+
+	public String getRtime() {
+		return rtime;
+	}
+
+	public void setRtime(String rtime) {
+		this.rtime = rtime;
+	}
+
+	public String getRcontractId() {
+		return rcontractId;
+	}
+
+	public void setRcontractId(String rcontractId) {
+		this.rcontractId = rcontractId;
+	}
+
+	public int getRcontractType() {
+		return rcontractType;
+	}
+
+	public void setRcontractType(int rcontractType) {
+		this.rcontractType = rcontractType;
+	}
+
+	public int getRcontractStatus() {
+		return rcontractStatus;
+	}
+
+	public void setRcontractStatus(int rcontractStatus) {
+		this.rcontractStatus = rcontractStatus;
+	}
+
+	public int getRcompany() {
+		return rcompany;
+	}
+
+	public void setRcompany(int rcompany) {
+		this.rcompany = rcompany;
+	}
+
+	public int getRpayStatus() {
+		return rpayStatus;
+	}
+
+	public void setRpayStatus(int rpayStatus) {
+		this.rpayStatus = rpayStatus;
+	}
+
+	public String getRbeginTime() {
+		return rbeginTime;
+	}
+
+	public void setRbeginTime(String rbeginTime) {
+		this.rbeginTime = rbeginTime;
+	}
+
+	public String getRendTime() {
+		return rendTime;
+	}
+
+	public void setRendTime(String rendTime) {
+		this.rendTime = rendTime;
+	}
+
+	public Paging getPaging() {
+		return paging;
+	}
+
+	public void setPaging(Paging paging) {
+		this.paging = paging;
+	}
+
+	public int getPagesize() {
+		return pagesize;
+	}
+
+	public void setPagesize(int pagesize) {
+		this.pagesize = pagesize;
+	}
+
+	public int getCur_page() {
+		return cur_page;
+	}
+
+	public void setCur_page(int cur_page) {
+		this.cur_page = cur_page;
+	}
+
+	public String getPageStr() {
+		return pageStr;
+	}
+
+	public void setPageStr(String pageStr) {
+		this.pageStr = pageStr;
+	}
+
+	public List<PayStatistics> getPayList() {
+		return payList;
+	}
+
+	public void setPayList(List<PayStatistics> payList) {
+		this.payList = payList;
+	}
+
+	public static long getSerialversionuid() {
+		return serialVersionUID;
+	}
+
+	public String getQuantities() {
+		return quantities;
+	}
+
+	public void setQuantities(String quantities) {
+		this.quantities = quantities;
+	}
+
+	public String getExpectedPayment() {
+		return expectedPayment;
+	}
+
+	public void setExpectedPayment(String expectedPayment) {
+		this.expectedPayment = expectedPayment;
+	}
+
+	public String getNoticePayment() {
+		return noticePayment;
+	}
+
+	public void setNoticePayment(String noticePayment) {
+		this.noticePayment = noticePayment;
+	}
+
+	public void setPaySList(List<PayStatistics> paySList) {
+		this.paySList = paySList;
+	}
+
+	public String getTrueMoney() {
+		return trueMoney;
+	}
+
+	public void setTrueMoney(String trueMoney) {
+		this.trueMoney = trueMoney;
+	}
+
+	public String getTrueDate() {
+		return trueDate;
+	}
+
+	public void setTrueDate(String trueDate) {
+		this.trueDate = trueDate;
+	}
+
+	public String getCompyName() {
+		return compyName;
+	}
+
+	public void setCompyName(String compyName) {
+		this.compyName = compyName;
+	}
+
+	public String getContractType() {
+		return contractType;
+	}
+
+	public void setContractType(String contractType) {
+		this.contractType = contractType;
+	}
+
+	public String getContractstatus() {
+		return contractstatus;
+	}
+
+	public void setContractstatus(String contractstatus) {
+		this.contractstatus = contractstatus;
+	}
+
+	// public String getPaystatus() {
+	// return paystatus;
+	// }
+	//
+	// public void setPaystatus(String paystatus) {
+	// this.paystatus = paystatus;
+	// }
+	public PaymentExtends getPayExt() {
+		return payExt;
+	}
+
+	public void setPayExt(PaymentExtends payExt) {
+		this.payExt = payExt;
+	}
+
+	public int getPID() {
+		return PID;
+	}
+
+	public void setPID(int pID) {
+		PID = pID;
+	}
+}

@@ -1,0 +1,38 @@
+package com.cauc.training.business;
+
+import java.util.List;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.pojos.StudentAndstautsRelation;
+import com.cauc.training.pojos.TDiction;
+
+public interface IStudentAndStatusRelationService {
+	/**
+	 * @功能描述：通过关键字查询学生状态与学籍状态关系集合
+	 * @param key
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<StudentAndstautsRelation> searchlist(String key,String key1)throws FinanceServiceException;
+	/**
+	 * @功能描述：通过类型名称查询学生和学籍状态
+	 * @param name
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<TDiction> searchDictionByName(String name)throws FinanceServiceException;
+	/**
+	 * @功能描述：保存学生状态与学籍状态关
+	 * @param sasr
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public boolean save(StudentAndstautsRelation sasr)throws FinanceServiceException;
+	/**
+	 * @功能描述：删除状态关系
+	 * @param ids
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public boolean deleteStatus(String ids)throws FinanceServiceException;
+}

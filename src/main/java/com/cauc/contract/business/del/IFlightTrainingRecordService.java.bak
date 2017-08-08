@@ -1,0 +1,687 @@
+package com.cauc.training.business;
+
+import java.util.List;
+import java.util.Map;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.business.dao.support.Page;
+import com.cauc.training.pojos.AddHoursAndAddLesson;
+import com.cauc.training.pojos.PracticeAsk;
+import com.cauc.training.pojos.PracticeTest;
+import com.cauc.training.pojos.TDiction;
+import com.cauc.training.pojos.TFlightTrainingrecord;
+import com.cauc.training.pojos.TOrg;
+import com.cauc.training.pojos.TOtherflyrecord;
+import com.cauc.training.pojos.TOutline;
+import com.cauc.training.pojos.TStuassignteacher;
+import com.cauc.training.pojos.TeacherBaseInfo;
+import com.cauc.training.pojos.TraininglessonRelation;
+import com.cauc.training.vo.VChangedbaseflyline;
+import com.cauc.training.vo.VFlightTrainingrecord;
+import com.cauc.training.vo.VFlightTrainingrecordDetail;
+import com.cauc.training.vo.VOrg;
+import com.cauc.training.vo.VOutline;
+import com.cauc.training.vo.VTeacherBaseInfo;
+import com.cauc.training.vo.VTotalSummary;
+import com.cauc.training.vo.VTrainingRecordCompletion;
+import com.cauc.training.vo.VTrainsubject;
+
+
+/**
+ * 飞行训练管理
+ * @author ch.f
+ *
+ */
+public interface IFlightTrainingRecordService {
+
+	/**
+	 * 飞行技术学院
+	 */
+	public static final String FLY_COLLEGE_HEADER = "f1866a954a1470a0014a1809befa0005";
+	
+	/**
+	 * 朝阳院领导
+	 */
+	public static final String CAHOYANG_COLLEGE_HEADER = "f1866a954a1470a0014a181561300009";
+	
+	/**
+	 * 内蒙院领导
+	 */
+	public static final String NEIMENG_COLLEGE_HEADER = "f1866a954a1470a0014a1815b105000a";
+	
+	/**
+	 * 校领导
+	 */
+	public static final String SCHOOL_HEADER = "f1866a954a1470a0014a180a5f8f0007";
+	
+	
+	
+	/**
+	 * 学员
+	 */
+	public static final int USERTYPE_STUDENT = 1;
+	/**
+	 * 教员
+	 */
+	public static final int USERTYPE_TEACHER = 2;
+	/**
+	 * 管理员
+	 */
+	public static final int USERTYPE_ADMIN = 3;	
+	/**
+	 * 其他 
+	 */
+	public static final int USERTYPE_OTHER = 4;
+	/**
+	 * 学生状态--国内训练
+	 */
+	public static final String STUDENT_STATUS_GUO_NEI_TRAINING = "4028aa494765f33d014765f7df820011";
+	
+	/**
+	 * 熟练检查
+	 */
+	public static final String  SHULIANJIANCHA = "297ea69a48492c950148492fd9f80007";
+	
+	/**
+	 * 定期检查
+	 */
+	public static final String  DINGQIJIANCHA = "297ea69a48492c950148492fb2290006";
+	
+	/**
+	 * 熟练考试
+	 */
+	public static final String  SHIJIANKAOSHI = "297ea69a48492c950148492f8a3b0005";
+	
+	/**
+	 * 课程性质0：带飞；1：单飞；2：机长
+	 */
+	public static final int LESSON_PROPERTY_DAIFEI=0;
+	
+	/**
+	 * 课程性质0：带飞；1：单飞；2：机长
+	 */
+	public static final int LESSON_PROPERTY_DANFEI=1;
+	
+	/**
+	 * 课程性质0：带飞；1：单飞；2：机长
+	 */
+	public static final int LESSON_PROPERTY_JIZHANGE=2;
+	
+	/**
+	 * 教员未审核
+	 */
+	public static final int FLIGHT_RECORD_STATUS_NO_AUDIT=0;
+	
+	/**
+	 * 待办标题，待审核的飞行训练
+	 */
+	public static final String FLIGHT_RECORD_TO_DOING="待审核的飞行训练";
+	
+	/**
+	 * 教员已审核
+	 */
+	public static final int FLIGHT_RECORD_STATUS_YES_AUDIT=1;
+	
+	
+	/**
+	 * 打回
+	 */
+	public static final int FLIGHT_RECORD_STATUS_BACK_AUDIT=2;
+	
+	
+	/**
+	 * 学员已确认
+	 */
+	public static final int FLIGHT_RECORD_STATUS_YES_CONFIRM=3;
+	
+	/**
+	 * 申诉
+	 */
+	public static final int FLIGHT_RECORD_STATUS_APPEAL=4;
+	
+	/**
+	 * 已处理申诉
+	 */
+	public static final int FLIGHT_RECORD_STATUS_APPEAL_DO_WITH=5;
+	
+	/**
+	 * 查询关键字
+	 */
+	public static final String  QUERY_KEY= "VName";
+	
+	/**
+	 * 学号
+	 */
+	public static final String QUERY_CODE="VCode";
+	
+	/**
+	 * 推荐
+	 */
+	public static final String  QUERY_KEY_TUIJIAN= "ITjexam";
+	
+	/**
+	 * 飞行出发时刻
+	 */
+	public static final String QUERY_KEY_BEGIN_DATE = "beginDate";
+	
+	/**
+	 * 飞行到达时刻
+	 */
+	public static final String QUERY_KEY_EDN_DATE = "endDate";
+	
+	/**
+	 * 飞行日期
+	 */
+	public static final String QUERY_KEY_FLY_DATE = "DFlydate";
+	
+	/**
+	 * 基地
+	 */
+	public static final String QUERY_KEY_BASE = "baseid";
+	
+	/**
+	 * 飞机id
+	 */
+	public static final String  QUERY_KEY_PLANE_ID = "planeid";
+	
+	/**
+	 * 分配教员
+	 */
+	public static final String QUERY_DISPATCH_TEACHER="teacherid";
+	
+	/**
+	 * 选择教员
+	 */
+	public static final String QUERY_SELECT_TEACHER="selectTeacherid";
+	
+	/**
+	 * 学生id
+	 */
+	public static final String QUERY_STUDENT="studentid";
+	
+	/**
+	 * 其他人员id
+	 */
+	public static final String QUERY_OTHER="otherid";
+	
+	/**
+	 * 课程id
+	 */
+	public static final String QUERY_LESSONID="lessonid";
+	
+	/**
+	 * 记录id
+	 */
+	public static final String TRAINING_RECORD_ID = "id";
+	
+	/**
+	 * 起飞站
+	 */
+	public static final String QUERY_BEGIN_STATION="flyStation";
+	
+	/**
+	 * 经停站
+	 */
+	public static final String QUERY_JT_STATION="jtStation";
+	
+	/**
+	 * 到达站
+	 */
+	public static final String QUERY_END_STATION="endStation";
+	
+	/**
+	 * 飞行种类
+	 */
+	public static final String QUERY_KEY_FLY_TYPE = "297ea69a48492c950148492e55790002";
+	
+	/**
+	 * 飞行训练记录录入时效
+	 */
+	public static final String QUERY_KEY_FLY_TYPE_EFFECTIVE = "4028816a488b602301488b673f000002";
+	
+	/**
+	 * 记录状态
+	 */
+	public static final String QUERY_AUDIT_STATUS = "IAuditstatus";
+	
+	/**
+	 * 根据学员登录的id获取大纲列表
+	 * @param userid
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<TOutline> readOutlineByUserId(String userid) throws FinanceServiceException;
+	
+	/**
+	 * 获取飞行种类
+	 * @param typeid
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<TDiction> readFlyTypeList(String typeid) throws FinanceServiceException;
+	
+	/**
+	 * 获取学员所在基地对象
+	 * @param userid
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	
+	public TOrg readOrgByUserid(String userid) throws FinanceServiceException;
+	
+	/**
+	 * 获取基地教员列表
+	 */
+	public List<VTeacherBaseInfo> readTeacherBaseInfoByBaseid(Map<String,Object> params) throws FinanceServiceException;
+	
+	/**
+	 * 获取基地监视教员列表
+	 */
+	public List<TeacherBaseInfo> readJianShiTeacherBaseInfoByBaseid(Map<String,Object> params) throws FinanceServiceException;
+	
+	/**
+	 * 根据登录学生id，获取最近一次飞行课程，审核通过
+	 * @param userid
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public TFlightTrainingrecord readFlightLessonByUserid(String userid)
+			throws FinanceServiceException;
+
+	/**
+	 * 获取学员分配的教员
+	 * 
+	 * @param userid
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public TStuassignteacher readStuAssignTeacher(String userid)
+			throws FinanceServiceException;
+
+	/**
+	 * 获取教员分派的飞机
+	 * 
+	 * @param params
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public VOrg readPlaneidByTeacherid(Map<String, Object> params)
+			throws FinanceServiceException;
+
+	/**
+	 * 获取航空器最近一次飞行记录
+	 * 
+	 * @param planeid
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public VFlightTrainingrecord readBestNewFlightRecordByPlaneid(String planeid,String id)
+			throws FinanceServiceException;
+
+	/**
+	 * 获取航空器冲突的飞行记录
+	 * 
+	 * @param planeid
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public VFlightTrainingrecord readChongTuFlightRecordByPlaneid(
+			Map<String, Object> params) throws FinanceServiceException;
+
+	/**
+	 * 根据课程id获取阶段id、大纲id
+	 * 
+	 * @param lessonid
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public TraininglessonRelation readPhaseidByTrainingLessonid(
+			String outlineid, String lessonid) throws FinanceServiceException;
+
+	/**
+	 * 保存学生训练记录
+	 * 
+	 * @param record
+	 * @throws FinanceServiceException
+	 */
+	public void saveCreateFlightTrainingRecord(TFlightTrainingrecord record)
+			throws FinanceServiceException;
+
+	/**
+	 * 保存学生历史训练记录
+	 * @param record
+	 * @throws FinanceServiceException
+	 */
+	public void saveCreateHistoryFlightTrainingRecord(TFlightTrainingrecord record)
+	throws FinanceServiceException;
+	
+	/**
+	 * 保存其它训练记录
+	 * 
+	 * @param record
+	 * @throws FinanceServiceException
+	 */
+	public void saveOtherFlightTrainingRecord(TOtherflyrecord record)
+			throws FinanceServiceException;
+
+	/**
+	 * 获取当天的飞行记录
+	 * 
+	 * @param sutdentid
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<VFlightTrainingrecordDetail> readDayFlightTrainingRecordList(
+			Map<String, Object> params) throws FinanceServiceException;
+
+	/**
+	 * 获取其它飞行记录对象
+	 * 
+	 * @param id
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public VFlightTrainingrecordDetail readOtherFlightTrainingRecordById(
+			String id) throws FinanceServiceException;
+
+	/**
+	 * 处理加时加课页面
+	 * @param id
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<VFlightTrainingrecordDetail> readAddHoursAndAddLessonById(
+			String id) throws FinanceServiceException;
+	
+	
+	
+	/**
+	 * 获取飞行训练记录录入时效
+	 * 
+	 * @param typeid
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public int readPrescription(String typeid) throws FinanceServiceException;
+
+	/**
+	 * 课程、起飞站、到达站判断其合法性
+	 * 
+	 * @param params
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public VOrg readStationIfRightByLessonid(Map<String, Object> params)
+			throws FinanceServiceException;
+
+	/**
+	 * 历史记录查询
+	 * 
+	 * @param params
+	 * @param pageNo
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page readTrainingHistoryRecordList(Map<String, Object> params,
+			String pageNo) throws FinanceServiceException;
+	
+	/**
+	 * 统计历史记录查询
+	 * 
+	 * @param params
+	 * @param pageNo
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page readStatisticsTrainingHistoryRecordList(Map<String, Object> params,
+			String pageNo) throws FinanceServiceException;
+	
+	/**
+	 * 其它记录查询
+	 * 
+	 * @param params
+	 * @param pageNo
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page readOtherTrainingHistoryRecordList(Map<String, Object> params,
+			String pageNo) throws FinanceServiceException;
+	
+	/**
+	 * 所有历史记录各项合计
+	 * @param params
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public VTotalSummary readTrainingHistoryRecordTotalSummary(Map<String, Object> params) throws FinanceServiceException;
+	/**
+	 * 记录完成情况查询
+	 * 
+	 * @param params
+	 * @param pageNo
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page readFlightTrainingRecordCompletionList(
+			Map<String, Object> params, String pageNo)
+			throws FinanceServiceException;
+	
+	/**
+	 * 统计记录完成情况查询
+	 * 
+	 * @param params
+	 * @param pageNo
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page readStatisticsFlightTrainingRecordCompletionList(
+			Map<String, Object> params, String pageNo)
+			throws FinanceServiceException;
+
+	/**
+	 * 记录完成情况导出XLS
+	 * 
+	 * @param params
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<VFlightTrainingrecord> exportDataFlightTrainingRecordCompletion(
+			Map<String, Object> params) throws FinanceServiceException;
+	
+	/**
+	 * 获取课程得分列表
+	 * 
+	 * @param trainingId
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<VTrainsubject> readStudentSubjectScoreByTrainingId(
+			String trainingId) throws FinanceServiceException;
+
+	/**
+	 * 显示教员评语
+	 * 
+	 * @param trainingId
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public VOrg readStudentCommentByTrainingId(String trainingId)
+			throws FinanceServiceException;
+
+	/**
+	 * 大纲单元完成情况列表
+	 * 
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<VTrainingRecordCompletion> readUnitTrainingRecordCompletionListByOutlineId(
+			String outlineid, String studentCode)
+			throws FinanceServiceException;
+
+	public List<VTrainingRecordCompletion> readAddHoursAndAddLessonUnitListByOutlineId(
+			String outlineid, String studentCode)
+			throws FinanceServiceException;
+	
+	public List<VTrainingRecordCompletion> readOutlineCheckListUnitListByOutlineId(
+			String outlineid, String studentCode)
+			throws FinanceServiceException;
+
+	/**
+	 * 大纲阶段完成情况列表
+	 * 
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<VTrainingRecordCompletion> readPhaseTrainingRecordCompletionListByOutlineId(
+			String outlineid, String studentCode)
+			throws FinanceServiceException;
+
+	public List<VTrainingRecordCompletion> readAddHoursAndAddLessonPhaseListByUnitId(
+			String unitid, String studentCode) throws FinanceServiceException;
+
+	public List<VTrainingRecordCompletion> readOutlineCheckListPhaseListByUnitId(
+			String unitid, String studentCode) throws FinanceServiceException;
+	
+	/**
+	 * 大纲课程完成情况列表
+	 * 
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<VTrainingRecordCompletion> readLessonTrainingRecordCompletionListByPhaseId(
+			String phaseid, String studentCode) throws FinanceServiceException;
+
+	public List<VTrainingRecordCompletion> readAddHoursAndAddLessonLessonListByPhaseId(
+			String phaseid, String studentCode) throws FinanceServiceException;
+	
+	public List<VTrainingRecordCompletion> readRecommendExamStudentList(
+			String studentids) throws FinanceServiceException;
+	
+	public List<VTrainingRecordCompletion> readRecommendExamAllNoAskStudentList() throws FinanceServiceException;
+
+	/**
+	 * 课程完成详细
+	 * 
+	 * @param id
+	 * @param studentCode
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public VFlightTrainingrecordDetail readTrainingRecordCompletionDetailByLessonId(
+			String id, String studentCode) throws FinanceServiceException;
+
+	/**
+	 * 获取学生加时加课列表
+	 * 
+	 * @param params
+	 * @param pageNo
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page readStudentAddHoursAndAddLessonList(Map<String, Object> params,
+			String pageNo) throws FinanceServiceException;
+	
+	/**
+	 * 实践考试学生列表
+	 * @param params
+	 * @param pageNo
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page readPracticeExamStudentList(Map<String, Object> params,
+			String pageNo) throws FinanceServiceException;
+	/**
+	 * 保存加时加课申请
+	 * 
+	 * @throws FinanceServiceException
+	 */
+	public void saveAddHoursAndAddLesson(AddHoursAndAddLesson add)
+			throws FinanceServiceException;
+	
+	/**
+	 * 保存加时加课申请
+	 * 
+	 * @throws FinanceServiceException
+	 */
+	public void savePracticeTest(PracticeTest test)
+			throws FinanceServiceException;
+	
+	public void escPracticeTest(PracticeTest test)
+			throws FinanceServiceException;
+	
+	public void savePracticeAsk(PracticeAsk ask)
+			throws FinanceServiceException;
+	/**
+	 * 获取大纲对象
+	 * 
+	 * @param studentCode
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public VOutline readOutlineInfoByStudentId(String studentid)
+			throws FinanceServiceException;
+	
+	/**
+	 * 获取实践考试申请的学生列表
+	 * @param id
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<PracticeTest> readPracticeExamAskListById(String id) throws FinanceServiceException;
+	
+	public PracticeAsk readPracticeExamAskById(String id) throws FinanceServiceException;
+	
+	public List<PracticeTest> readPracticeExamAskBackListById(String id) throws FinanceServiceException;
+	
+	public List<PracticeTest> readPracticeExamAskAuditedListById(String id) throws FinanceServiceException;
+	
+	/**
+	 * 显示转场课程的起飞站与到达站
+	 * @param lessonid
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public VChangedbaseflyline readStartPosAndEndPosByLessonid(String lessonid) throws FinanceServiceException;
+	
+	public List<PracticeAsk> readPracticeAskList() throws FinanceServiceException;
+	
+	/**
+	 * 根据学号获取学生姓名
+	 * @param code
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public VOrg readStudentNameByCode(String code) throws FinanceServiceException;
+	
+	/**
+	 * 根据学生id、大纲，判断是否与分配的大纲一致
+	 * @param stuid,outlineid
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public VOrg checkStudentOutlineIsRight(String stuid,String outlineid) throws FinanceServiceException;
+	
+	/**
+	 * 根据登录人的用户名获取学生的id
+	 * @param userid
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public String readStudentIdByUserid(String userid) throws FinanceServiceException;
+	
+	/**
+	 * 删除历史记录
+	 * @param id
+	 * @throws FinanceServiceException
+	 */
+	public void deleteHistoryFlightTrainingRecord(String id,int isOpen) throws FinanceServiceException;
+	
+	/**
+	 * 根据学生学号判断是否有未审核、未确认的记录，当日创建的除外。
+	 * @param code
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Integer readRecordStatusByStudentCode(String code)throws FinanceServiceException;
+	
+}

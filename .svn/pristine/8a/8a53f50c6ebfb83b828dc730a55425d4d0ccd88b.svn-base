@@ -1,0 +1,166 @@
+package com.cauc.training.business;
+
+import java.util.List;
+import java.util.Map;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.business.dao.support.Page;
+import com.cauc.training.pojos.TLessonFitCheck;
+import com.cauc.training.pojos.TLog;
+import com.cauc.training.pojos.TTeaLicense;
+import com.cauc.training.pojos.TTrainingLesson;
+import com.cauc.training.vo.VOrg;
+import com.cauc.training.vo.VStudentLicense;
+import com.cauc.training.vo.VTrainingRecordCompletion;
+
+/***
+ * @功能说明：用于管理日志文件接口
+ * @author gfm
+ */
+public interface ILogService {
+	
+	/**
+	 * 公司
+	 */
+	public static final String QUERY_KEY_LESSON = "lesson";
+	
+	/**
+	 * 飞行出发时刻
+	 */
+	public static final String QUERY_KEY_BEGIN_DATE = "beginDate";
+	
+	/**
+	 * 飞行到达时刻
+	 */
+	public static final String QUERY_KEY_EDN_DATE = "endDate";
+	
+	/**
+	 * 查询关键字
+	 */
+	public static final String  QUERY_KEY= "VName";
+	
+	/**
+	 * 学号
+	 */
+	public static final String QUERY_CODE="VCode";
+	
+	/**
+	 * 类型
+	 */
+	public static final String QUERY_TYPE="type";
+	
+	/**
+	 * 年
+	 */
+	public static final String QUERY_YEAR="year";
+	
+	/**
+	 * 月
+	 */
+	public static final String QUERY_MONTH="month";
+	
+	/**
+	 * @功能描述：保存日志文件
+	 * @param log 日志文件实体对象
+	 * @return 成功true 失败 false
+	 */
+	public boolean saveLog(TLog log) throws FinanceServiceException;
+	
+	/**
+	 * 历史记录查询
+	 * 
+	 * @param params
+	 * @param pageNo
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page readTrainingHistoryRecordLogList(Map<String, Object> params,
+			String pageNo) throws FinanceServiceException;
+	
+	/**
+	 * 获取指定课程训练记录列表
+	 * @param params
+	 * @param pageNo
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page readAFL52TrainingLessonRecordList(Map<String, Object> params,
+			String pageNo) throws FinanceServiceException;
+	
+	/**
+	 * 转场不是同一天的记录
+	 * @param params
+	 * @param pageNo
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page readZhuanChangNoSameDayRecordList(Map<String, Object> params,
+			String pageNo) throws FinanceServiceException;
+	/**
+	 * 强制三点转场不是三点的记录
+	 * @param params
+	 * @param pageNo
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page readZhuanChangNoTreePosRecordList(Map<String, Object> params,
+			String pageNo) throws FinanceServiceException;
+	
+	/**
+	 * 获取强制三点转场课程列表
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<TTrainingLesson> readZhuanChangLessonList() throws FinanceServiceException;
+	
+	/**
+	 * 课程符合性校验
+	 * @param params
+	 * @param pageNo
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page trainingLessonFitCheck(Map<String, Object> params,
+			String pageNo) throws FinanceServiceException;
+	
+	/**
+	 * 大纲单元符合性列表
+	 * 
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<VTrainingRecordCompletion> readUnitTrainingRecordFitCheckListByOutlineId(
+			String outlineid, String studentCode)
+			throws FinanceServiceException;
+	/**
+	 * 大纲阶段符合性列表
+	 * 
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<VTrainingRecordCompletion> readPhaseTrainingRecordFitCheckListByOutlineId(
+			String unitid, String studentCode)
+			throws FinanceServiceException;
+	
+	/**
+	 * 保存课程校验
+	 * @param fitCheck
+	 * @throws FinanceServiceException
+	 */
+	public void saveTrainingLessonFitCheck(TLessonFitCheck fitCheck) throws FinanceServiceException;
+	
+	//整体课程汇总
+	public List<VStudentLicense> statisticsWholeLessonBase(Map<String, Object> params)throws FinanceServiceException;
+	public VOrg statisticsWholeLessonHz(Map<String, Object> params)throws FinanceServiceException;
+	public VOrg statisticsWholeLessonZc(Map<String, Object> params)throws FinanceServiceException;
+	public List<VOrg> statisticsWholeLessonXb(Map<String, Object> params)throws FinanceServiceException;
+	public List<VOrg> statisticsNoWholeLessonAll(Map<String, Object> params)throws FinanceServiceException;
+	
+	//飞行教员
+	public VOrg statisticsFlyTeacherSort(Map<String, Object> params)throws FinanceServiceException;
+	public List<TTeaLicense> statisticsFlyTeacherBase(Map<String, Object> params)throws FinanceServiceException;
+	
+	//时间校验
+	public String planeTimeAndEngineTimeCheck(Map<String, Object> params)throws FinanceServiceException;
+	public String studentTimeAndDispatchTimeCheck(Map<String, Object> params)throws FinanceServiceException;
+}

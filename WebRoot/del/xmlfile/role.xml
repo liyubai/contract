@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<menu>
+	<item id="muItem_AD1" text="读" img="new.gif"/>
+	<item id="1" type="separator"/>
+	<item id="muItem_EDIT1" text="写" img="edit.gif"/>
+</menu>

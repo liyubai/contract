@@ -1,0 +1,76 @@
+package com.cauc.training.business;
+
+import java.util.List;
+import java.util.Map;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.business.dao.support.Page;
+import com.cauc.training.pojos.TDictype;
+
+/**
+ * 功能：用于字典类型管理
+ * 
+ * */
+
+
+public interface IDictionaryType {
+
+	
+	/**
+	 * 名称
+	 */
+	public static final String  QUERY_KEY_NAME = "VName";
+	
+	/**
+	 * 时间
+	 */
+	public static final String  QUERY_KEY_DATE = "DCreatedate";
+	
+	/**
+	 * 功能：保存字典类型
+	 * @param dic
+	 * @throws FinanceServiceException
+	 */
+	public void saveDictype(TDictype dic) throws FinanceServiceException;
+	
+	
+	/**
+	 * 功能：查询字典类型，带分页查询
+	 * @param params：Map结构，key为TDictype中的VName，value为用户输入的关键字
+	 * @param pageNo：当前页号
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page searchDictypes(Map<String,Object> params, String pageNo) throws FinanceServiceException;
+
+
+	/**
+	 * 功能：根据字典类型主键值，查询字典类型
+	 * @param id
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public TDictype searchDictypeById(String id) throws FinanceServiceException;
+	
+	/**
+	 * 更新字典类型
+	 * @param dic
+	 * @throws FinanceServiceException
+	 */
+	public void updateDictypes(TDictype dic) throws FinanceServiceException;
+	
+	/**删除字典类型（可单一删除，也可批量删除）
+	 * 
+	 * @param ids
+	 * @throws FinanceServiceException
+	 * 说明：String... ids 表示定义一个可变变量，即Ids就是一个字符串数组，等价于String[] ids
+	 */
+	public void deleteDictypesByIds(String... ids) throws FinanceServiceException;
+
+	/**
+	 * 查询全部字典类型 
+	 * 
+	*/
+	public List<TDictype> searchAllDictypes() throws FinanceServiceException;
+	
+}

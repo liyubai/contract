@@ -1,0 +1,668 @@
+﻿<%@page contentType="text/html; charset=UTF-8"%><%@ taglib prefix="s"
+	uri="/struts-tags"%>
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>新增合同</title>
+<link
+	href="<%=request.getContextPath()%>/contract/themes/cupertino/jquery.ui.all.css"
+	rel="stylesheet" type="text/css" />
+<link
+	href="<%=request.getContextPath()%>/contract/themes/cupertino/selfStyle.css"
+	rel="stylesheet" type="text/css" />
+<link
+	href="<%=request.getContextPath()%>/contract/themes/cupertino/date.css"
+	rel="stylesheet" type="text/css" />
+<script
+	src="<%=request.getContextPath()%>/contract/scripts/jquery.min.js"></script>
+<script
+	src="<%=request.getContextPath()%>/contract/scripts/jquery-ui.min.js"></script>
+<script
+	src="<%=request.getContextPath()%>/contract/scripts/ui/jquery.ui.position.min.js"></script>
+<script
+	src="<%=request.getContextPath()%>/contract/scripts/ui/jquery.ui.core.min.js"></script>
+<script
+	src="<%=request.getContextPath()%>/contract/scripts/ui/jquery.ui.widget.min.js"></script>
+<script
+	src="<%=request.getContextPath()%>/contract/scripts/ui/jquery.ui.button.min.js"></script>
+<script
+	src="<%=request.getContextPath()%>/contract/scripts/ui/jquery.ui.tabs.min.js"></script>
+<script
+	src="<%=request.getContextPath()%>/contract/scripts/ui/jquery.ui.dialog.min.js"></script>
+<script
+	src="<%=request.getContextPath()%>/contract/scripts/ui/jquery.ui.menu.min.js"></script>
+<script
+	src="<%=request.getContextPath()%>/contract/scripts/function.min.js"></script>
+<script
+	src="<%=request.getContextPath()%>/contract/scripts/datepicker4.8/WdatePicker.js"
+	type="text/javascript"></script>
+<script>
+	
+    $(document).ready(function(){
+    	var myDate= new Date(); 
+    	var startYear=myDate.getFullYear()-9;//起始年份 
+    	var endYear=myDate.getFullYear()+10;//结束年份 
+    	var html="<li><a href='#N' val='0' class='inline'>学生年级</a></li>";
+    	for (var i=startYear;i<=startYear+9;i++) 
+    	{ 
+    		var j=i-startYear;
+    			if(j==0)
+    				{
+    				html+="<li><a href='#' class='inline' val='"+i+"'><span class='ui-icon ui-icon-bullet'></span>"+i+"</a><a href='#' class='inline' val='"+i+10+"'>"+(i+10)+"</a></li>";
+    				}
+    			else
+    				{
+    				html+="<li><a href='#' class='inline' val='"+i+"'>"+i+"</a><a href='#' class='inline' val='"+(i+10)+"'>"+(i+10)+"</a></li>";
+    				}
+
+    	} 
+        $("#classSelect").html(html);
+        
+    
+
+        /* 合同类型 */
+        var params = {};
+           $.ajax({
+    		type:"post",
+    		url:"/contract/system/studentManagent_getDictionary.do?DictionaryId=322",
+    		data:params,
+    		dataType:"json",
+    		async:false,
+    		success:function(data){
+    	           var  data2 =data;
+    	           
+    	            var compyHtml=""
+    	            if(data2!=null)
+    	            	{
+    	                for(var j=0;j<data2.dics.length;j++){
+    	                	if(data2.dics[j].level==1){
+    	                		compyHtml+="<li><a href='#N' val='0'><span class='ui-icon ui-icon-bullet'></span>"+data2.dics[j].name+"</a></li>";
+    	                		break;
+    	                	}
+    	                }
+
+    	             for(var j=0;j<data2.dics.length;j++){
+    	                	if(data2.dics[j].level==""||data2.dics[j].level!=1){
+    	                	
+    	                		compyHtml+="<li><a href='#N' val='"+data2.dics[j].id+"'>"+data2.dics[j].name+"</a></li>"
+    	                	}
+    	                }
+    	            	}
+
+    	            $("#status").html(compyHtml);
+    			
+    		}
+    	});
+           /* 学员类型 */
+           var params = {};
+              $.ajax({
+       		type:"post",
+       		url:"/contract/system/studentManagent_getDictionary.do?DictionaryId=3",
+       		data:params,
+       		dataType:"json",
+       		async:false,
+       		success:function(data){
+       	           var  data2 =data;
+       	           
+       	            var compyHtml=""
+       	            if(data2!=null)
+       	            	{
+       	                for(var j=0;j<data2.dics.length;j++){
+       	                	if(data2.dics[j].level==1){
+       	                		compyHtml+="<li><a href='#N' val='0'><span class='ui-icon ui-icon-bullet'></span>"+data2.dics[j].name+"</a></li>";
+       	                		break;
+       	                	}
+       	                }
+
+       	             for(var j=0;j<data2.dics.length;j++){
+       	                	if(data2.dics[j].level==""||data2.dics[j].level!=1){
+       	                	
+       	                		compyHtml+="<li><a href='#N' val='"+data2.dics[j].id+"'>"+data2.dics[j].name+"</a></li>"
+       	                	}
+       	                }
+       	            	}
+
+       	            $("#stu").html(compyHtml);
+       			
+       		}
+       	});
+              /* 客户单位 */
+              var params = {};
+                 $.ajax({
+          		type:"post",
+          		url:"/contract/system/studentManagent_getDictionary.do?DictionaryId=2",
+          		data:params,
+          		dataType:"json",
+          		async:false,
+          		success:function(data){
+          	           var  data2 =data;
+          	           
+          	            var compyHtml=""
+          	            if(data2!=null)
+          	            	{
+          	                for(var j=0;j<data2.dics.length;j++){
+          	                	if(data2.dics[j].level==1){
+          	                		compyHtml+="<li><a href='#N' val='0'><span class='ui-icon ui-icon-bullet'></span>"+data2.dics[j].name+"</a></li>";
+          	                		break;
+          	                	}
+          	                }
+
+          	             for(var j=0;j<data2.dics.length;j++){
+          	                	if(data2.dics[j].level==""||data2.dics[j].level!=1){
+          	                	
+          	                		compyHtml+="<li><a href='#N' val='"+data2.dics[j].id+"'>"+data2.dics[j].name+"</a></li>"
+          	                	}
+          	                }
+          	            	}
+
+          	            $("#compys").html(compyHtml);
+          			
+          		}
+          	});
+                 /* 合同性质 */
+                 var params = {};
+                    $.ajax({
+             		type:"post",
+             		url:"/contract/system/studentManagent_getDictionary.do?DictionaryId=557",
+             		data:params,
+             		dataType:"json",
+             		async:false,
+             		success:function(data){
+             	           var  data2 =data;
+             	           
+             	            var compyHtml=""
+             	            if(data2!=null)
+             	            	{
+             	                for(var j=0;j<data2.dics.length;j++){
+             	                	if(data2.dics[j].level==1){
+             	                		compyHtml+="<li><a href='#N' val='0'><span class='ui-icon ui-icon-bullet'></span>"+data2.dics[j].name+"</a></li>";
+             	                		break;
+             	                	}
+             	                }
+
+             	             for(var j=0;j<data2.dics.length;j++){
+             	                	if(data2.dics[j].level==""||data2.dics[j].level!=1){
+             	                	
+             	                		compyHtml+="<li><a href='#N' val='"+data2.dics[j].id+"'>"+data2.dics[j].name+"</a></li>"
+             	                	}
+             	                }
+             	            	}
+
+             	            $("#ContractNature").html(compyHtml);
+             			
+             		}
+             	});
+        new $.dropDownList(0, true, 243);
+   		new $.dropDownList(1, true, 243);
+   		new $.dropDownList(2, true, 243);
+   		new $.dropDownList(3, true, 243);
+   		new $.dropDownList(4, true, 243);
+    	});
+</script>
+<!-- 此js务必放在所有页面自带的js后面加载 -->
+<script src="<%=request.getContextPath()%>/contract/scripts/base.min.js"></script>
+<script src="<%=request.getContextPath()%>/contract/scripts/time.js"></script>
+</head>
+<body>
+	<jsp:include page="/pages/common/topPart.jsp" />
+	<jsp:include page="/pages/common/leftPart.jsp" />
+	
+	<div id="rightPartA" style="overflow-x: hidden;">
+		<div>
+			<div class="Panel">
+				<div class="panelHead">
+					<span>修改合同</span>
+				</div>
+				<div class="panelContent">
+					<table class="modifyTable">
+						<tr>
+							<td class="col20_ textR">合同名称</td>
+							<td class="col15_"><input id="strContractName" type="text"
+								class="tableinput" value="${selConEneity.CName }" /></td>
+							<td class="col20_ textR">合同编号</td>
+							<td><input id="strContractID"  readonly="readonly" type="text" value="${selConEneity.CContractId }" class="tableinput" /></td>
+						</tr>
+						<tr>
+							<td class="col20_ textR">合同类型</td>
+							<td class="col15_">
+								<div class="dropDownList" id="Div1">
+									<button class="tableselect">合同类型</button>
+									<ul id="status">
+										<%-- <li><a href="#N" val="1"><span
+												class="ui-icon ui-icon-bullet"></span>合同类型</a></li>
+										<li><a href="#N" val="2">自费通航</a></li>
+										<li><a href="#N" val="3">自费整体</a></li>
+										<li><a href="#N" val="4">整体大包</a></li>
+										<li><a href="#N" val="5">整体课程</a></li>
+										<li><a href="#N" val="6">通航</a></li>
+										<li><a href="#N" val="7">军转民</a></li>
+										<li><a href="#N" val="8">自费高性能</a></li>
+										<li><a href="#N" val="9">基础理论+招飞</a></li>
+										<li><a href="#N" val="10">基础理论+执照理论</a></li>
+										<li><a href="#N" val="11">执照理论</a></li>
+										<li><a href="#N" val="8">基础理论</a></li>
+										<li><a href="#N" val="9">合作共建</a></li> --%>
+									</ul>
+										<input type="hidden" id="strContractType"
+										name="strContractType" value="${selConEneity.CType }" />
+								</div>
+							</td>
+							<td class="col20_ textR">学员类型</td>
+							<td>
+								<div class="dropDownList" id="Div4">
+									<button class="tableselect">学员类型</button>
+									<ul id="stu">
+										<%-- <li><a href="#N" val="1"><span
+												class="ui-icon ui-icon-bullet"></span>学员类型</a></li>
+										<li><a href="#N" val="2">4+1</a></li>
+										<li><a href="#N" val="3">高招生</a></li>
+										<li><a href="#N" val="4">高中生</a></li>
+										<li><a href="#N" val="5">军转民</a></li>
+										<li><a href="#N" val="6">通航</a></li>
+										<li><a href="#N" val="7">通航转整体</a></li>
+										<li><a href="#N" val="8">整体大包</a></li>
+										<li><a href="#N" val="9">整体课程</a></li>
+										<li><a href="#N" val="10">整体自费</a></li> --%>
+									</ul>
+									<input type="hidden" id="strStudentType" name="strStudentType" value="${selConEneity.CStuType }"/>
+								</div>
+							</td>
+						</tr>
+						<tr>
+							<td class="col20_ textR">合同状态</td>
+							<td class="col15_">
+								<div class="dropDownList" id="Div3">
+									<button class="tableselect">合同状态</button>
+									<ul>
+										<li><a href="#N" val="1"><span
+												class="ui-icon ui-icon-bullet"></span>意向</a></li>
+										<li><a href="#N" val="2">初稿</a></li>
+										<li><a href="#N" val="3">定稿</a></li>
+										<li><a href="#N" val="4">生效</a></li>
+										<li><a href="#N" val="5">完成</a></li>
+									</ul>
+									<input type="hidden" id="strContractStatus"
+										name="strContractStatus" value="${selConEneity.CStatus }" />
+								</div>
+							</td>
+							<td class="col20_ textR">合同性质</td>
+							<td>
+								<div class="dropDownList" id="Div6">
+									<button class="tableselect">合同性质</button>
+									<ul id="ContractNature">
+										<%-- <li><a href="#N" val="1"><span
+												class="ui-icon ui-icon-bullet"></span>飞行培训</a></li>
+										<li><a href="#N" val="2">整体大包</a></li>
+										<li><a href="#N" val="3">通航</a></li>
+										<li><a href="#N" val="4">合作共建</a></li>
+										<li><a href="#N" val="5">基础理论</a></li>
+										<li><a href="#N" val="6">生源基地</a></li>
+										<li><a href="#N" val="7">招飞+基础理论</a></li>
+										<li><a href="#N" val="8">招飞/基础理论</a></li>
+										<li><a href="#N" val="9">基础理论/执照理论</a></li>
+										<li><a href="#N" val="10">理论+飞行</a></li>
+										<li><a href="#N" val="11">执照理论</a></li>
+										<li><a href="#N" val="12">高性能训练</a></li>
+										<li><a href="#N" val="13">实践考试</a></li>
+										<li><a href="#N" val="14">私照外包</a></li>
+										<li><a href="#N" val="15">招飞</a></li>
+										<li><a href="#N" val="16">6+1</a></li> --%>
+									</ul>
+									<input type="hidden" id="strContractNature"
+										name="strContractNature" value="${selConEneity.CNature }" />
+								</div>
+
+							</td>
+						</tr>
+						<tr>
+							<td class="col20_ textR">客户单位</td>
+							<td class="col15_">
+								<div class="dropDownList" id="Div5">
+									<button class="tableselect">客户单位</button>
+									<ul id="compys">
+										<%-- <li><a href="#N" val="1"><span
+												class="ui-icon ui-icon-bullet"></span>客户单位</a></li>
+										<li><a href="#N" val="2">客户单位</a></li> --%>
+									</ul>
+									<input type="hidden" id="strCompy" name="strCompy"
+										name="strCompy" value="${selConEneity.CCompy }" />
+								</div>
+							</td>
+							<td class="col20_ textR">签订时间</td>
+							<td><input id="strSignTime" name="strSignTime" type="text"
+								class="tableinput date" onmouseup="WdatePicker()"
+								value="${selConEneity.CSignTime }" /></td>
+						</tr>
+						<tr>
+							<td class="col20_ textR">自费生姓名</td>
+							<td class="col15_"><input id="strPrivateName"
+								name="strPrivateName" type="text" class="tableinput"
+								value="${selConEneity.CPrivateName }" /></td>
+						</tr>
+						<tr>
+							<%-- <td class="col20_ textR">所在年级</td>
+							<td colspan="3">
+								<div class="dropDownList" id="Div2">
+									<button class="tableselect1">学生年级</button>
+									<ul>
+										<li><a href="#N" val="1" class="inline">学生年级</a></li>
+										<li><a href="#N" val="2" class="inline"><span
+												class="ui-icon ui-icon-bullet"></span>2006</a><a href="#N"
+											val="12" class="inline">2016</a></li>
+										<li><a href="#N" val="3" class="inline">2007</a><a
+											href="#N" val="13" class="inline">2017</a></li>
+										<li><a href="#N" val="4" class="inline">2008</a><a
+											href="#N" val="14" class="inline">2018</a></li>
+										<li><a href="#N" val="5" class="inline">2009</a><a
+											href="#N" val="15" class="inline">2019</a></li>
+										<li><a href="#N" val="6" class="inline">2010</a><a
+											href="#N" val="16" class="inline">2020</a></li>
+										<li><a href="#N" val="7" class="inline">2011</a><a
+											href="#N" val="17" class="inline">2021</a></li>
+										<li><a href="#N" val="8" class="inline">2012</a><a
+											href="#N" val="18" class="inline">2022</a></li>
+										<li><a href="#N" val="9" class="inline">2013</a><a
+											href="#N" val="19" class="inline">2023</a></li>
+										<li><a href="#N" val="10" class="inline">2014</a><a
+											href="#N" val="20" class="inline">2024</a></li>
+										<li><a href="#N" val="11" class="inline">2015</a><a
+											href="#N" val="21" class="inline">2025</a></li>
+									</ul>
+									<input type="hidden" id="gradeYear_0"
+										name="gradeYear_0" value="1" />
+								</div>
+								
+								<s:if test="selConEneity.CInitFlg==0">
+								
+									<button id="addStudentInfoBtn" class="greenBtn"
+										style="margin-left: 10px;">+</button>
+								</s:if> 
+								 <s:else>
+								 <button id="addStudentInfoBtn" class="greenBtn" style="margin-left: 10px;visibility:hidden;">+</button> 
+								 </s:else>
+								<span class="ml20">学员人数</span> <input
+								id="studentCount_0" name="studentCount_0" id="studentCount_0"
+								type="text" class="tableinput1 ml10" /> <span class="ml20">入校时间</span>
+								<input id="schoolTime_0" name="schoolTime_0" type="text"
+								class="tableinput1 ml10 date" onmouseup="WdatePicker()" />
+							</td>  --%>
+						</tr>
+					
+						<tr>
+							<td colspan="4" class="tCenter"><input id="Button1"
+								type="button"
+								class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-icon-primary ml10"
+								value="经费初始化" /> <input id="Button2" type="button"
+								class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-icon-primary ml10"
+								value="保存" /></td>
+						</tr>
+					</table>
+				</div>
+			</div>
+		</div>
+	</div>
+	<input id="hCInitFlg" type="hidden" value="${selConEneity.CInitFlg }" />
+	<form action="<%=request.getContextPath()%>/contract/contractRecPayment.do?${CID}" method="post" id="contractRecPayment">
+		  <!-- 合同主键 -->
+		<input type="hidden" name="CID" id="CID" value="${selConEneity.CId}">
+		<input type="hidden" name="contractName" id="contractName" value="${selConEneity.CName}">
+		<input type="hidden" name="contractID" id="contractID" value="${selConEneity.CContractId}">
+		<input type="hidden" name="contractType" id="contractType" value="${selConEneity.CType}" /> 
+  		<input type="hidden" name="studentType" id="studentType" value="${selConEneity.CStuType}" /> 
+  		<input type="hidden" name="contractStatus" id="contractStatus" value="${selConEneity.CStatus}" /> 
+  		<input type="hidden" name="contractNature" id="contractNature" value="${selConEneity.CNature}" /> 
+  		<input type="hidden" name="compy" id="compy" value="${selConEneity.CCompy}" /> 
+  		<input type="hidden" name="signTime" id="signTime" value="${selConEneity.CSignTime}" /> 
+  		<input type="hidden" name="privateName" id="privateName" value="${selConEneity.CPrivateName}" /> 
+  		<%-- <input type="hidden" name="gradeInfo" id="gradeInfo" value='${selConEneity.CGradeInfo}' /> --%>
+  	</form>
+  	<form action="<%=request.getContextPath()%>/contract/updateContract.do" method="post" id="updateContract">
+		  <!-- 合同主键 -->
+		<input type="hidden" name="CID" id="CID" value="${selConEneity.CId}">
+		<input type="hidden" name="contractName" id="contractName1" value="${selConEneity.CName}">
+		<input type="hidden" name="contractID" id="contractID1" value="${selConEneity.CContractId}">
+		<input type="hidden" name="contractType" id="contractType1" value="${selConEneity.CType}" /> 
+  		<input type="hidden" name="studentType" id="studentType1" value="${selConEneity.CStuType}" /> 
+  		<input type="hidden" name="contractStatus" id="contractStatus1" value="${selConEneity.CStatus}" /> 
+  		<input type="hidden" name="contractNature" id="contractNature1" value="${selConEneity.CNature}" /> 
+  		<input type="hidden" name="compy" id="compy1" value="${selConEneity.CCompy}" /> 
+  		<input type="hidden" name="signTime" id="signTime1" value="${selConEneity.CSignTime}" /> 
+  		<input type="hidden" name="privateName" id="privateName1" value="${selConEneity.CPrivateName}" /> 
+  		<%-- <input type="hidden" name="gradeInfo" id="gradeInfo1" value='${selConEneity.CGradeInfo}' /> --%>
+  </form>
+	<script>
+
+	var clickAddGrade = 1;
+	//var strgGradeInfo = [];
+	
+		$(function() {
+			$('#Button2').click(function() {
+				//alert(getGradeInfo());
+			//	if(getGradeInfo()){
+					
+					updateFormSubmit();
+					
+					//window.location.href = '/contract/contractRecPayment.jsp?CID=1&gradeInfo='+strgGradeInfo;		
+			//	}else{
+			//		alert("请至少填写一个年级的学生信息");
+			//	}
+				//window.location.href = 'cContractList.htm';
+			});
+			$('#Button1').click(function() {
+								//if(getGradeInfo()){
+									formSubmit();
+									//window.location.href = '/contract/contractRecPayment.jsp?CID=1&gradeInfo='+strgGradeInfo;		
+								//}else{
+								//	alert("请至少填写一个年级的学生信息");
+								//}
+							});
+
+			var pageddlNum = 5;
+			$('body').delegate('#addStudentInfoBtn','click',function(){
+				//alert(aaa);
+			
+			//$('#addStudentInfoBtn').click(function() {
+								//var str = $(this).parent().html();
+								var str = '';
+								str+=' <div class="dropDownList" id="Div2"> ';
+								str+='  <button class="tableselect1 ui-button ui-widget ui-state-default ui-corner-all ui-button-text-icon-secondary" role="button" aria-disabled="false"><span class="ui-button-text">学生年级</span><span class="ui-button-icon-secondary ui-icon ui-icon-carat-1-s"></span></button> ';
+								str+='  <ul id="ui-id-52" class="ui-menu ui-widget ui-widget-content ui-corner-all ui-menu-icons" role="menu" tabindex="0" style="width: 160px; z-index: 995; position: absolute;"> ';
+								str+='   <li class="ui-menu-item" role="presentation"><a href="#N" val="1" class="inline ui-corner-all" id="ui-id-53" tabindex="-1" role="menuitem"><span class="ui-icon ui-icon-bullet" style="margin-left: -1.3em;"></span>学生年级</a></li> ';
+								str+='   <li class="ui-menu-item" role="presentation"><a href="#N" val="2006" class="inline ui-corner-all" id="ui-id-54" tabindex="-1" role="menuitem">2006</a><a href="#N" val="2016" class="inline ui-corner-all" id="ui-id-55" tabindex="-1" role="menuitem">2016</a></li>';
+								str+='   <li class="ui-menu-item" role="presentation"><a href="#N" val="2007" class="inline ui-corner-all" id="ui-id-56" tabindex="-1" role="menuitem">2007</a><a href="#N" val="2017" class="inline ui-corner-all" id="ui-id-57" tabindex="-1" role="menuitem">2017</a></li>';
+								str+='   <li class="ui-menu-item" role="presentation"><a href="#N" val="2008" class="inline ui-corner-all" id="ui-id-58" tabindex="-1" role="menuitem">2008</a><a href="#N" val="2018" class="inline ui-corner-all" id="ui-id-59" tabindex="-1" role="menuitem">2018</a></li>';
+								str+='   <li class="ui-menu-item" role="presentation"><a href="#N" val="2009" class="inline ui-corner-all" id="ui-id-60" tabindex="-1" role="menuitem">2009</a><a href="#N" val="2019" class="inline ui-corner-all" id="ui-id-61" tabindex="-1" role="menuitem">2019</a></li>';
+								str+='   <li class="ui-menu-item" role="presentation"><a href="#N" val="2010" class="inline ui-corner-all" id="ui-id-62" tabindex="-1" role="menuitem">2010</a><a href="#N" val="2020" class="inline ui-corner-all" id="ui-id-63" tabindex="-1" role="menuitem">2020</a></li>';
+								str+='   <li class="ui-menu-item" role="presentation"><a href="#N" val="2011" class="inline ui-corner-all" id="ui-id-64" tabindex="-1" role="menuitem">2011</a><a href="#N" val="2021" class="inline ui-corner-all" id="ui-id-65" tabindex="-1" role="menuitem">2021</a></li>';
+								str+='   <li class="ui-menu-item" role="presentation"><a href="#N" val="2012" class="inline ui-corner-all" id="ui-id-66" tabindex="-1" role="menuitem">2012</a><a href="#N" val="2022" class="inline ui-corner-all" id="ui-id-67" tabindex="-1" role="menuitem">2022</a></li>';
+								str+='   <li class="ui-menu-item" role="presentation"><a href="#N" val="2013" class="inline ui-corner-all" id="ui-id-68" tabindex="-1" role="menuitem">2013</a><a href="#N" val="2023" class="inline ui-corner-all" id="ui-id-69" tabindex="-1" role="menuitem">2023</a></li>';
+								str+='   <li class="ui-menu-item" role="presentation"><a href="#N" val="2014" class="inline ui-corner-all" id="ui-id-70" tabindex="-1" role="menuitem">2014</a><a href="#N" val="2024" class="inline ui-corner-all" id="ui-id-71" tabindex="-1" role="menuitem">2024</a></li> ';
+								str+='   <li class="ui-menu-item" role="presentation"><a href="#N" val="2015" class="inline ui-corner-all" id="ui-id-72" tabindex="-1" role="menuitem">2015</a><a href="#N" val="2025" class="inline ui-corner-all" id="ui-id-73" tabindex="-1" role="menuitem">2025</a></li> ';
+								str+='  </ul> ';
+								str+=' <input type="hidden" id="gradeYear_'+clickAddGrade+'" name="gradeYear_'+clickAddGrade+'" value="1" /> ';
+								str+='</div> ';
+								str+='<button id="addStudentInfoBtn" class="greenBtn" style="margin-left: 10px;">+</button> ';
+								str+='<span class="ml20">学员人数</span> ';
+								str+='<input id="studentCount_'+clickAddGrade+'" name="studentCount_'+clickAddGrade+'" type="text" class="tableinput1 ml10" /> ';
+								str+='<span class="ml20">入校时间</span> ';
+								str+='<input id="schoolTime_'+clickAddGrade+'" name="schoolTime_'+clickAddGrade+'" type="text" class="tableinput1 ml10 date" onmouseup="WdatePicker()" /> ';
+								
+								var trNode = $('<tr><td class="col20_ textR">所在年级</td><td colspan="3">'
+										+ str + '</td></tr>');
+								$('.modifyTable tr').eq(-2).after(trNode);
+								trNode.find('.greenBtn').css('visibility',
+										'hidden');
+								new $.dropDownList(++pageddlNum, true, 160);
+								
+								clickAddGrade ++;
+							});
+			//初始化循环生成年级信息
+			//initGradeDiv();
+			
+		});
+		
+		function initGradeDiv(){
+			debugger;
+			var showGradeData = eval("["+$("#gradeInfo").val()+"]");
+			new $.dropDownList(5, true, 160);
+			var gg=$('#hCInitFlg').val();
+			
+			if($("#gradeInfo").val()!='')//有年级信息
+			{
+				
+			/*  $("#gradeYear_0").val(showGradeData[0].gradeYear);
+			$("#studentCount_0").val(showGradeData[0].studentCount);
+			$("#schoolTime_0").val(showGradeData[0].schoolTime);
+			alert($("#gradeYear_0").val());  */
+			
+			for(var i=0;i<(showGradeData.length);i++){
+				
+		    	
+				var str = '';
+				str+=' <div class="dropDownList" id="Div'+i+'"> ';
+				str+='  <button class="tableselect1 ui-button ui-widget ui-state-default ui-corner-all ui-button-text-icon-secondary" role="button" aria-disabled="false"><span class="ui-button-text">学生年级</span><span class="ui-button-icon-secondary ui-icon ui-icon-carat-1-s"></span></button> ';
+				str+='  <ul id="ui-id-52" class="ui-menu ui-widget ui-widget-content ui-corner-all ui-menu-icons" role="menu" tabindex="0" style="width: 160px; z-index: 995; position: absolute;"> ';
+				str+='   <li class="ui-menu-item" role="presentation"><a href="#N" val="1" class="inline ui-corner-all" id="ui-id-53" tabindex="-1" role="menuitem"><span class="ui-icon ui-icon-bullet" style="margin-left: -1.3em;"></span>学生年级</a></li> ';
+				str+='   <li class="ui-menu-item" role="presentation"><a href="#N" val="2006" class="inline ui-corner-all" id="ui-id-54" tabindex="-1" role="menuitem">2006</a><a href="#N" val="2016" class="inline ui-corner-all" id="ui-id-55" tabindex="-1" role="menuitem">2016</a></li>';
+				str+='   <li class="ui-menu-item" role="presentation"><a href="#N" val="2007" class="inline ui-corner-all" id="ui-id-56" tabindex="-1" role="menuitem">2007</a><a href="#N" val="2017" class="inline ui-corner-all" id="ui-id-57" tabindex="-1" role="menuitem">2017</a></li>';
+				str+='   <li class="ui-menu-item" role="presentation"><a href="#N" val="2008" class="inline ui-corner-all" id="ui-id-58" tabindex="-1" role="menuitem">2008</a><a href="#N" val="2018" class="inline ui-corner-all" id="ui-id-59" tabindex="-1" role="menuitem">2018</a></li>';
+				str+='   <li class="ui-menu-item" role="presentation"><a href="#N" val="2009" class="inline ui-corner-all" id="ui-id-60" tabindex="-1" role="menuitem">2009</a><a href="#N" val="2019" class="inline ui-corner-all" id="ui-id-61" tabindex="-1" role="menuitem">2019</a></li>';
+				str+='   <li class="ui-menu-item" role="presentation"><a href="#N" val="2010" class="inline ui-corner-all" id="ui-id-62" tabindex="-1" role="menuitem">2010</a><a href="#N" val="2020" class="inline ui-corner-all" id="ui-id-63" tabindex="-1" role="menuitem">2020</a></li>';
+				str+='   <li class="ui-menu-item" role="presentation"><a href="#N" val="2011" class="inline ui-corner-all" id="ui-id-64" tabindex="-1" role="menuitem">2011</a><a href="#N" val="2021" class="inline ui-corner-all" id="ui-id-65" tabindex="-1" role="menuitem">2021</a></li>';
+				str+='   <li class="ui-menu-item" role="presentation"><a href="#N" val="2012" class="inline ui-corner-all" id="ui-id-66" tabindex="-1" role="menuitem">2012</a><a href="#N" val="2022" class="inline ui-corner-all" id="ui-id-67" tabindex="-1" role="menuitem">2022</a></li>';
+				str+='   <li class="ui-menu-item" role="presentation"><a href="#N" val="2013" class="inline ui-corner-all" id="ui-id-68" tabindex="-1" role="menuitem">2013</a><a href="#N" val="2023" class="inline ui-corner-all" id="ui-id-69" tabindex="-1" role="menuitem">2023</a></li>';
+				str+='   <li class="ui-menu-item" role="presentation"><a href="#N" val="2014" class="inline ui-corner-all" id="ui-id-70" tabindex="-1" role="menuitem">2014</a><a href="#N" val="2024" class="inline ui-corner-all" id="ui-id-71" tabindex="-1" role="menuitem">2024</a></li> ';
+				str+='   <li class="ui-menu-item" role="presentation"><a href="#N" val="2015" class="inline ui-corner-all" id="ui-id-72" tabindex="-1" role="menuitem">2015</a><a href="#N" val="2025" class="inline ui-corner-all" id="ui-id-73" tabindex="-1" role="menuitem">2025</a></li> ';
+				str+='  </ul> ';
+				
+				str+=' <input type="hidden" id="gradeYear_'+i+'" name="gradeYear_'+i+'" value="'+showGradeData[i].gradeYear+'" /> '; 
+				str+='</div> ';
+				if(gg==0 && i==0)//flag=0，且在第一行有加号
+				{
+				  
+			       str+='<button id="addStudentInfoBtn" class="greenBtn" style="margin-left: 10px;">+</button>' ;
+				}
+			    else
+				{
+			       str+='<button id="addStudentInfoBtn" class="greenBtn" style="margin-left: 10px;visibility:hidden;">+</button>'
+				}
+				/* str+='<button id="addStudentInfoBtn" class="greenBtn" style="margin-left: 10px;">+</button> ';  */
+				str+='<span class="ml20">学员人数</span> ';
+				str+='<input id="studentCount_'+i+'" name="studentCount_'+i+'"  value="'+showGradeData[i].studentCount+'"  type="text" class="tableinput1 ml10" /> ';
+				str+='<span class="ml20">入校时间</span> ';
+				str+='<input id="schoolTime_'+i+'" name="schoolTime_'+i+'"   value="'+showGradeData[i].schoolTime+'"  type="text" class="tableinput1 ml10 date" onmouseup="WdatePicker()" /> ';
+				
+				var trNode = $('<tr><td class="col20_ textR">所在年级</td><td colspan="3">'
+						+ str + '</td></tr>');
+				
+				$('.modifyTable tr').eq(-2).after(trNode);
+				/* trNode.find('.greenBtn').css('visibility',
+						'hidden'); */
+				new $.dropDownList((5+i), true, 160);
+				
+				
+				}
+			}
+ 			else//无年级信息
+				{
+				var str = '';
+				str+=' <div class="dropDownList" id="Div0"> ';
+				str+='  <button class="tableselect1 ui-button ui-widget ui-state-default ui-corner-all ui-button-text-icon-secondary" role="button" aria-disabled="false"><span class="ui-button-text">学生年级</span><span class="ui-button-icon-secondary ui-icon ui-icon-carat-1-s"></span></button> ';
+				str+='  <ul id="ui-id-52" class="ui-menu ui-widget ui-widget-content ui-corner-all ui-menu-icons" role="menu" tabindex="0" style="width: 160px; z-index: 995; position: absolute;"> ';
+				str+='   <li class="ui-menu-item" role="presentation"><a href="#N" val="1" class="inline ui-corner-all" id="ui-id-53" tabindex="-1" role="menuitem"><span class="ui-icon ui-icon-bullet" style="margin-left: -1.3em;"></span>学生年级</a></li> ';
+				str+='   <li class="ui-menu-item" role="presentation"><a href="#N" val="2006" class="inline ui-corner-all" id="ui-id-54" tabindex="-1" role="menuitem">2006</a><a href="#N" val="2016" class="inline ui-corner-all" id="ui-id-55" tabindex="-1" role="menuitem">2016</a></li>';
+				str+='   <li class="ui-menu-item" role="presentation"><a href="#N" val="2007" class="inline ui-corner-all" id="ui-id-56" tabindex="-1" role="menuitem">2007</a><a href="#N" val="2017" class="inline ui-corner-all" id="ui-id-57" tabindex="-1" role="menuitem">2017</a></li>';
+				str+='   <li class="ui-menu-item" role="presentation"><a href="#N" val="2008" class="inline ui-corner-all" id="ui-id-58" tabindex="-1" role="menuitem">2008</a><a href="#N" val="2018" class="inline ui-corner-all" id="ui-id-59" tabindex="-1" role="menuitem">2018</a></li>';
+				str+='   <li class="ui-menu-item" role="presentation"><a href="#N" val="2009" class="inline ui-corner-all" id="ui-id-60" tabindex="-1" role="menuitem">2009</a><a href="#N" val="2019" class="inline ui-corner-all" id="ui-id-61" tabindex="-1" role="menuitem">2019</a></li>';
+				str+='   <li class="ui-menu-item" role="presentation"><a href="#N" val="2010" class="inline ui-corner-all" id="ui-id-62" tabindex="-1" role="menuitem">2010</a><a href="#N" val="2020" class="inline ui-corner-all" id="ui-id-63" tabindex="-1" role="menuitem">2020</a></li>';
+				str+='   <li class="ui-menu-item" role="presentation"><a href="#N" val="2011" class="inline ui-corner-all" id="ui-id-64" tabindex="-1" role="menuitem">2011</a><a href="#N" val="2021" class="inline ui-corner-all" id="ui-id-65" tabindex="-1" role="menuitem">2021</a></li>';
+				str+='   <li class="ui-menu-item" role="presentation"><a href="#N" val="2012" class="inline ui-corner-all" id="ui-id-66" tabindex="-1" role="menuitem">2012</a><a href="#N" val="2022" class="inline ui-corner-all" id="ui-id-67" tabindex="-1" role="menuitem">2022</a></li>';
+				str+='   <li class="ui-menu-item" role="presentation"><a href="#N" val="2013" class="inline ui-corner-all" id="ui-id-68" tabindex="-1" role="menuitem">2013</a><a href="#N" val="2023" class="inline ui-corner-all" id="ui-id-69" tabindex="-1" role="menuitem">2023</a></li>';
+				str+='   <li class="ui-menu-item" role="presentation"><a href="#N" val="2014" class="inline ui-corner-all" id="ui-id-70" tabindex="-1" role="menuitem">2014</a><a href="#N" val="2024" class="inline ui-corner-all" id="ui-id-71" tabindex="-1" role="menuitem">2024</a></li> ';
+				str+='   <li class="ui-menu-item" role="presentation"><a href="#N" val="2015" class="inline ui-corner-all" id="ui-id-72" tabindex="-1" role="menuitem">2015</a><a href="#N" val="2025" class="inline ui-corner-all" id="ui-id-73" tabindex="-1" role="menuitem">2025</a></li> ';
+				str+='  </ul> ';
+				str+=' <input type="hidden" id="gradeYear_0" name="gradeYear_0" value="1" /> ';
+				str+='</div> ';
+				if(gg==0)//flag=0
+				{
+			       //alert('1111111111111111'+gg);
+			       str+='<button id="addStudentInfoBtn" class="greenBtn" style="margin-left: 10px;">+</button>' ;
+				}
+			    else
+				{
+			       str+='<button id="addStudentInfoBtn" class="greenBtn" style="margin-left: 10px;visibility:hidden;">+</button>'
+				}
+				str+='<span class="ml20">学员人数</span> ';
+				str+='<input id="studentCount_0" name="studentCount_0"  value=""  type="text" class="tableinput1 ml10" /> ';
+				str+='<span class="ml20">入校时间</span> ';
+				str+='<input id="schoolTime_0" name="schoolTime_0"   value=""  type="text" class="tableinput1 ml10 date" onmouseup="WdatePicker()" /> ';
+				
+				var trNode = $('<tr><td class="col20_ textR">所在年级</td><td colspan="3">'
+						+ str + '</td></tr>');
+				
+				$('.modifyTable tr').eq(-2).after(trNode);
+				 /* trNode.find('.greenBtn').css('visibility',
+						'hidden');  */
+				new $.dropDownList(5, true, 160);
+				
+				} 
+			}
+			
+
+		function formSubmit(){
+			$("#contractName").val($.trim($("#strContractName").val()));
+			$("#contractID").val($.trim($("#strContractID").val()));
+			$("#contractType").val($.trim($("#strContractType").val()));
+			$("#studentType").val($.trim($("#strStudentType").val()));
+			$("#contractStatus").val($.trim($("#strContractStatus").val()));
+			$("#contractNature").val($.trim($("#strContractNature").val()));
+			$("#compy").val($.trim($("#strCompy").val()));
+			$("#signTime").val($.trim($("#strSignTime").val()));
+			$("#privateName").val($.trim($("#strPrivateName").val()));
+			/* $("#gradeInfo").val($.trim(strgGradeInfo)); */
+			$("#contractRecPayment").submit();
+		}
+		//updateForm
+		function updateFormSubmit(){
+			$("#contractName1").val($.trim($("#strContractName").val()));
+			$("#contractID1").val($.trim($("#strContractID").val()));
+			$("#contractType1").val($.trim($("#strContractType").val()));
+			$("#studentType1").val($.trim($("#strStudentType").val()));
+			$("#contractStatus1").val($.trim($("#strContractStatus").val()));
+			$("#contractNature1").val($.trim($("#strContractNature").val()));
+			$("#compy1").val($.trim($("#strCompy").val()));
+			$("#signTime1").val($.trim($("#strSignTime").val()));
+			$("#privateName1").val($.trim($("#strPrivateName").val()));
+			/* $("#gradeInfo1").val($.trim(strgGradeInfo)); */
+			//alert($("#gradeInfo1").val());
+			$("#updateContract").submit();
+		}
+		
+		function getGradeInfo(){
+			//debugger;
+			var gradeInfo =[];
+			//alert(clickAddGrade);
+			for(var i=0;i<=clickAddGrade;i++){
+				var tempStr = "";
+				if($("#studentCount_"+i).length>0){
+					tempStr += '{';
+					tempStr += '"gradeYear":"'+$("#gradeYear_"+i).val()+'"';
+					tempStr += ',"studentCount":"'+$("#studentCount_"+i).val()+'"';
+					tempStr += ',"schoolTime":"'+$("#schoolTime_"+i).val()+'"';
+					tempStr += '}';
+					//alert(tempStr);
+					gradeInfo.push(tempStr);
+				}
+			}
+			//alert(gradeInfo);
+			if($.trim($("#gradeYear_0").val())=="1"||$.trim($("#studentCount_0").val())==""||$.trim($("#schoolTime_0").val())==""){
+				return false;
+			}else{
+				strgGradeInfo = gradeInfo;
+				return true;
+			}
+		}
+	</script>
+</body>
+</html>

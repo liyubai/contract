@@ -1,0 +1,280 @@
+package com.cauc.training.ui.core.del;
+
+import java.text.ParseException;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.business.IDictionaryInfomation;
+import com.cauc.training.business.IDictionaryType;
+import com.cauc.training.pojos.TDiction;
+import com.cauc.training.pojos.TDictype;
+import com.cauc.training.pojos.TUser;
+import com.cauc.training.ui.common.BaseActionSupport;
+import com.cauc.training.vo.VODicInfoOrDicType;
+
+public class DictionaryInfoAction extends BaseActionSupport{
+	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -3189665413527444770L;
+	//获取日志生成器
+    private static Log log = LogFactory.getLog(DictionaryInfoAction.class);
+	
+    private TDiction dic;
+	
+	//用于存储主键值
+	private String id;
+		
+	//查询关键字
+	private String key;
+
+	//存储要删除的字典信息id，各个字典信息的id使用逗号（,）分隔
+	private String dicids;
+	
+	//存储字典类型
+	private List<TDictype> dicTypes;
+	
+
+	
+	//该VO对象用于为编辑页面提供数据，即采用JSON将VO对象数据传递给JSP页面显示
+	private VODicInfoOrDicType voDicInfo;
+	
+	public String saveDicInfo(){
+		//System.out.println("dic.vname: " + this.dic.getVName());
+		//System.out.println("dic.typeid: " + this.dic.getTDictype().getVId());
+		String result = SUCCESS;
+		if(StringUtils.isBlank(dic.getVName())) {
+			setStatusMsg("字典信息不能为空！");
+			setStatusMsg("1");
+		}else{
+			try {
+				// 获取用户对象,取得登录者，即创建该角色的人
+				TUser tuser = getFactory().getFinanceProviderInstance().getSysUserService().readSysUserByLoginID(this.getLoginContext().getLoginId());
+				this.dic.setTUser(tuser);
+				//设置创建时间
+				this.dic.setDCreatedate(new Date());
+				getFactory().getFinanceProviderInstance().getDictionaryInfomationManagerService().saveDicInfo(this.dic);
+				setStatusMsg("字典信息保存成功！");
+				setStatusMsg("0");
+
+			} catch (FinanceServiceException e) {
+				setStatusMsg(e.getMessage());
+				//e.printStackTrace();
+				setStatusMsg("1");
+
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * 功能：根据关键字分页查询字典信息
+	*/
+	public String searchDicInfos()throws ParseException{
+		//System.out.println("key: " + this.key);
+		IDictionaryInfomation dictionaryInfoService = getFactory().getFinanceProviderInstance().getDictionaryInfomationManagerService();
+		//构造查询参数
+		Map<String,Object> queryMap=new HashMap<String,Object>();
+		queryMap.put(IDictionaryType.QUERY_KEY_NAME, this.key);
+	
+		try {
+			setPage(dictionaryInfoService.searchDicInfos(queryMap, getPageIndex()));
+			//查询字典类型
+			this.dicTypes = getFactory().getFinanceProviderInstance().getDictionaryTypeManagerService().searchAllDictypes();
+
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+			setStatusMsg("查询字典信息列表失败");
+			setStatusMsg("1");
+		}
+		return SUCCESS;
+	}
+	
+	/**
+	 * 功能：根据主键查询字典信息
+	 * @return
+	 */
+	public String searchDicInfoById(){
+		
+		//String result = ERROR;
+		if (StringUtils.isBlank(this.getId())) {
+			setStatusMsg("字典信息id不能为空");
+			setStatusMsg("1");
+		}else{
+			try {
+				dic = getFactory().getFinanceProviderInstance().getDictionaryInfomationManagerService().searchDicInfoById(this.id);
+				//System.out.println(this.vrole.getVName());
+				//result = SUCCESS;
+			} catch (FinanceServiceException e) {
+				setStatusMsg("获取字典信息对象失败。");
+				e.printStackTrace();
+				setStatusMsg("1");
+			}
+		}
+
+		return SUCCESS;
+	}
+
+	
+	/**
+	 * 功能：根据主键查询字典信息，为编辑页面提供信息使用
+	 * @return
+	 */
+	public String searchDicInfoByIdForEdit(){
+		//System.out.println("id: " + this.id);
+		
+		//String result = ERROR;
+		if (StringUtils.isBlank(this.getId())) {
+			setStatusMsg("字典信息id不能为空");
+			setStatusMsg("1");
+		}else{
+			try {
+				dic = getFactory().getFinanceProviderInstance().getDictionaryInfomationManagerService().searchDicInfoById(this.id);
+				this.voDicInfo = new VODicInfoOrDicType();
+				this.voDicInfo.setVId(dic.getVId());
+				this.voDicInfo.setVName(dic.getVName());
+				this.voDicInfo.setDCreatedate(dic.getDCreatedate());
+				this.voDicInfo.setTypeVId(dic.getTDictype().getVId());
+				this.voDicInfo.setTypeVName(dic.getTDictype().getVName());;
+				//System.out.println(this.vrole.getVName());
+				//result = SUCCESS;
+			} catch (FinanceServiceException e) {
+				setStatusMsg("获取字典信息对象失败。");
+				setStatusMsg("1");
+				e.printStackTrace();
+			}
+		}
+
+		return SUCCESS;
+	}
+	
+	/**
+	 * 更新字典信息
+	 * 
+	 * @return
+	 */
+	public String updateDicInfo() {
+
+		//String result = ERROR;
+		if (StringUtils.isBlank(this.dic.getVId())) {
+			setStatusMsg("字典信息id不能为空");
+			setStatusMsg("1");
+		}else if (StringUtils.isBlank(this.dic.getVName())) {
+			setStatusMsg("字典信息不能为空");
+			setStatusMsg("1");
+		}else{
+			try {
+				IDictionaryInfomation dictionaryInfoService = getFactory()
+						.getFinanceProviderInstance()
+						.getDictionaryInfomationManagerService();
+
+				dictionaryInfoService.updateDicInfo(this.dic);
+				setStatusMsg("更新字典信息成功！");
+				setStatusMsg("0");
+				// result = SUCCESS;
+			} catch (FinanceServiceException e) {
+				setStatusMsg(e.getMessage());
+				setStatusMsg("1");
+				return SUCCESS;
+				// e.printStackTrace();
+			}
+
+		}
+			
+		return SUCCESS;
+	}
+	
+	/**
+	 * 删除字典信息
+	 * 
+	 * @return
+	 */
+	public String deleteDicInfo(){
+		String result = SUCCESS;
+		//System.out.println("del: key=" + this.key);
+		//System.out.println("del: pageIndex=" + getPageIndex());
+		if(StringUtils.isBlank(getDicids())){
+			setStatusMsg("请选择要删除的字典信息！");
+			setStatusMsg("1");
+		}else{
+			String[] ids = this.dicids.split(",");
+			if(ids != null && ids.length > 0){
+				try {
+					//删除字典信息
+					getFactory().getFinanceProviderInstance().getDictionaryInfomationManagerService().deleteDicInfoByIds(ids);						
+					setStatusMsg("删除字典信息成功！");
+					setStatusMsg("0");
+				} catch (FinanceServiceException e) {
+					//输出日志信息
+					log.error("删除字典信息出错：" + e.getMessage());
+					setStatusMsg("删除字典信息出错");
+					setStatusMsg("1");
+				}
+			}
+	
+		}
+
+		return result;
+	}
+	
+	
+	//setter and getter-----------
+	
+	public TDiction getDic() {
+		return dic;
+	}
+
+	public void setDic(TDiction dic) {
+		this.dic = dic;
+	}
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
+	public String getKey() {
+		return key;
+	}
+
+	public void setKey(String key) {
+		this.key = key;
+	}
+
+	public String getDicids() {
+		return dicids;
+	}
+
+	public void setDicids(String dicids) {
+		this.dicids = dicids;
+	}
+
+	public List<TDictype> getDicTypes() {
+		return dicTypes;
+	}
+
+	public void setDicTypes(List<TDictype> dicTypes) {
+		this.dicTypes = dicTypes;
+	}
+
+	public VODicInfoOrDicType getVoDicInfo() {
+		return voDicInfo;
+	}
+
+	public void setVoDicInfo(VODicInfoOrDicType voDicInfo) {
+		this.voDicInfo = voDicInfo;
+	}
+
+
+}

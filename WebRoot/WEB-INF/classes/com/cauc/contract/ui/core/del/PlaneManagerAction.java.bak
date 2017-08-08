@@ -1,0 +1,996 @@
+package com.cauc.training.ui.core.del;
+
+import java.text.ParseException;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.lang.StringUtils;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.business.IPlaneService;
+import com.cauc.training.pojos.PlaneCheckCycle;
+import com.cauc.training.pojos.Planecheck;
+import com.cauc.training.pojos.Planeform;
+import com.cauc.training.pojos.Planeinfo;
+import com.cauc.training.pojos.TOrg;
+import com.cauc.training.pojos.TRepairrecord;
+import com.cauc.training.pojos.TeacherBaseInfo;
+import com.cauc.training.ui.common.BaseActionSupport;
+import com.cauc.training.util.Utilities;
+import com.cauc.training.vo.VOperateBean;
+import com.cauc.training.vo.VOrg;
+import com.cauc.training.vo.VPlaneCheckCycle;
+import com.cauc.training.vo.VPlanecheck;
+import com.cauc.training.vo.VPlaneform;
+import com.cauc.training.vo.VPlaneinfo;
+import com.cauc.training.vo.VRepairrecord;
+
+/**
+ * @功能描述：用于管理飞机的Action
+ * @author ming.guo
+ */
+public class PlaneManagerAction extends BaseActionSupport {
+
+
+	private static final long serialVersionUID = -6038302809954657747L;
+	
+	private Planeform  planeform;
+	private List<VPlaneform> planeformList;
+	private List<Planeinfo> planeinfoList;
+	private List<VPlaneinfo> viewPlaneinfoList;
+	private String id;
+	private String ids;
+	private String name;
+	private VPlaneform viewPlaneform;
+	private List<TOrg> baselist;
+	private Planeinfo planeinfo;
+	private VPlaneinfo viewPlaneinfo;
+	private String deviceType;//航空器类型 0:飞机；1：训练器；2：模拟机
+	//jSon返回值
+	private VOrg viewOrg;
+	
+	private String baseid;
+	private String formid;
+	private TRepairrecord repairrecord;
+	private List<VRepairrecord> viewRepairRecordList;
+	private List<TeacherBaseInfo> teacherList; 
+	private Planecheck planecheck;
+	private List<VPlanecheck> viewPlaneCheckList;
+	
+	private PlaneCheckCycle checkForm;
+	private List<VPlaneCheckCycle> checkFormList;
+	
+	private String kaiche;
+	private String qifei;
+	private String luodi;
+	private String guanche;
+	
+	public String readPlaneTimeByBeginTimeAndEndTime(){
+		viewOrg = new VOrg();
+		try {
+			kaiche = kaiche.substring(0, 2)+":" + kaiche.substring(2, 4);
+			guanche = guanche.substring(0, 2)+":"+guanche.substring(2, 4);
+			
+			Date d1 = Utilities.parse(kaiche + ":00", "HH:mm:ss");
+			Date d2 = Utilities.parse(guanche + ":00", "HH:mm:ss");
+			if(d2.getTime()<=d1.getTime()){
+				viewOrg.setMessage("关车时刻晚于开车时刻，请重新输入。");
+				viewOrg.setFlag(false);
+				return SUCCESS;
+			}
+			qifei = qifei.substring(0,2)+":"+qifei.substring(2, 4);
+			luodi = luodi.substring(0, 2)+":"+luodi.substring(2,4);
+			Date d3 = Utilities.parse(qifei + ":00", "HH:mm:ss");
+			Date d4 = Utilities.parse(luodi + ":00", "HH:mm:ss");
+			if(d4.getTime()<=d3.getTime()){
+				viewOrg.setMessage("落地时刻晚于起飞时刻，请重新输入。");
+				viewOrg.setFlag(false);
+				return SUCCESS;
+			}
+	
+			long l1 = d1.getTime();
+			long l2 = d2.getTime();
+			double dd = (l2-l1)/1000.0/60.0;
+			viewOrg.setIStatus((int)dd);
+			long l3 = d3.getTime();
+			long l4 = d4.getTime();
+			double dd2 = (l4-l3)/1000.0/60.0;
+			viewOrg.setIDh((int)dd2);
+			viewOrg.setFlag(true);
+			
+
+			
+		} catch (ParseException e1) {
+			viewOrg.setMessage("输入的时刻格式错误，请重新输入。");
+			viewOrg.setFlag(false);
+		}
+		
+		return SUCCESS;
+	}
+	
+	public String readPlaneCheckFormList(){
+		
+		try {
+			checkFormList = getFactory().getFinanceProviderInstance().getPlaneService().readPlaneCheckFormList(id);
+
+		} catch (FinanceServiceException e) {
+			
+		}
+		return SUCCESS;
+	}
+	
+	//editCheck
+	public String updateSetPlaneCheckForm(){
+		try {
+			getFactory().getFinanceProviderInstance().getPlaneService().updateSetPlaneCheckForm(checkForm);
+		} catch (FinanceServiceException e) {
+
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("编辑定检类型成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	//deleteCheck
+	public String deleteSetPlaneCheckForm(){
+		try {
+			getFactory().getFinanceProviderInstance().getPlaneService().deleteSetPlaneCheckForm(id);
+		} catch (FinanceServiceException e) {
+
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("删除定检类型成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	//setCheck
+	public String saveSetPlaneCheckForm(){
+		try {
+			getFactory().getFinanceProviderInstance().getPlaneService().saveSetPlaneCheckForm(checkForm);
+		} catch (FinanceServiceException e) {
+
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("定检类型设置成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	
+	//saveCheck
+	public String savePlaneCheck(){
+		try {
+			if(StringUtils.isBlank(planecheck.getPlaneinfo().getVId())
+					|| StringUtils.isBlank(planecheck.getPlaneCheckCycle().getVId())
+					|| planecheck.getDChecktime()==null){
+				setStatusMsg("保存定检信息失败，参数传递错误。");
+				setStatusMsg("1");
+				return SUCCESS;
+			}
+			planecheck.setTUser(getFactory().getFinanceProviderInstance()
+					.getSysUserService()
+					.readSysUserByLoginID(getLoginContext().getLoginId()));
+			getFactory().getFinanceProviderInstance().getPlaneService().savePlaneCheck(planecheck);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("保存定检信息成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	//showCheckInfo
+	public String readPlaneCheckListById(){
+		viewOrg = new VOrg();
+		if(StringUtils.isBlank(id)){
+			viewOrg.setMessage("参数传递错误，编辑失败。");
+			viewOrg.setFlag(false);
+			return SUCCESS;
+		}
+		try {
+			viewPlaneCheckList = getFactory().getFinanceProviderInstance().getPlaneService().readPlaneCheckListById(id);
+		} catch (FinanceServiceException e) {
+			viewOrg.setMessage(e.getMessage());
+			viewOrg.setFlag(false);
+			return SUCCESS;
+		}
+		return SUCCESS;
+	}
+	public String savePlaneRecycleToTeacher(){
+		VOperateBean bean = new VOperateBean();
+		bean.setId(this.getId());//planeId
+		bean.setName(this.getIds());//teaId
+		bean.setUserid(getLoginContext().getUserId());//userid
+		try {
+			getFactory().getFinanceProviderInstance().getPlaneService().savePlaneRecycleToTeacher(bean);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("回收直接签派教员成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	public String savePlaneRecycle(){
+		if(StringUtils.isBlank(this.getIds())){
+			setStatusMsg("请选择要签派回收的飞机。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		VOperateBean bean = new VOperateBean();
+		bean.setId(this.getIds());
+		bean.setUserid(getLoginContext().getUserId());
+		try {
+			getFactory().getFinanceProviderInstance().getPlaneService().savePlaneRecycle(bean);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("飞机签派回收成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	public String savePlaneDispatch(){
+		if(StringUtils.isBlank(this.getIds())){
+			setStatusMsg("请选择要签派放行的飞机。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		VOperateBean bean = new VOperateBean();
+		bean.setId(this.getIds());
+		bean.setUserid(getLoginContext().getUserId());
+		try {
+			getFactory().getFinanceProviderInstance().getPlaneService().savePlaneDispatch(bean);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("飞机签派放行成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	public String saveMaintenanceRecycle(){
+		if(StringUtils.isBlank(this.getIds())){
+			setStatusMsg("请选择机务回收的飞机。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		VOperateBean bean = new VOperateBean();
+		bean.setId(this.getIds());
+		bean.setUserid(getLoginContext().getUserId());
+		try {
+			getFactory().getFinanceProviderInstance().getPlaneService().saveMaintenanceRecycle(bean);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("机务回收成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	public String saveBugMaintenanceRecycle(){
+		if(StringUtils.isBlank(this.getIds())){
+			setStatusMsg("请选择机务回收的飞机。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		VOperateBean bean = new VOperateBean();
+		bean.setId(this.getIds());
+		bean.setUserid(getLoginContext().getUserId());
+		try {
+			getFactory().getFinanceProviderInstance().getPlaneService().saveBugMaintenanceRecycle(bean);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("机务回收成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	public String saveMaintenanceRelease(){
+		if(StringUtils.isBlank(this.getIds())){
+			setStatusMsg("请选择机务放飞的飞机。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		VOperateBean bean = new VOperateBean();
+		bean.setId(this.getIds());
+		bean.setUserid(getLoginContext().getUserId());
+		try {
+			getFactory().getFinanceProviderInstance().getPlaneService().saveMaintenanceRelease(bean);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("机务放飞成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	public String createRepairReault(){
+		try {
+			getFactory().getFinanceProviderInstance().getPlaneService().createRepairReault(planeinfo);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("飞机定检成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	//check
+	public String readPlaneCheckInfoList(){
+		Map<String, Object> queryMap = new HashMap<String, Object>();
+		queryMap.put(IPlaneService.QUERY_KEY_PLANECODE, getName());
+		if(StringUtils.isBlank(this.getDeviceType())){
+			setDeviceType(String.valueOf(IPlaneService.QUERY_DEVICE_TYPE_PLANE));
+		}
+		queryMap.put(IPlaneService.QUERY_KEY_DEVICETYPE, this.getDeviceType());
+		queryMap.put(IPlaneService.QUERY_KEY_BASEID, this.getBaseid());
+		queryMap.put(IPlaneService.QUERY_KEY_FORMID, this.getFormid());
+	//	queryMap.put(IPlaneService.PLANE_STATUS, IPlaneService.PLANE_STATUS_USE); view all
+		try {
+			setViewDate(Utilities.format(new Date()));
+			IPlaneService planeService = getFactory().getFinanceProviderInstance().getPlaneService();
+			baselist = getFactory()
+					.getFinanceProviderInstance()
+					.getOrgService()
+					.readBaseList(IPlaneService.QUERY_KEY_BASE_ID,
+							IPlaneService.QUERY_KEY_HANGXIAO_ID);
+			planeformList = planeService.readPlaneformList(queryMap);
+			viewPlaneinfoList = planeService.readPlaneCheckInfoList(queryMap);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		return SUCCESS;
+	}
+	public String readUsedPlaneInfoList(){
+		Map<String, Object> queryMap = new HashMap<String, Object>();
+		queryMap.put(IPlaneService.QUERY_KEY_PLANECODE, getName());
+		//if(StringUtils.isBlank(this.getDeviceType())){
+		//	setDeviceType(String.valueOf(IPlaneService.QUERY_DEVICE_TYPE_PLANE));
+		//}
+		queryMap.put(IPlaneService.QUERY_KEY_DEVICETYPE, String.valueOf(IPlaneService.QUERY_DEVICE_TYPE_PLANE));//只有飞机才能签派
+		queryMap.put(IPlaneService.QUERY_KEY_BASEID, this.getBaseid());
+		queryMap.put(IPlaneService.QUERY_KEY_FORMID, this.getFormid());
+		queryMap.put(IPlaneService.PLANE_STATUS, IPlaneService.PLANE_STATUS_USE);
+		queryMap.put(IPlaneService.QUERY_LOGIN_USER_ID, getLoginContext().getUserId());
+		try {
+			IPlaneService planeService = getFactory().getFinanceProviderInstance().getPlaneService();
+			baselist = getFactory()
+					.getFinanceProviderInstance()
+					.getOrgService()
+					.readBaseList(IPlaneService.QUERY_KEY_BASE_ID,
+							IPlaneService.QUERY_KEY_HANGXIAO_ID);
+			planeformList = planeService.readPlaneformList(queryMap);
+			viewPlaneinfoList = planeService.readPlaneReleaseInfoList(queryMap);
+			setViewDate(Utilities.format(new Date(),"yyyy-MM-dd HH:mm:ss"));
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		return SUCCESS;
+	}
+	
+	//飞机维修
+	public String readPlaneRepairInfoList(){
+		setViewDate(Utilities.format(new Date()));
+		Map<String, Object> queryMap = new HashMap<String, Object>();
+		queryMap.put(IPlaneService.QUERY_KEY_PLANECODE, getName());
+		if(StringUtils.isBlank(this.getDeviceType())){
+			setDeviceType(String.valueOf(IPlaneService.QUERY_DEVICE_TYPE_PLANE));
+		}
+		queryMap.put(IPlaneService.QUERY_KEY_DEVICETYPE, this.getDeviceType());
+		queryMap.put(IPlaneService.QUERY_KEY_BASEID, this.getBaseid());
+		queryMap.put(IPlaneService.QUERY_KEY_FORMID, this.getFormid());
+		queryMap.put(IPlaneService.PLANE_STATUS, IPlaneService.PLANE_STATUS_USE);
+		try {
+			IPlaneService planeService = getFactory().getFinanceProviderInstance().getPlaneService();
+			baselist = getFactory()
+					.getFinanceProviderInstance()
+					.getOrgService()
+					.readBaseList(IPlaneService.QUERY_KEY_BASE_ID,
+							IPlaneService.QUERY_KEY_HANGXIAO_ID);
+			planeformList = planeService.readPlaneformList(queryMap);
+			planeinfoList = planeService.readPlaneRepairInfoList(queryMap);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		return SUCCESS;
+	}
+	public String readMaintenanceRecycleInfoList(){
+		Map<String, Object> queryMap = new HashMap<String, Object>();
+		queryMap.put(IPlaneService.QUERY_KEY_PLANECODE, getName());
+		if(StringUtils.isBlank(this.getDeviceType())){
+			setDeviceType(String.valueOf(IPlaneService.QUERY_DEVICE_TYPE_PLANE));
+		}
+		queryMap.put(IPlaneService.QUERY_KEY_DEVICETYPE, this.getDeviceType());
+		queryMap.put(IPlaneService.QUERY_KEY_BASEID, this.getBaseid());
+		queryMap.put(IPlaneService.QUERY_KEY_FORMID, this.getFormid());
+		queryMap.put(IPlaneService.PLANE_STATUS, IPlaneService.PLANE_STATUS_PATCH_USE);
+		try {
+			setViewDate(Utilities.format(new Date(),"yyyy-MM-dd HH:mm:ss"));
+			IPlaneService planeService = getFactory().getFinanceProviderInstance().getPlaneService();
+			baselist = getFactory()
+					.getFinanceProviderInstance()
+					.getOrgService()
+					.readBaseList(IPlaneService.QUERY_KEY_BASE_ID,
+							IPlaneService.QUERY_KEY_HANGXIAO_ID);
+			planeformList = planeService.readPlaneformList(queryMap);
+			planeinfoList = planeService.readMaintenanceRecycleInfoList(queryMap);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		return SUCCESS;
+	}
+	
+	public String readBugMaintenanceRecycleInfoList(){
+		try {
+			setViewDate(Utilities.format(new Date(),"yyyy-MM-dd HH:mm:ss"));
+			planeinfoList = getFactory().getFinanceProviderInstance().getPlaneService().readBugMaintenanceRecycleInfoList();
+		} catch (FinanceServiceException e) {
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		return SUCCESS;
+	}
+	
+	public String readPlaneRecycleInfoList(){
+		Map<String, Object> queryMap = new HashMap<String, Object>();
+		queryMap.put(IPlaneService.QUERY_KEY_PLANECODE, getName());
+		if(StringUtils.isBlank(this.getDeviceType())){
+			setDeviceType(String.valueOf(IPlaneService.QUERY_DEVICE_TYPE_PLANE));
+		}
+		queryMap.put(IPlaneService.QUERY_KEY_DEVICETYPE, this.getDeviceType());
+		queryMap.put(IPlaneService.QUERY_KEY_BASEID, this.getBaseid());
+		queryMap.put(IPlaneService.QUERY_KEY_FORMID, this.getFormid());
+		queryMap.put(IPlaneService.PLANE_STATUS, IPlaneService.PLANE_STATUS_PATCH_RELEASE);
+		try {
+			setViewDate(Utilities.format(new Date(),"yyyy-MM-dd HH:mm:ss"));
+			IPlaneService planeService = getFactory().getFinanceProviderInstance().getPlaneService();
+			baselist = getFactory()
+					.getFinanceProviderInstance()
+					.getOrgService()
+					.readBaseList(IPlaneService.QUERY_KEY_BASE_ID,
+							IPlaneService.QUERY_KEY_HANGXIAO_ID);
+			planeformList = planeService.readPlaneformList(queryMap);
+			planeinfoList = planeService.readPlaneRecycleInfoList(queryMap);
+			teacherList = planeService.readTeacherBaseInfoList(queryMap);//按基地查询
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		return SUCCESS;
+	}
+	public String readPlaneDispatchInfoList(){
+		Map<String, Object> queryMap = new HashMap<String, Object>();
+		queryMap.put(IPlaneService.QUERY_KEY_PLANECODE, getName());
+		//if(StringUtils.isBlank(this.getDeviceType())){
+		//	setDeviceType(String.valueOf(IPlaneService.QUERY_DEVICE_TYPE_PLANE));
+		//}
+		queryMap.put(IPlaneService.QUERY_KEY_DEVICETYPE, String.valueOf(IPlaneService.QUERY_DEVICE_TYPE_PLANE));
+		queryMap.put(IPlaneService.QUERY_KEY_BASEID, this.getBaseid());
+		queryMap.put(IPlaneService.QUERY_KEY_FORMID, this.getFormid());
+		queryMap.put(IPlaneService.PLANE_STATUS, IPlaneService.PLANE_STATUS_RELEASE);
+		try {
+			
+			IPlaneService planeService = getFactory().getFinanceProviderInstance().getPlaneService();
+			baselist = getFactory()
+					.getFinanceProviderInstance()
+					.getOrgService()
+					.readBaseList(IPlaneService.QUERY_KEY_BASE_ID,
+							IPlaneService.QUERY_KEY_HANGXIAO_ID);
+			planeformList = planeService.readPlaneformList(queryMap);
+			viewPlaneinfoList = planeService.readPlaneDispatchInfoList(queryMap);
+			teacherList = planeService.readTeacherBaseInfoList(queryMap);//按基地查询
+			setViewDate(Utilities.format(new Date(),"yyyy-MM-dd HH:mm:ss"));
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		return SUCCESS;
+	}
+	//获取飞机维修记录
+	public String readPlaneRepairListById(){
+
+		viewOrg = new VOrg();
+		if(StringUtils.isBlank(id)){
+			viewOrg.setMessage("参数传递错误，编辑失败。");
+			viewOrg.setFlag(false);
+			return SUCCESS;
+		}
+		try {
+			viewRepairRecordList = getFactory().getFinanceProviderInstance().getPlaneService().readPlaneRepairListById(id);
+		} catch (FinanceServiceException e) {
+			viewOrg.setMessage(e.getMessage());
+			viewOrg.setFlag(false);
+			return SUCCESS;
+		}
+		
+		return SUCCESS;
+	}
+	public String createPlaneform(){
+
+		if(StringUtils.isBlank(planeform.getVName())){
+			setStatusMsg("参数传递错误，添加失败。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		try{
+			planeform.setTUser(getFactory().getFinanceProviderInstance()
+					.getSysUserService()
+					.readSysUserByLoginID(this.getLoginContext().getLoginId()));
+			getFactory().getFinanceProviderInstance().getPlaneService()
+					.createPlaneform(planeform);
+		}catch(FinanceServiceException e){
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("添加飞机型号成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	public String updatePlaneform(){
+
+		if(StringUtils.isBlank(planeform.getVId()) || StringUtils.isBlank(planeform.getVName())){
+			setStatusMsg("参数传递错误，编辑失败。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		try{
+			getFactory().getFinanceProviderInstance().getPlaneService().updatePlaneform(planeform);
+		}catch(FinanceServiceException e){
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("更新飞机型号成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	
+	public String deletePlaneform(){
+		if(StringUtils.isBlank(getIds())){
+			setStatusMsg("请选择要删除的内容。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+
+		try {
+			getFactory()
+					.getFinanceProviderInstance()
+					.getPlaneService()
+					.deletePlaneform(
+							getIds().split(","));
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("删除飞机型号成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	
+	public String readPlaneformById(){
+		viewOrg = new VOrg();
+		if(StringUtils.isBlank(id)){
+			viewOrg.setMessage("参数传递错误，编辑失败。");
+			viewOrg.setFlag(false);
+			return SUCCESS;
+		}
+		try {
+			viewPlaneform = getFactory().getFinanceProviderInstance().getPlaneService().readVPlaneform(id);
+		} catch (FinanceServiceException e) {
+			viewOrg.setMessage(e.getMessage());
+			viewOrg.setFlag(false);
+			return SUCCESS;
+		}
+		
+		return SUCCESS;
+	}
+	
+	public String readPlaneInfoList(){
+		Map<String, Object> queryMap = new HashMap<String, Object>();
+		if (StringUtils.isNotBlank(this.getName()))
+			queryMap.put(IPlaneService.QUERY_KEY_NAME, getName());
+		try {
+			planeformList = getFactory().getFinanceProviderInstance().getPlaneService().readPlaneformList(queryMap);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		return SUCCESS;
+	}
+	
+	//以下为飞机信息管理----------------------------------------------
+	public String createPlaneBaseInfo(){
+		
+		this.setDeviceType(planeinfo.getIDeviceType().toString());
+		
+		if(StringUtils.isBlank(planeinfo.getVPlanecode()) || 
+				StringUtils.isBlank(planeinfo.getTOrg().getVId()) ||
+				StringUtils.isBlank(planeinfo.getPlaneform().getVId())
+			){
+			setStatusMsg("参数传递错误，添加失败。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		
+		try{
+			planeinfo.setTUser(getFactory().getFinanceProviderInstance()
+					.getSysUserService()
+					.readSysUserByLoginID(this.getLoginContext().getLoginId()));
+			getFactory().getFinanceProviderInstance().getPlaneService()
+					.createPlaneBaseInfo(planeinfo);
+		}catch(FinanceServiceException e){
+			
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("添加航空器信息成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	public String updatePlaneBaseInfo(){
+		
+		this.setDeviceType(planeinfo.getIDeviceType().toString());
+		
+		if (StringUtils.isBlank(planeinfo.getVId())
+				|| StringUtils.isBlank(planeinfo.getVPlanecode())
+				|| StringUtils.isBlank(planeinfo.getTOrg().getVId())
+				|| StringUtils.isBlank(planeinfo.getPlaneform().getVId()
+				)) {
+			setStatusMsg("参数传递错误，编辑失败。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		try{
+			getFactory().getFinanceProviderInstance().getPlaneService().updatePlaneBaseInfo(planeinfo);
+			
+		}catch(FinanceServiceException e){
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("更新航空器信息成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	
+	public String deletePlaneBaseInfo(){
+		if(StringUtils.isBlank(getIds())){
+			setStatusMsg("请选择要删除的内容。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+
+		try {
+			getFactory()
+					.getFinanceProviderInstance()
+					.getPlaneService()
+					.deletePlaneBaseInfo(
+							getIds().split(","));
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("删除航空器信息成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	
+	public String changePlaneBase(){
+		if (StringUtils.isBlank(planeinfo.getVId())
+				|| StringUtils.isBlank(planeinfo.getTOrg().getVId())) {
+			setStatusMsg("请选择要调换的飞机。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		try {
+			planeinfo.setTUser(getFactory().getFinanceProviderInstance()
+					.getSysUserService()
+					.readSysUserByLoginID(this.getLoginContext().getLoginId()));
+			getFactory()
+					.getFinanceProviderInstance()
+					.getPlaneService()
+					.changePlaneBase(planeinfo);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("飞机调换成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	public String changePlaneStatus(){
+		if (StringUtils.isBlank(planeinfo.getVId())
+				|| StringUtils.isBlank(planeinfo.getVPlanecode())) {
+			setStatusMsg("请选择要操作的航空器。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		try {
+			getFactory()
+					.getFinanceProviderInstance()
+					.getPlaneService()
+					.changePlaneStatus(planeinfo);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("改变航空器状态成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	public String createplaneRepairRecord(){
+		
+		if (StringUtils.isBlank(repairrecord.getPlaneinfo().getVId())
+				|| StringUtils.isBlank(repairrecord.getVContent())) {
+			setStatusMsg("请选择飞机。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		try {
+			repairrecord.setTUser(getFactory().getFinanceProviderInstance()
+					.getSysUserService()
+					.readSysUserByLoginID(this.getLoginContext().getLoginId()));
+			getFactory()
+					.getFinanceProviderInstance()
+					.getPlaneService()
+					.createplaneRepairRecord(repairrecord);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("录入维修记录成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	public String readPlaneBaseInfoById(){
+		viewOrg = new VOrg();
+		if(StringUtils.isBlank(id)){
+			viewOrg.setMessage("参数传递错误，编辑失败。");
+			viewOrg.setFlag(false);
+			return SUCCESS;
+		}
+		try {
+			viewPlaneinfo = getFactory().getFinanceProviderInstance().getPlaneService().readVPlaneinfo(id);
+		} catch (FinanceServiceException e) {
+			viewOrg.setMessage(e.getMessage());
+			viewOrg.setFlag(false);
+			return SUCCESS;
+		}
+		
+		return SUCCESS;
+	}
+	public String readPlaneBaseInfoList(){
+		Map<String, Object> queryMap = new HashMap<String, Object>();
+		queryMap.put(IPlaneService.QUERY_KEY_PLANECODE, getName());
+		if(StringUtils.isBlank(this.getDeviceType())){
+			setDeviceType(String.valueOf(IPlaneService.QUERY_DEVICE_TYPE_PLANE));
+		}
+		queryMap.put(IPlaneService.QUERY_KEY_DEVICETYPE, this.getDeviceType());
+		queryMap.put(IPlaneService.QUERY_KEY_BASEID, this.getBaseid());
+		queryMap.put(IPlaneService.QUERY_KEY_FORMID, this.getFormid());
+		setViewDate(Utilities.format(new Date()));
+		try {
+			IPlaneService planeService = getFactory().getFinanceProviderInstance().getPlaneService();
+			baselist = getFactory()
+					.getFinanceProviderInstance()
+					.getOrgService()
+					.readBaseList(IPlaneService.QUERY_KEY_BASE_ID,
+							IPlaneService.QUERY_KEY_HANGXIAO_ID);
+			planeformList = planeService.readPlaneformList(queryMap);
+			planeinfoList = planeService.readPlaneBaseInfoList(queryMap);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		return SUCCESS;
+	}
+
+	//----------------------setter and getter----------------------------------
+	public Planeform getPlaneform() {
+		return planeform;
+	}
+
+	public void setPlaneform(Planeform planeform) {
+		this.planeform = planeform;
+	}
+
+	public List<VPlaneform> getPlaneformList() {
+		return planeformList;
+	}
+
+	public void setPlaneformList(List<VPlaneform> planeformList) {
+		this.planeformList = planeformList;
+	}
+
+	public String getId() {
+		return id;
+	}
+	public void setId(String id) {
+		this.id = id;
+	}
+	public VPlaneform getViewPlaneform() {
+		return viewPlaneform;
+	}
+	public void setViewPlaneform(VPlaneform viewPlaneform) {
+		this.viewPlaneform = viewPlaneform;
+	}
+	public String getIds() {
+		return ids;
+	}
+	public void setIds(String ids) {
+		this.ids = ids;
+	}
+	public String getName() {
+		return name;
+	}
+	public void setName(String name) {
+		this.name = name;
+	}
+	public VOrg getViewOrg() {
+		return viewOrg;
+	}
+	public void setViewOrg(VOrg viewOrg) {
+		this.viewOrg = viewOrg;
+	}
+	public Planeinfo getPlaneinfo() {
+		return planeinfo;
+	}
+	public void setPlaneinfo(Planeinfo planeinfo) {
+		this.planeinfo = planeinfo;
+	}
+
+	public List<Planeinfo> getPlaneinfoList() {
+		return planeinfoList;
+	}
+	public void setPlaneinfoList(List<Planeinfo> planeinfoList) {
+		this.planeinfoList = planeinfoList;
+	}
+	public VPlaneinfo getViewPlaneinfo() {
+		return viewPlaneinfo;
+	}
+	public void setViewPlaneinfo(VPlaneinfo viewPlaneinfo) {
+		this.viewPlaneinfo = viewPlaneinfo;
+	}
+	public List<TOrg> getBaselist() {
+		return baselist;
+	}
+	public void setBaselist(List<TOrg> baselist) {
+		this.baselist = baselist;
+	}
+	public String getDeviceType() {
+		return deviceType;
+	}
+	public void setDeviceType(String deviceType) {
+		this.deviceType = deviceType;
+	}
+	public String getBaseid() {
+		return baseid;
+	}
+	public void setBaseid(String baseid) {
+		this.baseid = baseid;
+	}
+	public String getFormid() {
+		return formid;
+	}
+	public void setFormid(String formid) {
+		this.formid = formid;
+	}
+
+	public TRepairrecord getRepairrecord() {
+		return repairrecord;
+	}
+	public void setRepairrecord(TRepairrecord repairrecord) {
+		this.repairrecord = repairrecord;
+	}
+	public List<VRepairrecord> getViewRepairRecordList() {
+		return viewRepairRecordList;
+	}
+	public void setViewRepairRecordList(List<VRepairrecord> viewRepairRecordList) {
+		this.viewRepairRecordList = viewRepairRecordList;
+	}
+	public List<TeacherBaseInfo> getTeacherList() {
+		return teacherList;
+	}
+	public void setTeacherList(List<TeacherBaseInfo> teacherList) {
+		this.teacherList = teacherList;
+	}
+	public Planecheck getPlanecheck() {
+		return planecheck;
+	}
+	public void setPlanecheck(Planecheck planecheck) {
+		this.planecheck = planecheck;
+	}
+	public List<VPlanecheck> getViewPlaneCheckList() {
+		return viewPlaneCheckList;
+	}
+	public void setViewPlaneCheckList(List<VPlanecheck> viewPlaneCheckList) {
+		this.viewPlaneCheckList = viewPlaneCheckList;
+	}
+	public PlaneCheckCycle getCheckForm() {
+		return checkForm;
+	}
+	public void setCheckForm(PlaneCheckCycle checkForm) {
+		this.checkForm = checkForm;
+	}
+	public List<VPlaneinfo> getViewPlaneinfoList() {
+		return viewPlaneinfoList;
+	}
+	public void setViewPlaneinfoList(List<VPlaneinfo> viewPlaneinfoList) {
+		this.viewPlaneinfoList = viewPlaneinfoList;
+	}
+	public List<VPlaneCheckCycle> getCheckFormList() {
+		return checkFormList;
+	}
+	public void setCheckFormList(List<VPlaneCheckCycle> checkFormList) {
+		this.checkFormList = checkFormList;
+	}
+
+	public String getKaiche() {
+		return kaiche;
+	}
+
+	public void setKaiche(String kaiche) {
+		this.kaiche = kaiche;
+	}
+
+	public String getQifei() {
+		return qifei;
+	}
+
+	public void setQifei(String qifei) {
+		this.qifei = qifei;
+	}
+
+	public String getLuodi() {
+		return luodi;
+	}
+
+	public void setLuodi(String luodi) {
+		this.luodi = luodi;
+	}
+
+	public String getGuanche() {
+		return guanche;
+	}
+
+	public void setGuanche(String guanche) {
+		this.guanche = guanche;
+	}
+	
+}

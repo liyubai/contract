@@ -1,0 +1,56 @@
+package com.cauc.contract.pojos;
+
+import java.util.List;
+
+public class PaymentNoticeInfo {
+	List<List<PaymentNotice>> NoticeList;
+	int IntoTraining;//进入训练
+	int TrainingTheory;//理论培训
+	int extendStudies;//延长学业
+	int Grounded;//停飞
+	int TotalCost;//已收取费用
+	int percent;//百分比
+	
+	public List<List<PaymentNotice>> getNoticeList() {
+		return NoticeList;
+	}
+	public void setNoticeList(List<List<PaymentNotice>> noticeList) {
+		NoticeList = noticeList;
+	}
+	public int getIntoTraining() {
+		return IntoTraining;
+	}
+	public void setIntoTraining(int intoTraining) {
+		IntoTraining = intoTraining;
+	}
+	public int getTrainingTheory() {
+		return TrainingTheory;
+	}
+	public void setTrainingTheory(int trainingTheory) {
+		TrainingTheory = trainingTheory;
+	}
+	public int getExtendStudies() {
+		return extendStudies;
+	}
+	public void setExtendStudies(int extendStudies) {
+		this.extendStudies = extendStudies;
+	}
+	public int getGrounded() {
+		return Grounded;
+	}
+	public void setGrounded(int grounded) {
+		Grounded = grounded;
+	}
+	public int getTotalCost() {
+		return TotalCost;
+	}
+	public void setTotalCost(int totalCost) {
+		TotalCost = totalCost;
+	}
+	public int getPercent() {
+		return percent;
+	}
+	public void setPercent(int percent) {
+		this.percent = percent;
+	}
+}

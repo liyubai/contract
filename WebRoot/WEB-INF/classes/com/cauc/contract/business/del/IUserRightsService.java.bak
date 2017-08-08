@@ -1,0 +1,38 @@
+package com.cauc.training.business;
+
+import java.util.List;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.pojos.TUserRights;
+import com.cauc.training.vo.VOTUserRight;
+
+/**
+ * 用户与角色绑定处理 
+ * 
+ */
+public interface IUserRightsService {
+	
+	/**
+	 * 功能：保存用户-角色
+	 * @param tRoleFunctions
+	 * @throws FinanceServiceException
+	 */
+	public void saveTUserRights(List<TUserRights> tUserRights) throws FinanceServiceException;
+
+
+	
+	
+	/**
+	 * 功能：删除某一个用户所对应的所有绑定角色
+	 * @param userId
+	 * @throws FinanceServiceException
+	 */
+	public void deleteAllTUserRights(String userId) throws FinanceServiceException;
+	
+	/**
+	 * 功能：读取所有角色信息，返回VOTUserRight列表
+	 * @param userId：用户id，用于查询当前该用户所有的绑定角色列表
+	 * @throws FinanceServiceException
+	 */
+	public List<VOTUserRight> searchAllRolesList(String userId) throws FinanceServiceException;
+}

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE struts PUBLIC
+    "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN"
+    "http://struts.apache.org/dtds/struts-2.0.dtd">
+<struts>
+	<package name="cContractWait" extends="ErsDefault" namespace="/">
+		<!-- 加载 查看合同 -->
+		<action name="cContractWaitDeal" class="com.cauc.contract.ui.core.contractWaitDealAction"
+			 	method="contractWaitDeal">
+			 	<result name="success">/pages/main/cMain.jsp</result>	
+		</action>	
+		<!-- 查看合同 -->
+		<!-- <action name="cshowContractWaitDeal" class="com.cauc.contract.ui.core.contractWaitDealAction"
+			 	method="showContractWaitDeal">
+			 	<result name="success">/pages/main/cModifyContract.jsp</result>	
+		</action> -->
+		<!--查看付款  -->
+		<!-- <action name="cviewPayWaitDeal" class="com.cauc.contract.ui.core.contractWaitDealAction"
+			 method="viewPayWaitDeal">
+			<result name="success" >/pages/main/cModifyPay.jsp</result>					
+		    <result name="success" type="redirectAction">
+				<param name="namespace">/</param>
+				<param name="actionName">updateSearch?PId=${PId}</param>
+			</result> 
+		</action> -->
+		<!-- 跳转修改合同页面 -->
+		<action name="selContract" class="com.cauc.contract.ui.core.contractModifyAction"
+			method="selContractToUpdate">
+			<result name="success">/pages/contract/cUpdateContract.jsp</result>
+		</action>
+		<!-- 跳转修改付款页面 -->
+		<action name="updateSearch" class="com.cauc.contract.ui.core.PayListAction"
+			method="updateSearch">
+			<result name="success">/pages/payment/cUpdateContract.jsp</result>	
+		</action>
+	</package>
+	
+
+</struts> 

@@ -1,0 +1,130 @@
+package com.cauc.training.business.hibernate;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.collections.map.HashedMap;
+import org.hibernate.HibernateException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.business.IUserRightsService;
+import com.cauc.training.business.dao.GenericHibernateDAO;
+import com.cauc.training.pojos.TRole;
+import com.cauc.training.pojos.TUserRights;
+import com.cauc.training.vo.VOTUserRight;
+
+
+@Service("userRightsManagerServiceImpl")
+public class UserRightsManagerServiceImpl extends GenericHibernateDAO implements IUserRightsService {
+
+	/**
+	 * 功能：保存用户-角色
+	 * @param tRoleFunctions
+	 * @throws FinanceServiceException
+	 */
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void saveTUserRights(List<TUserRights> tUserRights) throws FinanceServiceException
+	{
+		/*
+		if(tUserRights != null && tUserRights.size() > 0){			
+			try{
+				for(TUserRights tur : tUserRights){
+					super.save(tur);
+				}				
+			}catch(HibernateException e){
+				throw new FinanceServiceException("用户-角色绑定失败！", e);
+			}
+
+		}else{
+			throw new FinanceServiceException("用户-角色绑定失败！");
+		}
+		*/
+		if(tUserRights == null || tUserRights.size()==0){
+			throw new FinanceServiceException("用户-角色绑定失败！");
+		}
+		super.saveOrUpdateALL(tUserRights);
+
+	}
+
+	/**
+	 * 功能：删除某一个用户所对应的所有绑定角色
+	 * @param userId
+	 * @throws FinanceServiceException
+	 */
+	@SuppressWarnings("unchecked")
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void deleteAllTUserRights(String userId) throws FinanceServiceException{
+		if(userId != null && !userId.trim().equals("")){
+			try {
+				//查询当前用户绑定的所有角色
+				String hql = "from TUserRights where TUserByVUserid.VId=?";
+				List<TUserRights> turs = super.find(hql, userId);
+				
+				super.removeALL(turs);
+				/*
+				TUserRights tur;
+				if(turs != null && turs.size() > 0){
+					for(int i=0; i<turs.size(); i++){
+						tur = turs.get(i);
+						super.removeById(TUserRights.class, tur.getVId());
+					}
+				}
+				*/
+			}catch (HibernateException e) {
+				//e.printStackTrace();
+				throw new FinanceServiceException("删除用户-角色绑定信息失败", e);
+			}
+		}
+
+	}
+
+	/**
+	 * 功能：读取所有角色信息，返回VOTUserRight列表
+	 * @param userId：用户id，用于查询当前该用户所有的绑定角色列表
+	 * @throws FinanceServiceException
+	 */
+	
+	@SuppressWarnings("unchecked")
+	public List<VOTUserRight> searchAllRolesList(String userId) throws FinanceServiceException{
+		List<VOTUserRight> backList = new ArrayList<VOTUserRight>(); //返回的角色对象列表
+		try {
+			String hql = "from TRole";
+			String hqlq = "from TUserRights where TUserByVUserid.VId=?";
+			List<TUserRights> turlist = super.find(hqlq, userId);
+			Map map = new HashedMap();
+			for(TUserRights tur : turlist){
+				//用于判断该角色是否赋予该用户，1：表示绑定；0：表示未绑定
+				map.put(tur.getTRole().getVId(), "1,"+tur.getIIsWrite());//0:写1读
+			}
+			//返回所有角色
+			List<TRole> roleList = super.find(hql);
+			VOTUserRight vtr;
+			for(TRole t :roleList){
+				
+				vtr = new VOTUserRight();
+				
+				vtr.setVId(t.getVId());
+				vtr.setVName(t.getVName());
+				vtr.setVDescription(t.getVDescription());
+				
+				if(map.get(t.getVId()) != null && map.get(t.getVId()).toString().split(",")[0].equals("1")){
+					vtr.setBinding(1);
+					vtr.setIsWrite(Integer.parseInt(map.get(t.getVId()).toString().split(",")[1]));
+				}else{
+					vtr.setBinding(0);
+					vtr.setIsWrite(1);
+				}
+				
+				backList.add(vtr);	
+			}
+						
+		} catch (HibernateException e) {
+			throw new FinanceServiceException("读取角色信息列表失败", e);
+		}
+		return backList;
+	}
+}

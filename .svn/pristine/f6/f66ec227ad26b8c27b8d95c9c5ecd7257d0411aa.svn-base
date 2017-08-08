@@ -1,0 +1,229 @@
+package com.cauc.training.ui.core.del;
+
+
+
+import java.text.ParseException;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.business.IDictionaryType;
+import com.cauc.training.pojos.TDictype;
+import com.cauc.training.pojos.TUser;
+import com.cauc.training.ui.common.BaseActionSupport;
+import com.cauc.training.vo.VODicInfoOrDicType;
+
+/**
+ * 功能：用于角色管理的Action
+ * */
+
+public class DictionaryTypeAction extends BaseActionSupport {
+	
+
+	private static final long serialVersionUID = -2239271065035675222L;
+	//获取日志生成器
+	private static Log log = LogFactory.getLog(DictionaryTypeAction.class);
+	
+	private TDictype dic;
+
+	//用于Ajax请求返回dic对象
+	private VODicInfoOrDicType vodicType;
+	
+	//用于存储主键值
+	private String id;
+	
+	//查询关键字
+	private String key;
+
+	//存储要删除的字典类型id，各个字典类型的id使用逗号（,）分隔
+	private String dicids;
+	
+	/**
+	 * 功能：保存字典类型
+	 * @return
+	 */
+	
+	public String saveDicType(){
+		String result = SUCCESS;
+		if(StringUtils.isBlank(dic.getVName())) {
+			setStatusMsg("字典类型名称不能为空！");
+		}else{
+			try {
+				// 获取用户对象,取得登录者，即创建该角色的人
+				TUser tuser = getFactory().getFinanceProviderInstance().getSysUserService().readSysUserByLoginID(this.getLoginContext().getLoginId());
+				this.dic.setTUser(tuser);
+				//设置创建时间
+				this.dic.setDCreatedate(new Date());
+				getFactory().getFinanceProviderInstance().getDictionaryTypeManagerService().saveDictype(this.dic);
+				setStatusMsg("字典类型保存成功！");
+				setStatusMsg("0");
+
+			} catch (FinanceServiceException e) {
+				setStatusMsg(e.getMessage());
+				setStatusMsg("1");
+				//e.printStackTrace();
+
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * 功能：根据关键字分页查询字典类型
+	 */
+	public String searchDicTypes()throws ParseException{
+		//System.out.println("key: " + this.key);
+		IDictionaryType dictionaryService = getFactory().getFinanceProviderInstance().getDictionaryTypeManagerService();
+		//构造查询参数
+		Map<String,Object> queryMap=new HashMap<String,Object>();
+		queryMap.put(IDictionaryType.QUERY_KEY_NAME, this.key);
+	
+		try {
+			setPage(dictionaryService.searchDictypes(queryMap, getPageIndex()));
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+			setStatusMsg("查询字典类型列表失败");
+			setStatusMsg("1");
+		}
+		return SUCCESS;
+	}
+	
+	/**
+	 * 功能：根据主键查询字典类型
+	 * @return
+	 */
+	public String searchDicTypeById(){
+		//String result = ERROR;
+		if (StringUtils.isBlank(this.getId())) {
+			setStatusMsg("字典类型id不能为空");
+			setStatusMsg("1");
+		}else{
+			try {
+				dic = getFactory().getFinanceProviderInstance().getDictionaryTypeManagerService().searchDictypeById(this.id);
+				this.vodicType = new VODicInfoOrDicType();
+				this.vodicType.setTypeVId(dic.getVId());
+				this.vodicType.setTypeVName(dic.getVName());
+				//System.out.println(this.vrole.getVName());
+				//result = SUCCESS;
+			} catch (FinanceServiceException e) {
+				setStatusMsg("获取字典类型对象信息失败。");
+				setStatusMsg("1");
+				e.printStackTrace();
+			}
+		}
+
+		return SUCCESS;
+	}
+	
+	/**
+	 * 更新字典类型信息
+	 * 
+	 * @return
+	 */
+	public String updateDicType() {
+
+		if (StringUtils.isBlank(this.dic.getVId())) {
+			setStatusMsg("字典类型id不能为空");
+			setStatusMsg("1");
+		}else if (StringUtils.isBlank(this.dic.getVName())) {
+			setStatusMsg("字典类型名称不能为空");
+			setStatusMsg("1");
+		}else{
+			try {
+				IDictionaryType dictionaryService = getFactory().getFinanceProviderInstance().getDictionaryTypeManagerService();
+
+				dictionaryService.updateDictypes(this.dic);
+				setStatusMsg("更新字典类型信息成功！");
+				setStatusMsg("0");
+	        } catch (FinanceServiceException e) {
+	        	setStatusMsg(e.getMessage());
+	        	setStatusMsg("1");
+	        }
+
+		}
+			
+		return SUCCESS;
+	}
+	
+	/**
+	 * 删除字典类型信息
+	 * 
+	 * @return
+	 */
+	public String deleteDicType(){
+		String result = SUCCESS;
+		if(StringUtils.isBlank(getDicids())){
+			setStatusMsg("请选择要删除的字典类型！");
+			setStatusMsg("1");
+		}else{
+			String[] ids = this.dicids.split(",");
+			if(ids != null && ids.length > 0){
+				try {
+					//删除字典类型
+					getFactory().getFinanceProviderInstance().getDictionaryTypeManagerService().deleteDictypesByIds(ids);						
+					setStatusMsg("删除字典类型成功！");
+					setStatusMsg("0");
+				} catch (FinanceServiceException e) {
+					//输出日志信息
+					log.error("删除字典类型出错：" + e.getMessage());
+					setStatusMsg("删该数据字典类型已经被引用，删除失败。");
+					setStatusMsg("1");
+				}
+			}
+	
+		}
+
+		return result;
+	}
+
+	
+	
+	public TDictype getDic() {
+		return dic;
+	}
+
+	public void setDic(TDictype dic) {
+		this.dic = dic;
+	}
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
+	public String getKey() {
+		return key;
+	}
+
+	public void setKey(String key) {
+		this.key = key;
+	}
+
+	public String getDicids() {
+		return dicids;
+	}
+
+	public void setDicids(String dicids) {
+		this.dicids = dicids;
+	}
+
+	public VODicInfoOrDicType getVodicType() {
+		return vodicType;
+	}
+
+	public void setVodicType(VODicInfoOrDicType vodicType) {
+		this.vodicType = vodicType;
+	}
+	
+	
+
+	
+}

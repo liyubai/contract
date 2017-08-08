@@ -1,0 +1,115 @@
+<%@ page language="java" contentType="text/html; charset=utf-8"
+    pageEncoding="utf-8"%>
+<%@ taglib prefix="s" uri="/struts-tags"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>明细</title>
+    <link href="<%=request.getContextPath()%>/contract/themes/cupertino/jquery.ui.all.css" rel="stylesheet" type="text/css" />
+    <link href="<%=request.getContextPath()%>/contract/themes/cupertino/selfStyle.css" rel="stylesheet" type="text/css" />
+    <script src="<%=request.getContextPath()%>/contract/scripts/jquery.min.js"></script>
+    <script src="<%=request.getContextPath()%>/contract/scripts/jquery-ui.min.js"></script>
+    <script src="<%=request.getContextPath()%>/contract/scripts/ui/jquery.ui.position.min.js"></script>
+    <script src="<%=request.getContextPath()%>/contract/scripts/ui/jquery.ui.core.min.js"></script>
+    <script src="<%=request.getContextPath()%>/contract/scripts/ui/jquery.ui.widget.min.js"></script>
+    <script src="<%=request.getContextPath()%>/contract/scripts/ui/jquery.ui.button.min.js"></script>
+    <script src="<%=request.getContextPath()%>/contract/scripts/ui/jquery.ui.tabs.min.js"></script>
+    <script src="<%=request.getContextPath()%>/contract/scripts/ui/jquery.ui.dialog.min.js"></script>
+    <script src="<%=request.getContextPath()%>/contract/scripts/ui/jquery.ui.menu.min.js"></script>
+    <script src="<%=request.getContextPath()%>/contract/scripts/function.min.js"></script>
+    <script src="<%=request.getContextPath()%>/pages/Student/js/detaile.js" type="text/javascript"></script> 
+    <!-- 此js务必放在所有页面自带的js后面加载 -->
+    <script src="<%=request.getContextPath()%>/contract/scripts/base.min.js"></script>
+    <script src="<%=request.getContextPath()%>/contract/scripts/time.js"></script>
+    <style type="<%=request.getContextPath()%>/contract/text/css">
+    .treeView li
+    {
+    	cursor:default;
+    	font-size:12px;
+    }
+    .treeView li span
+    {
+    	font-size:12px;
+    }
+    </style>
+</head>
+<body>
+<jsp:include page="/pages/common/topPart.jsp"></jsp:include>
+<jsp:include page="/pages/common/leftPart.jsp"></jsp:include>
+<div id="rightPartA" style="overflow-x:hidden;">
+    <div>
+        <div class="Panel">
+        <div class="panelHead">
+            <span>学生经费明细</span>
+        </div>
+        <div class="panelContent">
+            <table class="modifyTable" id="modifyTable">
+                <tr>
+                    <td class="col20_ textR" style="vertical-align:top;"></td>
+                    <td colspan="3">
+          <!-- 付款项目，及金额 json-->
+		   <input type="hidden" name="cpaymentInfo" id="cpaymentInfo" value='${contractEntety.CPaymentInfo}' />
+             <div class="treeView" id="treeView0">
+               <ul style="overflow:hidden;" id="treeView0ul">
+                   <%--  <li class="folderNode rootNode">合作共建</li>
+                    <li class="folderNode rootNode">${json }</li>
+                    <ul>
+                        <li class="folderNode">招飞经费</li>
+                        <ul>
+                            <li class="folderNode"><span>招飞经费：</span><span class="bold">${paymentInfolist.recruitFunding}元</span></li>
+                        </ul>
+                        <li class="folderNode">体检费</li>
+                        <ul>
+                            <li class="folderNode"><span>体检费：</span><span class="bold">${paymentInfolist.physicalExaminationFunding }元</span></li>
+                        </ul>
+                        <li class="folderNode">共建费</li>
+                        <ul>
+                            <li class="folderNode"><span>服装费：</span><span class="bold">${paymentInfolist.costumesFunding }元</span></li>
+                            <li class="folderNode"><span>伙食费：</span><span class="bold">${paymentInfolist.boardingFunding }元</span></li>
+                            <li class="folderNode"><span>住宿费：</span><span class="bold">${paymentInfolist.accommodationFunding }元</span></li>
+                            <li class="folderNode"><span>英语培训费：</span><span class="bold">${paymentInfolist.englishTrainingFunding }元</span></li>
+                            <li class="folderNode"><span>奖教奖学基金：</span><span class="bold">${paymentInfolist.scholarshipFunding }元</span></li>
+                            <li class="folderNode"><span>理论培训费：</span><span class="bold">${paymentInfolist.theoryOfTrainingFunding }元</span></li>
+                        </ul>
+                    </ul>
+                    <li class="folderNode rootNode">理论培训</li>
+                    <ul>
+                        <li class="folderNode">执照理论</li>
+                        <ul>
+                            <li class="folderNode"><span>私照理论：</span><span class="bold">${paymentInfolist.theoryOfPrivate }元</span>
+                                  <input id="Checkbox1" type="checkbox" class="ckb3" />
+                                                  
+                                <ul>
+                                    <li class="folderNode">
+                                       <span> 课时：</span> <span class="bold">时</span><input id="Text1" type="text" class="ddlJF" />
+                                    </li>
+                                </ul>
+                            </li>
+                            <li class="folderNode"><span>商照理论：</span><span class="bold">${paymentInfolist.businessTheory }元</span></li>
+                            <li class="folderNode"><span>仪表等级：</span><span class="bold">${paymentInfolist.instrumentRating }元</span></li>
+                            <li class="folderNode"><span>回国换证：</span><span class="bold">${paymentInfolist.returnReplacement }元</span></li>
+                        </ul>
+                    </ul>  --%>
+                </ul>              
+            </div>
+            	</td>
+            </tr>                       
+                <tr>
+                <td colspan="4" class="tCenter">
+                        <input id="Button1" type="button" class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-icon-primary ml10" value="保存" />
+                        <input id="Button2" type="button" class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-icon-primary ml10" value="返回" />
+                    </td>
+                </tr>
+            </table>
+            <form action="<%=request.getContextPath()%>/contract/studentManagent_showManagent.do" id="back" name="back"></form>
+            <form action="<%=request.getContextPath()%>/system/saveDetaile.do" id="saveSubmit" method="post">
+            	<input type="hidden" name="studentId" id="studentId" value="${studentId}"/>
+            	<input type="hidden" name="courseInfo" id="courseInfo" value="${courseInfo}"/>
+            </form>
+        </div>
+    </div>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,2913 @@
+package com.cauc.training.ui.core.del;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import jxl.Workbook;
+
+import jxl.write.WritableSheet;
+import jxl.write.WritableWorkbook;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.struts2.ServletActionContext;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.business.IStudentService;
+import com.cauc.training.business.ITeacherManagentService;
+import com.cauc.training.pojos.GraduationDesign;
+import com.cauc.training.pojos.GraduationStudentAssign;
+import com.cauc.training.pojos.Newworkerandchangetrain;
+import com.cauc.training.pojos.RecommendStudentLicenseExam;
+import com.cauc.training.pojos.StudentBaseInfo;
+import com.cauc.training.pojos.StudentDistributionClass;
+import com.cauc.training.pojos.StudentLicense;
+import com.cauc.training.pojos.Studentassignschool;
+import com.cauc.training.pojos.Studentstatuschange;
+import com.cauc.training.pojos.TAbroadaviationschool;
+import com.cauc.training.pojos.TAbroadtrain;
+import com.cauc.training.pojos.TChangedbase;
+import com.cauc.training.pojos.TChangedgroup;
+import com.cauc.training.pojos.TDiction;
+import com.cauc.training.pojos.TForeignaviationschoolinterview;
+import com.cauc.training.pojos.TGntrainbackschool;
+import com.cauc.training.pojos.TLesson;
+import com.cauc.training.pojos.TOffschool;
+import com.cauc.training.pojos.TOrg;
+import com.cauc.training.pojos.TOtheruser;
+import com.cauc.training.pojos.TPointLine;
+import com.cauc.training.pojos.TScore;
+import com.cauc.training.pojos.TSetClass;
+import com.cauc.training.pojos.TStuassignbase;
+import com.cauc.training.pojos.TStuassigngroup;
+import com.cauc.training.pojos.TStuassignteacher;
+import com.cauc.training.pojos.TStuchangedteacher;
+import com.cauc.training.pojos.TStustopfly;
+import com.cauc.training.pojos.TeacherBaseInfo;
+import com.cauc.training.ui.common.BaseActionSupport;
+import com.cauc.training.util.Utilities;
+import com.cauc.training.vo.AdvancedSearchBean;
+import com.cauc.training.vo.VOrg;
+import com.cauc.training.vo.VScore;
+import com.cauc.training.vo.VSetClassContent;
+import com.cauc.training.vo.VStudentBaseInfo;
+import com.cauc.training.vo.VStudentLicense;
+
+public class StudentManagentAction  extends BaseActionSupport{
+
+	/**
+	 * 学员管理
+	 */
+	private static final long serialVersionUID = 3677963344678904471L;
+	private static Log log = LogFactory.getLog(StudentManagentAction.class);
+	
+	private StudentBaseInfo student;//学员对象
+	List<StudentBaseInfo> studentList;//学员列表
+	private VStudentBaseInfo vstudentBaseInfo;
+	private List<VStudentBaseInfo> viewStudentList;
+	private String id;//前台id
+	private String socre;//成绩
+	private String ids;
+	private String name;// 学员名称
+	private String lessonid;
+	private String lessonName;
+	private String classid;
+	private String className;
+	private String ipass;
+	private String itype;//类型
+	private String examTime;//考试时间
+	private String isView;
+	private String newid;
+	private String changeDate;
+	private String changeReason;
+	private String opt;
+	private String schoolid;
+	
+	private List<TDiction> dictionStatusList;
+	private List<TDiction> dictionXjList;
+	private List<TDiction> dictionFormList;
+	private List<TDiction> dictionTypeList;
+	private List<TDiction> dictionFreeTypeList;
+	private List<TDiction> whcdList;
+	private List<TDiction> minzuList;
+	private List<TOrg> dictionCompanyList;
+	private List<Integer> yearList;
+	private List<TSetClass> classList;
+	private List<TSetClass> trainingClassList;
+	private TSetClass setClass;
+	
+	//大纲查询
+	private AdvancedSearchBean searchBean;//高级查询对象
+	private String isAssignid;//是否已分配
+	private String xstuTypeid;//学员类型
+	private String xcompanyid;//所属公司
+	private String xstatusid;//学生状态
+	private String xxjstatusid;//学籍状态
+	private String xformid;//招生形式
+	private String xfreetypeid;//自费/公费
+	private String year;//年
+	private String classNo;//班级
+	
+	private TStuassignbase assifnBase;//分配到基地
+	private TChangedbase changedbase;//基地调换
+	private TStuassigngroup assignGroup;//分配到大队
+	private TChangedgroup changeGroup;//大队调换
+	private TStuassignteacher assignTeacher;//分配教员
+	private TStuchangedteacher changeTeacher;//调换教员
+	private List<TeacherBaseInfo> teacherList;//教员列表
+	private List<TOtheruser> otherUserList;//理论教员列表
+	private List<TAbroadaviationschool> schoolList;//国外航校列表
+	private List<TLesson> lessonList;//雅思课程列表0
+	private List<TLesson> xklessonList;//校考课程列表1
+	private List<TLesson> jflessonList;//局方课程列表2
+	private List<TOrg> groupList;//大队列表;
+	private List<TOrg> baseList;//基地列表
+	//教员执照等级
+	private List<TDiction> jyzzDjList;
+	//教员执照类型
+	private List<TDiction> jyzzLxList;
+	//执照类型
+	private List<TDiction> zzLxList;
+	//仪表等级
+	private List<TDiction> ybDjList;
+	//飞机级别等级
+	private List<TDiction> fjJbList;
+	//航空器类别
+	private List<TDiction> hkqLbList;
+	//航空器型别等级
+	private List<TDiction> hkqXbList;
+	//旋翼机级别等级
+	private List<TDiction> xyjJbList;
+	//运输航空公司飞行教员执照等级
+	private List<TDiction> ysHkgsList;
+	//籍贯列表
+	private List<TDiction> jiguanList;
+	private VOrg viewOrg;
+	
+	private String selIds;//连续选择记录id
+	
+	private TPointLine pointLine;// 分数线对象
+	private Studentassignschool school;
+	private TGntrainbackschool finish;
+	
+	private TStustopfly stopFly;
+	private Studentstatuschange xueJi;
+	private TOffschool off;
+	private GraduationDesign design;
+	private GraduationStudentAssign assign;
+	private Newworkerandchangetrain score;
+	private TScore lessonScore;
+	private StudentLicense license; 
+	private List<VStudentLicense> licenseList;
+	private VStudentLicense viewStudentLicense;	
+	private List<VScore> viewScoreList; 
+	private VSetClassContent viewSetClassContent;
+	private StudentDistributionClass stuClass;
+	private TForeignaviationschoolinterview view;
+	private TAbroadtrain abroadtrain;
+	
+	private String ysipass;//雅思成绩
+	private String xkipass;//校考成绩
+	private String jfipass;//局方成绩
+	private String cjaudit;//成绩审查
+	private String staudit;//身体审查
+	private String bxaudit;//在校表现
+	private String allpass;//所有项都合格
+	private String backUrl;//返回地址
+	private String order;
+	private InputStream inputStream;// 输入流
+	private String attachmentName;// 附件名称
+	
+	private RecommendStudentLicenseExam recommend;
+	
+	
+	public String importHistoryScore(){
+		try {
+			getFactory().getFinanceProviderInstance().getStudentService().importHistoryScore();
+		} catch (FinanceServiceException e) {
+
+		}
+		return SUCCESS;
+	}
+	
+	public String updateAbroadtrain(){
+		try {
+			getFactory().getFinanceProviderInstance().getStudentService().updateAbroadtrain(abroadtrain);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("更新成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	
+	public String deleteAbroadtrain(){
+		try {
+			getFactory().getFinanceProviderInstance().getStudentService().deleteAbroadtrain(id);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("删除成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	
+	public String updateForeignaviationschoolinterview(){
+		try {
+			getFactory().getFinanceProviderInstance().getStudentService().updateForeignaviationschoolinterview(view);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("更新成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	
+	public String deleteForeignaviationschoolinterview(){
+		try {
+			getFactory().getFinanceProviderInstance().getStudentService().deleteForeignaviationschoolinterview(id);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("删除成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	
+	public String saveChangeStudentCommpany(){
+		try {
+			getFactory()
+					.getFinanceProviderInstance()
+					.getStudentService()
+					.saveChangeStudentCommpany(ids, newid, opt, changeDate,
+							changeReason);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("更新成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	
+	public String saveStudentAssignClass() {
+		try {
+			stuClass.setTUser(getFactory().getFinanceProviderInstance()
+					.getSysUserService().readSysUserByLoginID(
+							getLoginContext().getLoginId()));
+			getFactory().getFinanceProviderInstance().getStudentService()
+					.saveStudentAssignClass(stuClass);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("分配班级成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	public String updateStudentAssignClass(){
+		try {
+			getFactory().getFinanceProviderInstance().getStudentService().updateStudentAssignClass(stuClass);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("编辑成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	public String updatePointLine(){
+		try {
+			getFactory().getFinanceProviderInstance().getStudentService().updatePointLine(pointLine);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("编辑成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	
+	public String deletePointLineById(){
+		try {
+			getFactory().getFinanceProviderInstance().getStudentService().deletePointLineById(id);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("删除成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	public String deleteStudentAssignClassById(){
+		try {
+			getFactory().getFinanceProviderInstance().getStudentService().deleteStudentAssignClassById(id);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("删除成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	
+	public String updateSetClass(){
+		try {
+			getFactory().getFinanceProviderInstance().getStudentService().updateSetClass(setClass);
+		} catch (FinanceServiceException e) {
+			setStatusMsg("编辑失败，数据库错误。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("编辑成功。");
+		setStatusMsg("1");
+		return SUCCESS;
+	}
+	
+	public String deleteClassInfoById(){
+		try {
+			getFactory().getFinanceProviderInstance().getStudentService().deleteClassInfoById(id);
+		} catch (FinanceServiceException e) {
+			setStatusMsg("删除失败，数据库错误。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("删除成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	
+	public String readClassInfoById(){
+
+		try {
+			viewSetClassContent = getFactory().getFinanceProviderInstance()
+					.getStudentService().readVSetClassContent(id);
+		} catch (FinanceServiceException e) {
+		}
+		return SUCCESS;
+	}
+	
+	public String deleteLessonScore(){
+		if(StringUtils.isBlank(id)){
+			setStatusMsg("删除成绩失败，参数错误。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		try {
+			getFactory().getFinanceProviderInstance().getStudentService().deleteLessonScore(id);
+		} catch (FinanceServiceException e) {
+			setStatusMsg("删除成绩失败，数据库错误。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("删除成绩成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	
+	public String editLessonScore(){
+		if(StringUtils.isBlank(id)){
+			setStatusMsg("编辑成绩失败，参数错误。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+
+		try {
+			getFactory().getFinanceProviderInstance().getStudentService().editLessonScore(id,socre);
+		} catch (FinanceServiceException e) {
+			setStatusMsg("编辑成绩失败，数据库错误。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("编辑成绩成功。");
+		setStatusMsg("1");
+		return SUCCESS;
+	}
+	
+	public String readStudentScoreById(){
+		try {
+			viewScoreList = getFactory().getFinanceProviderInstance().getStudentService().readStudentScoreById(id,itype);
+		} catch (FinanceServiceException e) {
+		}
+		return SUCCESS;
+	}
+	
+	public String showStudentLicenseDetail(){
+		if(StringUtils.isBlank(getId())){
+			viewStudentLicense = null;
+			return SUCCESS;
+		}
+
+		try {
+			setViewStudentLicense(getFactory().getFinanceProviderInstance().getStudentService().readVStudentLicense(id, itype));
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		return SUCCESS;
+	}
+	
+	
+	public String readLicenseStudentById(){
+
+		if(StringUtils.isBlank(getId())){
+			setStatusMsg("请选择学生。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		try {
+			licenseList = getFactory().getFinanceProviderInstance().getStudentService().readLicenseStudentById(id);
+			student = getFactory().getFinanceProviderInstance().getStudentService().readStudentBaseInfo(id);
+		} catch (FinanceServiceException e) {
+			
+		}
+		return SUCCESS;
+	}
+	
+	public String updateStudentLicense(){
+		
+		String vtype = "";
+		if(getItype()==null || getItype().equals("edit")){
+			vtype = "编辑";
+		}else{
+			vtype = "升级";
+		}
+		license.setVBeizhu(license.getVBeizhu()+"," + getItype());
+		try {
+			getFactory().getFinanceProviderInstance().getStudentService().updateStudentLicense(license);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("保存" + vtype +"成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	
+	//打开升级或编辑执照页面
+	public String openUpSutdentLicense(){
+		if(StringUtils.isBlank(getId())){
+			setStatusMsg("请选择学生。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		if(StringUtils.isBlank(getItype())){
+			setStatusMsg("请选择操作类型。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		try {
+			ITeacherManagentService tservice = getFactory().getFinanceProviderInstance().getTeacherManagentService();
+			jyzzLxList = tservice.searchTDictionByType("学员执照类型");
+			ybDjList = tservice.searchTDictionByType("仪表等级");
+			fjJbList = tservice.searchTDictionByType("飞机级别等级");
+			hkqLbList = tservice.searchTDictionByType("航空器类别");
+			hkqXbList = tservice.searchTDictionByType("航空器型别等级");
+			xyjJbList = tservice.searchTDictionByType("旋翼机级别等级");
+			license = getFactory().getFinanceProviderInstance().getStudentService().readStudentLicense(id);
+		} catch (FinanceServiceException e) {
+			setStatusMsg("获取执照信息失败，数据库错误。");
+			setStatusMsg("1");
+			return INPUT;
+		}
+		return SUCCESS;
+	}
+	
+	//保存学生执照
+	public String saveStudentLicense() {
+		
+		if(StringUtils.isBlank(license.getStudentBaseInfo().getVId())){
+			setStatusMsg("保存失败，请选择学生。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		try {
+			license.setTUser(getFactory().getFinanceProviderInstance()
+					.getSysUserService().readSysUserByLoginID(
+							getLoginContext().getLoginId()));
+			getFactory().getFinanceProviderInstance().getStudentService().saveStudentLicense(license);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("保存执照成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+
+	//保存推荐局方证照考试
+	public String saveSutdentLicenseExam(){
+		if (StringUtils.isBlank(recommend.getVId())) {
+			setStatusMsg("保存失败，请选择学生。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		if (recommend.getDExamDate() == null) {
+			setStatusMsg("保存失败，请选择推荐考试日期。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		try {
+			
+			recommend.setTOtheruser(getFactory().getFinanceProviderInstance()
+					.getStudentService().readOtherUserByCode(
+							getLoginContext().getUserName()));
+			getFactory().getFinanceProviderInstance().getStudentService()
+					.saveSutdentLicenseExam(recommend);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("推荐成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	//成绩审核
+	public String saveAuditLessonScore(){
+		if(StringUtils.isBlank(getId())){
+			setStatusMsg("保存失败，请选择课程。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		try {
+			getFactory().getFinanceProviderInstance().getStudentService().saveAuditLessonScore(id);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("保存成绩提交审核成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	
+	//保存课程成绩
+	public String saveAddLessonScore(){
+		if(StringUtils.isBlank(lessonScore.getStudentBaseInfo().getVId())){
+			setStatusMsg("保存失败，请选择学生。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		try {
+			lessonScore.setTUserByVCreateUserId(getFactory().getFinanceProviderInstance()
+					.getSysUserService()
+					.readSysUserByLoginID(getLoginContext().getLoginId()));
+			getFactory().getFinanceProviderInstance().getStudentService().saveAddLessonScore(lessonScore);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("保存成绩成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	public String saveConfirmGraduationDesign(){
+		if(StringUtils.isBlank(design.getStudentBaseInfo().getVId())){
+			setStatusMsg("保存失败，请选择学生。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		String type = "";
+		if(design.getIType()==0){
+			type = "确认毕设";
+		}else{
+			type = "领毕业证";
+		}
+		try {
+			design.setTUser(getFactory().getFinanceProviderInstance()
+					.getSysUserService()
+					.readSysUserByLoginID(getLoginContext().getLoginId()));
+			getFactory().getFinanceProviderInstance().getStudentService().saveConfirmGraduationDesign(design);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg(type + "成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	
+	public String saveGraduationStudentAssign(){
+		if(StringUtils.isBlank(assign.getStudentBaseInfo().getVId())){
+			setStatusMsg("保存失败，请选择学生。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		try {
+			assign.setTUser(getFactory().getFinanceProviderInstance()
+					.getSysUserService()
+					.readSysUserByLoginID(getLoginContext().getLoginId()));
+			getFactory().getFinanceProviderInstance().getStudentService().saveGraduationStudentAssign(assign);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("保存毕业分配生成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	
+	public String saveStudentGraduationOffSchool(){
+		if(StringUtils.isBlank(off.getStudentBaseInfo().getVId())){
+			setStatusMsg("保存失败，请选择学生。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		try {
+			off.setTUser(getFactory().getFinanceProviderInstance()
+					.getSysUserService()
+					.readSysUserByLoginID(getLoginContext().getLoginId()));
+			getFactory().getFinanceProviderInstance().getStudentService().saveStudentGraduationOffSchool(off);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("保存毕业离校成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	
+	public String saveNewWorkerAndChangeTrain(){
+		if(StringUtils.isBlank(score.getStudentBaseInfo().getVId())){
+			setStatusMsg("保存失败，请选择学生。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		try {
+			score.setTUser(getFactory().getFinanceProviderInstance()
+					.getSysUserService()
+					.readSysUserByLoginID(getLoginContext().getLoginId()));
+			getFactory().getFinanceProviderInstance().getStudentService().saveNewWorkerAndChangeTrain(score);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("录入成绩成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	
+	//毕业分配页面
+	public String openGraduationStudentAssign(){
+		try {
+			dictionCompanyList = getFactory().getFinanceProviderInstance().getOutLineService().readCompanyList();
+		} catch (FinanceServiceException e) {
+
+		}
+		return SUCCESS;
+	}
+	public String saveStudentStopFlyOffSchool(){
+		
+		if(StringUtils.isBlank(off.getStudentBaseInfo().getVId())){
+			setStatusMsg("保存失败，请选择学生。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		try {
+			off.setTUser(getFactory().getFinanceProviderInstance()
+					.getSysUserService()
+					.readSysUserByLoginID(getLoginContext().getLoginId()));
+			getFactory().getFinanceProviderInstance().getStudentService().saveStudentStopFlyOffSchool(off);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("停飞离校成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	
+	public String saveStopFlyXjManage(){
+
+		if(StringUtils.isBlank(xueJi.getStudentBaseInfo().getVId())){
+			setStatusMsg("保存失败，请选择学生。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		try {
+			xueJi.setTUser(getFactory().getFinanceProviderInstance()
+					.getSysUserService()
+					.readSysUserByLoginID(getLoginContext().getLoginId()));
+			getFactory().getFinanceProviderInstance().getStudentService().saveStopFlyXjManage(xueJi);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("停飞学籍管理成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	
+	public String saveStudentBackSchool(){
+		if(StringUtils.isBlank(finish.getStudentBaseInfo().getVId())){
+			setStatusMsg("保存失败，请选择学生。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		try {
+			finish.setTUser(getFactory().getFinanceProviderInstance()
+					.getSysUserService()
+					.readSysUserByLoginID(getLoginContext().getLoginId()));
+			getFactory().getFinanceProviderInstance().getStudentService().saveStudentBackSchool(finish);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("派回学校成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	
+	public String saveStudentStopFly(){
+		if(StringUtils.isBlank(stopFly.getStudentBaseInfo().getVId())){
+			setStatusMsg("保存失败，请选择学生。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		try {
+			stopFly.setTUser(getFactory().getFinanceProviderInstance()
+					.getSysUserService()
+					.readSysUserByLoginID(getLoginContext().getLoginId()));
+			getFactory().getFinanceProviderInstance().getStudentService().saveStudentStopFly(stopFly);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("保存完成训练成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	public String saveStudentFinishTraining(){
+		if(StringUtils.isBlank(finish.getStudentBaseInfo().getVId())){
+			setStatusMsg("保存失败，请选择学生。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		try {
+			finish.setTUser(getFactory().getFinanceProviderInstance()
+					.getSysUserService()
+					.readSysUserByLoginID(getLoginContext().getLoginId()));
+			getFactory().getFinanceProviderInstance().getStudentService().saveStudentFinishTraining(finish);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("保存完成训练成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	
+	public String saveAddSutdentMedical(){
+		if (StringUtils.isBlank(getId())) {
+			setStatusMsg("参数不全面，保存失败。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		try {
+			getFactory().getFinanceProviderInstance().getStudentService()
+			.saveAddSutdentMedical(id, getLoginContext().getUserId());
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("体检信息保存成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	public String saveSetClass(){
+		if(StringUtils.isBlank(setClass.getVName())){
+			setStatusMsg("班号不能为空。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		try {
+			
+			setClass.setTUser(getFactory().getFinanceProviderInstance()
+					.getSysUserService()
+					.readSysUserByLoginID(getLoginContext().getLoginId()));
+			getFactory().getFinanceProviderInstance().getStudentService().saveSetClass(setClass);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("新增班级成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	
+	public String saveAddInterview(){
+		if (StringUtils.isBlank(getId())) {
+			setStatusMsg("参数不全面，保存失败。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		try {
+			getFactory().getFinanceProviderInstance().getStudentService()
+					.saveAddInterview(id, getLoginContext().getUserId());
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("面试信息录入成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	public String saveAssignAbroadSchool(){
+		if(StringUtils.isBlank(school.getTAbroadaviationschool().getVId())){
+			setStatusMsg("请选择航校。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		if(StringUtils.isBlank(school.getStudentBaseInfo().getVId())){
+			setStatusMsg("请选择学生。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		if(school.getDCreatedate()==null){
+			setStatusMsg("请选择面试日期。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		try {
+			school.setTUser(getFactory().getFinanceProviderInstance()
+					.getSysUserService()
+					.readSysUserByLoginID(getLoginContext().getLoginId()));
+			getFactory().getFinanceProviderInstance().getStudentService().saveAssignAbroadSchool(school);
+			setStatusMsg("分派成功。");
+			setStatusMsg("0");
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+
+		return SUCCESS;
+	}
+	
+	public String saveChangeAssignAbroadSchool(){
+		if(StringUtils.isBlank(school.getTAbroadaviationschool().getVId())){
+			setStatusMsg("请选择新航校。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		if(StringUtils.isBlank(school.getVId())){
+			setStatusMsg("请选择航校。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		try {
+			school.setTUser(getFactory().getFinanceProviderInstance()
+					.getSysUserService()
+					.readSysUserByLoginID(getLoginContext().getLoginId()));
+			getFactory().getFinanceProviderInstance().getStudentService().saveChangeAssignAbroadSchool(school);
+			setStatusMsg("调换成功。");
+			setStatusMsg("0");
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+
+		return SUCCESS;
+	}
+	
+	public String saveAddClassLesson(){
+		
+		try {
+			pointLine.setTUser(getFactory().getFinanceProviderInstance()
+					.getSysUserService()
+					.readSysUserByLoginID(getLoginContext().getLoginId()));
+			getFactory().getFinanceProviderInstance().getStudentService().saveAddClassLesson(pointLine);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		
+		setStatusMsg("班级添加课程成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	
+	public String openAddSutdentLicense(){
+
+		
+		try {
+	
+			jyzzLxList = getFactory().getFinanceProviderInstance()
+					.getTeacherManagentService().searchTDictionByType("学员执照类型");
+			ybDjList = getFactory().getFinanceProviderInstance()
+					.getTeacherManagentService().searchTDictionByType("仪表等级");
+			fjJbList = getFactory().getFinanceProviderInstance()
+					.getTeacherManagentService().searchTDictionByType("飞机级别等级");
+			hkqLbList = getFactory().getFinanceProviderInstance()
+					.getTeacherManagentService().searchTDictionByType("航空器类别");
+			hkqXbList = getFactory().getFinanceProviderInstance()
+					.getTeacherManagentService().searchTDictionByType("航空器型别等级");
+			xyjJbList = getFactory().getFinanceProviderInstance()
+					.getTeacherManagentService().searchTDictionByType("旋翼机级别等级");
+			student =getFactory().getFinanceProviderInstance().getStudentService().readStudentBaseInfo(id.split(",")[0]);
+	
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+
+		return SUCCESS;
+	}
+	public String addLessonScore(){
+		setViewDate(Utilities.format(new Date()));
+		try {
+			studentList = getFactory().getFinanceProviderInstance()
+					.getStudentService().readStudentBaseInfoByClassid(classid,
+							isView, lessonid);
+		} catch (FinanceServiceException e) {
+		}
+		return SUCCESS;
+	}
+	//学员调换教员
+	public String saveStudentChangeTeacher(){
+
+		if(StringUtils.isBlank(changeTeacher.getVId())){
+			setStatusMsg("请选择学员。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		if(StringUtils.isBlank(changeTeacher.getTeacherBaseInfoByVNewteacherid().getVId())){
+			setStatusMsg("请选择教员。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		try {
+			changeTeacher.setTUser(getFactory().getFinanceProviderInstance()
+					.getSysUserService()
+					.readSysUserByLoginID(getLoginContext().getLoginId()));
+			getFactory().getFinanceProviderInstance().getStudentService()
+					.saveStudentChangeTeacher(changeTeacher);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("保存成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	//取消学员教员
+	public String escStudentAssignTeacher(){
+		if(StringUtils.isBlank(this.getId())){
+			setStatusMsg("请选择学员。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+
+		try {
+
+			getFactory().getFinanceProviderInstance().getStudentService()
+					.escStudentAssignTeacher(id,getLoginContext().getUserId());
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("取消成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	//保存学员分配教员
+	public String saveStudentAssignTeacher(){
+		if(StringUtils.isBlank(assignTeacher.getVId())){
+			setStatusMsg("请选择学员。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		if(StringUtils.isBlank(assignTeacher.getTeacherBaseInfo().getVId())){
+			setStatusMsg("请选择教员。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		try {
+			assignTeacher.setTUser(getFactory().getFinanceProviderInstance()
+					.getSysUserService()
+					.readSysUserByLoginID(getLoginContext().getLoginId()));
+			getFactory().getFinanceProviderInstance().getStudentService()
+					.saveStudentAssignTeacher(assignTeacher);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("保存成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	
+	//学员调换大队
+	public String saveStudentChangeGroup(){
+
+		if(StringUtils.isBlank(changeGroup.getVId())){
+			setStatusMsg("请选择学员。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		if(StringUtils.isBlank(changeGroup.getTOrgByVNewgroup().getVId())){
+			setStatusMsg("请选择大队。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		try {
+			changeGroup.setTUser(getFactory().getFinanceProviderInstance()
+					.getSysUserService()
+					.readSysUserByLoginID(getLoginContext().getLoginId()));
+			getFactory().getFinanceProviderInstance().getStudentService()
+					.saveStudentChangeGroup(changeGroup);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("保存成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	//取消学员分配到大队
+	public String escStudentAssignGroup(){
+		if(StringUtils.isBlank(this.getId())){
+			setStatusMsg("请选择学员。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+
+		try {
+
+			getFactory().getFinanceProviderInstance().getStudentService()
+					.escStudentAssignGroup(id,getLoginContext().getUserId());
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("取消成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	//保存学员分配到大队
+	public String saveStudentAssignGroup(){
+		if(StringUtils.isBlank(assignGroup.getVId())){
+			setStatusMsg("请选择学员。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		if(StringUtils.isBlank(assignGroup.getTOrg().getVId())){
+			setStatusMsg("请选择大队。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		try {
+			assignGroup.setTUser(getFactory().getFinanceProviderInstance()
+					.getSysUserService()
+					.readSysUserByLoginID(getLoginContext().getLoginId()));
+			getFactory().getFinanceProviderInstance().getStudentService()
+					.saveStudentAssignGroup(assignGroup);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("保存成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	//调换基地
+	public String saveStudentChangeBase(){
+		if(StringUtils.isBlank(changedbase.getVId())){
+			setStatusMsg("请选择学员。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		if(StringUtils.isBlank(changedbase.getTOrgByVNewbaseid().getVId())){
+			setStatusMsg("请选择基地。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		try {
+			changedbase.setTUser(getFactory().getFinanceProviderInstance()
+					.getSysUserService()
+					.readSysUserByLoginID(getLoginContext().getLoginId()));
+			getFactory().getFinanceProviderInstance().getStudentService()
+					.saveStudentChangeBase(changedbase);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("调换成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	//取消学员分配到基地
+	public String escStudentAssignBase(){
+		if(StringUtils.isBlank(this.getId())){
+			setStatusMsg("请选择学员。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+
+		try {
+
+			getFactory().getFinanceProviderInstance().getStudentService()
+					.escStudentAssignBase(id,getLoginContext().getUserId());
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("取消成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	//保存学员分配到基地
+	public String saveStudentAssignBase(){
+		if(StringUtils.isBlank(assifnBase.getVId())){
+			setStatusMsg("请选择学员。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		if(StringUtils.isBlank(assifnBase.getTOrg().getVId())){
+			setStatusMsg("请选择基地。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		try {
+			assifnBase.setTUser(getFactory().getFinanceProviderInstance()
+					.getSysUserService()
+					.readSysUserByLoginID(getLoginContext().getLoginId()));
+			getFactory().getFinanceProviderInstance().getStudentService()
+					.saveStudentAssignBase(assifnBase);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("保存成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+
+	//保存改变学员状态
+	public String saveChangeStudentStatus(){
+		if(StringUtils.isBlank(vstudentBaseInfo.getVId())){
+			setStatusMsg("请选择学员。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		if(StringUtils.isBlank(vstudentBaseInfo.getStuStatusName())){
+			setStatusMsg("请选择状态。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		if(StringUtils.isBlank(this.getBackUrl())){
+			
+			if(vstudentBaseInfo.getStuStatusName().equals("2")){
+				this.setBackUrl("open_InternalSendPeiList");
+			}else if(vstudentBaseInfo.getStuStatusName().equals("3")){
+				this.setBackUrl("open_abroadSendPeiList");
+			}else{
+				this.setBackUrl("open_studentStatusList");
+			}
+		}
+		try {
+			vstudentBaseInfo.setVName(getLoginContext().getUserId());
+			getFactory().getFinanceProviderInstance().getStudentService().saveChangeStudentStatus(vstudentBaseInfo);
+		} catch (FinanceServiceException e) {
+			setStatusMsg(e.getMessage());
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		setStatusMsg("保存成功。");
+		setStatusMsg("0");
+		return SUCCESS;
+	}
+	//新增班级
+	public String readClassInfoList(){
+		Map<String, Object> queryMap = new HashMap<String, Object>();
+		if (StringUtils.isNotBlank(this.getName()))
+			queryMap.put(IStudentService.QUERY_KEY_NAME, getName());
+		try {
+			setViewDate(Utilities.format(new Date()));
+			//理论教员列表
+			//只有角色是理论教员的人才能被分配为某个执照班的责任教员
+			otherUserList = getFactory().getFinanceProviderInstance()
+					.getStudentService().readNormalTeacher();
+			setPage(getFactory().getFinanceProviderInstance()
+					.getStudentService().readClassInfoList(queryMap,
+							getPageIndex()));
+		} catch (FinanceServiceException e) {
+			
+		}
+		return SUCCESS;
+	}
+	
+	//课程设置
+	public String readSetLessonList(){
+		Map<String, Object> queryMap = new HashMap<String, Object>();
+		if(StringUtils.isNotBlank(this.getName()))
+			queryMap.put(IStudentService.QUERY_KEY_NAME, getName());
+		try {
+			lessonList= getFactory().getFinanceProviderInstance().getSysUserService().readLessonList(name,"");
+			setPage(getFactory().getFinanceProviderInstance().getStudentService().readSetLessonList(queryMap, getPageIndex()));
+		} catch (FinanceServiceException e) {;
+		}
+		return SUCCESS;
+	}
+	
+
+	//学员基础管理
+	public String readStudentBaseInfoList(){
+
+		try {
+			setViewDate(Utilities.format(new Date()));
+			IStudentService studentService =  getFactory().getFinanceProviderInstance().getStudentService();
+			setPage(studentService.readStudentList(searchGetValue(),getPageIndex()));
+
+		} catch (FinanceServiceException e) {
+			log.error("获取学员列表失败：" + e.getMessage());
+			setStatusMsg("获取学员列表失败。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}		
+		return SUCCESS;
+	}
+	
+	//导出数据
+	public String downloadFile(){
+		String dname = "学生信息.xls"; 
+		File foder= writeExcel();
+		
+		if (!foder.exists()) {
+				addActionError("files no exsist");
+				//setStatusMsg("1");
+				return ERROR;
+			}
+			try {
+				this.attachmentName = new String(dname.getBytes(),
+						"ISO8859-1");
+			} catch (UnsupportedEncodingException e) {
+				return ERROR;
+			}
+			try {
+				InputStream in = new FileInputStream(foder);
+				this.inputStream = in;
+			} catch (FileNotFoundException e) {
+				return ERROR;
+			}
+		return SUCCESS;
+	}
+	private File writeExcel()
+	{
+
+		File foder=null;
+		try{
+			String path = ServletActionContext.getServletContext().getRealPath("/");
+			path+= "WEB-INF";
+			foder = new File(path);
+			
+			if(!foder.exists()){
+				foder.mkdirs();
+			}
+			
+			foder = new File(path + File.separator + "attachment" + File.separator +"student.xls");
+			if(!foder.exists())
+			{
+				foder.createNewFile();
+			}
+
+			//打开文件
+			WritableWorkbook book = Workbook.createWorkbook(foder);
+            WritableSheet sheet = book.createSheet("学生信息表", 0);
+            
+            //表头行高
+            sheet.setRowView(0, 400);
+  
+            List<VOrg> vlist = new ArrayList<VOrg>();
+            VOrg vo;
+            //System.out.println("isView="+isView);
+            if(isView!=null && !isView.equals("")){
+            	 String v[] = isView.split(",");
+            	 for(int i=0;i<v.length;i++){
+            		
+            		 vo = new VOrg();
+            		 
+            		 if(v[i].equals("VClassNoid")){
+            			 vo.setVId("VClassNoid");
+            			 vo.setMessage("班级");
+            		 }
+            		 if(v[i].equals("VGender")){
+            			 vo.setVId("VGender");
+            			 vo.setMessage("性别");
+            		 }
+
+            		 if(v[i].equals("VStuTypeid")){
+            			 vo.setVId("VStuTypeid");
+            			 vo.setMessage("学员类型");
+            		 }
+            		 if(v[i].equals("TOrg")){
+            			 vo.setVId("TOrg");
+            			 vo.setMessage("所属公司");
+            		 }
+            		 if(v[i].equals("VStuStatusid")){
+            			 vo.setVId("VStuStatusid");
+            			 vo.setMessage("学生状态");
+            		 }
+            		 if(v[i].equals("VXjStatusid")){
+            			 vo.setVId("VXjStatusid");
+            			 vo.setMessage("学籍状态");
+            		 }
+            		 if(v[i].equals("VFormid")){
+            			 vo.setVId("VFormid");
+            			 vo.setMessage("招生形式");
+            		 }
+            		 if(v[i].equals("VFreeTypeid")){
+            			 vo.setVId("VFreeTypeid");
+            			 vo.setMessage("自费/公费");
+            		 }
+            		 if(v[i].equals("VCardid")){
+            			 vo.setVId("VCardid");
+            			 vo.setMessage("身份证");
+            		 }
+            		 if(v[i].equals("VJg")){
+            			 vo.setVId("VJg");
+            			 vo.setMessage("籍贯");
+            		 }
+            		 if(v[i].equals("VLxfs")){
+            			 vo.setVId("VLxfs");
+            			 vo.setMessage("电话");
+            		 }
+            		 if(v[i].equals("VJtzz")){
+            			 vo.setVId("VJtzz");
+            			 vo.setMessage("地址");
+            		 }
+            		 
+            		 if(v[i].equals("VNationid")){
+            			 vo.setVId("VNationid");
+            			 vo.setMessage("民族");
+            		 }
+            		 if(v[i].equals("VWhcd")){
+            			 vo.setVId("VWhcd");
+            			 vo.setMessage("文化程度");
+            		 }
+            		 if(v[i].equals("VZzmm")){
+            			 vo.setVId("VZzmm");
+            			 vo.setMessage("政治面貌");
+            		 }
+            		 if(v[i].equals("VByyx")){
+            			 vo.setVId("VByyx");
+            			 vo.setMessage("毕业院校");
+            		 }
+            		 
+            		 if(v[i].equals("VEnlevel")){
+            			 vo.setVId("VEnlevel");
+            			 vo.setMessage("英语水平");
+            		 }
+            		 if(v[i].equals("VZy")){
+            			 vo.setVId("VZy");
+            			 vo.setMessage("专业");
+            		 }
+            		 if(v[i].equals("VSyd")){
+            			 vo.setVId("VSyd");
+            			 vo.setMessage("生源地");
+            		 }
+            		 if(v[i].equals("DRxsj")){
+            			 vo.setVId("DRxsj");
+            			 vo.setMessage("入校时间");
+            		 }
+            		 if(v[i].equals("DLxsj")){
+            			 vo.setVId("DLxsj");
+            			 vo.setMessage("离校时间");
+            		 }
+            		 if(vo.getVId()==null){
+            			 continue;
+            		 }
+            		 vlist.add(vo);
+            		 
+            	 }
+            }
+            
+           
+            //设置列宽度
+            sheet.setColumnView(0, 10); //序号列宽
+            sheet.setColumnView(1, 13);//学号
+            sheet.setColumnView(2, 10);//姓名
+            
+            for(int i=0;i<vlist.size();i++){
+            	//System.out.println(vlist.get(i).getVId());
+            	
+            	if(vlist.get(i).getVId().equals("VCardid") || vlist.get(i).getVId().equals("VJg") ){
+            		sheet.setColumnView(i+3,20);
+            	}else if(vlist.get(i).getVId().equals("VJtzz")){
+            		sheet.setColumnView(i+3,40);
+            	}else{
+            		sheet.setColumnView(i+3,10);
+            	}
+            	
+            }
+            
+            /*
+           	sheet.setColumnView(3, 10);//班级
+            sheet.setColumnView(4, 10);//性别
+            sheet.setColumnView(5, 10);//学员类型
+            sheet.setColumnView(6, 10);//所属公司
+            sheet.setColumnView(7, 10);//学生状态
+            sheet.setColumnView(8, 10);//学籍状态
+            sheet.setColumnView(9, 10);//招生形式
+            sheet.setColumnView(10, 10);//自费/公费
+            
+            sheet.setColumnView(11, 30);//身份证
+            sheet.setColumnView(12, 30);//籍贯
+            sheet.setColumnView(13, 15);//电话
+            sheet.setColumnView(14, 40);//地址
+            
+            sheet.setColumnView(15, 10);//民族
+            sheet.setColumnView(16, 10);//文化程度
+            sheet.setColumnView(17, 10);//政治面貌
+            sheet.setColumnView(18, 10);//毕业院校
+            
+           
+            sheet.setColumnView(19, 10);//英语水平
+            sheet.setColumnView(20, 10);//专业
+            sheet.setColumnView(21, 10);//生源地
+            sheet.setColumnView(22, 10);//入校时间
+            */
+            
+            //格式化日期
+           // WritableCellFormat cf2 = new WritableCellFormat(DateFormats.FORMAT1);
+           // DateTime dt;
+            
+            sheet.addCell(new jxl.write.Label(0, 0, "序号"));
+            sheet.addCell(new jxl.write.Label(1, 0, "学号"));
+            sheet.addCell(new jxl.write.Label(2, 0, "姓名"));
+            
+			for(int i=0;i<vlist.size();i++){
+				sheet.addCell(new jxl.write.Label(i+3, 0, vlist.get(i).getMessage()));
+			}
+            
+            /*
+            sheet.addCell(new jxl.write.Label(3, 0, "班级"));
+            sheet.addCell(new jxl.write.Label(4, 0, "性别"));
+            sheet.addCell(new jxl.write.Label(5, 0, "学员类型"));
+            sheet.addCell(new jxl.write.Label(6, 0, "所属公司"));
+            sheet.addCell(new jxl.write.Label(7, 0, "学生状态"));
+            sheet.addCell(new jxl.write.Label(8, 0, "学籍状态"));
+            sheet.addCell(new jxl.write.Label(9, 0, "招生形式"));
+            sheet.addCell(new jxl.write.Label(10, 0, "自费/公费"));
+            
+            sheet.addCell(new jxl.write.Label(11, 0, "身份证"));
+            sheet.addCell(new jxl.write.Label(12, 0, "籍贯"));
+            sheet.addCell(new jxl.write.Label(13, 0, "电话"));
+            sheet.addCell(new jxl.write.Label(14, 0, "地址"));
+            
+            sheet.addCell(new jxl.write.Label(15, 0, "民族"));
+            sheet.addCell(new jxl.write.Label(16, 0, "文化程度"));
+            sheet.addCell(new jxl.write.Label(17, 0, "政治面貌"));
+            sheet.addCell(new jxl.write.Label(18, 0, "毕业院校"));
+            sheet.addCell(new jxl.write.Label(19, 0, "英语水平"));
+            sheet.addCell(new jxl.write.Label(20, 0, "专业"));
+            sheet.addCell(new jxl.write.Label(21, 0, "生源地"));
+            sheet.addCell(new jxl.write.Label(22, 0, "入校时间"));
+
+            */
+    		List<StudentBaseInfo> list = getFactory().getFinanceProviderInstance().getStudentService().exportStudentBaseInfo(student);
+
+    		int p=0;
+    		for(StudentBaseInfo s:list){
+
+    			p++;
+    			sheet.addCell(new jxl.write.Label(0, p, String.valueOf(p)));
+                sheet.addCell(new jxl.write.Label(1, p, s.getVCode()));
+                sheet.addCell(new jxl.write.Label(2, p, s.getVName()));
+                
+                for(int i=0;i<vlist.size();i++){
+                	 if(vlist.get(i).getVId().equals("VClassNoid")){
+                		 sheet.addCell(new jxl.write.Label(3+i, p, s.getVClassNoid()));
+            		 }
+            		 if(vlist.get(i).getVId().equals("VGender")){
+            			 sheet.addCell(new jxl.write.Label(3+i, p, s.getVGender()));
+            		 }
+            		 if(vlist.get(i).getVId().equals("VStuTypeid")){
+            			 if(s.getTDictionByVStuTypeid()==null){
+                         	sheet.addCell(new jxl.write.Label(3+i, p, ""));
+                         }else{
+                         	sheet.addCell(new jxl.write.Label(3+i, p, s.getTDictionByVStuTypeid().getVName()));
+                         }
+            		 }
+            		 if(vlist.get(i).getVId().equals("TOrg")){
+            			 if(s.getTOrg()==null){
+                         	sheet.addCell(new jxl.write.Label(3+i, p,""));
+                         }else{
+                         	sheet.addCell(new jxl.write.Label(3+i, p, s.getTOrg().getVName()));
+                         }
+            		 }
+            		 if(vlist.get(i).getVId().equals("VStuStatusid")){
+            			 if(s.getTDictionByVStuStatusid()==null){
+                         	sheet.addCell(new jxl.write.Label(3+i,p,""));
+                         }else{
+                         	sheet.addCell(new jxl.write.Label(3+i,p, s.getTDictionByVStuStatusid().getVName()));                
+                         }
+            		 }
+            		 if(vlist.get(i).getVId().equals("VXjStatusid")){
+            			 if(s.getTDictionByVXjStatusid()==null){
+                         	sheet.addCell(new jxl.write.Label(3+i,p, ""));
+                         }else{
+                         	sheet.addCell(new jxl.write.Label(3+i,p, s.getTDictionByVXjStatusid().getVName()));
+                         }
+            		 }
+            		 if(vlist.get(i).getVId().equals("VFormid")){
+            			 if(s.getTDictionByVFormid()==null){
+                         	sheet.addCell(new jxl.write.Label(3+i,p, ""));
+                         }else{
+                         	sheet.addCell(new jxl.write.Label(3+i,p, s.getTDictionByVFormid().getVName()));
+                         }
+            		 }
+            		 if(vlist.get(i).getVId().equals("VFreeTypeid")){
+            			 if(s.getTDictionByVFreeTypeid()==null){
+                         	sheet.addCell(new jxl.write.Label(3+i, p,""));
+                         }else{
+                         	sheet.addCell(new jxl.write.Label(3+i, p,s.getTDictionByVFreeTypeid().getVName()));
+                         }
+            		 }
+            		 if(vlist.get(i).getVId().equals("VCardid")){
+            			 sheet.addCell(new jxl.write.Label(3+i, p,s.getVCardid()));
+            		 }
+            		 if(vlist.get(i).getVId().equals("VJg")){
+            			 sheet.addCell(new jxl.write.Label(3+i, p,s.getVJg()));
+            		 }
+            		 if(vlist.get(i).getVId().equals("VLxfs")){
+            			 sheet.addCell(new jxl.write.Label(3+i, p,s.getVLxfs()));
+            		 }
+            		 if(vlist.get(i).getVId().equals("VJtzz")){
+            			 sheet.addCell(new jxl.write.Label(3+i, p,s.getVJtzz()));
+            		 }
+            		 
+            		 if(vlist.get(i).getVId().equals("VNationid")){
+            			 if(s.getTDictionByVNationid()==null){
+             				sheet.addCell(new jxl.write.Label(3+i, p,""));
+             			}else{
+             				sheet.addCell(new jxl.write.Label(3+i, p,s.getTDictionByVNationid().getVName()));
+             			}
+            		 }
+            		 if(vlist.get(i).getVId().equals("VWhcd")){
+            			 if(s.getTDictionByVWhcd()==null){
+             				sheet.addCell(new jxl.write.Label(3+i, p,""));
+             			}else{
+             				sheet.addCell(new jxl.write.Label(3+i, p,s.getTDictionByVWhcd().getVName()));
+             			}
+            		 }
+            		 if(vlist.get(i).getVId().equals("VZzmm")){
+            			 sheet.addCell(new jxl.write.Label(3+i, p,s.getVZzmm()));
+            		 }
+            		 if(vlist.get(i).getVId().equals("VByyx")){
+            			 sheet.addCell(new jxl.write.Label(3+i, p,s.getVByyx()));
+            		 }
+            		 
+            		 if(vlist.get(i).getVId().equals("VEnlevel")){
+            			 sheet.addCell(new jxl.write.Label(3+i, p,s.getVEnlevel()));
+            		 }
+            		 if(vlist.get(i).getVId().equals("VZy")){
+            			 sheet.addCell(new jxl.write.Label(3+i, p,s.getVZy()));
+            		 }
+            		 if(vlist.get(i).getVId().equals("VSyd")){
+            			 sheet.addCell(new jxl.write.Label(3+i, p,s.getVSyd()));
+            		 }
+            		 if(vlist.get(i).getVId().equals("DRxsj")){
+            			if(s.getDRxsj()==null){
+             				sheet.addCell(new jxl.write.Label(3+i,p,""));
+             			}else{
+             				sheet.addCell(new jxl.write.Label(3+i, p,Utilities.format(s.getDRxsj())));
+             			}
+            		 }
+            		 if(vlist.get(i).getVId().equals("DLxsj")){
+             			if(s.getDLxsj()==null){
+              				sheet.addCell(new jxl.write.Label(3+i,p,""));
+              			}else{
+              				sheet.addCell(new jxl.write.Label(3+i, p,Utilities.format(s.getDLxsj())));
+              			}
+             		 }
+                } 
+ 
+    		}
+
+            book.write();
+            book.close();
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+			System.out.println(e.getMessage());
+		}
+		return foder;
+	}
+	//更多条件学员基础管理
+	public String readMoreSeacrhStudentBaseInfoList(){
+		
+		//System.out.println(getIsView());
+		
+		try {
+			IStudentService studentService =  getFactory().getFinanceProviderInstance().getStudentService();
+			setPage(studentService.readMoreSeacrhStudentBaseInfoList(student,getPageIndex()));
+
+		} catch (FinanceServiceException e) {
+			log.error("获取学员列表失败：" + e.getMessage());
+			setStatusMsg("获取学员列表失败。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}		
+		return SUCCESS;
+	}
+	//学员分班信息列表
+	public String readStudentDistributionClassList(){
+
+		try {
+			setViewDate(Utilities.format(new Date()));
+			IStudentService studentService =  getFactory().getFinanceProviderInstance().getStudentService();
+			setPage(studentService.readStudentDistributionClassList(searchGetValue(),getPageIndex()));
+			trainingClassList = getFactory().getFinanceProviderInstance().getOutLineService().readTrainingClass("");
+		} catch (FinanceServiceException e) {
+			log.error("获取学员列表失败：" + e.getMessage());
+			setStatusMsg("获取学员列表失败。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}		
+		return SUCCESS;
+	}
+	
+	//国内送培
+	public String readInternalSendPeiList(){
+		try{
+			if(StringUtils.isBlank(this.getXstatusid())){
+				setXstatusid(IStudentService.QUERY_KEY_STUDENT_STATUS_GN_SONGPEI);
+			}
+			setViewDate(Utilities.format(new Date()));
+			Map<String, Object> queryMap = new HashMap<String, Object>(); 
+			//queryMap=searchGetValue();
+			//lessonList= getFactory().getFinanceProviderInstance().getSysUserService().readLessonList("","0");//雅思
+			//xklessonList= getFactory().getFinanceProviderInstance().getSysUserService().readLessonList("","1");//校考
+			//jflessonList= getFactory().getFinanceProviderInstance().getSysUserService().readLessonList("","2");//局方
+			queryMap.put(IStudentService.QUERY_KEY_STUDENT_STATUS,this.getXstatusid());//状态-国内送培
+			queryMap.put(IStudentService.QUERY_KEY_SONGPEI_SY, this.getYsipass());
+			queryMap.put(IStudentService.QUERY_KEY_SONGPEI_XK, this.getXkipass());
+			queryMap.put(IStudentService.QUERY_KEY_SONGPEI_JF, this.getJfipass());
+			queryMap.put(IStudentService.QUERY_KEY_SONGPEI_CJ, this.getCjaudit());
+			queryMap.put(IStudentService.QUERY_KEY_SONGPEI_ST, this.getStaudit());
+			queryMap.put(IStudentService.QUERY_KEY_SONGPEI_BX, this.getBxaudit());
+			queryMap.put(IStudentService.QUERY_KEY_SONGPEI_ALL, this.getAllpass());
+			queryMap.put(IStudentService.QUERY_KEY_NAME, this.getName());
+			IStudentService studentService =  getFactory().getFinanceProviderInstance().getStudentService();
+			setPage(studentService.readStudentInternalSendPeiList(queryMap,getPageIndex()));
+	
+		} catch (FinanceServiceException e) {
+			log.error("获取学员列表失败：" + e.getMessage());
+			setStatusMsg("获取学员列表失败。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}		
+		return SUCCESS;
+	}
+	
+	//完全符合国内送培条件的学生列表
+	public String readAccordAllCondtionList(){
+		try{
+			setViewDate(Utilities.format(new Date()));
+			Map<String, Object> queryMap = new HashMap<String, Object>(); 
+			queryMap.put(IStudentService.QUERY_KEY_STUDENT_STATUS,IStudentService.QUERY_KEY_STUDENT_STATUS_GN_SONGPEI);//状态-国内送培阶段
+			IStudentService studentService =  getFactory().getFinanceProviderInstance().getStudentService();
+			viewStudentList = studentService.readAccordAllCondtionList(queryMap);
+	
+		} catch (FinanceServiceException e) {
+			log.error("获取学员列表失败：" + e.getMessage());
+			setStatusMsg("获取学员列表失败。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}		
+		return SUCCESS;
+	}
+	
+	//国外送培
+	public String readAbroadSendPeiList(){
+		
+		try{
+			if(StringUtils.isBlank(this.getXstatusid())){
+				setXstatusid(IStudentService.QUERY_KEY_STUDENT_STATUS_GW_SONGPEI);
+			}
+			setViewDate(Utilities.format(new Date()));
+			Map<String, Object> queryMap = new HashMap<String, Object>(); 
+			//queryMap=searchGetValue();
+			lessonList= getFactory().getFinanceProviderInstance().getSysUserService().readLessonList("","0");//雅思
+			queryMap.put(IStudentService.QUERY_KEY_STUDENT_STATUS,this.getXstatusid());//状态-国外送培
+			queryMap.put(IStudentService.QUERY_KEY_SONGPEI_SY, this.getYsipass());
+			queryMap.put(IStudentService.QUERY_KEY_SONGPEI_XK, this.getXkipass());
+			queryMap.put(IStudentService.QUERY_KEY_SONGPEI_CJ, this.getCjaudit());
+			queryMap.put(IStudentService.QUERY_KEY_SONGPEI_ST, this.getStaudit());
+			queryMap.put(IStudentService.QUERY_KEY_SONGPEI_BX, this.getBxaudit());
+			queryMap.put(IStudentService.QUERY_KEY_SONGPEI_ALL, this.getAllpass());
+			if(StringUtils.isNotBlank(this.getName()))
+				queryMap.put(IStudentService.QUERY_KEY_NAME, getName());
+			IStudentService studentService =  getFactory().getFinanceProviderInstance().getStudentService();
+			setPage(studentService.readStudentAbroadSendPeiList(queryMap,getPageIndex()));
+		} catch (FinanceServiceException e) {
+			log.error("获取学员列表失败：" + e.getMessage());
+			setStatusMsg("获取学员列表失败。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}		
+		return SUCCESS;
+	}
+	
+	//学生状态
+	public String readStudentStatusInfoList(){
+		try {
+			if(StringUtils.isBlank(this.getXstatusid())){
+				setXstatusid(IStudentService.QUERY_KEY_STUDENT_STATUS_STUDY);
+			}
+			setViewDate(Utilities.format(new Date()));
+			Map<String, Object> queryMap = new HashMap<String, Object>(); 
+			queryMap=searchGetValue();
+			queryMap.put(IStudentService.QUERY_KEY_STUDENT_STATUS,this.getXstatusid());//状态时理论在学
+			IStudentService studentService =  getFactory().getFinanceProviderInstance().getStudentService();
+			setPage(studentService.readStudentStatusInfoList(queryMap,getPageIndex()));
+
+		} catch (FinanceServiceException e) {
+			log.error("获取学员列表失败：" + e.getMessage());
+			setStatusMsg("获取学员列表失败。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}		
+		return SUCCESS;
+	}
+	
+	//成绩管理--理论课程
+	public String readSutdentScoreList(){
+		try {
+			if(StringUtils.isBlank(getItype())){
+				setItype("0");
+			}
+			IStudentService studentService =  getFactory().getFinanceProviderInstance().getStudentService();
+			lessonList= getFactory().getFinanceProviderInstance().getSysUserService().readLessonList("",getItype());
+			Map<String, Object> queryMap = new HashMap<String, Object>(); 
+			queryMap=searchGetValue();
+			queryMap.put(IStudentService.QUERY_KEY_LESSON_ID, getLessonid());
+			queryMap.put(IStudentService.QUERY_KEY_PASS,getIpass());
+			queryMap.put(IStudentService.QUERY_KEY_LESSON_TYPE, getItype());
+			queryMap.put(IStudentService.QUERY_KEY_LOGIN_USER, this.getLoginContext().getUserName());
+			setPage(studentService.readStudentScoreList(queryMap,getPageIndex()));
+			setViewDate(Utilities.format(new Date()));
+			trainingClassList = getFactory().getFinanceProviderInstance().getOutLineService().
+			readTrainingClass(this.getLoginContext().getUserName());
+		} catch (FinanceServiceException e) {
+			log.error("获取学员列表失败：" + e.getMessage());
+			setStatusMsg("获取学员列表失败。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}		
+		return SUCCESS;
+	}
+	//推荐局方证照考试
+	public String readSutdentLicenseExamList() {
+		try {
+			if (StringUtils.isBlank(getItype())) {// 1代表校考成绩是否合格
+				setItype("1");
+			}
+			
+			trainingClassList = getFactory().getFinanceProviderInstance()
+					.getOutLineService().readTrainingClass(
+							this.getLoginContext().getUserName());
+			setViewDate(Utilities.format(new Date()));
+			IStudentService studentService = getFactory()
+					.getFinanceProviderInstance().getStudentService();
+			lessonList = getFactory().getFinanceProviderInstance()
+					.getSysUserService().readLessonList("", "1");
+			jflessonList = getFactory().getFinanceProviderInstance()
+					.getSysUserService().readLessonList("", "2");
+			Map<String, Object> queryMap = new HashMap<String, Object>();
+			queryMap = searchGetValue();
+			queryMap.put(IStudentService.QUERY_KEY_LESSON_ID, getLessonid());
+			queryMap.put(IStudentService.QUERY_KEY_PASS, getIpass());
+			queryMap.put(IStudentService.QUERY_KEY_LESSON_TYPE, getItype());
+			queryMap.put(IStudentService.QUERY_KEY_LOGIN_USER, this
+					.getLoginContext().getUserName());
+			
+			setPage(studentService.readStudentLicenseScoreList(queryMap,
+					getPageIndex()));
+
+		} catch (FinanceServiceException e) {
+			log.error("获取学员列表失败：" + e.getMessage());
+			setStatusMsg("获取学员列表失败。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		return SUCCESS;
+	}
+	//已推荐学生列表
+	public String readRecommendedList() {
+		try {
+
+			
+			setViewDate(Utilities.format(new Date()));
+			IStudentService studentService = getFactory()
+					.getFinanceProviderInstance().getStudentService();
+			Map<String, Object> queryMap = new HashMap<String, Object>();
+			if(StringUtils.isNotBlank(this.getName()))
+				queryMap.put(IStudentService.QUERY_KEY_NAME, getName());
+			queryMap.put(IStudentService.QUERY_KEY_LOGIN_USER, this.getLoginContext().getUserName());
+			queryMap.put("order", this.getOrder());
+			queryMap.put("id", this.getId());//推荐人
+			queryMap.put("riqi", this.getExamTime());
+			queryMap.put("lesson", this.getLessonName());
+			queryMap.put("ids", this.getIds());
+			setPage(studentService.readRecommendedList(queryMap,getPageIndex()));
+
+		} catch (FinanceServiceException e) {
+			setStatusMsg("获取学员列表失败。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}
+		return SUCCESS;
+	}
+	//执照管理
+	public String readSutdentLicenseList(){
+			try {
+				IStudentService studentService =  getFactory().getFinanceProviderInstance().getStudentService();
+				setPage(studentService.readStudentLicenseList(searchGetValue(),getPageIndex()));
+			} catch (FinanceServiceException e) {
+				log.error("获取学员列表失败：" + e.getMessage());
+				setStatusMsg("获取学员列表失败。");
+				setStatusMsg("1");
+				return SUCCESS;
+			}		
+			return SUCCESS;
+		}
+	//体检合格证
+	public String readStudentMedicalList(){
+		try {
+			IStudentService studentService =  getFactory().getFinanceProviderInstance().getStudentService();
+			setPage(studentService.readStudentMedicalList(searchGetValue(),getPageIndex()));
+		} catch (FinanceServiceException e) {
+			log.error("获取学员列表失败：" + e.getMessage());
+			setStatusMsg("获取学员列表失败。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}		
+		return SUCCESS;
+	}
+	//航校面试
+	public String readInterviewBaseInfoList(){
+		try {
+			setViewDate(Utilities.format(new Date()));
+			Map<String, Object> queryMap = new HashMap<String, Object>(); 
+			queryMap=searchGetValue();
+			queryMap.put("schoolid", this.getSchoolid());
+			//queryMap.put(IStudentService.QUERY_KEY_STUDENT_STATUS, 
+			//		IStudentService.QUERY_KEY_STUDENT_STATUS_GUOWAI);//状态时国外训练
+			schoolList = getFactory().getFinanceProviderInstance().getSysUserService().readSchoolList("","VSchoolname");
+			IStudentService studentService =  getFactory().getFinanceProviderInstance().getStudentService();
+			setPage(studentService.readStudentInterviewList(queryMap,getPageIndex()));
+		} catch (FinanceServiceException e) {
+			log.error("获取学员列表失败：" + e.getMessage());
+			setStatusMsg("获取学员列表失败。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}		
+		return SUCCESS;
+	}
+	
+	//学员基地管理
+	public String readStudentAssignBaseList(){
+		try {
+			setXstatusid(IStudentService.QUERY_KEY_STUDENT_STATUS_GUONEI);
+			setViewDate(Utilities.format(new Date()));
+			Map<String, Object> queryMap = new HashMap<String, Object>(); 
+			queryMap=searchGetValue();
+			IStudentService studentService =  getFactory().getFinanceProviderInstance().getStudentService();
+			queryMap.put(IStudentService.QUERY_KEY_STUDENT_STATUS, 
+					IStudentService.QUERY_KEY_STUDENT_STATUS_GUONEI);//状态时国内训练
+			baseList = getFactory().getFinanceProviderInstance().getOrgService().
+					readBaseList("4028816a470e3d6601470e4576460001", "4028816a470e3d6601470e475b880005");
+			
+			setPage(studentService.readStudentBaseList(queryMap,getPageIndex()));
+		} catch (FinanceServiceException e) {
+			log.error("获取学员列表失败：" + e.getMessage());
+			setStatusMsg("获取学员列表失败。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}		
+		return SUCCESS;
+	}
+	
+	//学员大队管理
+	public String readStudentAssignGroupList(){
+		try {
+			setViewDate(Utilities.format(new Date()));
+			IStudentService studentService =  getFactory().getFinanceProviderInstance().getStudentService();
+			Map<String, Object> queryMap = new HashMap<String, Object>(); 
+			queryMap=searchGetValue();
+			queryMap.put(IStudentService.QUERY_KEY_LOGIN_USER,getLoginContext().getUserName());
+			//获取大队列表
+			groupList = studentService.readOrgByUserId(getLoginContext().getUserName());
+			setPage(studentService.readStudentGroupList(queryMap,getPageIndex()));
+		} catch (FinanceServiceException e) {
+			log.error("获取学员列表失败：" + e.getMessage());
+			setStatusMsg("获取学员列表失败。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}		
+		return SUCCESS;
+	}
+	//学员教员管理
+	public String readStudentAssignTeacherList(){
+		try {
+			Map<String, Object> queryMap = new HashMap<String, Object>(); 
+			setViewDate(Utilities.format(new Date()));
+			IStudentService studentService =  getFactory().getFinanceProviderInstance().getStudentService();
+			queryMap=searchGetValue();
+			queryMap.put(IStudentService.QUERY_KEY_LOGIN_USER,getLoginContext().getUserName());
+			teacherList = studentService.readTeacherByUserId(getLoginContext().getUserId());
+			setPage(studentService.readStudentTeacherList(queryMap,getPageIndex()));
+		} catch (FinanceServiceException e) {
+			log.error("获取学员列表失败：" + e.getMessage());
+			setStatusMsg("获取学员列表失败。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}		
+		return SUCCESS;
+	}
+	//完成训练
+	public String readFinishTrainingStudentList(){
+		try {
+			setViewDate(Utilities.format(new Date()));
+			IStudentService studentService =  getFactory().getFinanceProviderInstance().getStudentService();
+			setPage(studentService.readFinishTrainingStudentList(searchGetValue(),getPageIndex()));
+		} catch (FinanceServiceException e) {
+			log.error("获取学员列表失败：" + e.getMessage());
+			setStatusMsg("获取学员列表失败。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}		
+		return SUCCESS;
+	}
+	//毕业
+	public String readOffSchoolList(){
+		try {
+			setViewDate(Utilities.format(new Date()));
+			IStudentService studentService =  getFactory().getFinanceProviderInstance().getStudentService();
+			setPage(studentService.readStudentGraduationList(searchGetValue(),getPageIndex()));
+		} catch (FinanceServiceException e) {
+			log.error("获取学员列表失败：" + e.getMessage());
+			setStatusMsg("获取学员列表失败。");
+			setStatusMsg("1");
+			return SUCCESS;
+		}		
+		return SUCCESS;
+	}
+
+	private Map<String, Object> searchGetValue(){
+		Map<String, Object> queryMap = new HashMap<String, Object>();
+		
+			if(StringUtils.isNotBlank(this.getName()))
+				queryMap.put(IStudentService.QUERY_KEY_NAME, getName());
+			if(StringUtils.isNotBlank(this.getIsAssignid()))
+				queryMap.put(IStudentService.QUERY_KEY_IF_ASSIGN, getIsAssignid());
+			if(StringUtils.isNotBlank(this.getXstuTypeid()))
+				queryMap.put(IStudentService.QUERY_KEY_STUDENT_TYPE, getXstuTypeid());	
+			if(StringUtils.isNotBlank(this.getXcompanyid()))
+				queryMap.put(IStudentService.QUERY_KEY_COMPANY, getXcompanyid());
+			if(StringUtils.isNotBlank(this.getXstatusid()))
+				queryMap.put(IStudentService.QUERY_KEY_STUDENT_STATUS, getXstatusid());
+			if(StringUtils.isNotBlank(this.getXxjstatusid()))
+				queryMap.put(IStudentService.QUERY_KEY_XJ_STUDENT_STATUS, getXxjstatusid());
+			if(StringUtils.isNotBlank(this.getXformid()))
+				queryMap.put(IStudentService.QUERY_KEY_FORM, getXformid());
+			if(StringUtils.isNotBlank(this.getXfreetypeid()))
+				queryMap.put(IStudentService.QUERY_KEY_FREE_FORM, getXfreetypeid());
+			if(StringUtils.isNotBlank(this.getYear()))
+				queryMap.put(IStudentService.QUERY_KEY_YEAR, getYear());
+			if(StringUtils.isNotBlank(this.getClassNo()))
+				queryMap.put(IStudentService.QUERY_KEY_CLASS,getClassNo());
+			
+			if(getSearchBean()!=null)//高级查询对象
+				queryMap.put(IStudentService.QUERY_KEY_ADVANCED_SEARCH_OBJ, getSearchBean());
+			try{
+			IStudentService studentService =  getFactory().getFinanceProviderInstance().getStudentService();
+			dictionStatusList =studentService.readDictionList(IStudentService.QUERY_STUDENT_STATUS);
+			dictionXjList = studentService.readDictionList(IStudentService.QUERY_XUEJI_STATUS);
+			dictionFormList = studentService.readDictionList(IStudentService.QUERY_ZHAOSHENG_FORM);
+			dictionTypeList = studentService.readDictionList(IStudentService.QUERY_STUDENT_TYPE);
+			dictionFreeTypeList =studentService.readDictionList(IStudentService.QUERY_FREE_TYPE);
+			dictionCompanyList = getFactory().getFinanceProviderInstance().getOutLineService().readCompanyList();
+			//年份列表
+			yearList = new ArrayList<Integer>();
+			for(int i=2008;i<=2020;i++){
+				
+				yearList.add(i);
+			}
+			classList = getFactory().getFinanceProviderInstance().getOutLineService().readSetClass(year);
+			
+		}catch(FinanceServiceException e){
+			
+		}
+		return queryMap;
+	}
+
+	//regStudent
+	public String openStudentBaseInfoPage(){
+		IStudentService studentService =  getFactory().getFinanceProviderInstance().getStudentService();
+		try {
+			dictionStatusList =studentService.readDictionList(IStudentService.QUERY_STUDENT_STATUS);
+			dictionXjList = studentService.readDictionList(IStudentService.QUERY_XUEJI_STATUS);
+			dictionFormList = studentService.readDictionList(IStudentService.QUERY_ZHAOSHENG_FORM);
+			dictionTypeList = studentService.readDictionList(IStudentService.QUERY_STUDENT_TYPE);
+			dictionFreeTypeList =studentService.readDictionList(IStudentService.QUERY_FREE_TYPE);
+			whcdList = studentService.readDictionList(IStudentService.QUERY_WHCD);
+			minzuList = studentService.readDictionList(IStudentService.QUERY_NATION);
+			jiguanList = studentService.readDictionList(IStudentService.QUERY_JIGUAN);
+			dictionCompanyList = getFactory().getFinanceProviderInstance().getOutLineService().readCompanyList();
+			classList = getFactory().getFinanceProviderInstance().getOutLineService().readSetClass(year);
+			
+		} catch (FinanceServiceException e) {
+			setStatusMsg("打开学生注册页面失败。");
+			setStatusMsg("1");
+			return INPUT;
+		}
+		
+		return SUCCESS;
+	}
+	
+	//editStudent
+	public String openEditStudentBaseInfoPage(){
+		if(StringUtils.isBlank(id)){
+			setStatusMsg("学生id不能为空。");
+			setStatusMsg("1");
+			return INPUT;
+		}
+		IStudentService studentService =  getFactory().getFinanceProviderInstance().getStudentService();
+		try {
+			dictionStatusList =studentService.readDictionList(IStudentService.QUERY_STUDENT_STATUS);
+			dictionXjList = studentService.readDictionList(IStudentService.QUERY_XUEJI_STATUS);
+			dictionFormList = studentService.readDictionList(IStudentService.QUERY_ZHAOSHENG_FORM);
+			dictionTypeList = studentService.readDictionList(IStudentService.QUERY_STUDENT_TYPE);
+			dictionFreeTypeList =studentService.readDictionList(IStudentService.QUERY_FREE_TYPE);
+			whcdList = studentService.readDictionList(IStudentService.QUERY_WHCD);
+			minzuList = studentService.readDictionList(IStudentService.QUERY_NATION);
+			jiguanList = studentService.readDictionList(IStudentService.QUERY_JIGUAN);
+			dictionCompanyList = getFactory().getFinanceProviderInstance().getOutLineService().readCompanyList();
+			classList = getFactory().getFinanceProviderInstance().getOutLineService().readSetClass(year);
+			student = studentService.readStudentBaseInfo(id);
+		} catch (FinanceServiceException e) {
+			setStatusMsg("打开编辑学生页面失败。");
+			setStatusMsg("1");
+			return INPUT;
+		}
+		
+		return SUCCESS;
+	}
+	//saveStudent
+	public String saveStudentBaseInfo(){
+		viewOrg = new VOrg();
+		
+		if(StringUtils.isBlank(student.getVClassNoid())){
+			viewOrg.setFlag(false);
+			viewOrg.setMessage("保存失败，班号必须选择。");
+			return SUCCESS;
+		}
+		if(StringUtils.isBlank(student.getVName())){
+			viewOrg.setFlag(false);
+			viewOrg.setMessage("保存失败，姓名必须填写。");
+			return SUCCESS;
+		}
+		if(StringUtils.isBlank(student.getVCardid())){
+			viewOrg.setFlag(false);
+			viewOrg.setMessage("保存失败，身份证号必须填写。");
+			return SUCCESS;
+		}
+		if(student.getDRxsj()==null){
+			viewOrg.setFlag(false);
+			viewOrg.setMessage("保存失败，入校时间必须填写。");
+			return SUCCESS;
+		}
+		if(student.getVId() != null){
+			student.setVId(null);
+		}
+		
+		try {
+			student.setTUser(getFactory().getFinanceProviderInstance()
+					.getSysUserService()
+					.readSysUserByLoginID(getLoginContext().getLoginId()));
+			getFactory().getFinanceProviderInstance().getStudentService().saveStudentBaseInfo(student);
+			viewOrg.setFlag(true);
+		} catch (FinanceServiceException e) {
+			viewOrg.setFlag(false);
+			viewOrg.setMessage(e.getMessage());
+			return SUCCESS;
+		}
+		viewOrg.setMessage("保存学生信息成功。");
+		return SUCCESS;
+	}
+	//updateStudent
+	public String updateStudentBaseInfo(){
+		viewOrg = new VOrg();
+		if(StringUtils.isBlank(student.getVId())){
+			viewOrg.setFlag(false);
+			viewOrg.setMessage("保存失败，学生id不能为空。");
+			return SUCCESS;
+		}
+		if(StringUtils.isBlank(student.getVClassNoid())){
+			viewOrg.setFlag(false);
+			viewOrg.setMessage("保存失败，班号必须选择。");
+			return SUCCESS;
+		}
+		if(StringUtils.isBlank(student.getVName())){
+			viewOrg.setFlag(false);
+			viewOrg.setMessage("保存失败，姓名必须填写。");
+			return SUCCESS;
+		}
+		if(StringUtils.isBlank(student.getVCardid())){
+			viewOrg.setFlag(false);
+			viewOrg.setMessage("保存失败，身份证号必须填写。");
+			return SUCCESS;
+		}
+		if(student.getDRxsj()==null){
+			viewOrg.setFlag(false);
+			viewOrg.setMessage("保存失败，入校时间必须填写。");
+			return SUCCESS;
+		}
+		
+		try {
+			getFactory().getFinanceProviderInstance().getStudentService().updateStudentBaseInfo(student);
+			viewOrg.setVId(student.getVId());
+			viewOrg.setFlag(true);
+		} catch (FinanceServiceException e) {
+			viewOrg.setFlag(false);
+			viewOrg.setMessage(e.getMessage());
+			return SUCCESS;
+		}
+		viewOrg.setMessage("编辑学生信息成功。");
+		return SUCCESS;
+	}
+	//-------------------------------setter and getter---------------------------
+
+	public StudentBaseInfo getStudent() {
+		return student;
+	}
+
+	public void setStudent(StudentBaseInfo student) {
+		this.student = student;
+	}
+
+	public VStudentBaseInfo getVstudentBaseInfo() {
+		return vstudentBaseInfo;
+	}
+
+	public void setVstudentBaseInfo(VStudentBaseInfo vstudentBaseInfo) {
+		this.vstudentBaseInfo = vstudentBaseInfo;
+	}
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
+	public String getIds() {
+		return ids;
+	}
+
+	public void setIds(String ids) {
+		this.ids = ids;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public List<TDiction> getDictionStatusList() {
+		return dictionStatusList;
+	}
+
+	public void setDictionStatusList(List<TDiction> dictionStatusList) {
+		this.dictionStatusList = dictionStatusList;
+	}
+
+	public List<TDiction> getDictionXjList() {
+		return dictionXjList;
+	}
+
+	public void setDictionXjList(List<TDiction> dictionXjList) {
+		this.dictionXjList = dictionXjList;
+	}
+
+	public List<TDiction> getDictionFormList() {
+		return dictionFormList;
+	}
+
+	public void setDictionFormList(List<TDiction> dictionFormList) {
+		this.dictionFormList = dictionFormList;
+	}
+
+	public List<TDiction> getDictionTypeList() {
+		return dictionTypeList;
+	}
+
+	public void setDictionTypeList(List<TDiction> dictionTypeList) {
+		this.dictionTypeList = dictionTypeList;
+	}
+
+	public List<TDiction> getDictionFreeTypeList() {
+		return dictionFreeTypeList;
+	}
+
+	public void setDictionFreeTypeList(List<TDiction> dictionFreeTypeList) {
+		this.dictionFreeTypeList = dictionFreeTypeList;
+	}
+
+	public List<TOrg> getDictionCompanyList() {
+		return dictionCompanyList;
+	}
+
+	public void setDictionCompanyList(List<TOrg> dictionCompanyList) {
+		this.dictionCompanyList = dictionCompanyList;
+	}
+
+	public List<Integer> getYearList() {
+		return yearList;
+	}
+
+	public void setYearList(List<Integer> yearList) {
+		this.yearList = yearList;
+	}
+
+	public List<TSetClass> getClassList() {
+		return classList;
+	}
+
+	public void setClassList(List<TSetClass> classList) {
+		this.classList = classList;
+	}
+
+	public AdvancedSearchBean getSearchBean() {
+		return searchBean;
+	}
+
+	public void setSearchBean(AdvancedSearchBean searchBean) {
+		this.searchBean = searchBean;
+	}
+
+	public String getIsAssignid() {
+		return isAssignid;
+	}
+
+	public void setIsAssignid(String isAssignid) {
+		this.isAssignid = isAssignid;
+	}
+
+	public String getXstuTypeid() {
+		return xstuTypeid;
+	}
+
+	public void setXstuTypeid(String xstuTypeid) {
+		this.xstuTypeid = xstuTypeid;
+	}
+
+	public String getXcompanyid() {
+		return xcompanyid;
+	}
+
+	public void setXcompanyid(String xcompanyid) {
+		this.xcompanyid = xcompanyid;
+	}
+
+	public String getXstatusid() {
+		return xstatusid;
+	}
+
+	public void setXstatusid(String xstatusid) {
+		this.xstatusid = xstatusid;
+	}
+
+	public String getXxjstatusid() {
+		return xxjstatusid;
+	}
+
+	public void setXxjstatusid(String xxjstatusid) {
+		this.xxjstatusid = xxjstatusid;
+	}
+
+	public String getXformid() {
+		return xformid;
+	}
+
+	public void setXformid(String xformid) {
+		this.xformid = xformid;
+	}
+
+	public String getXfreetypeid() {
+		return xfreetypeid;
+	}
+
+	public void setXfreetypeid(String xfreetypeid) {
+		this.xfreetypeid = xfreetypeid;
+	}
+
+	public String getYear() {
+		return year;
+	}
+
+	public void setYear(String year) {
+		this.year = year;
+	}
+
+	public String getClassNo() {
+		return classNo;
+	}
+
+	public void setClassNo(String classNo) {
+		this.classNo = classNo;
+	}
+
+	public String getSelIds() {
+		return selIds;
+	}
+
+	public void setSelIds(String selIds) {
+		this.selIds = selIds;
+	}
+
+	public List<TDiction> getWhcdList() {
+		return whcdList;
+	}
+
+	public void setWhcdList(List<TDiction> whcdList) {
+		this.whcdList = whcdList;
+	}
+
+	public List<TDiction> getMinzuList() {
+		return minzuList;
+	}
+
+	public void setMinzuList(List<TDiction> minzuList) {
+		this.minzuList = minzuList;
+	}
+	public TStuassignbase getAssifnBase() {
+		return assifnBase;
+	}
+	public void setAssifnBase(TStuassignbase assifnBase) {
+		this.assifnBase = assifnBase;
+	}
+	public TStuassigngroup getAssignGroup() {
+		return assignGroup;
+	}
+	public void setAssignGroup(TStuassigngroup assignGroup) {
+		this.assignGroup = assignGroup;
+	}
+	public TStuassignteacher getAssignTeacher() {
+		return assignTeacher;
+	}
+	public void setAssignTeacher(TStuassignteacher assignTeacher) {
+		this.assignTeacher = assignTeacher;
+	}
+
+	public TChangedbase getChangedbase() {
+		return changedbase;
+	}
+
+	public void setChangedbase(TChangedbase changedbase) {
+		this.changedbase = changedbase;
+	}
+	public List<TOrg> getGroupList() {
+		return groupList;
+	}
+	public void setGroupList(List<TOrg> groupList) {
+		this.groupList = groupList;
+	}
+	public TChangedgroup getChangeGroup() {
+		return changeGroup;
+	}
+	public void setChangeGroup(TChangedgroup changeGroup) {
+		this.changeGroup = changeGroup;
+	}
+	public TStuchangedteacher getChangeTeacher() {
+		return changeTeacher;
+	}
+	public void setChangeTeacher(TStuchangedteacher changeTeacher) {
+		this.changeTeacher = changeTeacher;
+	}
+	public List<TeacherBaseInfo> getTeacherList() {
+		return teacherList;
+	}
+	public void setTeacherList(List<TeacherBaseInfo> teacherList) {
+		this.teacherList = teacherList;
+	}
+	public List<TOtheruser> getOtherUserList() {
+		return otherUserList;
+	}
+	public void setOtherUserList(List<TOtheruser> otherUserList) {
+		this.otherUserList = otherUserList;
+	}
+	public VOrg getViewOrg() {
+		return viewOrg;
+	}
+	public void setViewOrg(VOrg viewOrg) {
+		this.viewOrg = viewOrg;
+	}
+	public List<TAbroadaviationschool> getSchoolList() {
+		return schoolList;
+	}
+	public void setSchoolList(List<TAbroadaviationschool> schoolList) {
+		this.schoolList = schoolList;
+	}
+	public List<TLesson> getLessonList() {
+		return lessonList;
+	}
+	public void setLessonList(List<TLesson> lessonList) {
+		this.lessonList = lessonList;
+	}
+	public List<TDiction> getJyzzDjList() {
+		return jyzzDjList;
+	}
+	public void setJyzzDjList(List<TDiction> jyzzDjList) {
+		this.jyzzDjList = jyzzDjList;
+	}
+	public List<TDiction> getJyzzLxList() {
+		return jyzzLxList;
+	}
+	public void setJyzzLxList(List<TDiction> jyzzLxList) {
+		this.jyzzLxList = jyzzLxList;
+	}
+	public List<TDiction> getZzLxList() {
+		return zzLxList;
+	}
+	public void setZzLxList(List<TDiction> zzLxList) {
+		this.zzLxList = zzLxList;
+	}
+	public List<TDiction> getYbDjList() {
+		return ybDjList;
+	}
+	public void setYbDjList(List<TDiction> ybDjList) {
+		this.ybDjList = ybDjList;
+	}
+	public List<TDiction> getFjJbList() {
+		return fjJbList;
+	}
+	public void setFjJbList(List<TDiction> fjJbList) {
+		this.fjJbList = fjJbList;
+	}
+	public List<TDiction> getHkqLbList() {
+		return hkqLbList;
+	}
+	public void setHkqLbList(List<TDiction> hkqLbList) {
+		this.hkqLbList = hkqLbList;
+	}
+	public List<TDiction> getHkqXbList() {
+		return hkqXbList;
+	}
+	public void setHkqXbList(List<TDiction> hkqXbList) {
+		this.hkqXbList = hkqXbList;
+	}
+	public List<TDiction> getXyjJbList() {
+		return xyjJbList;
+	}
+	public void setXyjJbList(List<TDiction> xyjJbList) {
+		this.xyjJbList = xyjJbList;
+	}
+	public List<TDiction> getYsHkgsList() {
+		return ysHkgsList;
+	}
+	public void setYsHkgsList(List<TDiction> ysHkgsList) {
+		this.ysHkgsList = ysHkgsList;
+	}
+
+	public TPointLine getPointLine() {
+		return pointLine;
+	}
+
+	public void setPointLine(TPointLine pointLine) {
+		this.pointLine = pointLine;
+	}
+
+	public Studentassignschool getSchool() {
+		return school;
+	}
+
+	public void setSchool(Studentassignschool school) {
+		this.school = school;
+	}
+	public TSetClass getSetClass() {
+		return setClass;
+	}
+	public void setSetClass(TSetClass setClass) {
+		this.setClass = setClass;
+	}
+	public TGntrainbackschool getFinish() {
+		return finish;
+	}
+	public void setFinish(TGntrainbackschool finish) {
+		this.finish = finish;
+	}
+
+	public TStustopfly getStopFly() {
+		return stopFly;
+	}
+
+	public void setStopFly(TStustopfly stopFly) {
+		this.stopFly = stopFly;
+	}
+
+	public Studentstatuschange getXueJi() {
+		return xueJi;
+	}
+
+	public void setXueJi(Studentstatuschange xueJi) {
+		this.xueJi = xueJi;
+	}
+
+	public TOffschool getOff() {
+		return off;
+	}
+
+	public void setOff(TOffschool off) {
+		this.off = off;
+	}
+
+	public GraduationDesign getDesign() {
+		return design;
+	}
+
+	public void setDesign(GraduationDesign design) {
+		this.design = design;
+	}
+
+	public GraduationStudentAssign getAssign() {
+		return assign;
+	}
+
+	public void setAssign(GraduationStudentAssign assign) {
+		this.assign = assign;
+	}
+
+	public Newworkerandchangetrain getScore() {
+		return score;
+	}
+
+	public void setScore(Newworkerandchangetrain score) {
+		this.score = score;
+	}
+	public TScore getLessonScore() {
+		return lessonScore;
+	}
+	public void setLessonScore(TScore lessonScore) {
+		this.lessonScore = lessonScore;
+	}
+	public String getLessonid() {
+		return lessonid;
+	}
+	public void setLessonid(String lessonid) {
+		this.lessonid = lessonid;
+	}
+	public String getIpass() {
+		return ipass;
+	}
+	public void setIpass(String ipass) {
+		this.ipass = ipass;
+	}
+
+	public String getItype() {
+		return itype;
+	}
+
+	public void setItype(String itype) {
+		this.itype = itype;
+	}
+	public StudentLicense getLicense() {
+		return license;
+	}
+	public void setLicense(StudentLicense license) {
+		this.license = license;
+	}
+
+	public List<VStudentLicense> getLicenseList() {
+		return licenseList;
+	}
+
+	public void setLicenseList(List<VStudentLicense> licenseList) {
+		this.licenseList = licenseList;
+	}
+
+	public VStudentLicense getViewStudentLicense() {
+		return viewStudentLicense;
+	}
+
+	public void setViewStudentLicense(VStudentLicense viewStudentLicense) {
+		this.viewStudentLicense = viewStudentLicense;
+	}
+
+	public List<TDiction> getJiguanList() {
+		return jiguanList;
+	}
+
+	public void setJiguanList(List<TDiction> jiguanList) {
+		this.jiguanList = jiguanList;
+	}
+
+	public List<TOrg> getBaseList() {
+		return baseList;
+	}
+
+	public void setBaseList(List<TOrg> baseList) {
+		this.baseList = baseList;
+	}
+
+	public List<VScore> getViewScoreList() {
+		return viewScoreList;
+	}
+	public void setViewScoreList(List<VScore> viewScoreList) {
+		this.viewScoreList = viewScoreList;
+	}
+
+	public String getSocre() {
+		return socre;
+	}
+
+	public void setSocre(String socre) {
+		this.socre = socre;
+	}
+
+	public VSetClassContent getViewSetClassContent() {
+		return viewSetClassContent;
+	}
+
+	public void setViewSetClassContent(VSetClassContent viewSetClassContent) {
+		this.viewSetClassContent = viewSetClassContent;
+	}
+
+	public List<TSetClass> getTrainingClassList() {
+		return trainingClassList;
+	}
+
+	public void setTrainingClassList(List<TSetClass> trainingClassList) {
+		this.trainingClassList = trainingClassList;
+	}
+
+	public StudentDistributionClass getStuClass() {
+		return stuClass;
+	}
+
+	public void setStuClass(StudentDistributionClass stuClass) {
+		this.stuClass = stuClass;
+	}
+	public String getExamTime() {
+		return examTime;
+	}
+	public void setExamTime(String examTime) {
+		this.examTime = examTime;
+	}
+	public String getClassid() {
+		return classid;
+	}
+	public void setClassid(String classid) {
+		this.classid = classid;
+	}
+	public String getLessonName() {
+		return lessonName;
+	}
+	public void setLessonName(String lessonName) {
+		this.lessonName = lessonName;
+	}
+	public String getClassName() {
+		return className;
+	}
+	public void setClassName(String className) {
+		this.className = className;
+	}
+	public String getIsView() {
+		return isView;
+	}
+	public void setIsView(String isView) {
+		this.isView = isView;
+	}
+	public List<StudentBaseInfo> getStudentList() {
+		return studentList;
+	}
+	public void setStudentList(List<StudentBaseInfo> studentList) {
+		this.studentList = studentList;
+	}
+	public String getNewid() {
+		return newid;
+	}
+	public void setNewid(String newid) {
+		this.newid = newid;
+	}
+	public String getChangeDate() {
+		return changeDate;
+	}
+	public void setChangeDate(String changeDate) {
+		this.changeDate = changeDate;
+	}
+	public String getChangeReason() {
+		return changeReason;
+	}
+	public void setChangeReason(String changeReason) {
+		this.changeReason = changeReason;
+	}
+	public String getOpt() {
+		return opt;
+	}
+	public void setOpt(String opt) {
+		this.opt = opt;
+	}
+
+	public TForeignaviationschoolinterview getView() {
+		return view;
+	}
+
+	public void setView(TForeignaviationschoolinterview view) {
+		this.view = view;
+	}
+
+	public TAbroadtrain getAbroadtrain() {
+		return abroadtrain;
+	}
+
+	public void setAbroadtrain(TAbroadtrain abroadtrain) {
+		this.abroadtrain = abroadtrain;
+	}
+
+	public List<TLesson> getXklessonList() {
+		return xklessonList;
+	}
+
+	public void setXklessonList(List<TLesson> xklessonList) {
+		this.xklessonList = xklessonList;
+	}
+
+	public List<TLesson> getJflessonList() {
+		return jflessonList;
+	}
+
+	public void setJflessonList(List<TLesson> jflessonList) {
+		this.jflessonList = jflessonList;
+	}
+
+	public String getYsipass() {
+		return ysipass;
+	}
+
+	public void setYsipass(String ysipass) {
+		this.ysipass = ysipass;
+	}
+
+	public String getXkipass() {
+		return xkipass;
+	}
+
+	public void setXkipass(String xkipass) {
+		this.xkipass = xkipass;
+	}
+
+	public String getJfipass() {
+		return jfipass;
+	}
+
+	public void setJfipass(String jfipass) {
+		this.jfipass = jfipass;
+	}
+
+	public String getCjaudit() {
+		return cjaudit;
+	}
+
+	public void setCjaudit(String cjaudit) {
+		this.cjaudit = cjaudit;
+	}
+
+	public String getStaudit() {
+		return staudit;
+	}
+
+	public void setStaudit(String staudit) {
+		this.staudit = staudit;
+	}
+
+	public String getBxaudit() {
+		return bxaudit;
+	}
+
+	public void setBxaudit(String bxaudit) {
+		this.bxaudit = bxaudit;
+	}
+
+	public String getAllpass() {
+		return allpass;
+	}
+
+	public void setAllpass(String allpass) {
+		this.allpass = allpass;
+	}
+
+	public String getBackUrl() {
+		return backUrl;
+	}
+
+	public void setBackUrl(String backUrl) {
+		this.backUrl = backUrl;
+	}
+
+	public RecommendStudentLicenseExam getRecommend() {
+		return recommend;
+	}
+
+	public void setRecommend(RecommendStudentLicenseExam recommend) {
+		this.recommend = recommend;
+	}
+
+	public String getOrder() {
+		return order;
+	}
+
+	public void setOrder(String order) {
+		this.order = order;
+	}
+
+	public String getSchoolid() {
+		return schoolid;
+	}
+
+	public void setSchoolid(String schoolid) {
+		this.schoolid = schoolid;
+	}
+
+	public InputStream getInputStream() {
+		return inputStream;
+	}
+
+	public void setInputStream(InputStream inputStream) {
+		this.inputStream = inputStream;
+	}
+
+	public String getAttachmentName() {
+		return attachmentName;
+	}
+
+	public void setAttachmentName(String attachmentName) {
+		this.attachmentName = attachmentName;
+	}
+
+	public List<VStudentBaseInfo> getViewStudentList() {
+		return viewStudentList;
+	}
+
+	public void setViewStudentList(List<VStudentBaseInfo> viewStudentList) {
+		this.viewStudentList = viewStudentList;
+	}
+
+	
+}

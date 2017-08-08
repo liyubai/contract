@@ -1,0 +1,490 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Struts2Diagram version="2.0">
+  <package name="website_index" location="0,0" size="0,0">
+    <action name="index" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="defaultIndexPage.jsp" />
+      </result>
+    </action>
+  </package>
+  <package name="system_index" location="0,0" size="0,0">
+    <action name="index" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="defaultIndexPage.jsp" />
+      </result>
+    </action>
+  </package>
+  <package name="ajax" location="0,0" size="0,0">
+    <action name="getPinYin" location="0,0" size="0,0">
+      <result name="success" />
+    </action>
+    <action name="showBalance" location="0,0" size="0,0">
+      <result name="success" />
+    </action>
+    <action name="showEnterprise" location="0,0" size="0,0">
+      <result name="success" />
+    </action>
+    <action name="showSingleEnterprise" location="0,0" size="0,0">
+      <result name="success" />
+    </action>
+    <action name="showSingleMea" location="0,0" size="0,0">
+      <result name="success" />
+    </action>
+    <action name="showMeaName" location="0,0" size="0,0">
+      <result name="success" />
+    </action>
+    <action name="showAcountNoAssignList" location="0,0" size="0,0">
+      <result name="success" />
+    </action>
+  </package>
+  <package name="system_management" location="0,0" size="0,0">
+    <action name="open_adminUserList" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="usersList.jsp" />
+      </result>
+    </action>
+    <action name="open_createAdminUser" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="addUser.jsp" />
+      </result>
+    </action>
+    <action name="createUser" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="open_createAdminUser" namespace="/system" />
+      </result>
+    </action>
+    <action name="open_updateAdminUser" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="editUser.jsp" />
+      </result>
+    </action>
+    <action name="updateAdminUser" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="open_updateAdminUser" namespace="/system" />
+      </result>
+    </action>
+    <action name="delAdminUser" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="open_adminUserList" namespace="/system" />
+      </result>
+    </action>
+    <action name="open_changePsw" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="updatePsw.jsp" />
+      </result>
+    </action>
+    <action name="changePassword" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="open_changePsw" namespace="/system" />
+      </result>
+    </action>
+    <action name="open_measList" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="measList.jsp" />
+      </result>
+    </action>
+    <action name="open_createMea" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="addMea.jsp" />
+      </result>
+    </action>
+    <action name="createMea" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="open_createMea" namespace="/system" />
+      </result>
+    </action>
+    <action name="open_updateMaterial" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="editMea.jsp" />
+      </result>
+    </action>
+    <action name="updateMaterial" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="open_updateMaterial" namespace="/system" />
+      </result>
+    </action>
+    <action name="delMea" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="open_measList" namespace="/system" />
+      </result>
+    </action>
+    <action name="open_compList" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="compList.jsp" />
+      </result>
+    </action>
+    <action name="open_createComp" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="addComp.jsp" />
+      </result>
+    </action>
+    <action name="createComp" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="open_createComp" namespace="/system" />
+      </result>
+    </action>
+    <action name="open_updateComp" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="editComp.jsp" />
+      </result>
+    </action>
+    <action name="updateEnterprise" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="open_updateComp" namespace="/system" />
+      </result>
+    </action>
+    <action name="delComp" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="open_compList" namespace="/system" />
+      </result>
+    </action>
+    <action name="cancelComp" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="open_compList" namespace="/system" />
+      </result>
+    </action>
+    <action name="auditEnterprise" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="open_compList" namespace="/system" />
+      </result>
+    </action>
+    <action name="open_accountList" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="accountList.jsp" />
+      </result>
+    </action>
+    <action name="open_createAccount" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="addAccount.jsp" />
+      </result>
+    </action>
+    <action name="createAccount" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="open_createAccount" namespace="/system" />
+      </result>
+    </action>
+    <action name="open_updateAccount" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="editAccount.jsp" />
+      </result>
+    </action>
+    <action name="open_updateRemaining" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="editRemaining.jsp" />
+      </result>
+    </action>
+    <action name="updateAccount" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="open_updateAccount" namespace="/system" />
+      </result>
+    </action>
+    <action name="saveRemaining" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="open_updateRemaining" namespace="/system" />
+      </result>
+    </action>
+    <action name="delAccount" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="open_accountList" namespace="/system" />
+      </result>
+    </action>
+    <action name="auditAccount" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="open_accountList" namespace="/system" />
+      </result>
+    </action>
+    <action name="open_searchList" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="searchList.jsp" />
+      </result>
+    </action>
+    <action name="open_updateJjInfo" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="updateJiBill.jsp" />
+      </result>
+    </action>
+    <action name="open_statisticsEnterpriseList" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="statisticsEnterprise.jsp" />
+      </result>
+    </action>
+    <action name="open_statisticsBugList" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="statisticsBugList.jsp" />
+      </result>
+    </action>
+    <action name="detailAccount" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="showDetailAccount.jsp" />
+      </result>
+    </action>
+    <action name="open_assignList" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="assignList.jsp" />
+      </result>
+    </action>
+    <action name="open_authorizedList" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="authorizedList.jsp" />
+      </result>
+    </action>
+    <action name="open_authorized" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="authorized.jsp" />
+      </result>
+    </action>
+    <action name="updateJjBill" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="open_updateJjInfo" namespace="/system" />
+      </result>
+    </action>
+    <action name="authorized" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="open_authorized" namespace="/system" />
+      </result>
+    </action>
+    <action name="escAuthorized" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="open_authorizedList" namespace="/system" />
+      </result>
+    </action>
+    <action name="open_createAssign" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="assign.jsp" />
+      </result>
+    </action>
+    <action name="createAssign" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="open_createAssign" namespace="/system" />
+      </result>
+    </action>
+    <action name="open_changeAssign" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="changeAssign.jsp" />
+      </result>
+    </action>
+    <action name="escAssign" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="open_assignList" namespace="/system" />
+      </result>
+    </action>
+    <action name="changeAssign" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="open_assignList" namespace="/system" />
+      </result>
+    </action>
+    <action name="open_carList" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="carList.jsp" />
+      </result>
+    </action>
+    <action name="open_updateCar" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="editCar.jsp" />
+      </result>
+    </action>
+    <action name="updateCarDo" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="open_updateCar" namespace="/system" />
+      </result>
+    </action>
+    <action name="delCarInfo" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="open_carList" namespace="/system" />
+      </result>
+    </action>
+    <action name="showCarImage" location="0,0" size="0,0" />
+    <action name="showJJImage" location="0,0" size="0,0" />
+    <action name="printF" location="0,0" size="0,0" />
+    <action name="open_staList" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="staList.jsp" />
+      </result>
+    </action>
+    <action name="open_createSta" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="addSta.jsp" />
+      </result>
+    </action>
+    <action name="createSta" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="open_createSta" namespace="/system" />
+      </result>
+    </action>
+    <action name="open_updateSta" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="editSta.jsp" />
+      </result>
+    </action>
+    <action name="updateSta" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="open_updateSta" namespace="/system" />
+      </result>
+    </action>
+    <action name="delSta" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="open_staList" namespace="/system" />
+      </result>
+    </action>
+    <action name="open_operList" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="operList.jsp" />
+      </result>
+    </action>
+    <action name="open_createOper" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="addOper.jsp" />
+      </result>
+    </action>
+    <action name="createOper" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="open_createOper" namespace="/system" />
+      </result>
+    </action>
+    <action name="open_updateOper" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="editOper.jsp" />
+      </result>
+    </action>
+    <action name="open_changeOper" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="changeOper.jsp" />
+      </result>
+    </action>
+    <action name="updateOper" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="open_updateOper" namespace="/system" />
+      </result>
+    </action>
+    <action name="changeOper" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="open_changeOper" namespace="/system" />
+      </result>
+    </action>
+    <action name="delOper" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="open_operList" namespace="/system" />
+      </result>
+    </action>
+    <action name="open_Log" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="logList.jsp" />
+      </result>
+    </action>
+    <action name="open_zzLog" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="zzlogList.jsp" />
+      </result>
+    </action>
+    <action name="open_statisticsEnterpriseTable" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="statisticsEnterpriseTable.jsp" />
+      </result>
+    </action>
+    <action name="open_statisticsMeaTable" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="statisticsMeaTable.jsp" />
+      </result>
+    </action>
+    <action name="open_showDetailAccount" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="showStaDetailAccount.jsp" />
+      </result>
+    </action>
+    <action name="printFZH" location="0,0" size="0,0" />
+    <action name="open_personList" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="personList.jsp" />
+      </result>
+    </action>
+    <action name="open_createPerson" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="addPerson.jsp" />
+      </result>
+    </action>
+    <action name="createPerson" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="open_createPerson" namespace="/system" />
+      </result>
+    </action>
+    <action name="open_updatePerson" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="editPerson.jsp" />
+      </result>
+    </action>
+    <action name="updatePerson" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="open_updatePerson" namespace="/system" />
+      </result>
+    </action>
+    <action name="delPseron" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="open_personList" namespace="/system" />
+      </result>
+    </action>
+    <action name="open_changePerson" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="changePerson.jsp" />
+      </result>
+    </action>
+    <action name="changePerson" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="open_changePerson" namespace="/system" />
+      </result>
+    </action>
+    <action name="downloadAttachment" location="0,0" size="0,0">
+      <result name="success" />
+    </action>
+    <action name="*" location="0,0" size="0,0">
+      <result name="success">
+        <resourceEdge source="success" routing="0" target="{1}.jsp" />
+      </result>
+    </action>
+  </package>
+  <webResource name="defaultIndexPage.jsp" path="WEB-INF/website/defaultIndexPage.jsp" location="4067,220" size="150,55" />
+  <webResource name="defaultIndexPage.jsp" path="/WEB-INF/system/defaultIndexPage.jsp" location="4452,220" size="150,55" />
+  <webResource name="usersList.jsp" path="/WEB-INF/system/usersList.jsp" location="3040,290" size="150,55" />
+  <webResource name="addUser.jsp" path="/WEB-INF/system/addUser.jsp" location="3047,465" size="150,55" />
+  <webResource name="editUser.jsp" path="/WEB-INF/system/editUser.jsp" location="3043,640" size="150,55" />
+  <webResource name="updatePsw.jsp" path="/WEB-INF/system/updatePsw.jsp" location="3040,815" size="150,55" />
+  <webResource name="measList.jsp" path="/WEB-INF/system/measList.jsp" location="3043,990" size="150,55" />
+  <webResource name="addMea.jsp" path="/WEB-INF/system/addMea.jsp" location="3050,1165" size="150,55" />
+  <webResource name="editMea.jsp" path="/WEB-INF/system/editMea.jsp" location="3047,1375" size="150,55" />
+  <webResource name="compList.jsp" path="/WEB-INF/system/compList.jsp" location="3043,1550" size="150,55" />
+  <webResource name="addComp.jsp" path="/WEB-INF/system/addComp.jsp" location="3047,1760" size="150,55" />
+  <webResource name="editComp.jsp" path="/WEB-INF/system/editComp.jsp" location="3043,1935" size="150,55" />
+  <webResource name="accountList.jsp" path="/WEB-INF/system/accountList.jsp" location="3033,2110" size="150,55" />
+  <webResource name="addAccount.jsp" path="/WEB-INF/system/addAccount.jsp" location="3036,2285" size="150,55" />
+  <webResource name="editAccount.jsp" path="/WEB-INF/system/editAccount.jsp" location="3033,2495" size="150,55" />
+  <webResource name="editRemaining.jsp" path="/WEB-INF/system/editRemaining.jsp" location="3026,2670" size="150,55" />
+  <webResource name="searchList.jsp" path="/WEB-INF/system/searchList.jsp" location="3036,2845" size="150,55" />
+  <webResource name="updateJiBill.jsp" path="/WEB-INF/system/updateJiBill.jsp" location="3029,3055" size="150,55" />
+  <webResource name="statisticsEnterprise.jsp" path="/WEB-INF/system/statisticsEnterprise.jsp" location="3036,3230" size="150,55" />
+  <webResource name="statisticsBugList.jsp" path="/WEB-INF/system/statisticsBugList.jsp" location="3047,3405" size="150,55" />
+  <webResource name="showDetailAccount.jsp" path="/WEB-INF/system/showDetailAccount.jsp" location="3047,3580" size="150,55" />
+  <webResource name="assignList.jsp" path="/WEB-INF/system/assignList.jsp" location="3036,3790" size="150,55" />
+  <webResource name="authorizedList.jsp" path="/WEB-INF/system/authorizedList.jsp" location="3022,3965" size="150,55" />
+  <webResource name="authorized.jsp" path="/WEB-INF/system/authorized.jsp" location="3036,4140" size="150,55" />
+  <webResource name="assign.jsp" path="/WEB-INF/system/assign.jsp" location="3050,4350" size="150,55" />
+  <webResource name="changeAssign.jsp" path="/WEB-INF/system/changeAssign.jsp" location="3029,4525" size="150,55" />
+  <webResource name="carList.jsp" path="/WEB-INF/system/carList.jsp" location="3047,4700" size="150,55" />
+  <webResource name="editCar.jsp" path="/WEB-INF/system/editCar.jsp" location="3047,4875" size="150,55" />
+  <webResource name="staList.jsp" path="/WEB-INF/system/staList.jsp" location="3047,5050" size="150,55" />
+  <webResource name="addSta.jsp" path="/WEB-INF/system/addSta.jsp" location="3050,5225" size="150,55" />
+  <webResource name="editSta.jsp" path="/WEB-INF/system/editSta.jsp" location="3047,5400" size="150,55" />
+  <webResource name="operList.jsp" path="/WEB-INF/system/operList.jsp" location="3043,5575" size="150,55" />
+  <webResource name="addOper.jsp" path="/WEB-INF/system/addOper.jsp" location="3047,5750" size="150,55" />
+  <webResource name="editOper.jsp" path="/WEB-INF/system/editOper.jsp" location="3043,5925" size="150,55" />
+  <webResource name="changeOper.jsp" path="/WEB-INF/system/changeOper.jsp" location="3036,6100" size="150,55" />
+  <webResource name="logList.jsp" path="/WEB-INF/system/logList.jsp" location="3047,6275" size="150,55" />
+  <webResource name="zzlogList.jsp" path="/WEB-INF/system/zzlogList.jsp" location="3040,6450" size="150,55" />
+  <webResource name="statisticsEnterpriseTable.jsp" path="/WEB-INF/system/statisticsEnterpriseTable.jsp" location="3054,6625" size="150,55" />
+  <webResource name="statisticsMeaTable.jsp" path="/WEB-INF/system/statisticsMeaTable.jsp" location="3043,6800" size="150,55" />
+  <webResource name="{1}.jsp" path="/{1}.jsp" location="100,10" size="150,55" />
+  <webResource name="showStaDetailAccount.jsp" path="/WEB-INF/system/showStaDetailAccount.jsp" location="0,0" size="0,0" />
+  <webResource name="personList.jsp" path="/WEB-INF/system/personList.jsp" location="0,0" size="0,0" />
+  <webResource name="addPerson.jsp" path="/WEB-INF/system/addPerson.jsp" location="0,0" size="0,0" />
+  <webResource name="editPerson.jsp" path="/WEB-INF/system/editPerson.jsp" location="0,0" size="0,0" />
+  <webResource name="changePerson.jsp" path="/WEB-INF/system/changePerson.jsp" location="0,0" size="0,0" />
+</Struts2Diagram>
+

@@ -1,0 +1,908 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE struts PUBLIC
+    "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN"
+    "http://struts.apache.org/dtds/struts-2.0.dtd">
+<struts>
+	<package name="website_index" extends="ErsDefault" namespace="/">
+		<action name="index" class="com.cauc.training.ui.common.BaseActionSupport"
+			method="forward">
+			<result name="success">WEB-INF/website/defaultIndexPage.jsp</result>
+		</action>
+	</package>
+
+	<package name="system_index" extends="ErsDefault" namespace="/system">
+		<!-- 打开后台管理首页 -->
+		<action name="index" class="com.cauc.training.ui.core.OutLineAction"
+			method="getTopNavigationList">
+			<result name="success">/WEB-INF/system/defaultIndexPage.jsp</result>
+		</action>
+		<!-- 默认页面 -->
+		<action name="open_right" class="com.cauc.training.ui.common.BaseActionSupport"
+			method="forward">
+			<result name="success">/WEB-INF/system/right.jsp</result>
+		</action>
+		
+		<!-- 数据备份管理页面 -->
+		<action name="open_backupDatabaseManage" class="com.cauc.training.ui.core.BackupDataAction"
+			method="openBackupDatabaseManage">
+			<result name="success">/WEB-INF/system/backupManage.jsp</result>
+		</action>
+
+		<!-- 局方文件管理页面 -->
+		<action name="open_fileManage" class="com.cauc.training.ui.common.BaseActionSupport"
+			method="forward">
+			<result name="success">/WEB-INF/system/fileManage.jsp</result>
+		</action>
+
+		<!-- 局方文件添加页面 -->
+		<action name="open_addfileInfo" class="com.cauc.training.ui.common.BaseActionSupport"
+			method="forward">
+			<result name="success">/WEB-INF/system/addFileInfo.jsp</result>
+		</action>
+
+		<!-- 字典类型管理页面 -->
+		<action name="open_dicTypeManage" class="com.cauc.training.ui.common.BaseActionSupport"
+			method="forward">
+			<result name="success">/WEB-INF/system/dicTypeManage.jsp</result>
+		</action>
+
+	</package>
+	<package name="ajax_system" extends="ErsDefault" namespace="/system">
+	
+		<!-- Telnet Vpn是否连接 -->
+		<action name="showIsTelentConnect"	class="com.cauc.training.ui.core.SystemUserManagerAction" method="openUsbKey">
+			<result name="success" type="json">
+				<param name="root">viewOrg</param>
+			</result>
+		</action>
+		<action name="readVAbroadaviationschool" class="com.cauc.training.ui.core.SysUserAction"
+			method="readVAbroadaviationschool">
+			<result name="success" type="json">
+				<param name="root">viewAbroadaviationschool</param>
+			</result>
+		</action>
+		<!-- 修改密码 -->
+		<action name="changePassword" class="com.cauc.training.ui.core.SysUserAction"
+			method="changePassword">
+			<result name="success" type="json">
+				<param name="root">viewOrg</param>
+			</result>
+		</action>
+
+		<!-- 根据主键查询角色信息 -->
+		<action name="searchRoleById" class="com.cauc.training.ui.core.RoleAction"
+			method="searchRoleById">
+			<result name="success" type="json">
+				<!-- root为固定值，该参数表示向Ajax的回调函数返回 RoleAction类中的一个属性值，本例为role属性，即将该属性值返回给Ajax回调函数的参数 
+					例如：Ajax回调函数参数为data，则使用role对象的VName属性时，就可以写成：data.VName -->
+				<param name="root">vrole</param>
+			</result>
+		</action>
+
+		<!-- 备份数据库Action -->
+		<action name="backupDatabase" class="com.cauc.training.ui.core.BackupDataAction"
+			method="backUp">
+			<result name="success" type="json">
+				<param name="root">fileName</param>
+			</result>
+		</action>
+
+		<!-- 删除局方文件附件Action -->
+		<action name="delAttachment" class="com.cauc.training.ui.core.FileManagerAction"
+			method="delAttachment">
+
+			<result name="success" type="json">
+				<param name="root">flag</param>
+			</result>
+
+		</action>
+
+		<!-- 根据主键查询字典类型信息 -->
+		<action name="searchDictypeById" class="com.cauc.training.ui.core.DictionaryTypeAction"
+			method="searchDicTypeById">
+			<result name="success" type="json">
+				<!-- root为固定值，该参数表示向Ajax的回调函数返回 DictionaryTypeAction类中的一个属性值，本例为dic属性，即将该属性值返回给Ajax回调函数的参数 
+					例如：Ajax回调函数参数为data，则使用dic对象的VName属性时，就可以写成：data.VName -->
+				<param name="root">vodicType</param>
+			</result>
+		</action>
+
+		<!-- 根据主键查询字典信息 -->
+		<action name="searchDicInfoByIdForEdit" class="com.cauc.training.ui.core.DictionaryInfoAction"
+			method="searchDicInfoByIdForEdit">
+			<result name="success" type="json">
+				<!-- root为固定值，该参数表示向Ajax的回调函数返回 DictionaryTypeAction类中的一个属性值，本例为voDicInfo属性，即将该属性值返回给Ajax回调函数的参数 
+					例如：Ajax回调函数参数为data，则使用dic对象的VName属性时，就可以写成：data.VName -->
+				<param name="root">voDicInfo</param>
+			</result>
+		</action>
+
+		<!-- 角色-功能绑定 -->
+		<action name="createRoleFunctions" class="com.cauc.training.ui.core.RoleFunctionAction"
+			method="saveRoleFunctions">
+			<result name="success" type="json">
+				<param name="root">flag</param>
+			</result>
+		</action>
+
+		<!-- 获取所有功能节点，包括与当前角色绑定的功能节点，采用非延时加载方式生成树形 -->
+		<action name="showAllRoleFunctionTree" class="com.cauc.training.ui.core.RoleFunctionAction"
+			method="readAllRoleFunctionTree">
+			<result name="success" type="json">
+				<param name="root">roleFuncList</param>
+			</result>
+		</action>
+
+
+		<!-- 系统用户账号查询 -->
+		<action name="searchUserAccountById"
+			class="com.cauc.training.ui.core.SystemUserManagerAction" method="searchUserAccountById">
+			<result name="success" type="json">
+				<param name="root">voUser</param>
+			</result>
+		</action>
+
+
+		<!-- 恢复默认密码，该Action用于查询所有状态用户账号的功能页使用 -->
+		<action name="recoverDefaultPassword"
+			class="com.cauc.training.ui.core.SystemUserManagerAction" method="recoverDefaultPassword">
+
+			<result name="success" type="json">
+				<param name="root">flag</param>
+			</result>
+		</action>
+
+		<!-- 获取所有角色，包括与当前用户绑定的角色 -->
+		<action name="searchRolesForBindingUser" class="com.cauc.training.ui.core.UserRightsAction"
+			method="searchRolesForBindingUser">
+
+			<result name="success" type="json">
+				<param name="root">voTUserRightList</param>
+			</result>
+		</action>
+
+		<!-- 根据主键查询政策法规量化信息 -->
+		<action name="searchPolicyLawsInfoByIdForEditAndView" class="com.cauc.training.ui.core.PolicyLawsInfoAction"
+			method="searchPolicyLawsInfoByIdForEditAndView">
+			<result name="success" type="json">
+				<param name="root">voLawsInfo</param>
+			</result>
+		</action>
+
+
+	</package>
+	<package name="system_management" extends="ErsDefault" namespace="/system">
+	
+		<!-- 课程排序 -->
+		<action name="handOrderByNum" class="com.cauc.training.ui.core.SysUserAction" method="handOrderByNum">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">${backUrl}</param>
+				<param name="orgId">${orgId}</param>
+			</result>
+		</action>
+
+		<!-- 理论课程信息管理 -->
+		<action name="open_lessonList" class="com.cauc.training.ui.core.SysUserAction"
+			method="readLessonList">
+			<result name="success">/WEB-INF/system/lessonList.jsp</result>
+		</action>
+		<!-- 保存课程信息 -->
+		<action name="createLssson" class="com.cauc.training.ui.core.SysUserAction"	method="saveLesson">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_lessonList</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 编辑课程信息 -->
+		<action name="updateLessonBaseInfo" class="com.cauc.training.ui.core.SysUserAction"	method="updateLessonBaseInfo">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_lessonList</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 删除课程信息 -->
+		<action name="deleteLessonBaseInfo" class="com.cauc.training.ui.core.SysUserAction"	method="deleteLessonBaseInfo">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_lessonList</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 国外航校信息管理-->
+		<action name="open_foreignSchoolBaseInfo" class="com.cauc.training.ui.core.SysUserAction"
+			method="readForeignSchoolBaseInfoList">
+			<result name="success">/WEB-INF/system/foreignSchoolBaseInfoList.jsp</result>
+		</action>
+		<!-- 保存国外航校信息管理-->
+		<action name="createforeignSchoolBaseInfo" class="com.cauc.training.ui.core.SysUserAction"
+			method="saveForeignSchoolBaseInfo">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_foreignSchoolBaseInfo</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 编辑国外航校信息管理-->
+		<action name="updateforeignSchoolBaseInfo" class="com.cauc.training.ui.core.SysUserAction"
+			method="updateforeignSchoolBaseInfo">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_foreignSchoolBaseInfo</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 删除国外航校信息管理-->
+		<action name="deleteForeignSchoolBaseInfo" class="com.cauc.training.ui.core.SysUserAction"
+			method="deleteForeignSchoolBaseInfo">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_foreignSchoolBaseInfo</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 日志查询Action -->
+		<action name="open_LogListPage" class="com.cauc.training.ui.core.LogAction"
+			method="readLogList">
+			<result name="success">/WEB-INF/log/flightTrainingRecordLogList.jsp</result>
+		</action>
+		<!-- 打开密码修改页面 <action name="open_changePsw" class="com.cauc.training.ui.core.SysUserAction" 
+			method="forward"> <result name="success">/WEB-INF/system/updatePsw.jsp</result> 
+			</action> -->
+
+
+
+		<!-- 角色查询Action -->
+		<action name="searchRoles" class="com.cauc.training.ui.core.RoleAction"
+			method="searchRoles">
+
+			<result name="success">
+
+				/WEB-INF/system/roleManage.jsp
+			</result>
+
+		</action>
+
+		<!-- 添加角色Action -->
+		<action name="createRole" class="com.cauc.training.ui.core.RoleAction"
+			method="saveRole">
+
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">searchRoles</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+
+		</action>
+		<!-- 编辑角色Action -->
+		<action name="updateRole" class="com.cauc.training.ui.core.RoleAction"
+			method="updateRole">
+
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">searchRoles</param>
+				<param name="statusMsg">${statusMsg}</param>
+				<param name="pageIndex">${pageIndex}</param>
+			</result>
+
+		</action>
+
+		<!-- 删除角色Action -->
+		<action name="deleteRole" class="com.cauc.training.ui.core.RoleAction"
+			method="deleteRole">
+
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">searchRoles</param>
+				<param name="statusMsg">${statusMsg}</param>
+				<param name="pageIndex">${pageIndex}</param>
+			</result>
+
+		</action>
+		<!-- 附件下载 -->
+		<action name="downloadAttachment"
+			class="com.cauc.training.ui.core.DownloadAttachmentAction" method="downloadFile">
+			<result name="success" type="stream">
+				<param name="contentType">
+					application/octet-stream;charset=ISO8859-1
+				</param>
+				<param name="inputStream">inputStream</param>
+				<param name="contentDisposition">
+					attachment;filename="${attachmentName}"
+				</param>
+				<param name="bufferSize">4096</param>
+			</result>
+		</action>
+
+		<!-- 局方文件查询Action -->
+		<action name="searchTFiles" class="com.cauc.training.ui.core.FileManagerAction"
+			method="searchTFiles">
+
+			<result name="success">
+
+				/WEB-INF/system/fileManage.jsp
+			</result>
+
+		</action>
+
+		<!-- 添加局方文件Action -->
+		<action name="createTFile" class="com.cauc.training.ui.core.FileManagerAction"
+			method="saveFileInfo">
+
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_addfileInfo</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+
+		</action>
+
+		<!-- 编辑局方文件Action -->
+		<action name="updateTFile" class="com.cauc.training.ui.core.FileManagerAction"
+			method="updateFileInfo">
+
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">searchTFiles</param>
+				<param name="statusMsg">${statusMsg}</param>
+				<param name="pageIndex">${pageIndex}</param>
+			</result>
+
+		</action>
+
+		<!-- 删除局方文件Action -->
+		<action name="deleteTFile" class="com.cauc.training.ui.core.FileManagerAction"
+			method="deleteTFiles">
+
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">searchTFiles</param>
+				<param name="statusMsg">${statusMsg}</param>
+				<param name="pageIndex">${pageIndex}</param>
+			</result>
+
+		</action>
+
+		<!-- 根据主键查看局方文件Action -->
+		<action name="searchTFileById" class="com.cauc.training.ui.core.FileManagerAction"
+			method="searchTFileById">
+
+			<result name="successForEdit">
+				/WEB-INF/system/editFileInfo.jsp
+			</result>
+
+			<result name="successForView">
+				/WEB-INF/system/viewFileInfo.jsp
+			</result>
+		</action>
+
+
+		<!-- 字典类型查询Action -->
+		<action name="searchDictypes" class="com.cauc.training.ui.core.DictionaryTypeAction"
+			method="searchDicTypes">
+
+			<result name="success">
+
+				/WEB-INF/system/dictionaryTypeManage.jsp
+
+			</result>
+
+		</action>
+
+		<!-- 添加字典类型Action -->
+		<action name="createDictype" class="com.cauc.training.ui.core.DictionaryTypeAction"
+			method="saveDicType">
+
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">searchDictypes</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+
+		</action>
+		<!-- 编辑字典类型Action -->
+		<action name="updateDictype" class="com.cauc.training.ui.core.DictionaryTypeAction"
+			method="updateDicType">
+
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">searchDictypes</param>
+				<param name="statusMsg">${statusMsg}</param>
+				<param name="pageIndex">${pageIndex}</param>
+			</result>
+
+		</action>
+
+		<!-- 删除字典类型Action -->
+		<action name="deleteDictype" class="com.cauc.training.ui.core.DictionaryTypeAction"
+			method="deleteDicType">
+
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">searchDictypes</param>
+				<param name="statusMsg">${statusMsg}</param>
+				<param name="pageIndex">${pageIndex}</param>
+			</result>
+
+		</action>
+
+
+		<!-- 字典信息查询Action -->
+		<action name="searchDicInfos" class="com.cauc.training.ui.core.DictionaryInfoAction"
+			method="searchDicInfos">
+
+			<result name="success">
+				/WEB-INF/system/dicInfoManage.jsp
+			</result>
+
+		</action>
+
+		<!-- 添加字典信息Action -->
+		<action name="createDicInfo" class="com.cauc.training.ui.core.DictionaryInfoAction"
+			method="saveDicInfo">
+
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">searchDicInfos</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+
+		</action>
+		<!-- 编辑字典信息Action -->
+		<action name="updateDicInfo" class="com.cauc.training.ui.core.DictionaryInfoAction"
+			method="updateDicInfo">
+
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">searchDicInfos</param>
+				<param name="statusMsg">${statusMsg}</param>
+				<param name="pageIndex">${pageIndex}</param>
+			</result>
+
+		</action>
+
+		<!-- 删除字典信息Action -->
+		<action name="deleteDicInfo" class="com.cauc.training.ui.core.DictionaryInfoAction"
+			method="deleteDicInfo">
+
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">searchDicInfos</param>
+				<param name="statusMsg">${statusMsg}</param>
+				<param name="pageIndex">${pageIndex}</param>
+			</result>
+
+		</action>
+
+		<!-- 直接创建系统用户账号Action，然后跳转到所有状态页面 -->
+		<action name="createSystemUserAccount"
+			class="com.cauc.training.ui.core.SystemUserManagerAction" method="createSystemUserAccount">
+
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">searchAllStatusUserInfos</param>
+				<param name="statusMsg">${statusMsg}</param>
+				<param name="userType">${userType}</param>
+			</result>
+
+		</action>
+
+		<!-- 直接创建系统用户账号Action，然后跳转到所有正常（开通）状态页面 -->
+
+
+		<action name="createSystemUserAccountForOpenedStatus"
+			class="com.cauc.training.ui.core.SystemUserManagerAction" method="createSystemUserAccount">
+
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">searchOpenedStatusUserAccount</param>
+				<param name="statusMsg">${statusMsg}</param>
+				<param name="userType">${userType}</param>
+			</result>
+
+		</action>
+
+		<!-- 直接更新系统用户账号Action，然后跳转到所有状态页面 -->
+		<action name="updateSystemUserAccount"
+			class="com.cauc.training.ui.core.SystemUserManagerAction" method="updateSystemUserAccount">
+
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">searchAllStatusUserInfos</param>
+				<param name="statusMsg">${statusMsg}</param>
+				<param name="searchStatus">${searchStatus}</param><!-- 查询关键字，用户状态 -->
+				<param name="pageIndex">${pageIndex}</param>
+				<param name="userType">${userType}</param>
+			</result>
+
+		</action>
+
+		<!-- 直接更新系统用户账号Action，然后跳转到正常（开通）状态页面 -->
+		<action name="updateSystemUserAccountForOpenedStatus"
+			class="com.cauc.training.ui.core.SystemUserManagerAction" method="updateSystemUserAccount">
+
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">searchOpenedStatusUserAccount</param>
+				<param name="statusMsg">${statusMsg}</param>
+				<param name="searchStatus">${searchStatus}</param><!-- 查询关键字，用户状态 -->
+				<param name="pageIndex">${pageIndex}</param>
+				<param name="userType">${userType}</param>
+			</result>
+
+		</action>
+
+
+		<!-- 所有状态系统用户查询Action -->
+		<action name="searchAllStatusUserInfos"
+			class="com.cauc.training.ui.core.SystemUserManagerAction" method="searchAllStatusUserAccount">
+
+			<result name="success">
+				/WEB-INF/system/systemAllStatusUserManage.jsp
+			</result>
+
+		</action>
+
+		<!-- 查询正常（开通）状态系统用户Action -->
+		<action name="searchOpenedStatusUserAccount"
+			class="com.cauc.training.ui.core.SystemUserManagerAction" method="searchOpenedStatusUserAccount">
+			<result name="success">
+				/WEB-INF/system/systemOpenStatusUserManage.jsp
+			</result>
+		</action>
+		
+		<!-- 发送数字证书 -->
+		<action name="open_usbKey"	class="com.cauc.training.ui.core.SystemUserManagerAction" method="openUsbkPage">
+			<result name="success">/WEB-INF/system/usbKey.jsp</result>
+		</action>
+		
+		<!-- 用户绑定数字证书 -->
+		<action name="usbKeyToUser"	class="com.cauc.training.ui.core.SystemUserManagerAction" method="usbKeyToUser">
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">open_usbKey</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		
+
+		<!-- 查询停用状态系统用户Action -->
+		<action name="searchStopStatusUserAccount"
+			class="com.cauc.training.ui.core.SystemUserManagerAction" method="searchStopStatusUserAccount">
+
+			<result name="success">
+				/WEB-INF/system/systemStopStatusUserManage.jsp
+			</result>
+
+		</action>
+
+		<!-- 查询删除状态系统用户Action -->
+		<action name="searchDeleteStatusUserAccount"
+			class="com.cauc.training.ui.core.SystemUserManagerAction" method="searchDeleteStatusUserAccount">
+
+			<result name="success">
+				/WEB-INF/system/systemDeleteStatusUserManage.jsp
+			</result>
+
+		</action>
+
+
+
+		<!-- 直接恢复系统用户账号Action，该Action用于查询所有状态用户账号的功能页使用 -->
+		<action name="recoverUserAccountForAllStatus"
+			class="com.cauc.training.ui.core.SystemUserManagerAction" method="recoverUserAccount">
+
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">searchAllStatusUserInfos</param>
+				<param name="statusMsg">${statusMsg}</param>
+
+				<!-- 需要传递查询关键字和页码，否则会影响到分页 -->
+				<param name="searchStatus">${searchStatus}</param><!-- 查询关键字，用户状态 -->
+				<param name="pageIndex">${pageIndex}</param>
+				<param name="userType">${userType}</param>
+			</result>
+
+		</action>
+
+		<!-- 直接恢复系统用户账号Action，该Action用于查询停用状态用户账号的功能页使用 -->
+		<action name="recoverUserAccountForStopStatus"
+			class="com.cauc.training.ui.core.SystemUserManagerAction" method="recoverUserAccount">
+
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">searchStopStatusUserAccount</param>
+				<param name="statusMsg">${statusMsg}</param>
+
+				<!-- 需要传递查询关键字和页码，否则会影响到分页 -->
+				<param name="searchStatus">${searchStatus}</param><!-- 查询关键字，用户状态 -->
+				<param name="pageIndex">${pageIndex}</param>
+				<param name="userType">${userType}</param>
+			</result>
+
+		</action>
+
+		<!-- 直接恢复系统用户账号Action，该Action用于查询删除状态用户账号的功能页使用 -->
+		<action name="recoverUserAccountForDeleteStatus"
+			class="com.cauc.training.ui.core.SystemUserManagerAction" method="recoverUserAccount">
+
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">searchDeleteStatusUserAccount</param>
+				<param name="statusMsg">${statusMsg}</param>
+
+				<!-- 需要传递查询关键字和页码，否则会影响到分页 -->
+				<param name="searchStatus">${searchStatus}</param><!-- 查询关键字，用户状态 -->
+				<param name="pageIndex">${pageIndex}</param>
+				<param name="userType">${userType}</param>
+			</result>
+
+		</action>
+
+
+
+		<!-- 直接停用系统用户账号Action，该Action用于查询所有状态用户账号的功能页使用 -->
+		<action name="stopUserAccountForAllStatus"
+			class="com.cauc.training.ui.core.SystemUserManagerAction" method="stopUserAccount">
+
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">searchAllStatusUserInfos</param>
+				<param name="statusMsg">${statusMsg}</param>
+
+				<!-- 需要传递查询关键字和页码，否则会影响到分页 -->
+				<param name="searchStatus">${searchStatus}</param><!-- 查询关键字，用户状态 -->
+				<param name="pageIndex">${pageIndex}</param>
+				<param name="userType">${userType}</param>
+			</result>
+		</action>
+
+		<!-- 直接停用系统用户账号Action，该Action用于查询正常（已开通）状态用户账号的功能页使用 -->
+		<action name="stopUserAccountForOpenedStatus"
+			class="com.cauc.training.ui.core.SystemUserManagerAction" method="stopUserAccount">
+
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">searchOpenedStatusUserAccount</param>
+				<param name="statusMsg">${statusMsg}</param>
+
+				<!-- 需要传递查询关键字和页码，否则会影响到分页 -->
+				<param name="searchStatus">${searchStatus}</param><!-- 查询关键字，用户状态 -->
+				<param name="pageIndex">${pageIndex}</param>
+				<param name="userType">${userType}</param>
+			</result>
+		</action>
+
+
+		<!-- 直接删除系统用户账号Action，该Action用于查询所有状态用户账号的功能页使用 -->
+		<action name="deleteUserAccountForAllStatus"
+			class="com.cauc.training.ui.core.SystemUserManagerAction" method="deleteUserAccount">
+
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">searchAllStatusUserInfos</param>
+				<param name="statusMsg">${statusMsg}</param>
+
+				<!-- 需要传递查询关键字和页码，否则会影响到分页 -->
+				<param name="searchStatus">${searchStatus}</param><!-- 查询关键字，用户状态 -->
+				<param name="pageIndex">${pageIndex}</param>
+				<param name="userType">${userType}</param>
+			</result>
+		</action>
+
+		<!-- 直接删除系统用户账号Action，该Action用于查询正常（已开通）状态状态用户账号的功能页使用 -->
+		<action name="deleteUserAccountForOpenedStatus"
+			class="com.cauc.training.ui.core.SystemUserManagerAction" method="deleteUserAccount">
+
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">searchOpenedStatusUserAccount</param>
+				<param name="statusMsg">${statusMsg}</param>
+				<param name="searchStatus">${searchStatus}</param>
+				<param name="pageIndex">${pageIndex}</param>
+				<param name="userType">${userType}</param>
+			</result>
+		</action>
+
+
+		<!-- 直接删除系统用户账号Action，该Action用于查询停用状态用户账号的功能页使用 -->
+		<action name="deleteUserAccountForStopStatus"
+			class="com.cauc.training.ui.core.SystemUserManagerAction" method="deleteUserAccount">
+
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">searchStopStatusUserAccount</param>
+				<param name="statusMsg">${statusMsg}</param>
+				<param name="searchStatus">${searchStatus}</param>
+				<param name="pageIndex">${pageIndex}</param>
+				<param name="userType">${userType}</param>
+			</result>
+		</action>
+
+		<!-- 待开通用户账号处理部分 -->
+
+		<!-- 查询教员信息Action -->
+		<action name="searchTeachersInfoForOpenUserAccount"
+			class="com.cauc.training.ui.core.SystemUserManagerAction" method="searchTeachersInfo">
+
+			<result name="success">
+				/WEB-INF/system/systemTeachersInfo.jsp
+			</result>
+
+		</action>
+
+		<!-- 查询学员信息Action -->
+		<action name="searchStudentsInfoForOpenUserAccount"
+			class="com.cauc.training.ui.core.SystemUserManagerAction" method="searchStudentsInfo">
+
+			<result name="success">
+				/WEB-INF/system/systemStudentsInfo.jsp
+			</result>
+
+		</action>
+
+		<!-- 查询其他人员信息Action -->
+		<action name="searchOtherUsersInfoForOpenUserAccount"
+			class="com.cauc.training.ui.core.SystemUserManagerAction" method="searchOtherUsersInfo">
+
+			<result name="success">
+				/WEB-INF/system/systemOtherUsersInfo.jsp
+			</result>
+
+		</action>
+
+		<!-- 开通教员的用户账号Action -->
+		<action name="openTeachersUserAccount"
+			class="com.cauc.training.ui.core.SystemUserManagerAction" method="openTeachersUserAccount">
+
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">searchTeachersInfoForOpenUserAccount</param>
+				<param name="statusMsg">${statusMsg}</param>
+				<param name="pageIndex">${pageIndex}</param>
+				<param name="userType">${userType}</param>
+			</result>
+		</action>
+
+		<!-- 开通学员的用户账号Action -->
+		<action name="openStudentsUserAccount"
+			class="com.cauc.training.ui.core.SystemUserManagerAction" method="openStudentsUserAccount">
+
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">searchStudentsInfoForOpenUserAccount</param>
+				<param name="statusMsg">${statusMsg}</param>
+				<param name="pageIndex">${pageIndex}</param>
+				<param name="userType">${userType}</param>
+			</result>
+		</action>
+
+		<!-- 开通其他人员的用户账号Action -->
+		<action name="openOtherUsersUserAccount"
+			class="com.cauc.training.ui.core.SystemUserManagerAction" method="openOtherUsersUserAccount">
+
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">searchOtherUsersInfoForOpenUserAccount</param>
+				<param name="statusMsg">${statusMsg}</param>
+
+				<param name="pageIndex">${pageIndex}</param>
+				<param name="userType">${userType}</param>
+			</result>
+		</action>
+
+		<!-- 用户-角色绑定Action -->
+
+		<action name="saveUserRights" class="com.cauc.training.ui.core.UserRightsAction"
+			method="saveUserRights">
+
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">searchOpenedStatusUserAccount</param>
+				<param name="statusMsg">${statusMsg}</param>
+
+				<!-- 需要传递查询关键字和页码，否则会影响到分页 -->
+				<param name="pageIndex">${pageIndex}</param>
+				<param name="userType">${userType}</param>
+			</result>
+		</action>
+
+		<!-- 政策法规量化信息查询Action -->
+		<action name="searchPolicyLawsInfos" class="com.cauc.training.ui.core.PolicyLawsInfoAction"
+			method="searchPolicyLawsInfos">
+
+			<result name="success">
+				/WEB-INF/system/policyLawsInfoManage.jsp
+			</result>
+
+		</action>
+
+		<!-- 添加政策法规量化信息Action -->
+		<action name="savePolicyLawsInfo" class="com.cauc.training.ui.core.PolicyLawsInfoAction"
+			method="savePolicyLawsInfo">
+
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">searchPolicyLawsInfos</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+
+		</action>
+
+		<!-- 编辑政策法规量化信息Action -->
+		<action name="updatePolicyLawsInfo" class="com.cauc.training.ui.core.PolicyLawsInfoAction"
+			method="updatePolicyLawsInfo">
+
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">searchPolicyLawsInfos</param>
+				<param name="statusMsg">${statusMsg}</param>
+				<param name="searchlawstypeid">${searchlawstypeid}</param>
+				<param name="searchcontenttypeid">${searchcontenttypeid}</param>
+				<param name="pageIndex">${pageIndex}</param>
+			</result>
+
+		</action>
+
+		<!-- 删除政策法规量化信息Action -->
+		<action name="deletePolicyLawsInfo" class="com.cauc.training.ui.core.PolicyLawsInfoAction"
+			method="deletePolicyLawsInfo">
+
+			<result name="success" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">searchPolicyLawsInfos</param>
+				<param name="statusMsg">${statusMsg}</param>
+				<param name="searchlawstypeid">${searchlawstypeid}</param>
+				<param name="searchcontenttypeid">${searchcontenttypeid}</param>
+				<param name="pageIndex">${pageIndex}</param>
+			</result>
+
+		</action>
+
+		<!-- 系统性能查询 -->
+		<action name="writeAction" class="com.cauc.training.ui.core.ServerMonitorAction"
+			method="write">
+			<result name="hqcg">/WEB-INF/system/serverMonitorList.jsp</result>
+		</action>
+
+		<!-- 当前在线用户统计管理 -->
+		<action name="OnlineCounterManage" class="com.cauc.training.ui.core.OnlineCounterAction"
+			method="HqOnlineList">
+			<result name="success">/WEB-INF/system/onlineCounterList.jsp</result>
+		</action>
+
+
+		<!-- 学籍状态与学生状态关系绑定 -->
+		<action name="*StudentStatusAction"
+			class="com.cauc.training.ui.core.StudentAndStatusRelationMagAction"
+			method="{1}StudentStatus">
+			<result name="searchList">/WEB-INF/system/studentAndStatusList.jsp</result>
+			<result name="addSS" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">searchListStudentStatusAction</param>
+				<param name="key1">${key1}</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+			<result name="deleteSS" type="redirectAction">
+				<param name="namespace">/system</param>
+				<param name="actionName">searchListStudentStatusAction</param>
+				<param name="statusMsg">${statusMsg}</param>
+			</result>
+		</action>
+		<!-- 用户在线时长统计 -->
+		<action name="OnlineCounterPageManage" class="com.cauc.training.ui.core.OnlineCounterAction"
+			method="searchList">
+			<result name="success">/WEB-INF/system/onlineCounterPageList.jsp
+			</result>
+		</action>
+
+
+		<!-- 屏蔽警告 -->
+		<action name="*">
+			<result>/{1}.jsp</result>
+		</action>
+	</package>
+
+</struts>

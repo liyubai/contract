@@ -1,0 +1,126 @@
+package com.cauc.training.ui.core.del;
+
+import java.util.List;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.pojos.TOrg;
+import com.cauc.training.ui.common.BaseActionSupport;
+import com.cauc.training.vo.VOrg;
+
+
+public class OrgAction extends BaseActionSupport {
+
+	/**
+	 * 组织机构管理
+	 */
+	private static final long serialVersionUID = 344938190059029608L;
+
+	private TOrg org;
+	private List<VOrg> orgList;
+	private String id;
+	private VOrg viewOrg;
+	
+	public String readOrgTree(){
+
+		try {
+			orgList = getFactory().getFinanceProviderInstance().getOrgService().readOrgList(id);
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+
+		return SUCCESS;
+	}
+	
+	public String readOrgInfoList(){
+		
+		return SUCCESS;
+	}
+	
+	public String createOrg(){
+	
+		if(org.getVId()!=null || org.getVId().equals("")){
+			org.setVId(null);
+		}
+		try {
+			org.setTUser(getFactory().getFinanceProviderInstance()
+								.getSysUserService()
+								.readSysUserByLoginID(getLoginContext().getLoginId()));
+			getFactory().getFinanceProviderInstance().getOrgService().saveOrg(org);
+			setId(org.getVId());
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		
+		return SUCCESS;
+	}
+	public String deleteOrg(){ 
+		viewOrg = new VOrg();
+		if(this.getId()==null || getId().equals("")){
+			viewOrg.setFlag(false);
+			viewOrg.setMessage("单位删除失败 ，参数传递错误。");
+			return SUCCESS;
+		}
+		
+		try{
+			getFactory().getFinanceProviderInstance().getOrgService().deleteOrgById(id);
+			viewOrg.setFlag(true);
+		}catch (FinanceServiceException e) {
+			viewOrg.setMessage(e.getMessage());
+			viewOrg.setFlag(false);
+		}
+		return SUCCESS;
+	}
+	public String updateOrg(){
+		viewOrg = new VOrg();
+		if(org.getVId()==null || org.getVId().equals("")){
+			viewOrg.setFlag(false);
+			viewOrg.setMessage("单位更新失败 ，参数传递错误。");
+			return SUCCESS;
+		}
+		try{
+			getFactory().getFinanceProviderInstance().getOrgService().updateOrg(org);
+			viewOrg.setFlag(true);
+		}catch (FinanceServiceException e) {
+			viewOrg.setFlag(false);
+			viewOrg.setMessage("单位更新失败 ，数据库连接超时，请重试。");
+			return SUCCESS;
+		}
+		return SUCCESS;
+	}
+	//---------------------setter and getter-------------------------------
+		public TOrg getOrg() {
+		return org;
+	}
+
+	public void setOrg(TOrg org) {
+		this.org = org;
+	}
+
+
+	public List<VOrg> getOrgList() {
+		return orgList;
+	}
+
+	public void setOrgList(List<VOrg> orgList) {
+		this.orgList = orgList;
+	}
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
+	public VOrg getViewOrg() {
+		return viewOrg;
+	}
+
+	public void setViewOrg(VOrg viewOrg) {
+		this.viewOrg = viewOrg;
+	}
+
+
+	
+}

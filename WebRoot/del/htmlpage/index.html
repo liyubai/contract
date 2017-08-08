@@ -1,0 +1,99 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>学员管理</title>
+<style type="text/css">
+<!--
+body {
+	margin-left: 0px;
+	margin-top: 0px;
+	margin-right: 0px;
+	margin-bottom: 0px;
+}
+td{
+	font-size:10pt;
+	line-height:21px;
+}
+-->
+</style></head>
+
+<body>
+<table width="100%" border="0" align="left" cellpadding="0" cellspacing="0" background="images/bj.gif">
+  <tr>
+    <td colspan="2" background="images/top_bj.gif"><img src="images/top.gif" width="1186" height="90" /></td>
+  </tr>
+  <tr>
+    <td width="203" height="500" valign="top"><img src="images/left0.gif" width="200" height="390" usemap="#Map" border="0" /></td>
+    <td width="1067"  valign="top">开发说明 <br />
+      <p>1、多表操作用需要事物处理。<br />
+        @Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)   // 对数据增加、修改、删除的时，方法上面做前面的声明,查询不需要。<br />
+        public void changeAssigned(CompSta coms) throws FinanceServiceException {<br />
+        try{<br />
+        }catch (HibernateException e){<br />
+        throw new RuntimeException(&quot;转账失败：&quot;+e.getMessage());多表操作抛出RuntimeException<br />
+        }<br />
+      }      </p>
+      <p>2、&lt;s:property value=&quot;#ttt&quot;/&gt;按道理说可以显示了啊。其实暗藏玄机，就是这时候他把abc当成变量来取值，而不是看成字符串。<br />
+        所以要想看成字符串必须加单引号。&lt;s:set name=&quot;ttt&quot; value=&quot;'abc'&quot; /&gt;<br />
+      </p>
+      <p>3、页面的表单都要放在页面的最下方，以隐藏值得方式传递，页面的控件不能放在表单里面，否则控件特效失败，页面混乱，多浏览器会有更多的问题。通过js的方式为表单元素传值。</p>
+<p>3、dialog 显示编辑的数据，json方式显示数据库要将实体类扁平化，外键要预先处理。以vo的方式显示。</p>
+      <p>4、包的说明</p>
+      <p>com.cauc.training.pojos 实体类包，自动生成，对里面的内容不要做任何修改。</p>
+      <p>com.cauc.training.vo  json方式回调数据显示包，所有的viewObject都放在这个包</p>
+      <p>com.cauc.training.util 工具类的包，可引用。</p>
+      <p>com.cauc.training.ui.core 是ACTion包 所有的Action 都要继承BaseActionSupport </p>
+      <p>com.cauc.training.business 接口包</p>
+      <p>om.cauc.training.business.hibernate 实现类包</p>
+      <p>学员管理这部分，只要对以下三个类最修改。<br />
+        com.cauc.training.business.hibernate.StudentServiceImpl</p>
+      <p>com.cauc.training.business.IStudentService </p>
+      <p>com.cauc.training.ui.core.StudentManagentAction</p>
+      <p>&lt;include file=&quot;struts-config/struts_student.xml&quot;/&gt;  在这个配置文件里面添加内容。</p>
+      <p>jsp文件在/WEB-INF/student/createStudentBaseInfo.jsp 学员注册的页面，所有学员管理的页面都放在这个文件夹下。<br />
+      </p>
+      <p>在vo里面新增相应的实体类的扁平化显示类</p>
+      <p>5、数据库是 sql server 2008  端口号是1435，用户名 sa 密码 123,abc<br />
+      </p>
+      <p>6、具体做法参照大纲管理的部分。</p>
+      <p>7、数据库的修改由专一的人做，表的字段及机构可根据需要调整。</p>
+      <p>8、acrion方式分页程序、json方式的分页程序 在大纲管理部门都有体现，可以直接应用，无须重新编码实现。 除了上述5个文件加一个vo外，尽量不要改动，</p>
+      <p>9、多表的持久化操作需要抛出RuntimeException 满足spring事务回滚。单表的持久化操作，抛出FinanceServiceException</p>
+      <p>10、系统日志文件是Tomcat 6.0\logs\training.log 测试的时候需要打开该文件，系统用的是struts2新版本，对一些变量的控制比较严格，即使页面没有错误，日志也可能会报警告。需要处理。<br />
+      </p>
+      <p>12、$(&quot;div.dropDownList&quot;).find(&quot;button&quot;).css(&quot;width&quot;,&quot;100px&quot;).end().each(function(i){ <br />
+        new $.dropDownList(i,true,280);<br />
+        })<br />
+  &quot;width&quot;,&quot;100px&quot; 去掉两个下拉框之间的缝隙</p>
+      <p>&lt;span class=&quot;bar&quot;&gt;&lt;/span&gt; 解决360按钮不在一行的问题<br />
+      </p>
+      <p>13、VOutline viewOutline; vOutline 这种属性，前端页面取不到数据库 怪哉。</p>
+      <p>14、&lt;s:if test=&quot;#str.length()&gt;22&quot;&gt;   字符截取<br />
+  &lt;s:property value=&quot;#str.substring(0,21)+'...'&quot; /&gt;<br />
+  &lt;/s:if&gt;<br />
+  &lt;s:else&gt;<br />
+  &lt;s:property value=&quot;#str&quot; /&gt;<br />
+  &lt;/s:else&gt;</p><br />
+    
+    </td>
+  </tr>
+</table>
+
+<map name="Map" id="Map">
+  <area shape="rect" coords="16,6,111,32" href="stulist.html" />
+  <area shape="rect" coords="23,59,99,87" href="addclass.html" />
+  <area shape="rect" coords="27,91,92,116" href="setlesson.html" />
+  <area shape="rect" coords="20,117,95,140" href="scoreList.html" />
+  <area shape="rect" coords="19,145,127,166" href="kaoshi.html" />
+  <area shape="rect" coords="19,166,109,195" href="tijian.html" />
+  <area shape="rect" coords="16,198,103,222" href="zhizhao.html" />
+  <area shape="rect" coords="18,226,96,250" href="zhuangtai.html" />
+  <area shape="rect" coords="19,254,99,275" href="mianshi.html" />
+  <area shape="rect" coords="18,279,116,305" href="jidi.html" />
+  <area shape="rect" coords="17,308,114,329" href="dadui.html" />
+  <area shape="rect" coords="14,330,117,354" href="wancheng.html" />
+  <area shape="rect" coords="14,356,115,380" href="biye.html" />
+</map>
+</body>
+</html>

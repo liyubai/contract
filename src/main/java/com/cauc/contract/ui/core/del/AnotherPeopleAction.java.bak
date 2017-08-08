@@ -1,0 +1,445 @@
+package com.cauc.training.ui.core.del;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.lang.StringUtils;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.business.IAnotherPeopleService;
+import com.cauc.training.business.IStudentService;
+import com.cauc.training.pojos.TDiction;
+import com.cauc.training.pojos.TFunction;
+import com.cauc.training.pojos.TOtheruser;
+import com.cauc.training.pojos.TUser;
+import com.cauc.training.ui.common.BaseActionSupport;
+import com.cauc.training.vo.VAnotherPeople;
+import com.opensymphony.xwork2.ActionContext;
+
+/**
+ * @功能描述：用于管理其他人员的Action
+ * @author gfm
+ */
+public class AnotherPeopleAction extends BaseActionSupport {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -3116518147087888350L;
+	// 其他人员实体对象
+	private TOtheruser otheruser;
+	// 其他人员VO实体对象
+	private com.cauc.training.vo.VAnotherPeople anotherpeople;
+	// 查询关键字
+	private String key;
+	// 用于存储其他人员列表
+	private List<VAnotherPeople> list;
+	// 用户ID
+	private String id;
+	private String peopleids;
+	// 用于页面显示文字
+	private String aoru;
+	// 用于判断是否为查看页面
+	private String showPeople;
+	// 部门名称
+	private String deptName;
+	// 部门ID
+	private String deptId;
+	
+	private List<TDiction> whcdList;
+	private List<TDiction> minzuList;
+	private List<TDiction> jiguanList;
+	/**
+	 * @功能描述：分页查询其他人员
+	 * @return
+	 */
+	@SuppressWarnings("static-access")
+	public String peopleListAnother() {
+		String result = "pageList";
+		try {
+
+			// TUser tuser =
+			// getFactory().getFinanceProviderInstance().getSysUserService().readSysUserByLoginID(this.getLoginContext().getLoginId());
+			// Date date = new Date();
+			// //日志文件
+			// TLog log = new TLog();
+			// log.setDCreateDate(date);
+			// log.setTUser(tuser);
+			// String urlid =
+			// getFactory().getFinanceProviderInstance().getFunctionService().getVid(ActionContext.getContext().getName());
+			// TFunction tfunction = new TFunction();
+			// tfunction.setVId(urlid);
+			// log.setTFunction(tfunction);
+			// log.setVContent("分页查询其他人员");
+			// 获得接口
+			IAnotherPeopleService iand = getFactory()
+					.getFinanceProviderInstance().getAnotherPeopleService();
+			// 构造查询参数
+			Map<String, Object> queryMap = new HashMap<String, Object>();
+			queryMap.put(iand.QUERY_KEY_NAME, this.key);
+			// queryMap.put("id", this.id);
+			// 设置分页
+			setPage(iand.searchAnotherPeople(queryMap, getPageIndex()));
+			// //保存日志
+			// getFactory().getFinanceProviderInstance().getLogService().saveLog(log);
+		} catch (FinanceServiceException e) {
+			setStatusMsg("查询列表其他人员出错！");
+			setStatusMsg("1");
+		}
+		return result;
+	}
+
+	/**
+	 * @功能描述：通过关键字查询其他人员列表
+	 * @return
+	 */
+	public String searchPeopleListAnother() {
+		String result = "peopleList";
+		// TUser tuser =
+		// getFactory().getFinanceProviderInstance().getSysUserService().readSysUserByLoginID(this.getLoginContext().getLoginId());
+		// Date date = new Date();
+		// //日志文件
+		// TLog log = new TLog();
+		// log.setDCreateDate(date);
+		// log.setTUser(tuser);
+		// String urlid =
+		// getFactory().getFinanceProviderInstance().getFunctionService().getVid(ActionContext.getContext().getName());
+		// TFunction tfunction = new TFunction();
+		// tfunction.setVId(urlid);
+		// log.setTFunction(tfunction);
+		// log.setVContent("通过关键字查询其他人员列表！");
+		// list =
+		// getFactory().getFinanceProviderInstance().getAnotherPeopleService().searchPeopleList(key);
+		try {
+			list = getFactory().getFinanceProviderInstance()
+					.getAnotherPeopleService().searchPeopleListAjax(deptId, key);
+		//	System.out.println(list.size());
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		setDeptId(deptId);
+		// //保存日志
+		// getFactory().getFinanceProviderInstance().getLogService().saveLog(log);
+		return result;
+	}
+
+	/**
+	 * @功能描述：利用Ajax通过关键字查询其他人员列表
+	 * @return
+	 */
+	public String searchPeopleListAjaxAnother() {
+		String result = "ajaxPeopleList";
+		try {
+			list = getFactory().getFinanceProviderInstance()
+					.getAnotherPeopleService().searchPeopleListAjax(id, key);
+		} catch (FinanceServiceException e) {
+			e.printStackTrace();
+		}
+		return result;
+	}
+
+	/**
+	 * @功能描述：删除其他人员
+	 * @return
+	 */
+	public String deletePeopleAnother() {
+		String result = "deletePeople";
+		if (StringUtils.isBlank(getPeopleids())) {
+			setStatusMsg("请选择要删除的人员！");
+			setStatusMsg("1");
+		} else {
+			/*
+			TUser tuser = null;
+			try {
+				tuser = getFactory().getFinanceProviderInstance()
+						.getSysUserService().readSysUserByLoginID(
+								this.getLoginContext().getLoginId());
+			} catch (FinanceServiceException e1) {
+				e1.printStackTrace();
+			}
+			Date date = new Date();
+			*/
+			// 日志文件
+//			TLog log = new TLog();
+//			log.setDCreateDate(date);
+//			log.setTUser(tuser);
+			String urlid="";
+			try {
+				urlid = getFactory().getFinanceProviderInstance()
+						.getFunctionService().getVid(
+								ActionContext.getContext().getName());
+			} catch (FinanceServiceException e1) {
+				e1.printStackTrace();
+			}
+			TFunction tfunction = new TFunction();
+			tfunction.setVId(urlid);
+//			log.setTFunction(tfunction);
+			String[] ids = this.peopleids.split(",");
+			if (ids != null && ids.length > 0) {
+				try {
+				//	String pname = getFactory().getFinanceProviderInstance()
+				//	.getAnotherPeopleService().searchPeopleNameByIds(ids);
+					
+				//	String logcontent = "删除了其他人员！姓名："+pname;
+//					log.setVContent(new SerialClob(logcontent.toCharArray()));
+					setDeptId(deptId);
+					// 删除人员
+					getFactory().getFinanceProviderInstance()
+							.getAnotherPeopleService().deletePeopleByIds(ids);
+					// 保存日志
+//					getFactory().getFinanceProviderInstance().getLogService()
+//							.saveLog(log);
+					setStatusMsg("删除人员成功！");
+					setStatusMsg("0");
+				} catch (FinanceServiceException e) {
+					setStatusMsg("删除人员出错！");
+					setStatusMsg("1");
+				} 
+//				catch (SerialException e) {
+//					e.printStackTrace();
+//				} catch (SQLException e) {
+//					e.printStackTrace();
+//				}
+			}
+
+		}
+		return result;
+	}
+
+	/**
+	 * @功能描述：跳转至添加或修改或查看页面
+	 * @return
+	 */
+	public String toAddPeopleAnother() {
+		String result = "toAddPeople";
+		setDeptId(this.deptId);
+		setKey(key);
+		IStudentService studentService =  getFactory().getFinanceProviderInstance().getStudentService();
+		
+		try {
+			whcdList = studentService.readDictionList(IStudentService.QUERY_WHCD);
+			minzuList = studentService.readDictionList(IStudentService.QUERY_NATION);
+			jiguanList = studentService.readDictionList(IStudentService.QUERY_JIGUAN);
+		} catch (FinanceServiceException e1) {
+			
+		}
+		if (StringUtils.isBlank(getId())) {
+			// 用于判断是否为查看人员信息，如果是查看，则页面不显示保存按钮，否则显示保存按钮
+			setShowPeople("");
+			// 用于页面显示表头
+			//setAoru("Add Department:" + deptName);
+			return result;
+		} else {
+			try {
+				anotherpeople = getFactory().getFinanceProviderInstance()
+						.getAnotherPeopleService().searchPeopleById(getId());
+			} catch (FinanceServiceException e) {
+				e.printStackTrace();
+			}
+			if (StringUtils.isBlank(getShowPeople())) {
+				// 用于判断是否为查看人员信息，如果是查看，则页面不显示保存按钮，否则显示保存按钮
+				setShowPeople("");
+				// 用于页面显示表头
+				//setAoru("Edit code:" + anotherpeople.getVCode() + " Department:");
+				return "toEditPeople";
+			} else {
+				// 用于判断是否为查看人员信息，如果是查看，则页面不显示保存按钮，否则显示保存按钮
+				setShowPeople(this.showPeople);
+				// 用于页面显示表头
+				//setAoru("view code:" + anotherpeople.getVCode() + " Department:");
+				return "toShowPeople";
+			}
+		}
+	}
+
+	/**
+	 * @功能描述：添加或者更新人员
+	 * @return
+	 */
+	public String savePeopleAnother() {
+		String result = "saveSuccess";
+		
+		if(StringUtils.isBlank(otheruser.getTOrg().getVId())){
+			setStatusMsg("人员所在部门必须选择。");
+			setStatusMsg("1");
+			return result;
+		}
+		
+		// 获取用户对象,取得登录者，即创建该角色的人
+		TUser tuser = null;
+		try {
+			tuser = getFactory().getFinanceProviderInstance()
+					.getSysUserService().readSysUserByLoginID(
+							this.getLoginContext().getLoginId());
+		} catch (FinanceServiceException e1) {
+			e1.printStackTrace();
+		}
+		Date date = new Date();
+		//String logcontent = "";
+		// 日志文件
+//		TLog log = new TLog();
+//		log.setDCreateDate(date);
+//		log.setTUser(tuser);
+		String urlid="";
+		try {
+			urlid = getFactory().getFinanceProviderInstance()
+					.getFunctionService().getVid(
+							ActionContext.getContext().getName());
+		} catch (FinanceServiceException e1) {
+			e1.printStackTrace();
+		}
+		TFunction tfunction = new TFunction();
+		tfunction.setVId(urlid);
+//		log.setTFunction(tfunction);
+
+		if (StringUtils.isBlank(otheruser.getVName())) {
+			setStatusMsg("人员姓名不能为空！");
+			setStatusMsg("1");
+		} else {
+			try {
+				if (StringUtils.isBlank(this.otheruser.getVId())) {
+				//	logcontent = "添加了其他人员！姓名："+otheruser.getVName();
+//					log.setVContent(new SerialClob(logcontent.toCharArray()));
+					this.otheruser.setTUser(tuser);
+					// 设置创建时间
+					this.otheruser.setDCreatedate(date);
+					this.otheruser.setOpenStatus(0);
+					getFactory().getFinanceProviderInstance()
+							.getAnotherPeopleService().savePeople(otheruser);
+					setStatusMsg("人员保存成功！");
+					setStatusMsg("0");
+				} else {
+//					log.setVOperateid(otheruser.getVId());
+				//	logcontent = "更新了其他人员！"+otheruser.getVName();
+					getFactory().getFinanceProviderInstance()
+							.getAnotherPeopleService().updatePeople(
+									this.otheruser);
+//					log.setVContent(new SerialClob(logcontent.toCharArray()));
+					setStatusMsg("更新人员信息成功！");
+					setStatusMsg("0");
+				}
+				// 用于返回至列表页面是选中树形节点
+				setDeptId(this.otheruser.getTOrg().getVId());
+				// 保存日志
+//				getFactory().getFinanceProviderInstance().getLogService()
+//						.saveLog(log);
+			} catch (FinanceServiceException e) {
+				setStatusMsg("人员保存失败！");
+				setStatusMsg("1");
+			} 
+//			catch (SerialException e) {
+//				e.printStackTrace();
+//			} catch (SQLException e) {
+//				e.printStackTrace();
+//			}
+		}
+		return result;
+	}
+
+	public TOtheruser getOtheruser() {
+		return otheruser;
+	}
+
+	public void setOtheruser(TOtheruser otheruser) {
+		this.otheruser = otheruser;
+	}
+
+	public String getKey() {
+		return key;
+	}
+
+	public void setKey(String key) {
+		this.key = key;
+	}
+
+	public List<VAnotherPeople> getList() {
+		return list;
+	}
+
+	public void setList(List<VAnotherPeople> list) {
+		this.list = list;
+	}
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
+	public String getAoru() {
+		return aoru;
+	}
+
+	public void setAoru(String aoru) {
+		this.aoru = aoru;
+	}
+
+	public String getShowPeople() {
+		return showPeople;
+	}
+
+	public void setShowPeople(String showPeople) {
+		this.showPeople = showPeople;
+	}
+
+	public String getDeptName() {
+		return deptName;
+	}
+
+	public void setDeptName(String deptName) {
+		this.deptName = deptName;
+	}
+
+	public String getDeptId() {
+		return deptId;
+	}
+
+	public void setDeptId(String deptId) {
+		this.deptId = deptId;
+	}
+
+	public String getPeopleids() {
+		return peopleids;
+	}
+
+	public void setPeopleids(String peopleids) {
+		this.peopleids = peopleids;
+	}
+
+	public VAnotherPeople getAnotherpeople() {
+		return anotherpeople;
+	}
+
+	public void setAnotherpeople(VAnotherPeople anotherpeople) {
+		this.anotherpeople = anotherpeople;
+	}
+
+	public List<TDiction> getWhcdList() {
+		return whcdList;
+	}
+
+	public void setWhcdList(List<TDiction> whcdList) {
+		this.whcdList = whcdList;
+	}
+
+	public List<TDiction> getMinzuList() {
+		return minzuList;
+	}
+
+	public void setMinzuList(List<TDiction> minzuList) {
+		this.minzuList = minzuList;
+	}
+
+	public List<TDiction> getJiguanList() {
+		return jiguanList;
+	}
+
+	public void setJiguanList(List<TDiction> jiguanList) {
+		this.jiguanList = jiguanList;
+	}
+	
+}

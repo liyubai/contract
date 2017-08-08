@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<!-- Generated 2016-8-11 9:59:16 by Hibernate Tools 3.6.0.Final -->
+<hibernate-mapping>
+    <class name="com.cauc.contract.pojos.LoginUser" table="LoginUser" schema="dbo" catalog="trainingRecord">
+        <id name="VId" type="int">
+            <column name="v_id" />
+            <generator class="native" />
+        </id>
+        <property name="VUsername" type="string">
+            <column name="v_username" length="50" not-null="true" />
+        </property>
+        <property name="VPassword" type="string">
+            <column name="v_password" length="50" not-null="true" />
+        </property>
+        <property name="VCreateDate" type="timestamp">
+            <column name="v_createDate" length="23" />
+        </property>
+        <property name="VCreateUserId" type="java.lang.Integer">
+            <column name="v_createUserId" />
+        </property>
+        <property name="VRoleId" type="java.lang.Integer">
+            <column name="v_roleId" />
+        </property>
+        <property name="VLastModifyTime" type="timestamp">
+            <column name="v_lastModifyTime" length="23" />
+        </property>
+        <property name="VLastModiyUser" type="java.lang.Integer">
+            <column name="v_lastModiyUser" />
+        </property>
+        <property name="VLoginType" type="java.lang.Integer">
+            <column name="v_loginType" />
+        </property>
+        <property name="VAdminStatus" type="java.lang.Integer">
+            <column name="v_adminStatus" />
+        </property>
+        <property name="VRealname" type="string">
+            <column name="v_realname" length="20" />
+        </property>
+    </class>
+</hibernate-mapping>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE struts PUBLIC
+    "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN"
+    "http://struts.apache.org/dtds/struts-2.0.dtd">
+<struts>
+	<package name="ajax_contract" extends="ErsDefault" namespace="/contract">
+		<!-- 更新 -->
+		<action name="userManagent_updateUser" class="com.cauc.training.ui.core.contract.UserManagentAction"
+			 method="updateUser">
+			<result name="success" type="json">
+				<param name="root">user</param>
+			</result>
+		</action>
+	</package>
+	<package name="contract_management" extends="ErsDefault" namespace="/contract">
+		<!-- 显示用户管理信息 -->
+		<action name="userManagent_showManagent" class="com.cauc.training.ui.core.contract.UserManagentAction" 
+			method="showManagent">
+			<result name="success">/WEB-INF/contract/cUserList.jsp</result>
+		</action>
+		<!-- 插入 -->
+		<action name="userManagent_addUser" class="com.cauc.training.ui.core.contract.UserManagentAction" 
+			method="addUser">
+			<result name="success">/WEB-INF/contract/cUserList.jsp</result>
+		</action>
+	</package>
+</struts> 

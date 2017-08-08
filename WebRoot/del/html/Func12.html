@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>main</title>
+
+<link rel="stylesheet" href="themes/cupertino/jquery.ui.all.css">
+<script src="scripts/jquery.min.js"></script>
+<script src="scripts/jquery-ui.min.js"></script>
+<script src="scripts/ui/jquery.ui.position.min.js"></script>
+<script src="scripts/ui/jquery.ui.core.min.js"></script>
+<script src="scripts/ui/jquery.ui.widget.min.js"></script>
+<script src="scripts/ui/jquery.ui.button.min.js"></script>
+<script src="scripts/ui/jquery.ui.tabs.min.js"></script>
+<script src="scripts/ui/jquery.ui.dialog.min.js"></script>
+<script src="scripts/ui/jquery.ui.menu.min.js"></script>
+<script src="scripts/function.min.js"></script>
+
+<style>
+.testDiv { padding: 5px; }
+
+/*功能12*/
+#loginWrapper { position: relative; } /*不要在td上面加"position: relative;"这个样式，火狐里不支持*/
+#loginDiv { width: 295px; height: 305px; font-weight: normal; outline: none; -o-box-shadow: 1px 1px 3px #888; -icab-box-shadow: 1px 1px 3px #888; -khtml-box-shadow: 1px 1px 3px #888; -moz-box-shadow: 1px 1px 3px #888; -webkit-box-shadow: 1px 1px 3px #888; box-shadow: 0px 0px 10px #CFCFCF; }
+
+.loginFormInput,.btn,.ico,.ico-uid,.ico-pwd{background-image:url(themes/cupertino/images/ui-bg_new_login.png)}
+.loginInput{position:absolute;width:205px;padding:9px 0 10px;ime-mode:disabled;height:21px;top:1px;left:28px;font-size:14px;font-weight:700;border:none;font-family:verdana;line-height:21px;color:#92a4bf;background:transparent!important;}
+.ico-uid{width:14px;height:16px;background-position: -154px -12px}
+.ico-pwd{width:14px;height:16px;background-position: -178px -12px}
+.login{padding:14px 16px 15px;margin-left:90px;text-align:left;position:absolute;z-index:2;}
+.loginTitle{width:148px;height:47px;overflow:hidden;clear:both;position:relative;line-height:46px;float:left;font-size:14px;text-align:center;+line-height:48px;color:#626262;}
+.loginForm{position:relative;height:380px;padding-top:30px;}
+.loginFormInput{position:relative;width:240px;height:42px;line-height:42px;margin:0 0 18px 25px;padding-right:5px;clear:both;border-radius:4px;background-position:0 -300px;z-index:2}
+.loginFormInput .ico{position:absolute;left:9px;top:13px;z-index:1;}
+.loginFormInput-over{}
+.loginFormInput-focus{box-shadow:0 0 5px rgba(2,145,252,.5);}
+.loginFormInput-focus .placeholder{color:#C9C9C9;}
+.loginFormButton{position:relative;width:245px;height:43px;margin:16px 0 0 25px}
+.loginInput{width:205px;padding:9px 0 10px;ime-mode:disabled;height:21px;top:1px;left:28px;font-size:14px;font-weight:700;border:none;font-family:verdana;line-height:21px;color:#92a4bf;background:transparent!important;}
+.loginInput:focus{outline:0;}
+.loginInput-focus{color:#333;font-weight:700;}
+.showPlaceholder .placeholder{visibility:visible;cursor:text;}
+.placeholder{color:#C9C9C9;;font-size:14px;position:absolute;left:30px;top:14px;line-height:14px;visibility:hidden;background:none;}
+.domain{width:80px;height:33px;background-position:0 -60px;line-height:999em;overflow:hidden;display:block;right:8px;top:4px;}
+.loginFormCheck{height:13px;line-height:13px;color:#555;margin-left:25px;clear:both;width:245px;position:relative;z-index:1;}
+.loginFormCheckInner{height:14px;width:150px;float:left;position: relative;}
+.forgetPwdLine{text-align: right}
+.ico-checkbox{display: inline-block; width: 13px; height: 13px; background-position: -40px -108px; vertical-align: middle; cursor: pointer;}
+.autoLogin-checked .ico-checkbox{background-position: -40px -128px;}
+.loginFormCheckbox{width:13px;height:13px;padding:0;overflow:hidden;margin:0; vertical-align: middle;}
+.btn{width:110px;height:38px;float:left;text-align:center;cursor:pointer;border:0;padding:0;font-weight:700;font-size:14px;display:inline-block;vertical-align:baseline;line-height:38px;outline:0;background-color:transparent;border-radius:3px;}
+.btn-login{background-position:0 -156px;color:#fff;box-shadow:0 2px 5px rgba(0,28,88,.3)}
+.btn-login:hover{background-position:0 -204px;}
+.btn-login:active{background-position:0 -252px;color:#b5d1ee;}
+.btn-reg{background-position:-117px -156px;color:#6d798c;float:right;box-shadow:0 2px 5px rgba(0,0,0,.1);}
+.loginFormButton .btn-reg:hover{background-position:-117px -204px;color:#347bc7;}
+.loginFormButton .btn-reg:active{background-position:-117px -252px;color:#6d798c;}
+.loginFormConf{height:12px;line-height:14px;margin-left:25px;margin-top:12px;clear:both;width:245px;position:relative;color:#848585;z-index:1;}
+.loginFormConfTip{float:left;width:100%;}
+
+#login{height: 215px;}
+#idInputTest{visibility: hidden; float: left; font-size: 14px; font-weight: 700;}
+#capsLockHint{position: absolute; top: 42px; left: 0px;padding: 4px 8px; line-height: 12px; background-color: #ffffcc; border: 1px solid #d7d7d7; color: #555; z-index: 2;}
+#autoLogin{display: none;}
+#autoLoginTxt, .forgetPwd{color:#848585;}
+#autoLoginTxt:hover, .forgetPwd:hover{color:#626262;}
+#autologinTip{z-index:9; width:180px; height:36px;background-color:#fffde4; border:1px #dfb86d solid; left:0px;top:16px;text-align:left; padding:5px 10px;line-height:18px; color:#dc9632;display:none;border-radius: 4px}
+
+.error-hd,
+.error-mid,
+.error-ft,
+.error-arrow,
+.error-tt p{background-image: url("themes/cupertino/images/ui-bg_new_login_error.png"); _background-image: url("themes/cupertino/images/ui-bg_new_login_error.png");}
+#errorAlert{position: absolute; width: 347px; top: 0; left: -300px; text-align: left; z-index: 1000; display: none;}
+#errorAlert.errorAlert-show{display: block; -webkit-animation: shake 0.6s ease-in-out 0.3s; -moz-animation: shake 0.6s ease-in-out 0.3s; -o-animation: shake 0.6s ease-in-out 0.3s; animation: shake 0.6s ease-in-out 0.3s;}
+#errorAlert .error-hd,
+#errorAlert .error-ft{overflow: hidden; font-size: 0; line-height: 0;}
+#errorAlert .error-hd{height: 8px; background-position: -10px 0; background-repeat: no-repeat;}
+#errorAlert .error-ft{height: 10px; background-position: -10px -8px; background-repeat: no-repeat;}
+#errorAlert .error-mid{padding: 5px 20px 7px; background-position: -357px 0; background-repeat: repeat-y;}
+#errorAlert .error-arrow{position: absolute; top: 35px; right: -6px; width: 10px; height: 19px; background-position: 0 0; background-repeat: no-repeat;}
+#errorAlert .error-tt p{padding: 10px 20px 8px 60px; color: #434343; line-height: 22px; font-weight: bold; font-size: 14px; background-position: -704px center; background-repeat: no-repeat;}
+#errorAlert .error-detail{margin-top:2px; padding: 8px 18px 5px 18px; color: #7d7d7d; line-height: 18px; border-top: 1px solid #e1e1e1;}
+#errorAlert .error-detail a{color: #4e90e2; text-decoration: underline;}
+/*
+@-webkit-keyframes shake{0%{margin-left: -265px;}25%{margin-left: -262px;}50%{margin-left: -265px;}75%{margin-left: -262px;}100%{margin-left: -265px;}}
+@-moz-keyframes shake{0%{margin-left: -265px;}25%{margin-left: -262px;}50%{margin-left: -265px;}75%{margin-left: -262px;}100%{margin-left: -265px;}}
+@-o-keyframes shake{0%{margin-left: -265px;}25%{margin-left: -262px;}50%{margin-left: -265px;}75%{margin-left: -262px;}100%{margin-left: -265px;}}
+@keyframes shake{0%{margin-left: -265px;}25%{margin-left: -262px;}50%{margin-left: -265px;}75%{margin-left: -262px;}100%{margin-left: -265px;}}
+*/
+/*功能12*/
+</style>
+
+
+<script>
+$(function() {
+
+	//功能12
+	addShadow($("#loginDiv"), {top: -4, left: -5, width: "290px", height: "300px"});
+	
+	/*
+	//已经使用通用函数处理
+	$("#autoLoginLine input[type='checkbox']").change(function(){
+		$(this).parent().toggleClass("autoLogin-checked", this.checked);
+	}).next().click(function(){
+		var checkbox = $(this).prev()[0];
+		checkbox.checked = !checkbox.checked; //alert(checkbox.checked)
+		$(this).parent().toggleClass("autoLogin-checked", checkbox.checked);
+	}).next().click(function(){
+		$(this).prev().click();
+	});
+	*/
+	
+	$(".loginInput").change(function(){
+		if($.trim(this.value)!="")
+			$(this).addClass("loginInput-focus").parent().removeClass("showPlaceholder");
+		else
+			$(this).removeClass("loginInput-focus").parent().addClass("showPlaceholder");
+	}).keydown(function(){
+		if($.trim(this.value)=="")
+			$(this).val("").addClass("loginInput-focus").parent().removeClass("showPlaceholder");
+	}).keyup(function(){
+		if($.trim(this.value)=="")
+			$(this).val("").removeClass("loginInput-focus").parent().addClass("showPlaceholder");
+	});
+	
+	
+	$("#loginBtn").click(function(e){
+		e.stopPropagation();
+		checkForm();		
+	});
+	
+	$("html,body").click(function(e) {
+		$("#errorAlert").removeClass("errorAlert-show");
+		$("#overlayMask").hide();
+		top.$("#overlayMask").hide();
+	});
+
+	$(window).unload( function () { top.$("#overlayMask").hide(); } );
+
+	//功能12
+
+});
+
+//功能12
+function checkForm(){
+	//这段代码需要改写成更复杂的逻辑判断，这里这段参考
+	var $idInput = $("#idInput"), $pwdInput = $("#pwdInput");
+	if($.trim($idInput.val()).length==0){
+		showError($idInput, "用户名不能为空！");
+		return;
+	}
+	if($.trim($pwdInput.val()).length==0){
+		showError($pwdInput, "密码不能为空！");
+		return;
+	}
+	$("#errorAlert").removeClass("errorAlert-show");
+	$("#overlayMask").hide();
+	top.$("#overlayMask").hide();
+	//后续的登录动作代码
+}
+
+function showError($nErrorTarget,nErrorText){
+	var nErrorBaseTop = 115; //两个输入框的中间高度，可能需要适时调整
+	var $errorAlert = $("#errorAlert"), $errorArr = $("#errorArr");
+	$nErrorTarget.focus();
+	if($nErrorTarget.attr("id") == "idInput"){
+		nErrorBaseTop -= 30;
+	}else{
+		nErrorBaseTop += 30;
+	}
+	$("#errorTitle").html(nErrorText);
+	//$("#errorInfo").html("这个根据具体情况决定是否展现");
+	//$("#errorDetail").show(); //这个根据具体情况决定是否展现
+	$("#overlayMask").show();
+	top.$("#overlayMask").show();
+	
+	$errorAlert.addClass("errorAlert-show").css("top", nErrorBaseTop - $errorAlert[0].offsetHeight/2 + "px");
+	$errorArr.css("top", ($errorAlert[0].offsetHeight - $errorArr[0].offsetHeight)/2 + "px");
+	$errorAlert.effect( "shake", {distance: 3, times: 2}, 500 );
+}
+//功能12
+</script>
+<!-- 此js务必放在所有页面自带的js后面加载 -->
+<script src="scripts/base.min.js"></script>
+</head>
+<body class="hide">
+
+<div id="leftPartA"><div>
+
+<ul class="itemList">
+	<li><a class="navLink" href="main1.html" id="navLink0" title="我的首页">我的首页</a><!-- (10) --></li>
+	<li><a class="navLink" href="peopleManage.html" id="navLink1" title="人员管理">人员管理</a></li>
+	<li><a class="navLink" href="trainingManage.html" id="navLink2" title="飞行训练管理">飞行训练管理</a></li>
+	<li><a class="navLink" href="aircraftManage.html" id="navLink3" title="航空器管理">航空器管理</a></li>
+	<li><a class="navLink" href="summaryManage.html" id="navLink4" title="飞行训练大纲管理">飞行训练大纲管理</a></li>
+	<li><a class="navLink" href="systemManage.html" id="navLink5" title="系统管理">系统管理</a></li>
+	<li><a class="navLink" href="marksManage.html" id="navLink6" title="成绩管理">成绩管理</a>
+</ul>
+<span class="panelLine"></span>
+<ul class="itemList">
+	<li><a class="navLink" href="Func1.html" id="navLink101" title="功能展示1">功能展示1</a></li>
+	<li><a class="navLink" href="Func2.html" id="navLink102" title="功能展示2">功能展示2</a></li>
+	<li><a class="navLink" href="Func3.html" id="navLink103" title="功能展示3">功能展示3</a></li>
+	<li><a class="navLink" href="Func4.html" id="navLink104" title="功能展示4">功能展示4</a></li>
+	<li><a class="navLink" href="Func5.html" id="navLink105" title="功能展示5">功能展示5</a></li>
+	<li><a class="navLink" href="Func6.html" id="navLink106" title="功能展示6">功能展示6</a></li>
+	<li><a class="navLink" href="Func7.html" id="navLink107" title="功能展示7">功能展示7</a></li>
+	<li><a class="navLink" href="Func8.html" id="navLink108" title="功能展示8">功能展示8</a></li>
+	<li><a class="navLink" href="Func9.html" id="navLink109" title="功能展示9">功能展示9</a></li>
+	<li><a class="navLink" href="Func10.html" id="navLink110" title="功能展示10">功能展示10</a></li>
+</ul>
+<ul class="foldList">
+	<li><span class="ui-icon ui-icon-carat-1-e"></span>功能展示11</li>
+	<ul class="itemList hide">
+		<li><a class="navLink" href="Func11.html" id="navLink111" title="功能展示11" tabTitle="功能展示11[HTML]">HTML版本</a></li>
+		<li><a class="navLink" href="Func11_1.html" id="navLink11101" title="功能展示11" tabTitle="功能展示11[JS]">JS版本</a></li>
+	</ul>
+</ul>
+<ul class="itemList">
+	<li class="active"><a class="navLink" href="Func12.html" id="navLink112" title="功能展示12">功能展示12</a></li>
+	<li><a class="navLink" href="Func13.html" id="navLink113" title="功能展示13">功能展示13</a></li>
+	<li><a class="navLink" href="Func14.html" id="navLink114" title="功能展示14">功能展示14</a></li>
+</ul>
+
+</div></div>
+
+
+
+<div id="rightPartA"><div>
+
+<div class="testDiv">
+功能12：登录表单及提示<br>
+
+<table width="100%" height="100%">
+  <tr>
+    <td width="560"><span class="ui-icon-custom ui-icon-custom-warning"></span><span class="ui-icon-custom ui-icon-custom-success"></span><span class="ui-icon-custom ui-icon-custom-error"></span><span class="ui-icon-custom ui-icon-custom-error2"></span>dsfdsf</td>
+    <td height="30">&nbsp;</td>
+  </tr>
+  <tr>
+    <td align="right" valign="top">&nbsp;</td>
+    <td valign="top">
+	<div id="loginWrapper">
+		<!--错误提示浮层-->
+		<div id="errorAlert">
+			<div class="error-hd"></div>
+			<div class="error-mid">
+				<div class="error-tt">
+					<p id="errorTitle"></p>
+				</div>
+				<div id="errorDetail" class="error-detail" style="display:none;">
+					<p>提示：</p>
+					<p id="errorInfo" class="error-info"></p>
+				</div>
+			</div>
+			<div class="error-ft"></div>
+			<div id="errorArr" class="error-arrow"></div>
+		</div>
+      <!--登录框-->
+		<div id="loginDiv" class="login tab-1 ui-state-default ui-corner-all-4">
+			<div class="loginTitle loginTitleNormal">
+				邮箱帐号登录
+			</div>
+			<div class="loginForm">
+				<form id="login" name="login" method="post" action="登录.jsp">
+					<div id="idInputLine" class="loginFormInput showPlaceholder"> <b class="ico ico-uid"></b>
+						<input class="loginInput" title="请输入帐号" id="idInput" name="username" type="text" maxlength="50" value="" />
+						<!--<span id="showdomain" class="domain">@163.com</span> -->
+						<div id="mobtips"></div>
+						<label for="idInput" class="placeholder" id="idPlaceholder">请输入帐号</label>
+						<div id="idInputTest"></div>
+						</div>
+						<div id="pwdInputLine" class="loginFormInput showPlaceholder"> <b class="ico ico-pwd"></b>
+						<input class="loginInput" title="请输入密码" id="pwdInput" name="password" type="password"/>
+						<label for="pwdInput" class="placeholder" id="pwdPlaceholder">请输入密码</label>
+						<p id="capsLockHint" style="display: none">大写状态开启</p>
+						</div>
+						<div class="loginFormCheck">
+						<div id="autoLoginLine" class="loginFormCheckInner">
+						<input title="十天内免登录" class="loginFormCheckbox" type="radio" id="autoLogin" name="autoLogin" />
+						<b class="ico ico-checkbox"></b>
+						<label id="autoLoginTxt">十天内免登录</label>		
+                        
+                        <input title="十天内免登录2" class="loginFormCheckbox" type="radio" id="autoLogin" name="autoLogin" />
+						<b class="ico ico-checkbox"></b>
+						<label id="autoLoginTxt">十天内免登录2</label>	
+                        				
+						<div id="autologinTip">为了您的信息安全，请不要在网吧或公用电脑上使用此功能！ </div>
+						</div>
+                        
+						<div class="forgetPwdLine"> <a class="forgetPwd" href="找回密码.jsp" title="找回密码">忘记密码了?</a> </div>
+						</div>
+						<div class="loginFormButton">
+						<button id="loginBtn" class="btn btn-login" type="button">登&nbsp;&nbsp;录</button>
+						<a id="lfBtnReg" class="btn btn-reg" href="注册.jsp">注&nbsp;&nbsp;册</a> </div>
+						<div class="loginFormConf">
+						<div class="loginFormConfTip"> 这里可以放入一些其他的提示 </div>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+    </td>
+  </tr>
+</table>
+</div>
+
+</div></div>
+
+
+
+<div id="bottomPartA"><div>
+
+<button class="green" style="position: absolute; left: 10px;">保存</button>
+<button class="normal" style="position: absolute; left: 70px;">取消</button>
+<button class="normal" style="position: absolute; right: 30px;">还原为默认</button>
+
+</div></div>
+
+
+
+<!--遮羞蒙版-->
+<div id="overlayMask" style="display:none;"></div>
+</body>
+</html>

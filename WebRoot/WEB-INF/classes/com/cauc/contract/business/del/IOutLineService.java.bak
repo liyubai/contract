@@ -1,0 +1,922 @@
+package com.cauc.training.business;
+
+import java.util.List;
+import java.util.Map;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.business.dao.support.Page;
+import com.cauc.training.pojos.Changedbaseflyline;
+import com.cauc.training.pojos.Lessonchangedbaseflyline;
+import com.cauc.training.pojos.Planeform;
+import com.cauc.training.pojos.Station;
+import com.cauc.training.pojos.TDiction;
+import com.cauc.training.pojos.TOrg;
+import com.cauc.training.pojos.TOutline;
+import com.cauc.training.pojos.TPhase;
+import com.cauc.training.pojos.TSetClass;
+import com.cauc.training.pojos.TSubjectsort;
+import com.cauc.training.pojos.TTimesubject;
+import com.cauc.training.pojos.TTrainingLesson;
+import com.cauc.training.pojos.TTrainlessonsubject;
+import com.cauc.training.pojos.TTrainsubject;
+import com.cauc.training.pojos.TrainingLessonSort;
+import com.cauc.training.pojos.TraininglessonRelation;
+import com.cauc.training.pojos.Trainlessonunit;
+import com.cauc.training.vo.VChangedbaseflyline;
+import com.cauc.training.vo.VLeftNavigation;
+import com.cauc.training.vo.VOrg;
+import com.cauc.training.vo.VOutline;
+import com.cauc.training.vo.VOutlineDetail;
+import com.cauc.training.vo.VStation;
+import com.cauc.training.vo.VTimesubject;
+import com.cauc.training.vo.VTrainingLessonContent;
+import com.cauc.training.vo.VTrainingRecordCompletion;
+import com.cauc.training.vo.VTrainlessonunit;
+import com.cauc.training.vo.VTrainsubject;
+
+/**
+ * 大纲管理服务接口
+ * 
+ * @author fuChaohui
+ *
+ */
+public interface IOutLineService {
+	
+	/**
+	 * 树形节点类型
+	 */
+	public static final String QUERY_KEY_NODE_TYPE = "nodeType";
+	
+	/**
+	 * 高级搜索对象
+	 * 
+	 */
+	public static final String QUERY_KEY_ADVANCED_SEARCH_OBJ = "searchobj";
+	
+	/**
+	 * 是否分配
+	 */
+	public static final String  QUERY_KEY_IF_ASSIGN="assign";
+	
+	/**
+	 * 年
+	 */
+	public static final String QUERY_KEY_YEAR = "year";
+	
+	/**
+	 * 班级
+	 */
+	public static final String QUERY_KEY_CLASS = "class";
+	
+	/**
+	 * 学员类型
+	 */
+	public static final String  QUERY_KEY_STUDENT_TYPE="stuType";
+	
+	/**
+	 * 是否分配大纲
+	 */
+	public static final String QUERY_KEY_ASSIGN_YES = "assignyes";
+	
+	/**
+	 * 公司
+	 */
+	public static final String QUERY_KEY_COMPANY = "company";
+	
+	/**
+	 * 学生状态
+	 */
+	public static final String QUERY_KEY_STUDENT_STATUS = "stustatus";
+	
+	/**学籍状态
+	 * 
+	 */
+	public static final String QUERY_KEY_XJ_STUDENT_STATUS = "xjstatus";
+	
+	/**招生形式
+	 * 
+	 */
+	public static final String QUERY_KEY_FORM = "vform";
+	
+	/**费用形式
+	 * 
+	 */
+	public static final String QUERY_KEY_FREE_FORM = "freeform";
+	
+	/**
+	0：审批生效
+	1：取消,作废
+	3：未审批
+	2：审批未通过
+	4：未提交审批
+	*/
+	/**
+	 * 已生效
+	 */
+	public static final int QUERY_AUDIT_TYPE_EFFECT=0;
+	
+	/**
+	 * 已取消
+	 */
+	public static final int QUERY_AUDIT_TYPE_NOTEFFECT=1;
+	
+	
+	/**
+	 * 未通过
+	 */
+	public static final int QUERY_AUDIT_TYPE_NOTPASS=2;
+	
+	/**
+	 * 未审批
+	 */
+	public static final int QUERY_AUDIT_TYPE_NO=3;
+	
+	/**
+	 * 未提交
+	 */
+	public static final int QUERY_AUDIT_TYPE_NOSUBMIT=4;
+	
+	/**
+	 * 名称
+	 */
+	public static final String  QUERY_KEY_NAME="VName";
+	
+	/**
+	 * 本转场特性
+	 */
+	public static final String QUERY_KEY_ZHUANCHANG ="ITrainType";
+	
+	/**
+	 * 时间
+	 */
+	public static final String  QUERY_KEY_DATE="DCreatedate";
+	
+	public static final String  QUERY_KEY_UPDATE="DCreateDate";
+	
+	/**
+	 * 登录用户ID
+	 */
+	public static final String QUERY_KEY_USER_ID = "loginUesrId";
+	
+	/**
+	 * 科目分组
+	 */
+	public static final String  QUERY_KEY_SUBJECT_GROUP="VGroup";
+	
+	/**
+	 * 训练科目分类ID
+	 */
+	public static final String QUERY_KEY_SUBJECT_SORT_ID="id";
+	
+	/**
+	 * 大纲状态
+	 */
+	public static final String QUERY_KEY_OUTLINE_STATUS="IStatus";
+	
+	/**
+	 * 单元ID
+	 */
+	public static final String QUERY_KEY_UNIT_ID="VBeiyong";
+
+	/**
+	 * 创建单元科目字典
+	 * @param timesubject
+	 * @throws FinanceServiceException
+	 */
+	public void saveUnitSubjectDictionary(TTimesubject timesubject) throws FinanceServiceException;
+	
+	/**
+	 * 更新单元科目字典
+	 * @param timesubject
+	 * @throws FinanceServiceException
+	 */
+	public void updateUnitSubjectDictionary(TTimesubject timesubject) throws FinanceServiceException;
+	
+	/**删除单元科目字典
+	 * 
+	 * @param id
+	 * @throws FinanceServiceException
+	 */
+	public void deleteUnitSubjectDictionaryByIds(String... Ids) throws FinanceServiceException;
+	
+	/**
+	 * 获取单元科目字典对象
+	 * @param id
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public VTimesubject readVUnitSubjectDictionaryById(String id) throws FinanceServiceException;
+	
+	/**
+	 * 获取单元科目字典列表
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<TTimesubject> readUnitSubjectDictionaryList(Map<String,Object> params) throws FinanceServiceException;
+	
+	//-------------------------以下站名管理------------------------
+	/**
+	 * 创建站名
+	 * @param station
+	 * @throws FinanceServiceException
+	 */
+	public void saveStation(Station station) throws FinanceServiceException;
+	
+	/**
+	 * 更新站名
+	 * @param station
+	 * @throws FinanceServiceException
+	 */
+	public void updateStation(Station station) throws FinanceServiceException;
+	
+	/**删除站
+	 * 
+	 * @param id
+	 * @throws FinanceServiceException
+	 */
+	public void deleteStationByIds(String... Ids) throws FinanceServiceException;
+	
+	/**
+	 * 获取站名对象
+	 * @param id
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Station readStationById(String id) throws FinanceServiceException;
+	
+	/**
+	 * 获取站名对象
+	 * @param id
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public VStation readVStationById(String id) throws FinanceServiceException;
+	
+	/**
+	 * 获取站名列表
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<Station> readStationList(Map<String,Object> params) throws FinanceServiceException;
+	
+	//-------------------------以下课程单元字典管理------------------------
+	/**
+	 * 创建
+	 * @param traininglessonunitdiction
+	 * @throws FinanceServiceException
+	 */
+	public void saveTraininglessonunitdiction(TrainingLessonSort traininglessonunitdiction) throws FinanceServiceException;
+	
+	/**
+	 * 更新
+	 * @param traininglessonunitdiction
+	 * @throws FinanceServiceException
+	 */
+	public void updateTraininglessonunitdiction(TrainingLessonSort traininglessonunitdiction) throws FinanceServiceException;
+	
+	/**删除
+	 * 
+	 * @param id
+	 * @throws FinanceServiceException
+	 */
+	public void deleteTraininglessonunitdictionByIds(String... Ids) throws FinanceServiceException;
+	
+		
+	/**
+	 * 获取站名对象
+	 * @param id
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public VStation readTraininglessonunitdictionById(String id) throws FinanceServiceException;
+	public VStation readTraininglessonunitdictionByNoId(String id) throws FinanceServiceException;
+	
+	/**
+	 * 获取列表
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<TrainingLessonSort> readTraininglessonunitdictionList(Map<String,Object> params) throws FinanceServiceException;
+	
+	
+	//-------------------------以下专场航线管理------------------------
+	/**
+	 * 创建
+	 * @param line
+	 * @throws FinanceServiceException
+	 */
+	public void saveChangedbaseflyline(Changedbaseflyline line) throws FinanceServiceException;
+	
+	/**
+	 * 更新
+	 * @param line
+	 * @throws FinanceServiceException
+	 */
+	public void updateChangedbaseflyline(Changedbaseflyline line) throws FinanceServiceException;
+	
+	/**删除
+	 * 
+	 * @param id
+	 * @throws FinanceServiceException
+	 */
+	public void deleteChangedbaseflylineByIds(String... Ids) throws FinanceServiceException;
+	
+	/**
+	 * 获取对象
+	 * @param id
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Changedbaseflyline readChangedbaseflylineById(String id) throws FinanceServiceException;
+	
+	/**
+	 * 获取对象
+	 * @param id
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public VChangedbaseflyline readVChangedbaseflylineById(String id) throws FinanceServiceException;
+	
+	/**
+	 * 获取列表
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<Changedbaseflyline> readChangedbaseflylineList(Map<String,Object> params) throws FinanceServiceException;
+	
+	//-------------------------以下训练科目分类管理------------------------
+	/**
+	 * 创建训练科目分类
+	 * @param sort
+	 * @throws FinanceServiceException
+	 */
+	public void saveSubjectsort(TSubjectsort sort) throws FinanceServiceException;
+	
+	/**
+	 * 更新训练科目分类
+	 * @param sort
+	 * @throws FinanceServiceException
+	 */
+	public void updateSubjectsort(TSubjectsort sort) throws FinanceServiceException;
+	
+	/**删除训练科目分类
+	 * 
+	 * @param id
+	 * @throws FinanceServiceException
+	 */
+	public void deleteSubjectsortByIds(String... Ids) throws FinanceServiceException;
+	
+	/**
+	 * 获取训练科目分类对象
+	 * @param id
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public VStation readSubjectsortById(String id) throws FinanceServiceException;
+	
+	/**
+	 * 获取训练科目分类列表
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<TSubjectsort> readSubjectsortList(Map<String,Object> params) throws FinanceServiceException;
+	
+	//-------------------------以下训练科目管理------------------------
+	/**
+	 * 创建训练科目
+	 * @param sort
+	 * @throws FinanceServiceException
+	 */
+	public void saveTrainsubject(TTrainsubject subject) throws FinanceServiceException;
+	
+	/**
+	 * 更新训练科目
+	 * @param subject
+	 * @throws FinanceServiceException
+	 */
+	public void updateTrainsubject(TTrainsubject subject) throws FinanceServiceException;
+	
+	/**删除训练科目
+	 * 
+	 * @param id
+	 * @throws FinanceServiceException
+	 */
+	public void deleteTrainsubjectByIds(String... Ids) throws FinanceServiceException;
+	
+	/**
+	 * 获取训练科目对象
+	 * @param id
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public VTrainsubject readTrainsubjectById(String id) throws FinanceServiceException;
+	
+	/**
+	 * 获取训练科目列表
+	 * @param params
+	 * @param pageNo
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page readTrainsubjectList(Map<String,Object> params,String pageNo)throws FinanceServiceException;
+	
+	//-------------------------以下训练课程管理------------------------
+	/**
+	 * 创建课程
+	 * @param trainingLesson
+	 * @throws FinanceServiceException
+	 */
+	public void saveTrainingLesson(TTrainingLesson trainingLesson) throws FinanceServiceException;
+	
+	/**
+	 * 复制课程
+	 * @param id
+	 * @throws FinanceServiceException
+	 */
+	public String copyTrainingLesson(String id) throws FinanceServiceException;
+	
+	/**
+	 * 获取课程列表
+	 * @param params
+	 * @param pageNo
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page readTrainingLessonList(Map<String,Object> params,String pageNo) throws FinanceServiceException;
+	
+	/**
+	 * 获取课程列表,大纲阶段选课使用。json的方式读取分页数据
+	 * @param params
+	 * @param pageNo
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page readVTrainingLessonContentList(Map<String,Object> params,String pageNo) throws FinanceServiceException;
+	
+	/**
+	 * 根据节点id获取分配的课目
+	 * @param params
+	 * @param pageNo
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page readVTrainingLessonListByParentId(Map<String,Object> params,String pageNo) throws FinanceServiceException;
+	
+	/**
+	 * 获取大纲列表,学员分配大纲使用。json的方式读取分页数据
+	 * @param params
+	 * @param pageNo
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page readCanUsedOutlineList(Map<String,Object> params,String pageNo) throws FinanceServiceException;
+	
+	/**
+	 * 获取转场课程列表
+	 * @param params
+	 * @param pageNo
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page readChangeBaseTrainingLessonList(Map<String,Object> params,String pageNo) throws FinanceServiceException;
+	
+	/**
+	 * 读取训练课程对象
+	 * @param id
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public TTrainingLesson readTrainingLessonById(String id) throws FinanceServiceException;
+	
+	public List<Lessonchangedbaseflyline> readLessonchangedbaseflylineById(String id) throws FinanceServiceException;
+	
+	/**
+	 * 读取训练课程对象
+	 * @param id
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public VTrainingLessonContent readTrainingLessonContentById(String id) throws FinanceServiceException;
+	//public VTrainingLessonContent readTrainingLessonContentByNoId(String id) throws FinanceServiceException;
+	/**
+	 * 删除课程信息
+	 * @param id
+	 * @throws FinanceServiceException
+	 */
+	public void deleteTrainingLessonById(String id) throws FinanceServiceException;
+	
+	/**
+	 * 更新课程信息
+	 * @param trainingLesson
+	 * @throws FinanceServiceException
+	 */
+	public void updateTrainingLesson(TTrainingLesson trainingLesson)throws FinanceServiceException;
+	
+	/**
+	 * 获取大纲列表
+	 * @param params
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<VOutline> readOutlineListByLessonId(String id) throws FinanceServiceException;
+	
+	/**
+	 * 为转场课程分配转场航线
+	 * @param lessonchangedbaseflyline
+	 * @throws FinanceServiceException
+	 */
+	public void saveTrainingLessonChangeBaseLine(Lessonchangedbaseflyline lessonchangedbaseflyline)throws FinanceServiceException;
+	
+	/**
+	 * 删除转场课程分配转场航线
+	 * @param lessonchangedbaseflyline
+	 * @throws FinanceServiceException
+	 */
+	public void deleteTrainingLessonChangeBaseLine(String id)throws FinanceServiceException;
+	
+	/**
+	 * 获取课程单元科目列表
+	 * @param unitid
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<VTimesubject> readTimesubjectByLessonUnitId(String unitid) throws FinanceServiceException;
+	
+	/**
+	 * 根据课程id获取时间科目列表
+	 * @param lessonid
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<VTimesubject> readTraininglessonSubjectRelationByLessonId(String lessonid) throws FinanceServiceException;
+	
+	/**
+	 * 根据科目分类id获取科目列表
+	 * @param id
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<VTrainsubject> readVTrainsubjectListById(VTrainsubject vTrainsubject) throws FinanceServiceException;
+	
+	/**
+	 * 保存设置课程科目
+	 * @param vTrainsubject
+	 * @throws FinanceServiceException
+	 */
+	public void saveSetTrainingLessonSubject(VTrainsubject vTrainsubject) throws FinanceServiceException;
+	
+	/**
+	 * 更新设置的课程科目
+	 * @param vTrainsubject
+	 * @throws FinanceServiceException
+	 */
+	public void updateSetTrainingLessonSubject(VTrainsubject vTrainsubject) throws FinanceServiceException;
+	
+	/**
+	 * 根据课程id获取已经设置的科目列表
+	 * @param id
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<VTrainsubject> readSetTrainsubjectListById(String id) throws FinanceServiceException;
+	
+	public List<VTrainsubject> readTrainingLessonSubjectListById(String id) throws FinanceServiceException;
+	
+	public List<VTrainsubject> readAuditTrainingLessonSubjectListById(String id) throws FinanceServiceException;
+	
+	/**
+	 * 删除保存课程科目
+	 * @param vTrainsubject
+	 * @throws FinanceServiceException
+	 */
+	public void deleteSetTrainingLessonSubject(String id) throws FinanceServiceException;
+	
+	/**
+	 * 获取飞机型号列表
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<Planeform> readPlaneformList() throws FinanceServiceException;
+	
+	/**
+	 * 创建大纲
+	 * @param outline
+	 * @throws FinanceServiceException
+	 */
+	public void createOutline(TOutline outline)throws FinanceServiceException;
+	
+	/**
+	 * 获取大纲对象
+	 * @param id
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public TOutline readOutlineById(String id) throws FinanceServiceException;
+	
+	/**
+	 * 更新大纲
+	 * @param outline
+	 * @throws FinanceServiceException
+	 */
+	public void updateOutline(TOutline outline) throws FinanceServiceException;
+	
+	/**
+	 * 获取大纲对象
+	 * @param params
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public VOutlineDetail readTrainingOutlineContentById(String id) throws FinanceServiceException;
+	
+	/**
+	 * 获取大纲详细信息列表
+	 * @param params
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<VOutlineDetail> readVOutlineDetailList(Map<String,Object> params) throws FinanceServiceException;
+	
+	/**
+	 * 获取大纲符合性校验列表
+	 * @param params
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page readVOutlineDetailCheckList(Map<String,Object> params,String pageNo) throws FinanceServiceException;
+	
+	/**
+	 * 获取大纲审批列表
+	 * @param params
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page readVOutlineDetailAuditList(Map<String,Object> params,String pageNo) throws FinanceServiceException;
+	
+	/**
+	 * 获取教员执照类型列表
+	 * @param typeid
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<TDiction> readDictionList(String typeid) throws FinanceServiceException;
+	
+	/**
+	 * 创建单元
+	 * @param unit
+	 * @throws FinanceServiceException
+	 */
+	public VOrg saveOutlineUnit(Trainlessonunit unit) throws FinanceServiceException;
+	/**
+	 * 更新单元
+	 * @param unit
+	 * @throws FinanceServiceException
+	 */
+	public void updateOutlineUnit(Trainlessonunit unit) throws FinanceServiceException;
+	
+	/**
+	 * 获取大纲单元列表
+	 * @param outlineid
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<VOutline> readOutlineUnitList(String outlineid) throws FinanceServiceException;
+	
+	public List<Trainlessonunit> readOutlineUnitListById(String outlineid) throws FinanceServiceException;
+	
+	/**
+	 * 保存大纲阶段
+	 * @param phase
+	 * @throws FinanceServiceException
+	 */
+	public void saveOutlinePhase(TPhase phase) throws FinanceServiceException;
+	
+	/**
+	 * 更新大纲阶段
+	 * @param phase
+	 * @throws FinanceServiceException
+	 */
+	public void updateOutlinePhase(TPhase phase) throws FinanceServiceException;
+	
+	/**
+	 * 获取大纲阶段列表
+	 * @param unitid
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<VOutline> readOutlinePhaseList(String unitid) throws FinanceServiceException;
+	
+	public List<VOutline> readOutlinePhaseListById(String unitid) throws FinanceServiceException;
+	
+	/**
+	 * 删除大纲单元
+	 * @param unitid
+	 * @throws FinanceServiceException
+	 */
+	public void deleteOutlineUnitById(String unitid) throws FinanceServiceException;
+	
+	/**
+	 * 删除大纲阶段
+	 * @param unitid
+	 * @throws FinanceServiceException
+	 */
+	public void deleteOutlinePhaseById(String phaseid) throws FinanceServiceException;
+	
+	/**
+	 * 获取单元对象
+	 * @param id
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public VTrainlessonunit readVTrainlessonunitById(String id) throws FinanceServiceException;
+	
+	/**
+	 * 获取阶段对象
+	 * @param id
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public VTrainlessonunit readVTrainlessonphaseById(String id) throws FinanceServiceException;
+	
+	/**
+	 * 保存课程与阶段的关联
+	 * @param vTrainsubject
+	 * @throws FinanceServiceException
+	 */
+	public List<VOutline> saveOutlinePhaseAndLessonRelation(VTrainsubject vTrainsubject) throws FinanceServiceException;
+	
+	/**
+	 * 删除课程与阶段的关联
+	 * @param vTrainsubject
+	 * @throws FinanceServiceException
+	 */
+	public void deleteOutlinePhaseAndLessonRelation(String id) throws FinanceServiceException;
+	
+	/**
+	 * 获取阶段课程列表
+	 * @param phaseid
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<VOutline> readOutlinePhaseLessonList(String phaseid) throws FinanceServiceException;
+	public List<VOutline> readOutlineAllLessonList(String outlineid) throws FinanceServiceException;
+	
+	/**
+	 * 删除大纲
+	 * @param id
+	 * @throws FinanceServiceException
+	 */
+	public void deleteOutlineById(String id) throws FinanceServiceException;
+	
+	/**
+	 * 复制大纲
+	 * @param id
+	 * @throws FinanceServiceException
+	 */
+	public VOrg execOutlineCopyById(String id) throws FinanceServiceException;
+	
+	/**
+	 * 大纲提交审批
+	 * @param id
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public void execOutlineSubmitAuditById(String id) throws FinanceServiceException;
+	
+	public void saveTrainingLessonOrderByNum(String id,String order) throws FinanceServiceException;
+	
+	/**获取大纲单元科目组信息：组名、科目数量
+	 * 
+	 */
+	public List<VOrg> readOutlineUnitSubjectGroupById(String unitid) throws FinanceServiceException;
+	
+	/**
+	 * 获取左侧导航树
+	 * @param parentid
+	 * @param userid
+	 * @return List<VLeftNavigation>
+	 * @throws FinanceServiceException
+	 */
+	public List<VLeftNavigation> readLeftNavigation(String parentid,String userid) throws FinanceServiceException;
+	
+	/**
+	 * 审批大纲
+	 * @param v
+	 * @throws FinanceServiceException
+	 */
+	public void auditOutlineById(VTrainsubject v) throws FinanceServiceException;
+	
+	/**
+	 * 学员分配大纲列表
+	 * @param params
+	 * @param pageNo
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page readStudentAssignOutlineList(Map<String,Object> params,String pageNo) throws FinanceServiceException;
+	
+	/**
+	 * 学员分配大纲
+	 * @param v
+	 * @throws FinanceServiceException
+	 */
+	public void saveAssignOutline(VTrainsubject v) throws FinanceServiceException;
+	
+	/**
+	 * 学员更换大纲
+	 * @param v
+	 * @throws FinanceServiceException
+	 */
+	public void saveChangedOutline(VTrainsubject v) throws FinanceServiceException;
+	
+	/**
+	 * 取消分配大纲
+	 * @param id
+	 * @throws FinanceServiceException
+	 */
+	public void escAssignOutline(String id) throws FinanceServiceException;
+	
+	/**
+	 * 获取分配大纲详细信息
+	 * @param params
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public VOutlineDetail readAssignOutlineDetailById(String id) throws FinanceServiceException;
+	
+	
+	public List<TOrg> readCompanyList() throws FinanceServiceException;
+	
+	public List<TSetClass> readSetClass(String year)throws FinanceServiceException;
+	
+	public List<TSetClass> readTrainingClass(String userName) throws FinanceServiceException;
+	
+	public void saveSubjectOrder(String sortId,String order)throws FinanceServiceException;
+	
+	public void subjectSortOrder(String sortId,String order)throws FinanceServiceException;
+	
+	public VOrg existOutlineUnitById(String id,String sortId) throws FinanceServiceException;
+	
+	public VOrg existOutlinePhaseById(String id,String sortId) throws FinanceServiceException;
+	
+	public VOrg readTreeNodeType(String id)throws FinanceServiceException;
+	
+	public VOrg ifCanAddLessonById(String id,String sortId) throws FinanceServiceException;
+	
+	public VOrg isHasLessonById(String id) throws FinanceServiceException;
+	
+	public void saveOrderByNum(String id,String num,String type) throws FinanceServiceException;
+	
+	public List<TTrainsubject> readTrainsubjectList()throws FinanceServiceException;
+	
+	public List<TTrainlessonsubject> readTrainLessonSubjectList(String lessonid)throws FinanceServiceException;
+	
+	/**
+	 * 获取大纲单元阶段课程合计
+	 * @param outlineid
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<VTrainingRecordCompletion> readOutlineUnitPhaseListByOutlineId(String outlineid) throws FinanceServiceException;
+	
+	/**
+	 * 获取某单元下所有阶段课程合计
+	 * @param unitid
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<VTrainingRecordCompletion> readUnitPhaseListByOutlineId(String unitid) throws FinanceServiceException;
+	
+	/**
+	 * 根据周与开始日期获取周的日期
+	 * @param week
+	 * @param date
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public String readDateByWeekAndSelectDate(String bweek,String eweek,String date)throws FinanceServiceException;
+	
+	/**
+	 * 获取已生效大纲列表
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<TOutline> readOutlineList()throws FinanceServiceException;
+	
+	/**
+	 * 根据大纲id，获取大纲单元、阶段、课程列表
+	 * @param list
+	 * @param type unit:单元 phase：阶段 lesson：课程
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<VOutline> readLessonObjectList(List<TOutline> list,String type)throws FinanceServiceException;
+	
+	/**
+	 * 获取根据大纲id获取课程对象
+	 * @param outlineid
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public TraininglessonRelation readTraininglessonRelationByOutlineId(String outlineid)throws FinanceServiceException;
+	
+}

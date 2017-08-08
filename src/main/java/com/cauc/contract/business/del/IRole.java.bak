@@ -1,0 +1,70 @@
+package com.cauc.training.business;
+
+import java.util.Map;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.business.dao.support.Page;
+import com.cauc.training.pojos.TRole;
+import com.cauc.training.vo.VORole;
+
+/**
+ * 功能：用于角色管理
+ * 
+ * */
+
+
+public interface IRole {
+
+	
+	/**
+	 * 名称
+	 */
+	public static final String  QUERY_KEY_NAME="VName";
+	
+	/**
+	 * 时间
+	 */
+	public static final String  QUERY_KEY_DATE="DCreateDate";
+	
+	/**
+	 * 功能：保存角色
+	 * @param role
+	 * @throws FinanceServiceException
+	 */
+	public void saveRole(TRole role) throws FinanceServiceException;
+	
+	
+	/**
+	 * 功能：查询角色，带分页查询
+	 * @param params：Map结构，key为TRole中的VName，value为用户输入的关键字
+	 * @param pageNo：当前页号
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Page searchRole(Map<String,Object> params, String pageNo) throws FinanceServiceException;
+
+
+	/**
+	 * 功能：根据角色主键值，查询角色
+	 * @param id
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public TRole searchRoleById(String id) throws FinanceServiceException;
+	
+	/**
+	 * 更新角色
+	 * @param role
+	 * @throws FinanceServiceException
+	 */
+	public void updateRole(TRole role) throws FinanceServiceException;
+	
+	/**删除角色（可单一删除，也可批量删除）
+	 * 
+	 * @param ids
+	 * @throws FinanceServiceException
+	 * 说明：String... ids 表示定义一个可变变量，即Ids就是一个字符串数组，等价于String[] ids
+	 */
+	public void deleteRoleByIds(String... ids) throws FinanceServiceException;
+
+}

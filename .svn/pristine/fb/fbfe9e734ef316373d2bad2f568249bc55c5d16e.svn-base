@@ -1,0 +1,73 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>学员管理</title>
+<style type="text/css">
+<!--
+body {
+	margin-left: 0px;
+	margin-top: 0px;
+	margin-right: 0px;
+	margin-bottom: 0px;
+}
+td{ font-size:10pt; line-height:21px;}
+-->
+</style></head>
+
+<body>
+<table width="100%" border="0" align="left" cellpadding="0" cellspacing="0" background="images/bj.gif">
+  <tr>
+    <td colspan="3" background="images/top_bj.gif"><img src="images/top.gif" width="1186" height="90" /></td>
+  </tr>
+  <tr>
+    <td width="200" height="500" valign="top"><img src="images/left.gif" width="200" height="390" usemap="#Map3" border="0"  /></td>
+    <td width="10" align="center" valign="top">&nbsp;</td>
+    <td valign="top" bgcolor="#FFFFFF"><img src="images/1.gif" alt="" border="0" usemap="#Map" /><br />
+      说明：  年：从学员表获取实际的入学年份（入学年份字段）， 下拉框采用多列显示；班级下拉框也是多列显示（从班级表T_SETCLASS获取）。参照“飞行训练大纲管理 ——学员分配大纲页面” 学员类型、所属公司、学生状态、学籍状态、招生形式、自费/公费。从数据字典t_diction表中获取，更多里面包含：男、女、全部三项快捷查询。<br />
+      高级查询 参照：飞行训练大纲管理——学员分配大纲页面<br />
+      下面列表参照：飞行训练大纲管理——站名管理页面<br>
+      点注册按钮进入 注册页面<br />
+      删除要给出提示
+      页面窗口如下图模态窗口的形式。列表上面的删除是批量删除，列表中的<img src="images/del.gif" align="absmiddle" />，单条删除；<img src="images/edit.gif" width="26" height="26" align="absmiddle" />对该行的信息编辑。 <br />
+      所有信息的删除都要采用下图的提示窗口。<br />
+      删除提示窗口，参照：飞行训练大纲管理——站名管理页面。<br />
+  <img src="images/4.gif" width="483" height="294" /> <br />
+  <br />
+      改变学籍状态、改变学生状态、改变航空公司 三个功能类似都是对学员基础信息表的某个字段进行更改，记录更改时间、原因、操作人<br/>
+      学员表：studentBaseInfo， 其中：推荐局方证照考试 字段 0：未推荐<br />1：已推荐  默认0 <br />
+      V_COMPANYID	所属公司标识<br/>
+      V_STUSTATUSID	学生状态标识<br/>
+      V_XJSTATUSID	学籍状态标识<br/> 以上三个字段与字典表t_diction 的v_id 是外键关联。<br />
+      表关系，请查看数据库关系图Diagram_0  与PowerDesigner 数据库设计。
+      
+  <br />
+      学生三种状态 功能对应的表 学员状态变化表（t_stuStatus）、学籍更新表（studentstatuschange）、 改变航空公司(changecompany)、参考数据字典。 <br />
+      三个功能页面如下图模态窗口的形式：实现过程：先筛选学员，选 新的公司，确认，完成操作。<br />
+      内容少的采用两列，多的采用三列。窗口的尺寸随之调整，窗口尺寸的最大高度是495<br />
+      <img src="images/5.gif" width="457" height="424" /><br />
+    <br />
+    </td>
+  </tr>
+</table>
+
+<map name="Map" id="Map">
+  <area shape="rect" coords="1,8,50,38" href="addstu.html" />
+</map>
+<map name="Map3" id="Map3">
+  <area shape="rect" coords="16,6,111,32" href="stulist.html" />
+  <area shape="rect" coords="23,59,99,87" href="addclass.html" />
+  <area shape="rect" coords="27,91,92,116" href="setlesson.html" />
+  <area shape="rect" coords="20,117,95,140" href="scoreList.html" />
+  <area shape="rect" coords="19,145,127,166" href="kaoshi.html" />
+  <area shape="rect" coords="19,166,109,195" href="tijian.html" />
+  <area shape="rect" coords="16,198,103,222" href="zhizhao.html" />
+  <area shape="rect" coords="18,226,96,250" href="zhuangtai.html" />
+  <area shape="rect" coords="19,254,99,275" href="mianshi.html" />
+  <area shape="rect" coords="18,279,116,305" href="jidi.html" />
+  <area shape="rect" coords="17,308,114,329" href="dadui.html" />
+  <area shape="rect" coords="14,330,117,354" href="wancheng.html" />
+  <area shape="rect" coords="14,356,115,380" href="biye.html" />
+</map>
+</body>
+</html>

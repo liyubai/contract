@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE struts PUBLIC
+    "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN"
+    "http://struts.apache.org/dtds/struts-2.0.dtd">
+<struts>
+	<package name="Account" extends="ErsDefault" namespace="/account">
+	    <!-- 初次加载 查询全部  -->
+    	<action name="selectAccountList" class="com.cauc.contract.ui.core.selectAccountList" method="selectAccount">
+    		<result name="success">/pages/Account/cClearingList.jsp</result>
+    	</action>
+    	<!-- 条件查询 -->
+    	<action name="selectAccountById" class="com.cauc.contract.ui.core.selectAccountList" method="selectAccountById"  >
+    	<!-- 	<result name="success" type="json">
+		        <param name="root">partOfaccountList</param>
+		        <param name="pageStr">pageStr</param>
+		    </result> -->
+		        <result name="success">/pages/Account/cClearingList.jsp</result>
+		</action>
+		<!-- 生成Excel表 -->
+		<action name="excelAccountById" class="com.cauc.contract.ui.core.selectAccountList" method="excelAccountById">
+    		<!-- <result name="success" type="redirectAction">selectAccountList.do</result> -->
+    	</action>
+    	
+    </package>
+    
+    <package name="UpdateAccount" extends="ErsDefault" namespace="/UpdateAccount">
+    	<action name="updateAccountInit" class="com.cauc.contract.ui.core.UpdateAccountAction" method="UpdateAccountInit">
+    		<result name="success">/pages/Account/cModifyBH.jsp</result>
+    	</action>
+    	<action name="updateAccountById" class="com.cauc.contract.ui.core.UpdateAccountAction" method="updateAccountById">
+    		<result name="success" type="redirectAction">
+    		    <param name="namespace">/account</param>
+                <param name="actionName">selectAccountList</param>
+    		</result>
+    	</action>
+    	<!-- 下载Excel 表 -->
+    	<action name="downloadExcel" class="com.cauc.contract.ui.core.UpdateAccountAction" method="downloadExcel">
+    	</action>
+
+    </package>
+</struts>

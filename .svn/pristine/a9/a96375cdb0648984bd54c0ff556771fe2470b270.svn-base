@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<menu>
+	<item id="muItem_AD1" text="创建大纲" img="new.gif"/>
+	<item id="1" type="separator"/>
+	<item id="muItem_EDIT1" text="编辑大纲" img="edit.gif"/>
+	<item id="2" type="separator"/>
+	<item id="muItem_COPY" text="复制大纲" img="copy.gif"/>
+	<item id="3" type="separator"/>
+	<item id="muItem_DELETE1" text="删除大纲" img="del.gif"/>
+	<item id= "4" type="separator"/>
+	<item id="muItem_ASSIGN" text="提交审批" img="select_all.gif"/>
+	<item id= "5" type="separator"/>
+	<item id="muItem_addlesson" text="添加课目" img="select_all.gif"/>
+	<item id= "6" type="separator"/>
+	<item id="muItem_addphase" text="创建阶段" img="new.gif"/>
+
+</menu>

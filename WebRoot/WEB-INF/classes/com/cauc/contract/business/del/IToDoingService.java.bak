@@ -1,0 +1,373 @@
+package com.cauc.training.business;
+
+import java.util.List;
+import java.util.Map;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.pojos.PracticeAsk;
+import com.cauc.training.pojos.StudentBaseInfo;
+import com.cauc.training.pojos.TAppeal;
+import com.cauc.training.pojos.TBackrecord;
+import com.cauc.training.pojos.TFlightTrainingrecord;
+import com.cauc.training.pojos.TOtheruser;
+import com.cauc.training.pojos.TScore;
+import com.cauc.training.pojos.TeacherBaseInfo;
+import com.cauc.training.vo.VFlightTrainingrecordDetail;
+import com.cauc.training.vo.VToDoing;
+
+
+public interface IToDoingService {
+	
+	/**
+	 * 飞标部节点id
+	 */
+	public static final String FLY_DEPARTMENT ="fbd3253b48cb0a620148cb367f4e000c";
+	
+	/**
+	 * 飞行训练管理处-id
+	 */
+	public static final String FLY_TRAINING_MANAGEMENT ="4028816a470f515801470fa0917c001f";
+	
+	/**
+	 * 局方节点-id
+	 */
+	public static final String JUFANG_MANAGEMENT ="fbd3253b48cb0a620148cb386cfa0012";
+	
+	/**
+	 * 局方考试员
+	 */
+	public static final String JUFANG_EXAMOR="fbd3253b48cb0a620148cb3949bc0016";
+	
+	/**
+	 * 教员中的委任代表
+	 * 
+	 */
+	public static final String TEACHER_WEIRENDAIBIAO="4028aa494765f33d014765f530700003";
+	
+	/**
+	 * 数据字典历史记录id
+	 */
+	public static final String HISTORY_SETUP="f1866a954be530a3014be921a2fe0023";
+	
+	/**
+	 * 学员
+	 */
+	public static final int USERTYPE_STUDENT = 1;
+	/**
+	 * 教员
+	 */
+	public static final int USERTYPE_TEACHER = 2;
+	/**
+	 * 管理员
+	 */
+	public static final int USERTYPE_ADMIN = 3;	
+	/**
+	 * 其他 
+	 */
+	public static final int USERTYPE_OTHER = 4;
+	
+	/**
+	 * 登录人id
+	 */
+	public static final String QUERY_LOGIN_USER_ID = "userid";
+	
+	/**
+	 * 姓名
+	 */
+	public static final String QUERY_VNAME = "VName";
+	
+	
+	/**
+	 * 学生id
+	 */
+	public static final String QUERY_STUDENT="studentid";
+	
+	/**
+	 * 分配教员
+	 */
+	public static final String QUERY_DISPATCH_TEACHER="teacherid";
+	
+	/**
+	 * 记录id
+	 */
+	public static final String QUERY_TRAINING_ID= "id";
+	
+	/**
+	 * 记录状态
+	 */
+	public static final String QUERY_AUDIT_STATUS = "IAuditstatus";
+	
+	/**
+	 * 评语状态0未确定
+	 */
+	public static final int COMMENT_STATUS_NO_CONFIRM = 0;
+	
+	/**
+	 * 评语状态已确定
+	 */
+	public static final int COMMENT_STATUS_YES_CONFIRM = 1;
+	
+	/**
+	 * 评语状态申诉
+	 */
+	public static final int COMMENT_STATUS_APPEAL = 2;
+	
+	/**
+	 * 申诉处理状态 未处理
+	 */
+	public static final int APPEAL_DOWITH_STATUS_NO=0;
+	
+	/**
+	 * 申诉处理状态 已处理
+	 */
+	public static final int APPEAL_DOWITH_STATUS_YES=1;
+	
+	
+	/**
+	 * 获取教员待办事项列表
+	 * @param userid
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<VToDoing> readTeacherToDoingList(Map<String,Object> params) throws FinanceServiceException;
+		
+	/**
+	 * 学生待确认或打回的记录
+	 * @param params
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<VToDoing> readStudentToDoingList(Map<String,Object> params) throws FinanceServiceException;
+	
+	/**
+	 * 其它飞行记录审核列表
+	 * @param params
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<VToDoing> readOtherToDoingList(Map<String,Object> params) throws FinanceServiceException;
+	
+	/**
+	 * 根据信息id获取对象
+	 * @param id
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public VFlightTrainingrecordDetail readFlightTrainingRecordDetailById(Map<String,Object> param)throws FinanceServiceException;
+	
+	public VFlightTrainingrecordDetail readFlightTrainingRecordEditDetailById(Map<String,Object> param)throws FinanceServiceException;
+	
+	/**
+	 * 处理申诉
+	 * @param toDoing
+	 * @throws FinanceServiceException
+	 */
+	public void saveDoWithAppeal(TAppeal appeal)throws FinanceServiceException;
+	
+	/**
+	 * 评语申诉
+	 * @param toDoing
+	 * @throws FinanceServiceException
+	 */
+	public void saveStudentShenSu(TAppeal appeal)throws FinanceServiceException;
+	
+	/**
+	 * 确认教员审核
+	 * @param toDoing
+	 * @throws FinanceServiceException
+	 */
+	public void saveStudentConfirmRecord(VToDoing toDoing)throws FinanceServiceException;
+	
+	/**
+	 * 确认其它记录审核
+	 * @param toDoing
+	 * @throws FinanceServiceException
+	 */
+	public void saveOtherRecordConfirm(VToDoing toDoing)throws FinanceServiceException;
+	
+	/**
+	 * 确认加时加课审核
+	 * @param toDoing
+	 * @throws FinanceServiceException
+	 */
+	public void saveAddHoursAndAddLessonConfirm(VToDoing toDoing)throws FinanceServiceException;
+	
+	/**
+	 * 保存审核考试申请通过
+	 * @param toDoing
+	 * @throws FinanceServiceException
+	 */
+	public void savePracticeExamAskConfirm(VToDoing toDoing)throws FinanceServiceException;
+	
+	/**
+	 * 分配考试员
+	 * @param toDoing
+	 * @throws FinanceServiceException
+	 */
+	public void savePracticeExamAskStudentAssignTeacher(VToDoing toDoing)throws FinanceServiceException;
+	
+	/**
+	 * 保存审核考试申请不通过
+	 * @param toDoing
+	 * @throws FinanceServiceException
+	 */
+	public void saveBackPracticeExamAsk(PracticeAsk ask)throws FinanceServiceException;
+	
+	/**
+	 * 保存审核考试申请不通过重新申请
+	 * @param toDoing
+	 * @throws FinanceServiceException
+	 */
+	public void savePracticeBackExamAskConfirmToAsk(PracticeAsk ask)throws FinanceServiceException;
+	
+	/**
+	 * 修改记录
+	 * @param toDoing
+	 * @throws FinanceServiceException
+	 */
+	public void updateFlightTrainingRecord(TFlightTrainingrecord record)throws FinanceServiceException;
+	
+	/**
+	 * 教员审核
+	 * @param toDoing
+	 * @throws FinanceServiceException
+	 */
+	public void saveTeacherConfirm(VToDoing toDoing)throws FinanceServiceException;
+
+	/**
+	 * 代替审核
+	 * @param toDoing
+	 * @throws FinanceServiceException
+	 */
+	public void saveReplaceTeacherConfirm(VToDoing toDoing) throws FinanceServiceException;
+	
+	/**
+	 * 记录打回
+	 * @param back
+	 * @throws FinanceServiceException
+	 */
+	public void saveBackTrainingRecord(TBackrecord back)throws FinanceServiceException;
+	
+	/**
+	 * 获取评语对象
+	 * @param recordid
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public VToDoing readCommentTrainingRecord(String recordid)throws FinanceServiceException;
+	
+	/**
+	 * 获取申诉对象
+	 * @param recordid
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public VToDoing readAppealTrainingRecord(String recordid)throws FinanceServiceException;
+	
+	/**
+	 * 获取打回原因
+	 * @param recordid
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public VToDoing readBackrecordByRecordId(String recordid) throws FinanceServiceException;
+	
+	/**
+	 * 加时加课申请列表
+	 * @param params
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<VToDoing> readAddHoursAndAddLessonToDoingList(Map<String,Object> params) throws FinanceServiceException;
+	
+	/**
+	 * 以申请人为单位，获取待办事项列表
+	 * @param params
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<VToDoing> readAddHoursAndAddLessonToDoingListGroupByUser(Map<String,Object> params) throws FinanceServiceException;
+	
+	/**
+	 * 获取考试申请列表
+	 * @param params
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<VToDoing> readExamAskToDoingList(Map<String,Object> params) throws FinanceServiceException;
+	
+	/**
+	 * 分配考试员列表
+	 * @param params
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<VToDoing> readAssignTeacherToDoingList(Map<String,Object> params) throws FinanceServiceException;
+	
+	/**
+	 * 获取送培资格审查列表
+	 * @param params
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<VToDoing> readScoreAuditToDoingList(Map<String,Object> params) throws FinanceServiceException;
+	
+	/**
+	 * 获取成绩审核列表
+	 * @param params
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<VToDoing> readLessonScoreAuditToDoingList(Map<String,Object> params) throws FinanceServiceException;
+	
+	/**
+	 * 获取局方考试员列表
+	 * @param id
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<TOtheruser> readJuFangExamor(String id)throws FinanceServiceException;
+	
+	public List<TOtheruser> readJuFangAssignedExamor(String id)throws FinanceServiceException;
+	
+	/**
+	 * 获取委任代表
+	 * @param id
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public List<TeacherBaseInfo> readWeiRenDaiBiao(String id)throws FinanceServiceException;
+	
+	public List<TeacherBaseInfo> readAssignedWeiRenDaiBiao(String id)throws FinanceServiceException;
+	
+	public List<StudentBaseInfo> readSongPeiZiGeAuditStudentList(String userName)throws FinanceServiceException;
+	
+	/**
+	 * 获取成绩审核列表
+	 * @param params
+	 * @return List
+	 * @throws FinanceServiceException
+	 */
+	public List<TScore> readLessonScoreAuditList(Map<String,Object> params)throws FinanceServiceException;
+	
+	/**
+	 * 保存送配资格审查
+	 * @param doing
+	 * @throws FinanceServiceException
+	 */
+	public void saveSongPeiZiGeAudit(VToDoing doing)throws FinanceServiceException;
+	
+	/**
+	 * 保存成绩审查
+	 * @param doing
+	 * @throws FinanceServiceException
+	 */
+	public void saveLessonScoreAudit(VToDoing doing)throws FinanceServiceException;
+	
+	/**
+	 * 获取历史记录录入开放与关闭设置
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public Integer readAddHistorySetUp(String type) throws FinanceServiceException;
+}

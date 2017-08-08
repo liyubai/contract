@@ -1,0 +1,213 @@
+package com.cauc.training.business.hibernate;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import org.hibernate.HibernateException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.cauc.training.FinanceServiceException;
+import com.cauc.training.business.IFunctionService;
+import com.cauc.training.business.dao.GenericHibernateDAO;
+import com.cauc.training.pojos.TFunction;
+import com.cauc.training.pojos.TRoleFunction;
+import com.cauc.training.vo.VFunction;
+import com.cauc.training.vo.VOrg;
+
+
+@Service
+public class FunctionServiceImpl extends GenericHibernateDAO implements IFunctionService {
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void deleteFunctionById(String id)
+			throws FinanceServiceException {
+
+		try {
+				if(super.findBy(TRoleFunction.class, "TFunction.VId", id).size()>0){
+					
+					throw new FinanceServiceException("功能模块已经被引用，不能删除。");
+				}
+			
+				if(super.findBy(TFunction.class, "VParentid", id).size()>0){
+					throw new FinanceServiceException("该功能模块已经有下级功能模块不能删除。");
+				}
+			
+				super.removeById(TFunction.class, id);
+		}catch (HibernateException e) {
+			e.printStackTrace();
+			throw new FinanceServiceException("删除功能模块失败", e);
+		}
+	}
+	
+
+	@SuppressWarnings("unchecked")
+	public List<VFunction> readFunctionList(String parentid)
+			throws FinanceServiceException {
+		
+		try {
+			String hql = " from TFunction where VParentid=? order by IOrder asc";
+			List<VFunction> backList = new ArrayList<VFunction>(); //返回的功能模块对象列表
+			VFunction vn;
+			List<TFunction> list = super.find(hql, parentid);//子节点列表
+			//查询孙子节点的目的是为了出现“+”号
+			List<TFunction> child;//孙子节点列表
+			
+			for(TFunction p :list){
+				vn = new VFunction();
+				vn.setVId(p.getVId());
+				vn.setVParentid(parentid);
+				vn.setVName(p.getVName());
+				vn.setIOrder(1);//标注是父节点
+				backList.add(vn);
+
+				
+				child = super.find(hql,p.getVId());//下一级是否有子节点，只取一条记录
+				if(child.size()>0){
+					vn = new VFunction();
+					vn.setVId(child.get(0).getVId());
+					vn.setVParentid(p.getVId());
+					vn.setVName(child.get(0).getVName());
+					vn.setIOrder(0);//标注是子节点
+					backList.add(vn);
+				}
+				
+			}
+			
+			return backList;
+		} catch (HibernateException e) {
+			throw new FinanceServiceException("读取功能模块信息列表失败", e);
+		}
+	}
+
+	/**
+	 * 获取所有功能模块，用于采用非延时加载生成权限树
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	@SuppressWarnings("unchecked")
+	public List<VFunction> readAllFunctionList() throws FinanceServiceException{
+		List<VFunction> backList = new ArrayList<VFunction>(); //返回的功能模块对象列表
+		try {
+			String hql = "from TFunction order by IOrder asc,DCreateDate asc";
+			
+			//返回所有功能模块（节点）
+			List<TFunction> list = super.find(hql);
+			
+			for(TFunction p :list){
+				VFunction vn = new VFunction();
+				vn.setVId(p.getVId());
+				vn.setVParentid(p.getVParentid());
+				vn.setVName(p.getVName());
+				vn.setIOrder(1);
+				
+				backList.add(vn);	
+			}
+			
+			
+		} catch (HibernateException e) {
+			throw new FinanceServiceException("读取功能模块信息列表失败", e);
+		}
+		return backList;
+	}
+
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void saveFunction(TFunction function)
+			throws FinanceServiceException {
+		try {
+			String hql=" from TFunction where VParentid=? and VName=?";
+			if (super.find(hql, QUERY_KEY_ROOT,function.getVName()).size()>0) {
+				throw new FinanceServiceException("提交内容重复，添加失败。");
+			}
+			function.setDCreateDate(new Date());
+			//function.setIOrder(QUERY_KEY_ORDER);
+			super.save(function);
+		}catch (HibernateException e) {
+			throw new FinanceServiceException("保存功能模块失败", e);
+			
+		}
+		
+	}
+
+	@Transactional(readOnly = false, isolation = Isolation.READ_COMMITTED)
+	public void updateFunction(TFunction function)
+			throws FinanceServiceException {
+		try {
+			TFunction old = super.get(TFunction.class, function.getVId());
+			old.setVName(function.getVName());
+			old.setVUrl(function.getVUrl());
+			
+			if(function.getIDh()!=null){
+				old.setIDh(function.getIDh());
+			}
+			if(function.getIOrder()!=null){
+				old.setIOrder(function.getIOrder());
+			}
+			if(function.getIRootid()!=null){
+				old.setIRootid(function.getIRootid());
+			}
+			super.update(old);
+		}catch (HibernateException e) {
+			throw new FinanceServiceException("更新功能模块对象失败", e);
+		}
+		
+	}
+
+	public VOrg readFunctionById(String id) throws FinanceServiceException {
+		try{
+			VOrg vo = new VOrg();
+			TFunction t = super.get(TFunction.class, id);
+			vo.setVId(t.getVId());
+			vo.setMessage(t.getVUrl());
+			vo.setVParentid(t.getVParentid());
+			vo.setIStatus(t.getIOrder());
+			vo.setIDh(t.getIDh());
+			vo.setIRootid(t.getIRootid());
+			return vo;
+		}catch (HibernateException e) {
+			throw new FinanceServiceException("获取功能模块对象失败", e);
+		}
+	}
+	
+	/**
+	 * 获取功能模块对象的VId属性
+	 * @param url：功能模块的访问路径，即访问该功能模块的action的name值
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	@SuppressWarnings("unchecked")		 
+	public String getVid(String url) throws FinanceServiceException{
+		String fid = null;
+		try {
+		   String hql = "from TFunction where VUrl=?";		   
+		   List<TFunction> fs = super.find(hql, url);
+		   if(fs != null && fs.size() >0){
+			   TFunction  func = fs.get(0);
+			   fid = func.getVId();
+		   }
+		}catch (HibernateException e) {
+			throw new FinanceServiceException("查询功能模块主键值出错", e);
+		}
+		return fid;
+	}
+	
+	/**
+	 * 获取功能模块对象为角色-功能模块绑定时使用
+	 * @param id
+	 * @return
+	 * @throws FinanceServiceException
+	 */
+	public TFunction readFunctionByIdForRole(String id) throws FinanceServiceException{
+		TFunction tf = null;
+		try{
+
+			tf = super.get(TFunction.class, id);
+
+		}catch (HibernateException e) {
+			throw new FinanceServiceException("获取功能模块对象失败", e);
+		}
+		return tf;
+	}
+	
+
+}
